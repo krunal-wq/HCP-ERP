@@ -1,0 +1,703 @@
+﻿"""
+master_routes.py â€” CRUD for Lead Masters
+Blueprint: masters at /masters
+"""
+from flask import Blueprint, render_template, redirect, url_for, request, flash, jsonify
+from flask_login import login_required, current_user
+from core.permissions import get_perm
+from models import db, LeadStatus, LeadSource, LeadCategory, ProductRange, CategoryMaster, UOMMaster, HSNCode, QCParamOption
+from flask_login import current_user
+from datetime import datetime
+
+masters = Blueprint('masters', __name__, url_prefix='/masters')
+
+MASTER_MAP = {
+    'status':   {'model': LeadStatus,    'label': 'Lead Status',    'icon': 'ðŸ”µ'},
+    'source':   {'model': LeadSource,    'label': 'Lead Source',    'icon': 'ðŸ“Œ'},
+    'category': {'model': LeadCategory,  'label': 'Lead Category',  'icon': 'ðŸ·ï¸'},
+    'range':    {'model': ProductRange,  'label': 'Product Range',  'icon': 'ðŸ“¦'},
+}
+
+# Separate map for new full-featured masters
+FULL_MASTER_MAP = {
+    'cat_master': {'model': CategoryMaster, 'label': 'Category Master', 'icon': 'ðŸ—‚ï¸'},
+    'uom':        {'model': UOMMaster,      'label': 'UOM Master',      'icon': 'ðŸ“'},
+    'hsn':        {'model': HSNCode,        'label': 'HSN Code Master', 'icon': 'ðŸ”¢'},
+}
+
+# â”€â”€ List page (all 4 masters on one page) â”€â”€
+@masters.route('/')
+@login_required
+def index():
+    from core.permissions import get_sub_perm
+    if not get_sub_perm('crm_settings', 'lead_master'):
+        from flask import flash, redirect, url_for
+        flash('Access denied: Lead Master permission nahi hai.', 'error')
+        return redirect(url_for('dashboard'))
+    data = {}
+    for key, cfg in MASTER_MAP.items():
+        data[key] = cfg['model'].query.order_by(cfg['model'].sort_order, cfg['model'].name).all()
+    perm = get_perm('masters')
+    return render_template('masters/index.html', data=data, perm=perm, active_page='masters')
+
+# â”€â”€ Quick Add via AJAX (from lead form + button) â”€â”€
+@masters.route('/quick-add', methods=['POST'])
+@login_required
+def quick_add():
+    perm = get_perm('masters')
+    if not perm or not perm.can_add:
+        return jsonify(success=False, error='Permission denied'), 403
+    mtype = request.json.get('type')
+    name  = request.json.get('name', '').strip()
+    icon  = request.json.get('icon', '').strip() or None
+    if not mtype or not name:
+        return jsonify(success=False, error='Missing data'), 400
+    cfg = MASTER_MAP.get(mtype)
+    if not cfg:
+        return jsonify(success=False, error='Unknown type'), 400
+    Model = cfg['model']
+    if Model.query.filter_by(name=name).first():
+        return jsonify(success=False, error=f'"{name}" already exists')
+    obj = Model(name=name)
+    if icon: obj.icon = icon
+    db.session.add(obj)
+    db.session.commit()
+    return jsonify(success=True, id=obj.id, name=obj.name,
+                   icon=getattr(obj, 'icon', ''), label=cfg['label'])
+
+# â”€â”€ Add â”€â”€
+@masters.route('/<mtype>/add', methods=['POST'])
+@login_required
+def add(mtype):
+    cfg = MASTER_MAP.get(mtype)
+    if not cfg: flash('Unknown master type', 'error'); return redirect(url_for('masters.index'))
+    Model = cfg['model']
+    name = request.form.get('name','').strip()
+    if not name: flash('Name is required','error'); return redirect(url_for('masters.index'))
+    if Model.query.filter_by(name=name).first():
+        flash(f'"{name}" already exists','warning')
+        return redirect(url_for('masters.index'))
+    # Icon: user-provided, else model column's default (e.g. ðŸ”µ / ðŸ“Œ / ðŸ·ï¸ / ðŸ“¦)
+    _icon = request.form.get('icon', '').strip()
+    if not _icon:
+        _col = getattr(Model, 'icon', None)
+        _default = getattr(getattr(_col, 'default', None), 'arg', '') if _col is not None else ''
+        _icon = _default or ''
+    obj = Model(
+        name       = name,
+        icon       = _icon,
+        sort_order = int(request.form.get('sort_order', 0) or 0),
+        is_active  = 'is_active' in request.form,
+    )
+    if mtype == 'status':
+        obj.color = request.form.get('color','#6b7280')
+    db.session.add(obj)
+    db.session.commit()
+    flash(f'{cfg["label"]} "{name}" added!', 'success')
+    return redirect(url_for('masters.index') + f'#{mtype}')
+
+# â”€â”€ Edit â”€â”€
+@masters.route('/<mtype>/<int:id>/edit', methods=['POST'])
+@login_required
+def edit(mtype, id):
+    cfg = MASTER_MAP.get(mtype)
+    if not cfg: flash('Unknown master type','error'); return redirect(url_for('masters.index'))
+    obj = cfg['model'].query.get_or_404(id)
+    obj.name       = request.form.get('name', obj.name).strip()
+    obj.icon       = request.form.get('icon', obj.icon).strip()
+    obj.sort_order = int(request.form.get('sort_order', obj.sort_order) or 0)
+    obj.is_active  = 'is_active' in request.form
+    if mtype == 'status':
+        obj.color = request.form.get('color', obj.color)
+    db.session.commit()
+    flash(f'Updated successfully!', 'success')
+    return redirect(url_for('masters.index') + f'#{mtype}')
+
+# â”€â”€ Delete â”€â”€
+@masters.route('/<mtype>/<int:id>/delete', methods=['POST'])
+@login_required
+def delete(mtype, id):
+    cfg = MASTER_MAP.get(mtype)
+    if not cfg: flash('Unknown master type','error'); return redirect(url_for('masters.index'))
+    obj = cfg['model'].query.get_or_404(id)
+    name = obj.name
+    db.session.delete(obj)
+    db.session.commit()
+    flash(f'"{name}" deleted', 'success')
+    return redirect(url_for('masters.index') + f'#{mtype}')
+
+# â”€â”€ Toggle active â”€â”€
+@masters.route('/<mtype>/<int:id>/toggle', methods=['POST'])
+@login_required
+def toggle(mtype, id):
+    cfg = MASTER_MAP.get(mtype)
+    if not cfg: return jsonify(success=False)
+    obj = cfg['model'].query.get_or_404(id)
+    obj.is_active = not obj.is_active
+    db.session.commit()
+    return jsonify(success=True, is_active=obj.is_active)
+
+# â”€â”€ Get all options for a type (used by lead form JS) â”€â”€
+@masters.route('/options/<mtype>')
+@login_required
+def options(mtype):
+    cfg = MASTER_MAP.get(mtype)
+    if not cfg: return jsonify([])
+    items = cfg['model'].query.filter_by(is_active=True)\
+                .order_by(cfg['model'].sort_order, cfg['model'].name).all()
+    return jsonify([{'id': o.id, 'name': o.name,
+                     'icon': getattr(o,'icon',''),
+                     'color': getattr(o,'color','')} for o in items])
+
+
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# CATEGORY MASTER â€” Full CRUD
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+
+@masters.route('/uom-options')
+@login_required
+def uom_options():
+    items = UOMMaster.query.filter_by(status=True, is_deleted=False).order_by(UOMMaster.code).all()
+    return jsonify([{'id': u.id, 'code': u.code, 'name': u.name} for u in items])
+
+
+@masters.route('/category-options')
+@login_required
+def category_options():
+    items = CategoryMaster.query.filter_by(status=True, is_deleted=False).order_by(CategoryMaster.name).all()
+    return jsonify([{'id': ct.id, 'name': ct.name} for ct in items])
+
+
+@masters.route('/category-master')
+@login_required
+def category_master_list():
+    search = request.args.get('search','')
+    q = CategoryMaster.query.filter_by(is_deleted=False)
+    if search:
+        q = q.filter(CategoryMaster.name.ilike(f'%{search}%'))
+    items = q.order_by(CategoryMaster.name).all()
+    return render_template('masters/category_master.html', items=items, search=search, active_page='cat_master')
+
+@masters.route('/category-master/add', methods=['POST'])
+@login_required
+def category_master_add():
+    name = request.form.get('name','').strip()
+    if not name:
+        flash('Name required', 'danger'); return redirect(url_for('masters.category_master_list'))
+    if CategoryMaster.query.filter_by(name=name, is_deleted=False).first():
+        flash(f'"{name}" already exists', 'warning'); return redirect(url_for('masters.category_master_list'))
+    obj = CategoryMaster(name=name, status=True, created_by=current_user.id)
+    db.session.add(obj); db.session.commit()
+    flash(f'Category "{name}" added!', 'success')
+    return redirect(url_for('masters.category_master_list'))
+
+@masters.route('/category-master/<int:id>/edit', methods=['POST'])
+@login_required
+def category_master_edit(id):
+    obj = CategoryMaster.query.get_or_404(id)
+    obj.name        = request.form.get('name', obj.name).strip()
+    obj.status      = request.form.get('status') == '1'
+    obj.modified_by = current_user.id
+    obj.modified_at = datetime.now()
+    db.session.commit(); flash('Updated!', 'success')
+    return redirect(url_for('masters.category_master_list'))
+
+@masters.route('/category-master/<int:id>/delete', methods=['POST'])
+@login_required
+def category_master_delete(id):
+    obj = CategoryMaster.query.get_or_404(id)
+    obj.is_deleted = True; obj.modified_by = current_user.id; obj.modified_at = datetime.now()
+    db.session.commit(); flash(f'"{obj.name}" deleted', 'success')
+    return redirect(url_for('masters.category_master_list'))
+
+@masters.route('/category-master/<int:id>/toggle', methods=['POST'])
+@login_required
+def category_master_toggle(id):
+    obj = CategoryMaster.query.get_or_404(id)
+    obj.status = not obj.status; obj.modified_by = current_user.id; obj.modified_at = datetime.now()
+    db.session.commit(); return jsonify(success=True, status=obj.status)
+
+
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# UOM MASTER â€” Full CRUD
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+
+@masters.route('/uom-master')
+@login_required
+def uom_master_list():
+    search = request.args.get('search','')
+    q = UOMMaster.query.filter_by(is_deleted=False)
+    if search:
+        q = q.filter(UOMMaster.name.ilike(f'%{search}%') | UOMMaster.code.ilike(f'%{search}%'))
+    items = q.order_by(UOMMaster.name).all()
+    return render_template('masters/uom_master.html', items=items, search=search, active_page='uom_master')
+
+@masters.route('/uom-master/add', methods=['POST'])
+@login_required
+def uom_master_add():
+    code = request.form.get('code','').strip().upper()
+    name = request.form.get('name','').strip()
+    if not code or not name:
+        flash('Code and Name both required', 'danger'); return redirect(url_for('masters.uom_master_list'))
+    if UOMMaster.query.filter_by(code=code, is_deleted=False).first():
+        flash(f'Code "{code}" already exists', 'warning'); return redirect(url_for('masters.uom_master_list'))
+    obj = UOMMaster(code=code, name=name, status=True, created_by=current_user.id)
+    db.session.add(obj); db.session.commit()
+    flash(f'UOM "{code} - {name}" added!', 'success')
+    return redirect(url_for('masters.uom_master_list'))
+
+@masters.route('/uom-master/<int:id>/edit', methods=['POST'])
+@login_required
+def uom_master_edit(id):
+    obj = UOMMaster.query.get_or_404(id)
+    obj.code        = request.form.get('code', obj.code).strip().upper()
+    obj.name        = request.form.get('name', obj.name).strip()
+    obj.status      = request.form.get('status') == '1'
+    obj.modified_by = current_user.id
+    obj.modified_at = datetime.now()
+    db.session.commit(); flash('Updated!', 'success')
+    return redirect(url_for('masters.uom_master_list'))
+
+@masters.route('/uom-master/<int:id>/delete', methods=['POST'])
+@login_required
+def uom_master_delete(id):
+    obj = UOMMaster.query.get_or_404(id)
+    obj.is_deleted = True; obj.modified_by = current_user.id; obj.modified_at = datetime.now()
+    db.session.commit(); flash(f'"{obj.name}" deleted', 'success')
+    return redirect(url_for('masters.uom_master_list'))
+
+@masters.route('/uom-master/<int:id>/toggle', methods=['POST'])
+@login_required
+def uom_master_toggle(id):
+    obj = UOMMaster.query.get_or_404(id)
+    obj.status = not obj.status; obj.modified_by = current_user.id; obj.modified_at = datetime.now()
+    db.session.commit(); return jsonify(success=True, status=obj.status)
+
+
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# HSN CODE MASTER â€” Full CRUD
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+
+@masters.route('/hsn-master')
+@login_required
+def hsn_master_list():
+    search = request.args.get('search','')
+    q = HSNCode.query.filter_by(is_deleted=False)
+    if search:
+        q = q.filter(HSNCode.hsn_code.ilike(f'%{search}%') | HSNCode.description.ilike(f'%{search}%'))
+    items = q.order_by(HSNCode.hsn_code).all()
+    return render_template('masters/hsn_master.html', items=items, search=search, active_page='hsn_master')
+
+@masters.route('/hsn-master/add', methods=['POST'])
+@login_required
+def hsn_master_add():
+    hsn_code = request.form.get('hsn_code','').strip()
+    if not hsn_code:
+        flash('HSN Code required', 'danger'); return redirect(url_for('masters.hsn_master_list'))
+    if HSNCode.query.filter_by(hsn_code=hsn_code, is_deleted=False).first():
+        flash(f'HSN "{hsn_code}" already exists', 'warning'); return redirect(url_for('masters.hsn_master_list'))
+    gst = float(request.form.get('gst_rate','0') or 0)
+    obj = HSNCode(
+        hsn_code    = hsn_code,
+        description = request.form.get('description','').strip(),
+        gst_rate    = gst,
+        cgst        = round(gst/2, 2),
+        sgst        = round(gst/2, 2),
+        igst        = gst,
+        cess        = float(request.form.get('cess','0') or 0),
+        status      = True,
+        created_by  = current_user.id,
+    )
+    db.session.add(obj); db.session.commit()
+    flash(f'HSN Code "{hsn_code}" added!', 'success')
+    return redirect(url_for('masters.hsn_master_list'))
+
+@masters.route('/hsn-master/<int:id>/edit', methods=['POST'])
+@login_required
+def hsn_master_edit(id):
+    obj = HSNCode.query.get_or_404(id)
+    gst = float(request.form.get('gst_rate', obj.gst_rate) or 0)
+    obj.hsn_code    = request.form.get('hsn_code', obj.hsn_code).strip()
+    obj.description = request.form.get('description', obj.description or '').strip()
+    obj.gst_rate    = gst
+    obj.cgst        = round(gst/2, 2)
+    obj.sgst        = round(gst/2, 2)
+    obj.igst        = gst
+    obj.cess        = float(request.form.get('cess', obj.cess or 0) or 0)
+    obj.status      = request.form.get('status') == '1'
+    obj.modified_by = current_user.id
+    obj.modified_at = datetime.now()
+    db.session.commit(); flash('Updated!', 'success')
+    return redirect(url_for('masters.hsn_master_list'))
+
+@masters.route('/hsn-master/<int:id>/delete', methods=['POST'])
+@login_required
+def hsn_master_delete(id):
+    obj = HSNCode.query.get_or_404(id)
+    obj.is_deleted = True; obj.modified_by = current_user.id; obj.modified_at = datetime.now()
+    db.session.commit(); flash(f'HSN "{obj.hsn_code}" deleted', 'success')
+    return redirect(url_for('masters.hsn_master_list'))
+
+@masters.route('/hsn-master/<int:id>/toggle', methods=['POST'])
+@login_required
+def hsn_master_toggle(id):
+    obj = HSNCode.query.get_or_404(id)
+    obj.status = not obj.status; obj.modified_by = current_user.id; obj.modified_at = datetime.now()
+    db.session.commit(); return jsonify(success=True, status=obj.status)
+
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# NPD STATUS MASTER â€” Full CRUD
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+
+@masters.route('/npd-status')
+@login_required
+def npd_status_list():
+    from models import NPDStatus
+    statuses = NPDStatus.query.order_by(NPDStatus.sort_order, NPDStatus.id).all()
+    perm = get_perm('masters')
+    return render_template('masters/npd_status.html', statuses=statuses, perm=perm, active_page='npd_status_master')
+
+@masters.route('/npd-status/add', methods=['POST'])
+@login_required
+def npd_status_add():
+    from models import NPDStatus
+    import re
+    name = request.form.get('name','').strip()
+    if not name:
+        flash('Name is required', 'error')
+        return redirect(url_for('masters.npd_status_list'))
+    # auto-generate slug from name
+    slug = request.form.get('slug','').strip()
+    if not slug:
+        slug = re.sub(r'[^a-z0-9]+', '_', name.lower()).strip('_')
+    if NPDStatus.query.filter_by(slug=slug).first():
+        flash(f'Slug "{slug}" already exists', 'warning')
+        return redirect(url_for('masters.npd_status_list'))
+    obj = NPDStatus(
+        name       = name,
+        slug       = slug,
+        color      = request.form.get('color','#6b7280'),
+        icon       = request.form.get('icon','ðŸ”µ').strip() or 'ðŸ”µ',
+        sort_order = int(request.form.get('sort_order', 0) or 0),
+        is_active  = 'is_active' in request.form,
+        created_by = current_user.id,
+    )
+    db.session.add(obj)
+    db.session.commit()
+    flash(f'NPD Status "{name}" added!', 'success')
+    return redirect(url_for('masters.npd_status_list'))
+
+@masters.route('/npd-status/<int:id>/edit', methods=['POST'])
+@login_required
+def npd_status_edit(id):
+    from models import NPDStatus
+    obj = NPDStatus.query.get_or_404(id)
+    obj.name       = request.form.get('name', obj.name).strip()
+    obj.color      = request.form.get('color', obj.color)
+    obj.icon       = request.form.get('icon', obj.icon).strip() or obj.icon
+    obj.sort_order = int(request.form.get('sort_order', obj.sort_order) or 0)
+    obj.is_active  = 'is_active' in request.form
+    obj.modified_by= current_user.id
+    obj.modified_at= datetime.now()
+    db.session.commit()
+    flash(f'"{obj.name}" updated!', 'success')
+    return redirect(url_for('masters.npd_status_list'))
+
+@masters.route('/npd-status/<int:id>/delete', methods=['POST'])
+@login_required
+def npd_status_delete(id):
+    from models import NPDStatus
+    obj = NPDStatus.query.get_or_404(id)
+    name = obj.name
+    db.session.delete(obj)
+    db.session.commit()
+    flash(f'"{name}" deleted', 'success')
+    return redirect(url_for('masters.npd_status_list'))
+
+@masters.route('/npd-status/<int:id>/toggle', methods=['POST'])
+@login_required
+def npd_status_toggle(id):
+    from models import NPDStatus
+    obj = NPDStatus.query.get_or_404(id)
+    obj.is_active   = not obj.is_active
+    obj.modified_by = current_user.id
+    obj.modified_at = datetime.now()
+    db.session.commit()
+    return jsonify(success=True, is_active=obj.is_active)
+
+@masters.route('/npd-status/options')
+@login_required
+def npd_status_options():
+    from models import NPDStatus
+    items = NPDStatus.query.filter_by(is_active=True).order_by(NPDStatus.sort_order).all()
+    return jsonify([{'id': o.id, 'slug': o.slug, 'name': o.name,
+                     'color': o.color, 'icon': o.icon} for o in items])
+
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# MILESTONE STATUS MASTER â€” Full CRUD
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+
+@masters.route('/milestone-status')
+@login_required
+def milestone_status_list():
+    from models import MilestoneStatus
+    statuses = MilestoneStatus.query.order_by(MilestoneStatus.sort_order, MilestoneStatus.id).all()
+    perm = get_perm('masters')
+    return render_template('masters/milestone_status.html', statuses=statuses, perm=perm, active_page='milestone_status_master')
+
+@masters.route('/milestone-status/add', methods=['POST'])
+@login_required
+def milestone_status_add():
+    from models import MilestoneStatus
+    import re
+    name = request.form.get('name','').strip()
+    if not name:
+        flash('Name is required', 'error')
+        return redirect(url_for('masters.milestone_status_list'))
+    slug = request.form.get('slug','').strip()
+    if not slug:
+        slug = re.sub(r'[^a-z0-9]+', '_', name.lower()).strip('_')
+    if MilestoneStatus.query.filter_by(slug=slug).first():
+        flash(f'Slug "{slug}" already exists', 'warning')
+        return redirect(url_for('masters.milestone_status_list'))
+    obj = MilestoneStatus(
+        name       = name,
+        slug       = slug,
+        color      = request.form.get('color','#6b7280'),
+        icon       = request.form.get('icon','ðŸ”µ').strip() or 'ðŸ”µ',
+        sort_order = int(request.form.get('sort_order', 0) or 0),
+        is_active  = 'is_active' in request.form,
+        created_by = current_user.id,
+    )
+    db.session.add(obj)
+    db.session.commit()
+    flash(f'Milestone Status "{name}" added!', 'success')
+    return redirect(url_for('masters.milestone_status_list'))
+
+@masters.route('/milestone-status/<int:id>/edit', methods=['POST'])
+@login_required
+def milestone_status_edit(id):
+    from models import MilestoneStatus
+    obj = MilestoneStatus.query.get_or_404(id)
+    obj.name       = request.form.get('name', obj.name).strip()
+    obj.color      = request.form.get('color', obj.color)
+    obj.icon       = request.form.get('icon', obj.icon).strip() or obj.icon
+    obj.sort_order = int(request.form.get('sort_order', obj.sort_order) or 0)
+    obj.is_active  = 'is_active' in request.form
+    obj.modified_by= current_user.id
+    obj.modified_at= datetime.now()
+    db.session.commit()
+    flash(f'"{obj.name}" updated!', 'success')
+    return redirect(url_for('masters.milestone_status_list'))
+
+@masters.route('/milestone-status/<int:id>/delete', methods=['POST'])
+@login_required
+def milestone_status_delete(id):
+    from models import MilestoneStatus
+    obj = MilestoneStatus.query.get_or_404(id)
+    name = obj.name
+    db.session.delete(obj)
+    db.session.commit()
+    flash(f'"{name}" deleted', 'success')
+    return redirect(url_for('masters.milestone_status_list'))
+
+@masters.route('/milestone-status/<int:id>/toggle', methods=['POST'])
+@login_required
+def milestone_status_toggle(id):
+    from models import MilestoneStatus
+    obj = MilestoneStatus.query.get_or_404(id)
+    obj.is_active   = not obj.is_active
+    obj.modified_by = current_user.id
+    obj.modified_at = datetime.now()
+    db.session.commit()
+    return jsonify(success=True, is_active=obj.is_active)
+
+@masters.route('/milestone-status/options')
+@login_required
+def milestone_status_options():
+    from models import MilestoneStatus
+    items = MilestoneStatus.query.filter_by(is_active=True).order_by(MilestoneStatus.sort_order).all()
+    return jsonify([{'id': o.id, 'slug': o.slug, 'name': o.name,
+                     'color': o.color, 'icon': o.icon} for o in items])
+
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# NPD CATEGORY MASTER (uses existing CategoryMaster model)
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+
+@masters.route('/npd-category')
+@login_required
+def npd_category_list():
+    from models.master import CategoryMaster
+    search = request.args.get('search', '').strip()
+    q = CategoryMaster.query.filter_by(is_deleted=False)
+    if search:
+        q = q.filter(CategoryMaster.name.ilike(f'%{search}%'))
+    items = q.order_by(CategoryMaster.name).all()
+    return render_template('masters/npd_category.html', items=items, search=search, active_page='npd_category_master')
+
+@masters.route('/npd-category/add', methods=['POST'])
+@login_required
+def npd_category_add():
+    from models.master import CategoryMaster
+    name = request.form.get('name', '').strip()
+    if not name:
+        flash('Name required', 'danger')
+        return redirect(url_for('masters.npd_category_list'))
+    if CategoryMaster.query.filter_by(name=name, is_deleted=False).first():
+        flash(f'"{name}" already exists', 'warning')
+        return redirect(url_for('masters.npd_category_list'))
+    obj = CategoryMaster(name=name, status=True, created_by=current_user.id)
+    db.session.add(obj)
+    db.session.commit()
+    flash(f'Category "{name}" added!', 'success')
+    return redirect(url_for('masters.npd_category_list'))
+
+@masters.route('/npd-category/<int:id>/edit', methods=['POST'])
+@login_required
+def npd_category_edit(id):
+    from models.master import CategoryMaster
+    obj = CategoryMaster.query.get_or_404(id)
+    name = request.form.get('name', '').strip()
+    if name:
+        obj.name = name
+    obj.status = 'status' in request.form
+    obj.modified_at = datetime.now()
+    obj.modified_by = current_user.id
+    db.session.commit()
+    flash(f'"{obj.name}" updated!', 'success')
+    return redirect(url_for('masters.npd_category_list'))
+
+@masters.route('/npd-category/<int:id>/delete', methods=['POST'])
+@login_required
+def npd_category_delete(id):
+    from models.master import CategoryMaster
+    obj = CategoryMaster.query.get_or_404(id)
+    name = obj.name
+    obj.is_deleted = True
+    obj.modified_at = datetime.now()
+    obj.modified_by = current_user.id
+    db.session.commit()
+    flash(f'"{name}" deleted', 'success')
+    return redirect(url_for('masters.npd_category_list'))
+
+@masters.route('/npd-category/<int:id>/toggle', methods=['POST'])
+@login_required
+def npd_category_toggle(id):
+    from models.master import CategoryMaster
+    obj = CategoryMaster.query.get_or_404(id)
+    obj.status = not obj.status
+    obj.modified_at = datetime.now()
+    obj.modified_by = current_user.id
+    db.session.commit()
+    return jsonify(success=True, status=obj.status)
+
+
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# QC PARAMETERS MASTER â€” Physical State / Appearance / Odour
+#   Single page, three categories. Used by the TRS form dropdowns.
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+QC_PARAM_CATS = [
+    ('physical_state', 'Physical State', 'ðŸ§ª'),
+    ('appearance',     'Appearance',     'ðŸ‘ï¸'),
+    ('odour',          'Odour',          'ðŸ‘ƒ'),
+]
+_QC_VALID_CATS = {c[0] for c in QC_PARAM_CATS}
+
+
+@masters.route('/qc-params')
+@login_required
+def qc_param_list():
+    grouped = {}
+    for cat, _label, _icon in QC_PARAM_CATS:
+        grouped[cat] = (QCParamOption.query
+                        .filter_by(category=cat, is_deleted=False)
+                        .order_by(QCParamOption.sort_order.asc(),
+                                  QCParamOption.value.asc())
+                        .all())
+    return render_template('masters/qc_param_master.html',
+                           cats=QC_PARAM_CATS,
+                           grouped=grouped,
+                           active_page='qc_param_master')
+
+
+@masters.route('/qc-params/add', methods=['POST'])
+@login_required
+def qc_param_add():
+    category = (request.form.get('category') or '').strip()
+    value    = (request.form.get('value') or '').strip()
+    if category not in _QC_VALID_CATS:
+        flash('Invalid category', 'danger')
+        return redirect(url_for('masters.qc_param_list'))
+    if not value:
+        flash('Value required', 'danger')
+        return redirect(url_for('masters.qc_param_list'))
+    existing = QCParamOption.query.filter_by(category=category, value=value).first()
+    if existing:
+        if existing.is_deleted:
+            # revive a soft-deleted one instead of duplicate-key error
+            existing.is_deleted = False
+            existing.status = True
+            existing.modified_by = current_user.id
+            existing.modified_at = datetime.now()
+            db.session.commit()
+            flash(f'"{value}" restored', 'success')
+        else:
+            flash(f'"{value}" already exists', 'warning')
+        return redirect(url_for('masters.qc_param_list'))
+    last = (QCParamOption.query.filter_by(category=category)
+            .order_by(QCParamOption.sort_order.desc()).first())
+    nxt = (last.sort_order + 1) if last else 0
+    obj = QCParamOption(category=category, value=value, sort_order=nxt,
+                        status=True, created_by=current_user.id)
+    db.session.add(obj)
+    db.session.commit()
+    flash(f'"{value}" added', 'success')
+    return redirect(url_for('masters.qc_param_list'))
+
+
+@masters.route('/qc-params/<int:id>/edit', methods=['POST'])
+@login_required
+def qc_param_edit(id):
+    obj = QCParamOption.query.get_or_404(id)
+    new_val = (request.form.get('value') or obj.value).strip()
+    if new_val and new_val != obj.value:
+        dupe = QCParamOption.query.filter(
+            QCParamOption.category == obj.category,
+            QCParamOption.value == new_val,
+            QCParamOption.id != obj.id,
+            QCParamOption.is_deleted == False).first()
+        if dupe:
+            flash(f'"{new_val}" already exists', 'warning')
+            return redirect(url_for('masters.qc_param_list'))
+    obj.value = new_val
+    obj.status = request.form.get('status') == '1'
+    obj.modified_by = current_user.id
+    obj.modified_at = datetime.now()
+    db.session.commit()
+    flash('Updated', 'success')
+    return redirect(url_for('masters.qc_param_list'))
+
+
+@masters.route('/qc-params/<int:id>/delete', methods=['POST'])
+@login_required
+def qc_param_delete(id):
+    obj = QCParamOption.query.get_or_404(id)
+    obj.is_deleted = True
+    obj.modified_by = current_user.id
+    obj.modified_at = datetime.now()
+    db.session.commit()
+    flash(f'"{obj.value}" deleted', 'success')
+    return redirect(url_for('masters.qc_param_list'))
+
+
+@masters.route('/qc-params/<int:id>/toggle', methods=['POST'])
+@login_required
+def qc_param_toggle(id):
+    obj = QCParamOption.query.get_or_404(id)
+    obj.status = not obj.status
+    obj.modified_by = current_user.id
+    obj.modified_at = datetime.now()
+    db.session.commit()
+    return jsonify(success=True, status=obj.status)
+
+

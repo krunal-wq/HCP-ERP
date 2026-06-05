@@ -1,0 +1,243 @@
+{% extends "base.html" %}
+{% block title %}Employee Dashboard{% endblock %}
+{% block page_title %}Employee Dashboard{% endblock %}
+{% block bread %}HR / Employee Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+.main{ background:
+  radial-gradient(120% 55% at 0% 0%, #f3f0fc 0%, rgba(243,240,252,0) 55%),
+  radial-gradient(120% 60% at 100% 20%, #fdeef4 0%, rgba(253,238,244,0) 50%),
+  #f7f7fb !important; }
+.dash{ max-width:1700px; margin:0 auto; padding:8px 4px 30px; color:#1e1b2e; }
+
+.dh{ display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:12px; margin:2px 0 18px; }
+.dh-title{ font-size:23px; font-weight:800; letter-spacing:-.025em; margin:0; }
+.dh-sub{ font-size:13px; color:#9b95a6; margin-top:3px; }
+.dh-primary{ display:inline-flex; align-items:center; gap:7px; background:linear-gradient(135deg,#7c3aed,#6366f1); color:#fff; border:none; box-shadow:0 7px 18px rgba(99,102,241,.30); border-radius:11px; padding:10px 16px; font-size:13px; font-weight:600; text-decoration:none; }
+
+.panel{ background:#fff; border:1px solid #efeef3; border-radius:18px; box-shadow:0 2px 12px rgba(30,27,46,.04); padding:18px 18px 16px; }
+.panel-h{ display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+.panel-t{ font-size:14.5px; font-weight:700; letter-spacing:-.01em; }
+.panel-link{ font-size:11.5px; font-weight:600; color:#6d5fe6; text-decoration:none; } .panel-link:hover{ text-decoration:underline; }
+
+.kpi-grid{ display:grid; grid-template-columns:repeat(6,1fr); gap:14px; margin-bottom:16px; }
+.kpi{ background:#fff; border:1px solid #efeef3; border-radius:16px; padding:15px 16px; display:flex; align-items:flex-start; gap:12px; box-shadow:0 2px 12px rgba(30,27,46,.04); text-decoration:none; color:inherit; }
+a.kpi:hover{ box-shadow:0 10px 22px rgba(76,29,149,.12); transform:translateY(-2px); transition:transform .15s, box-shadow .15s; }
+.kpi-ic{ width:40px; height:40px; border-radius:12px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:17px; }
+.kpi-l{ font-size:10.5px; font-weight:600; color:#9b95a6; }
+.kpi-n{ font-size:22px; font-weight:800; letter-spacing:-.02em; line-height:1.2; margin:2px 0; }
+.kpi-c{ font-size:10.5px; color:#b7b2c2; font-weight:600; }
+.kpi-up{ color:#16a34a; } .kpi-sub{ font-size:10.5px; color:#9b95a6; font-weight:600; }
+.k-lav{background:#f1edfe;color:#7c3aed;} .k-green{background:#e7f8ef;color:#16a34a;} .k-amber{background:#fef3e2;color:#ea580c;} .k-blue{background:#e7f0fe;color:#2563eb;} .k-rose{background:#fde7ea;color:#e11d48;} .k-cyan{background:#e3f6fb;color:#0891b2;}
+
+.r3{ display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:16px; }
+.r2{ display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px; }
+.r3x{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-bottom:16px; align-items:start; }
+.stack{ display:flex; flex-direction:column; gap:16px; }
+
+.bar-box{ position:relative; width:100%; height:230px; }
+.bar-box canvas{ position:absolute; inset:0; width:100%!important; height:100%!important; }
+
+.dn-wrap{ display:flex; align-items:center; gap:14px; }
+.dn-c{ width:150px; height:150px; flex-shrink:0; position:relative; }
+.dn-c canvas{ position:absolute; inset:0; width:100%!important; height:100%!important; }
+.dn-center{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+.dn-center .big{ font-size:21px; font-weight:800; } .dn-center .sm{ font-size:10px; color:#9b95a6; }
+.dn-leg{ flex:1; display:flex; flex-direction:column; gap:7px; min-width:0; }
+.dn-li{ display:flex; align-items:center; gap:8px; font-size:11.5px; }
+.dn-li .nm{ color:#3a3550; font-weight:600; } .dn-li .vl{ margin-left:auto; color:#9b95a6; white-space:nowrap; }
+.fn-dot{ width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+
+.rmt{ width:100%; border-collapse:collapse; font-size:12px; }
+.rmt th{ text-align:left; font-size:10px; font-weight:700; color:#9b95a6; text-transform:uppercase; letter-spacing:.03em; padding:6px 7px; border-bottom:1px solid #f0eef5; }
+.rmt td{ padding:8px 7px; border-bottom:1px solid #f6f5f9; color:#3a3550; }
+.rmt tr:last-child td{ border-bottom:none; }
+.rmt .num{ text-align:right; }
+.pbar{ height:6px; border-radius:100px; background:#f0eef5; overflow:hidden; min-width:60px; }
+.pbar i{ display:block; height:100%; border-radius:100px; }
+.badge{ font-size:10px; font-weight:700; padding:2px 9px; border-radius:100px; background:#eef0ff; color:#4f46e5; }
+.empty{ font-size:12.5px; color:#b7b2c2; padding:22px 4px; text-align:center; }
+
+.att-row{ display:flex; align-items:center; gap:10px; padding:9px 2px; border-bottom:1px solid #f6f5f9; }
+.att-row:last-child{ border-bottom:none; }
+.att-row .nm{ font-size:12.5px; font-weight:600; color:#3a3550; }
+.att-row .vl{ margin-left:auto; font-size:13px; font-weight:800; } .att-row .pc{ font-size:11px; color:#9b95a6; width:62px; text-align:right; }
+
+.qa-grid{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
+.qa{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:7px; text-align:center; padding:14px 8px; border:1px solid #efeef3; border-radius:13px; text-decoration:none; color:#3a3550; background:#fcfcfe; }
+.qa:hover{ box-shadow:0 8px 18px rgba(76,29,149,.10); transform:translateY(-2px); transition:.15s; }
+.qa-ic{ width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:15px; }
+.qa-l{ font-size:10.5px; font-weight:600; line-height:1.25; }
+
+@media(max-width:1200px){ .kpi-grid{grid-template-columns:repeat(3,1fr)} .r3,.r3x{grid-template-columns:1fr} .r2{grid-template-columns:1fr} }
+@media(max-width:560px){ .kpi-grid{grid-template-columns:1fr} .qa-grid{grid-template-columns:1fr 1fr} }
+</style>
+{% endblock %}
+
+{% block content %}
+{% set a = analytics if analytics is defined else {} %}
+{% set dd_total = (a.get('dept_donut', [])|sum(attribute='value')) or 0 %}
+{% set pf_total = (a.get('profile_overview', [])|sum(attribute='value')) or 0 %}
+
+<div class="dash">
+
+  <!-- HEADER (no filter) -->
+  <div class="dh">
+    <div>
+      <h1 class="dh-title">Employee Dashboard</h1>
+      <div class="dh-sub">Overview of Employees and HR Analytics</div>
+    </div>
+    <a class="dh-primary" href="/hr/employees/add"><i class="bi bi-person-plus-fill"></i> Add Employee</a>
+  </div>
+
+  <!-- KPI CARDS (clickable) -->
+  <div class="kpi-grid">
+    <a class="kpi" href="/hr/employees"><div class="kpi-ic k-lav"><i class="bi bi-people-fill"></i></div><div><div class="kpi-l">Total Employees</div><div class="kpi-n">{{ a.get('total_employees',0) }}</div><div class="kpi-sub kpi-up">↑ {{ a.get('new_this_month',0) }} this month</div></div></a>
+    <a class="kpi" href="/hr/employees"><div class="kpi-ic k-green"><i class="bi bi-diagram-3-fill"></i></div><div><div class="kpi-l">Departments</div><div class="kpi-n">{{ a.get('departments_count',0) }}</div><div class="kpi-sub">Active Departments</div></div></a>
+    <a class="kpi" href="/hr/employees"><div class="kpi-ic k-amber"><i class="bi bi-person-badge-fill"></i></div><div><div class="kpi-l">Designations</div><div class="kpi-n">{{ a.get('designations_count',0) }}</div><div class="kpi-sub">Active Designations</div></div></a>
+    <a class="kpi" href="/hr/employees"><div class="kpi-ic k-blue"><i class="bi bi-gender-male"></i></div><div><div class="kpi-l">Male Employees</div><div class="kpi-n">{{ a.get('male',0) }}</div><div class="kpi-sub">{{ a.get('male_pct',0) }}% of total</div></div></a>
+    <a class="kpi" href="/hr/employees"><div class="kpi-ic k-rose"><i class="bi bi-gender-female"></i></div><div><div class="kpi-l">Female Employees</div><div class="kpi-n">{{ a.get('female',0) }}</div><div class="kpi-sub">{{ a.get('female_pct',0) }}% of total</div></div></a>
+    <a class="kpi" href="/hr/employees"><div class="kpi-ic k-cyan"><i class="bi bi-person-vcard-fill"></i></div><div><div class="kpi-l">New Joinees (This Month)</div><div class="kpi-n">{{ a.get('new_this_month',0) }}</div><div class="kpi-sub kpi-up">↑ {{ a.get('new_last_month',0) }} last month</div></div></a>
+  </div>
+
+  <!-- ROW 1: Department donut | Type bar | Profile overview donut -->
+  <div class="r3">
+    <div class="panel">
+      <div class="panel-h"><span class="panel-t">Employees by Department</span></div>
+      {% if dd_total %}
+      <div class="dn-wrap">
+        <div class="dn-c"><canvas id="deptDonut"></canvas><div class="dn-center"><span class="big">{{ a.get('total_employees',0) }}</span><span class="sm">Total</span></div></div>
+        <div class="dn-leg">
+          {% for x in a.get('dept_donut', []) %}<div class="dn-li"><span class="fn-dot" style="background:{{ x.color }}"></span><span class="nm">{{ x.label|truncate(14) }}</span><span class="vl">{{ x.value }} ({{ x.pct }}%)</span></div>{% endfor %}
+        </div>
+      </div>
+      {% else %}<div class="empty">No employee data</div>{% endif %}
+    </div>
+
+    <div class="panel">
+      <div class="panel-h"><span class="panel-t">Employees by Employee Type</span></div>
+      {% if a.get('type_bar') %}<div class="bar-box"><canvas id="typeBar"></canvas></div>{% else %}<div class="empty">No type data</div>{% endif %}
+    </div>
+
+    <div class="panel">
+      <div class="panel-h"><span class="panel-t">Profile Completion Overview</span></div>
+      {% if pf_total %}
+      <div class="dn-wrap">
+        <div class="dn-c"><canvas id="pfDonut"></canvas><div class="dn-center"><span class="big">{{ a.get('total_employees',0) }}</span><span class="sm">Total</span></div></div>
+        <div class="dn-leg">
+          {% for x in a.get('profile_overview', []) %}<div class="dn-li"><span class="fn-dot" style="background:{{ x.color }}"></span><span class="nm">{{ x.label }}</span><span class="vl">{{ x.value }} ({{ x.pct }}%)</span></div>{% endfor %}
+        </div>
+      </div>
+      {% else %}<div class="empty">No profile data</div>{% endif %}
+    </div>
+  </div>
+
+  <!-- ROW 2: Profile completion by dept | Top incomplete -->
+  <div class="r2">
+    <div class="panel">
+      <div class="panel-h"><span class="panel-t">Profile Completion by Department</span><a class="panel-link" href="/hr/employees">View Full Report</a></div>
+      {% if a.get('profile_by_dept') %}
+      <table class="rmt"><thead><tr><th>Department</th><th class="num">Total</th><th class="num">100%</th><th class="num">75-99</th><th class="num">50-74</th><th class="num">&lt;50</th><th style="width:110px">Avg</th></tr></thead><tbody>
+        {% for d in a.get('profile_by_dept', []) %}
+        <tr><td>{{ d.dept|truncate(14) }}</td><td class="num">{{ d.total }}</td><td class="num" style="color:#16a34a;font-weight:700">{{ d.c100 }}</td><td class="num">{{ d.c75 }}</td><td class="num">{{ d.c50 }}</td><td class="num">{{ d.c25 + d.c0 }}</td>
+          <td><div style="display:flex;align-items:center;gap:6px;"><div class="pbar"><i style="width:{{ d.avg }}%;background:{{ '#10b981' if d.avg>=75 else ('#f59e0b' if d.avg>=50 else '#ef4444') }}"></i></div><span style="font-size:10.5px;color:#9b95a6;font-weight:700">{{ d.avg }}%</span></div></td></tr>
+        {% endfor %}
+      </tbody></table>
+      {% else %}<div class="empty">No data</div>{% endif %}
+    </div>
+
+    <div class="panel">
+      <div class="panel-h"><span class="panel-t">Top Incomplete Profiles</span><a class="panel-link" href="/hr/employees">View All Incomplete Profiles</a></div>
+      {% if a.get('top_incomplete') %}
+      <table class="rmt"><thead><tr><th>Emp ID</th><th>Name</th><th>Department</th><th style="width:120px">Completion</th><th class="num">Pending</th></tr></thead><tbody>
+        {% for r in a.get('top_incomplete', []) %}
+        <tr><td>{{ r.id }}</td><td>{{ r.name|truncate(13) }}</td><td>{{ r.dept|truncate(11) }}</td>
+          <td><div style="display:flex;align-items:center;gap:6px;"><div class="pbar"><i style="width:{{ r.pct }}%;background:{{ '#f59e0b' if r.pct>=50 else '#ef4444' }}"></i></div><span style="font-size:10.5px;color:#9b95a6;font-weight:700">{{ r.pct }}%</span></div></td>
+          <td class="num">{{ r.pending }} Section{{ 's' if r.pending != 1 else '' }}</td></tr>
+        {% endfor %}
+      </tbody></table>
+      {% else %}<div class="empty">All profiles complete</div>{% endif %}
+    </div>
+  </div>
+
+  <!-- ROW 3: New joinees | On leave today | (Attendance summary + Quick actions) -->
+  <div class="r3x">
+    <div class="panel">
+      <div class="panel-h"><span class="panel-t">New Joinees (This Month)</span><a class="panel-link" href="/hr/employees">View All</a></div>
+      {% if a.get('new_joinees') %}
+      <table class="rmt"><thead><tr><th>Emp ID</th><th>Name</th><th>Department</th><th>Joining</th></tr></thead><tbody>
+        {% for r in a.get('new_joinees', []) %}<tr><td>{{ r.id }}</td><td>{{ r.name|truncate(13) }}</td><td>{{ r.dept|truncate(11) }}</td><td>{{ r.doj.strftime('%d %b %Y') if r.doj else '-' }}</td></tr>{% endfor %}
+      </tbody></table>
+      {% else %}<div class="empty">No new joinees this month</div>{% endif %}
+    </div>
+
+    <div class="panel">
+      <div class="panel-h"><span class="panel-t">Employees on Leave Today</span><a class="panel-link" href="/hr/leave/list">View All On Leave</a></div>
+      {% if a.get('on_leave_today') %}
+      <table class="rmt"><thead><tr><th>Emp ID</th><th>Name</th><th>Department</th><th>Leave Type</th></tr></thead><tbody>
+        {% for r in a.get('on_leave_today', []) %}<tr><td>{{ r.id }}</td><td>{{ r.name|truncate(13) }}</td><td>{{ r.dept|truncate(11) }}</td><td>{{ r.type }}</td></tr>{% endfor %}
+      </tbody></table>
+      {% else %}<div class="empty">No one on leave today</div>{% endif %}
+    </div>
+
+    <div class="stack">
+      <div class="panel">
+        <div class="panel-h"><span class="panel-t">Today's Attendance Summary</span><a class="panel-link" href="/hr/attendance">View Full Attendance</a></div>
+        <div class="att-row"><span class="fn-dot" style="background:#10b981"></span><span class="nm">Present</span><span class="vl" style="color:#16a34a">{{ a.get('att_present',0) }}</span><span class="pc">({{ a.get('att_present_pct',0) }}%)</span></div>
+        <div class="att-row"><span class="fn-dot" style="background:#ef4444"></span><span class="nm">Absent</span><span class="vl" style="color:#e11d48">{{ a.get('att_absent',0) }}</span><span class="pc">({{ a.get('att_absent_pct',0) }}%)</span></div>
+        <div class="att-row"><span class="fn-dot" style="background:#f59e0b"></span><span class="nm">Mis Punch</span><span class="vl" style="color:#ea580c">{{ a.get('att_mispunch',0) }}</span><span class="pc">({{ a.get('att_mispunch_pct',0) }}%)</span></div>
+        <div class="att-row"><span class="fn-dot" style="background:#3b82f6"></span><span class="nm">On Leave</span><span class="vl" style="color:#2563eb">{{ a.get('att_onleave',0) }}</span><span class="pc">({{ a.get('att_onleave_pct',0) }}%)</span></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-h"><span class="panel-t">Quick Actions</span></div>
+        <div class="qa-grid">
+          <a class="qa" href="/hr/employees/add"><span class="qa-ic k-lav"><i class="bi bi-person-plus-fill"></i></span><span class="qa-l">Add New Employee</span></a>
+          <a class="qa" href="/hr/employees/import"><span class="qa-ic k-green"><i class="bi bi-upload"></i></span><span class="qa-l">Bulk Upload Employees</span></a>
+          <a class="qa" href="/hr/employees"><span class="qa-ic k-rose"><i class="bi bi-pie-chart-fill"></i></span><span class="qa-l">Profile Completion Report</span></a>
+          <a class="qa" href="/hr/employees"><span class="qa-ic k-blue"><i class="bi bi-diagram-3-fill"></i></span><span class="qa-l">Department Report</span></a>
+          <a class="qa" href="/hr/attendance"><span class="qa-ic k-amber"><i class="bi bi-calendar-check-fill"></i></span><span class="qa-l">Attendance Report</span></a>
+          <a class="qa" href="/hr/leave/list"><span class="qa-ic k-cyan"><i class="bi bi-airplane-fill"></i></span><span class="qa-l">Leave Report</span></a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script id="emp-data" type="application/json">{{ {'dept': a.get('dept_donut', []), 'type': a.get('type_bar', []), 'profile': a.get('profile_overview', [])} | tojson }}</script>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+(function(){
+  var data = {};
+  try { data = JSON.parse(document.getElementById('emp-data').textContent || '{}'); } catch(e){ data = {}; }
+  if (typeof Chart === 'undefined') return;
+  Chart.defaults.font.family = "'Inter', sans-serif";
+  Chart.defaults.plugins.legend.display = false;
+
+  function donut(id, arr){
+    var el = document.getElementById(id); if(!el || !arr.length) return;
+    new Chart(el, { type:'doughnut', data:{ labels: arr.map(function(x){return x.label;}),
+      datasets:[{ data: arr.map(function(x){return x.value;}), backgroundColor: arr.map(function(x){return x.color;}), borderWidth:0, cutout:'70%' }]},
+      options:{ responsive:true, maintainAspectRatio:false } });
+  }
+  donut('deptDonut', data.dept || []);
+  donut('pfDonut', data.profile || []);
+
+  var tb = data.type || [];
+  var tbar = document.getElementById('typeBar');
+  if (tbar && tb.length){
+    new Chart(tbar, { type:'bar', data:{ labels: tb.map(function(d){return d.label;}),
+      datasets:[{ data: tb.map(function(d){return d.value;}), backgroundColor: tb.map(function(d){return d.color;}), borderRadius:6, maxBarThickness:46 }]},
+      options:{ responsive:true, maintainAspectRatio:false,
+        plugins:{ tooltip:{enabled:true} },
+        scales:{ y:{ beginAtZero:true, grid:{color:'#f1eff6'}, ticks:{color:'#b7b2c2',font:{size:10}} },
+                 x:{ grid:{display:false}, ticks:{color:'#7a7588',font:{size:10}} } } } });
+  }
+})();
+</script>
+{% endblock %}

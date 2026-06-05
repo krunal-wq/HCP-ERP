@@ -1,0 +1,252 @@
+{% extends "base.html" %}
+{% block title %}HRMS Dashboard{% endblock %}
+{% block page_title %}HRMS Dashboard{% endblock %}
+{% block bread %}HR / Attendance Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+.main{ background:
+  radial-gradient(120% 55% at 0% 0%, #f3f0fc 0%, rgba(243,240,252,0) 55%),
+  radial-gradient(120% 60% at 100% 20%, #fdeef4 0%, rgba(253,238,244,0) 50%),
+  #f7f7fb !important; }
+.dash{ max-width:1700px; margin:0 auto; padding:8px 4px 30px; color:#1e1b2e; }
+
+.dh{ display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:12px; margin:2px 0 18px; }
+.dh-title{ font-size:23px; font-weight:800; letter-spacing:-.025em; margin:0; }
+.dh-sub{ font-size:13px; color:#9b95a6; margin-top:3px; }
+.dh-tools{ display:flex; gap:9px; align-items:center; flex-wrap:wrap; }
+.dh-date{ font-family:'Inter',sans-serif; font-size:13px; font-weight:600; color:#4a4560; background:#fff; border:1px solid #e8e6ef; border-radius:11px; padding:9px 12px; }
+.dh-pill{ display:inline-flex; align-items:center; gap:7px; background:#fff; border:1px solid #e8e6ef; border-radius:11px; padding:9px 13px; font-size:12.5px; font-weight:600; color:#4a4560; text-decoration:none; cursor:pointer; }
+
+.panel{ background:#fff; border:1px solid #efeef3; border-radius:18px; box-shadow:0 2px 12px rgba(30,27,46,.04); padding:18px 18px 16px; }
+.panel-h{ display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+.panel-t{ font-size:14.5px; font-weight:700; letter-spacing:-.01em; }
+.panel-t small{ color:#b7b2c2; font-weight:600; font-size:11px; }
+.panel-link{ font-size:11.5px; font-weight:600; color:#6d5fe6; text-decoration:none; } .panel-link:hover{ text-decoration:underline; }
+
+.kpi-grid{ display:grid; grid-template-columns:repeat(6,1fr); gap:14px; margin-bottom:16px; }
+.kpi{ background:#fff; border:1px solid #efeef3; border-radius:16px; padding:15px 16px; display:flex; align-items:flex-start; gap:12px; box-shadow:0 2px 12px rgba(30,27,46,.04); text-decoration:none; color:inherit; }
+a.kpi:hover{ box-shadow:0 10px 22px rgba(76,29,149,.12); transform:translateY(-2px); transition:transform .15s, box-shadow .15s; }
+.kpi-ic{ width:40px; height:40px; border-radius:12px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:17px; }
+.kpi-l{ font-size:10.5px; font-weight:600; color:#9b95a6; }
+.kpi-n{ font-size:22px; font-weight:800; letter-spacing:-.02em; line-height:1.2; margin:2px 0; }
+.kpi-c{ font-size:10.5px; color:#b7b2c2; font-weight:600; }
+.k-lav{background:#f1edfe;color:#7c3aed;} .k-green{background:#e7f8ef;color:#16a34a;} .k-amber{background:#fef3e2;color:#ea580c;} .k-blue{background:#e7f0fe;color:#2563eb;} .k-rose{background:#fde7ea;color:#e11d48;} .k-cyan{background:#e3f6fb;color:#0891b2;}
+
+.r3{ display:grid; grid-template-columns:1fr 1.3fr 1fr; gap:16px; margin-bottom:16px; }
+.r3b{ display:grid; grid-template-columns:1.2fr 1fr 1fr; gap:16px; margin-bottom:16px; }
+.r3c{ display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:16px; }
+
+.line-box,.bar-box{ position:relative; width:100%; height:230px; }
+.line-box canvas,.bar-box canvas{ position:absolute; inset:0; width:100%!important; height:100%!important; }
+
+.dn-wrap{ display:flex; align-items:center; gap:14px; }
+.dn-c{ width:160px; height:160px; flex-shrink:0; position:relative; }
+.dn-c canvas{ position:absolute; inset:0; width:100%!important; height:100%!important; }
+.dn-center{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+.dn-center .big{ font-size:22px; font-weight:800; } .dn-center .sm{ font-size:10px; color:#9b95a6; }
+.dn-leg{ flex:1; display:flex; flex-direction:column; gap:8px; }
+.dn-li{ display:flex; align-items:center; gap:8px; font-size:12px; }
+.dn-li .nm{ color:#3a3550; font-weight:600; } .dn-li .vl{ margin-left:auto; color:#9b95a6; }
+.fn-dot{ width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+
+.rmt{ width:100%; border-collapse:collapse; font-size:12px; }
+.rmt th{ text-align:left; font-size:10px; font-weight:700; color:#9b95a6; text-transform:uppercase; letter-spacing:.03em; padding:6px 7px; border-bottom:1px solid #f0eef5; }
+.rmt td{ padding:7px; border-bottom:1px solid #f6f5f9; color:#3a3550; }
+.rmt tr:last-child td{ border-bottom:none; }
+.rmt .tot td{ font-weight:800; border-top:1.5px solid #ece9f3; }
+.rmt .num{ text-align:right; }
+.pp{ color:#16a34a; font-weight:700; } .pa{ color:#e11d48; font-weight:700; } .pm{ color:#ea580c; font-weight:700; } .pl{ color:#2563eb; font-weight:700; }
+.badge{ font-size:10px; font-weight:700; padding:2px 8px; border-radius:100px; }
+.empty{ font-size:12.5px; color:#b7b2c2; padding:24px 4px; text-align:center; }
+
+.rm-foot{ display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; font-size:11.5px; color:#9b95a6; margin-top:6px; padding:0 4px; }
+
+@media(max-width:1200px){ .kpi-grid{grid-template-columns:repeat(3,1fr)} .r3,.r3b,.r3c{grid-template-columns:1fr} }
+@media(max-width:560px){ .kpi-grid{grid-template-columns:1fr} }
+</style>
+{% endblock %}
+
+{% block content %}
+{% set a = analytics if analytics is defined else {} %}
+{% set ov_total = (a.get('overview', [])|sum(attribute='value')) or 0 %}
+{% set gd_total = (a.get('gender', [])|sum(attribute='value')) or 0 %}
+
+<div class="dash">
+
+  <!-- HEADER -->
+  <div class="dh">
+    <div>
+      <h1 class="dh-title">HRMS Dashboard</h1>
+      <div class="dh-sub">Overview of Attendance, Leave and Employee Status</div>
+    </div>
+    <div class="dh-tools">
+      <input type="date" id="dDate" class="dh-date" value="{{ sel_date.strftime('%Y-%m-%d') }}" onchange="onDateChange()">
+      <a class="dh-pill" href="/hr/attendance"><i class="bi bi-arrow-counterclockwise"></i> Today</a>
+    </div>
+  </div>
+
+  <!-- KPI CARDS (clickable) -->
+  <div class="kpi-grid">
+    <a class="kpi" href="/hr/employees"><div class="kpi-ic k-lav"><i class="bi bi-people-fill"></i></div><div><div class="kpi-l">Total Employees</div><div class="kpi-n">{{ a.get('total_employees',0) }}</div><div class="kpi-c" style="color:#b7b2c2">All Active Employees</div></div></a>
+    <a class="kpi" href="/hr/attendance/daily?date={{ sel_date.strftime('%Y-%m-%d') }}"><div class="kpi-ic k-green"><i class="bi bi-person-check-fill"></i></div><div><div class="kpi-l">Present</div><div class="kpi-n">{{ a.get('present',0) }}</div><div class="kpi-c pp">{{ a.get('present_pct',0) }}%</div></div></a>
+    <a class="kpi" href="/hr/attendance/daily?date={{ sel_date.strftime('%Y-%m-%d') }}"><div class="kpi-ic k-rose"><i class="bi bi-person-x-fill"></i></div><div><div class="kpi-l">Absent</div><div class="kpi-n">{{ a.get('absent',0) }}</div><div class="kpi-c pa">{{ a.get('absent_pct',0) }}%</div></div></a>
+    <a class="kpi" href="/hr/attendance/late-absent"><div class="kpi-ic k-amber"><i class="bi bi-clock-history"></i></div><div><div class="kpi-l">Mis Punch</div><div class="kpi-n">{{ a.get('mispunch',0) }}</div><div class="kpi-c pm">{{ a.get('mispunch_pct',0) }}%</div></div></a>
+    <a class="kpi" href="/hr/leave/list"><div class="kpi-ic k-blue"><i class="bi bi-airplane-fill"></i></div><div><div class="kpi-l">On Leave</div><div class="kpi-n">{{ a.get('on_leave',0) }}</div><div class="kpi-c pl">{{ a.get('on_leave_pct',0) }}%</div></div></a>
+    <a class="kpi" href="/hr/attendance/monthly"><div class="kpi-ic k-cyan"><i class="bi bi-calendar2-week"></i></div><div><div class="kpi-l">Total Working Days</div><div class="kpi-n">{{ a.get('working_days',0) }}</div><div class="kpi-c" style="color:#b7b2c2">{{ sel_date.strftime('%b %Y') }}</div></div></a>
+  </div>
+
+  <!-- ROW 1 -->
+  <div class="r3">
+    <div class="panel">
+      <div class="panel-h"><span class="panel-t">Attendance Overview <small>(Selected Day)</small></span></div>
+      {% if ov_total %}
+      <div class="dn-wrap">
+        <div class="dn-c"><canvas id="ovDonut"></canvas><div class="dn-center"><span class="big">{{ a.get('total_employees',0) }}</span><span class="sm">Total</span></div></div>
+        <div class="dn-leg">
+          {% for x in a.get('overview', []) %}<div class="dn-li"><span class="fn-dot" style="background:{{ x.color }}"></span><span class="nm">{{ x.label }}</span><span class="vl">{{ x.value }} ({{ ((x.value/ov_total*100)|round(2)) }}%)</span></div>{% endfor %}
+        </div>
+      </div>
+      {% else %}<div class="empty">No attendance for this day</div>{% endif %}
+    </div>
+
+    <div class="panel">
+      <div class="panel-h"><span class="panel-t">Employee Category Summary <small>(Selected Day)</small></span></div>
+      {% if a.get('category_summary') %}
+      <table class="rmt"><thead><tr><th>Category</th><th class="num">Total</th><th class="num">Present</th><th class="num">Absent</th><th class="num">Mis Punch</th><th class="num">On Leave</th></tr></thead><tbody>
+        {% for c in a.get('category_summary', []) %}
+        <tr><td>{{ c.label }}</td><td class="num">{{ c.total }}</td><td class="num pp">{{ c.present }}</td><td class="num pa">{{ c.absent }}</td><td class="num pm">{{ c.mispunch }}</td><td class="num pl">{{ c.on_leave }}</td></tr>
+        {% endfor %}
+        <tr class="tot"><td>Total</td><td class="num">{{ a.get('total_employees',0) }}</td><td class="num pp">{{ a.get('present',0) }}</td><td class="num pa">{{ a.get('absent',0) }}</td><td class="num pm">{{ a.get('mispunch',0) }}</td><td class="num pl">{{ a.get('on_leave',0) }}</td></tr>
+      </tbody></table>
+      {% else %}<div class="empty">No category data</div>{% endif %}
+    </div>
+
+    <div class="panel">
+      <div class="panel-h"><span class="panel-t">Gender Wise Attendance</span></div>
+      {% if gd_total %}
+      <div class="dn-wrap">
+        <div class="dn-c"><canvas id="gdDonut"></canvas><div class="dn-center"><span class="big">{{ gd_total }}</span><span class="sm">Total</span></div></div>
+        <div class="dn-leg">
+          {% for x in a.get('gender', []) %}<div class="dn-li"><span class="fn-dot" style="background:{{ x.color }}"></span><span class="nm">{{ x.label }}</span><span class="vl">{{ x.value }} ({{ ((x.value/gd_total*100)|round(2)) }}%)</span></div>{% endfor %}
+        </div>
+      </div>
+      {% else %}<div class="empty">No employee data</div>{% endif %}
+    </div>
+  </div>
+
+  <!-- ROW 2 -->
+  <div class="r3b">
+    <div class="panel">
+      <div class="panel-h"><span class="panel-t">Attendance Trend <small>(Last 7 Days)</small></span></div>
+      {% if a.get('trend') %}<div class="line-box"><canvas id="trendLine"></canvas></div>{% else %}<div class="empty">No trend data</div>{% endif %}
+    </div>
+    <div class="panel">
+      <div class="panel-h"><span class="panel-t">Category Wise Attendance <small>(Selected Day)</small></span></div>
+      {% if a.get('category_bar') %}<div class="bar-box"><canvas id="catBar"></canvas></div>{% else %}<div class="empty">No category data</div>{% endif %}
+    </div>
+    <div class="panel">
+      <div class="panel-h"><span class="panel-t">Shift Wise Attendance <small>(Selected Day)</small></span></div>
+      {% if a.get('shift_summary') %}
+      <table class="rmt"><thead><tr><th>Shift</th><th class="num">Total</th><th class="num">Present</th><th class="num">Absent</th><th class="num">M.P.</th><th class="num">Leave</th></tr></thead><tbody>
+        {% for s in a.get('shift_summary', []) %}<tr><td>{{ s.label|truncate(16) }}</td><td class="num">{{ s.total }}</td><td class="num pp">{{ s.present }}</td><td class="num pa">{{ s.absent }}</td><td class="num pm">{{ s.mispunch }}</td><td class="num pl">{{ s.on_leave }}</td></tr>{% endfor %}
+      </tbody></table>
+      {% else %}<div class="empty">No shift data</div>{% endif %}
+    </div>
+  </div>
+
+  <!-- ROW 3 -->
+  <div class="r3c">
+    <div class="panel">
+      <div class="panel-h"><span class="panel-t">Top Mis Punch Employees <small>(Selected Day)</small></span><a class="panel-link" href="/hr/attendance/late-absent">View All</a></div>
+      {% if a.get('top_mispunch') %}
+      <table class="rmt"><thead><tr><th>Code</th><th>Name</th><th>In</th><th>Issue</th></tr></thead><tbody>
+        {% for r in a.get('top_mispunch', []) %}<tr><td>{{ r.code }}</td><td>{{ r.name|truncate(12) }}</td><td>{{ r.in }}</td><td><span class="badge" style="background:#fde7ea;color:#e11d48;">{{ r.issue }}</span></td></tr>{% endfor %}
+      </tbody></table>
+      {% else %}<div class="empty">No mis-punch records</div>{% endif %}
+    </div>
+
+    <div class="panel">
+      <div class="panel-h"><span class="panel-t">Employees On Leave <small>(Selected Day)</small></span><a class="panel-link" href="/hr/leave/list">View All</a></div>
+      {% if a.get('leave_rows') %}
+      <table class="rmt"><thead><tr><th>Code</th><th>Name</th><th>Type</th><th>Days</th></tr></thead><tbody>
+        {% for r in a.get('leave_rows', []) %}<tr><td>{{ r.code }}</td><td>{{ r.name|truncate(12) }}</td><td>{{ r.type }}</td><td>{{ "{:g}".format(r.days) }}</td></tr>{% endfor %}
+      </tbody></table>
+      {% else %}<div class="empty">No one on leave</div>{% endif %}
+    </div>
+
+    <div class="panel">
+      <div class="panel-h"><span class="panel-t">Department Wise Attendance <small>(Selected Day)</small></span></div>
+      {% if a.get('dept_summary') %}
+      <table class="rmt"><thead><tr><th>Department</th><th class="num">Total</th><th class="num">Present</th><th class="num">Absent</th><th class="num">Leave</th></tr></thead><tbody>
+        {% for d in a.get('dept_summary', []) %}<tr><td>{{ d.label|truncate(14) }}</td><td class="num">{{ d.total }}</td><td class="num pp">{{ d.present }}</td><td class="num pa">{{ d.absent }}</td><td class="num pl">{{ d.on_leave }}</td></tr>{% endfor %}
+      </tbody></table>
+      {% else %}<div class="empty">No department data</div>{% endif %}
+    </div>
+  </div>
+
+  <div class="rm-foot">
+    <span>Last sync: {{ a.get('last_sync','-') }}</span>
+    <span>Data as on {{ sel_date.strftime('%d %b %Y') }} &nbsp;|&nbsp; All times are in IST</span>
+  </div>
+
+</div>
+
+<script id="hr-data" type="application/json">{{ {'overview': a.get('overview', []), 'gender': a.get('gender', []), 'trend': a.get('trend', []), 'category_bar': a.get('category_bar', [])} | tojson }}</script>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function onDateChange(){
+  var v = document.getElementById('dDate').value;
+  window.location = '/hr/attendance' + (v ? ('?date=' + encodeURIComponent(v)) : '');
+}
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+(function(){
+  var data = {};
+  try { data = JSON.parse(document.getElementById('hr-data').textContent || '{}'); } catch(e){ data = {}; }
+  if (typeof Chart === 'undefined') return;
+  Chart.defaults.font.family = "'Inter', sans-serif";
+  Chart.defaults.plugins.legend.display = false;
+  var yGrid = { beginAtZero:true, grid:{color:'#f1eff6'}, ticks:{color:'#b7b2c2',font:{size:10}} };
+  var noGrid = { grid:{display:false}, ticks:{color:'#b7b2c2',font:{size:10}} };
+
+  function donut(id, arr){
+    var el = document.getElementById(id); if(!el || !arr.length) return;
+    new Chart(el, { type:'doughnut', data:{ labels: arr.map(function(x){return x.label;}),
+      datasets:[{ data: arr.map(function(x){return x.value;}), backgroundColor: arr.map(function(x){return x.color;}), borderWidth:0, cutout:'68%' }]},
+      options:{ responsive:true, maintainAspectRatio:false } });
+  }
+  donut('ovDonut', data.overview || []);
+  donut('gdDonut', data.gender || []);
+
+  var tr = data.trend || [];
+  var tl = document.getElementById('trendLine');
+  if (tl && tr.length){
+    new Chart(tl, { type:'line', data:{ labels: tr.map(function(d){return d.label;}),
+      datasets:[
+        { label:'Present',   data: tr.map(function(d){return d.present;}),  borderColor:'#10b981', backgroundColor:'#10b981', tension:.4, pointRadius:3, borderWidth:2 },
+        { label:'Absent',    data: tr.map(function(d){return d.absent;}),   borderColor:'#ef4444', backgroundColor:'#ef4444', tension:.4, pointRadius:3, borderWidth:2 },
+        { label:'Mis Punch', data: tr.map(function(d){return d.mispunch;}), borderColor:'#f59e0b', backgroundColor:'#f59e0b', tension:.4, pointRadius:3, borderWidth:2 },
+        { label:'On Leave',  data: tr.map(function(d){return d.on_leave;}), borderColor:'#3b82f6', backgroundColor:'#3b82f6', tension:.4, pointRadius:3, borderWidth:2 }
+      ]},
+      options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:true, labels:{boxWidth:10,font:{size:10},color:'#7a7588'}}}, scales:{ y:yGrid, x:noGrid } } });
+  }
+
+  var cb = data.category_bar || [];
+  var cbar = document.getElementById('catBar');
+  if (cbar && cb.length){
+    new Chart(cbar, { type:'bar', data:{ labels: cb.map(function(d){return d.label;}),
+      datasets:[
+        { label:'Present',   data: cb.map(function(d){return d.present;}),  backgroundColor:'#10b981', borderRadius:4 },
+        { label:'Absent',    data: cb.map(function(d){return d.absent;}),   backgroundColor:'#ef4444', borderRadius:4 },
+        { label:'Mis Punch', data: cb.map(function(d){return d.mispunch;}), backgroundColor:'#f59e0b', borderRadius:4 },
+        { label:'On Leave',  data: cb.map(function(d){return d.on_leave;}), backgroundColor:'#3b82f6', borderRadius:4 }
+      ]},
+      options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:true, labels:{boxWidth:10,font:{size:10}}}}, scales:{ y:yGrid, x:noGrid } } });
+  }
+})();
+</script>
+{% endblock %}

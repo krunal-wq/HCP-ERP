@@ -1,0 +1,5067 @@
+﻿"""
+npd_routes.py — Product Development Workflow
+Blueprint: npd at /npd
+"""
+
+import os, json, csv, io
+from datetime import datetime, date
+from flask import (Blueprint, render_template, redirect, url_for,
+                   request, flash, jsonify, current_app)
+from flask_login import login_required, current_user
+from werkzeug.utils import secure_filename
+
+from models import (db, User, Lead, NPDMilestoneTemplate,
+                    NPDProject, MilestoneMaster, MilestoneLog,
+                    NPDFormulation, NPDPackingMaterial, NPDArtwork, NPDActivityLog,
+                    OfficeDispatchToken, OfficeDispatchItem,
+                    SampleApprovalLog)
+
+from core.permissions import get_perm, get_sub_perm, require_perm
+npd = Blueprint('npd', __name__, url_prefix='/npd')
+
+
+# ─────────────────────────────────────────────────────────────────
+#  Visibility helpers — who sees which NPD/EPD project
+# ─────────────────────────────────────────────────────────────────
+#  Mirrors the pattern in rd_routes.py (`is_rd_manager_user`,
+#  `_user_is_assigned`). Without these, every NPD-team member sees
+#  every project regardless of assignment — that's the bug Sneha
+#  reported (in NPD team but not assigned to a specific project,
+#  yet seeing it on /npd/npd-projects).
+#
+#  Manager / admin → sees everything.
+#  Everyone else  → sees only projects where they appear in any of:
+#      • assigned_rd / assigned_sc / npd_poc  (legacy single-user FKs)
+#      • RDSubAssignment.user_id              (modern multi-user table)
+#      • assigned_rd_members / assigned_members  (legacy comma-separated
+#        tokens — both `u_<user_id>` and pure-numeric employee_id forms)
+#  Project creator (created_by) is intentionally NOT auto-included —
+#  spec says creators of leads/projects must be explicitly assigned to
+#  retain visibility, otherwise NPD coordinators end up watching every
+#  project they ever spawned.
+#
+#  Manager role: User.role in ('npd_manager', 'admin'). Set this in
+#  the users table for whoever should see the full pipeline. No magic
+#  designation guessing — explicit role only.
+def is_npd_manager_user(user=None):
+    """True if `user` (default current_user) should see ALL NPD/EPD
+    projects without per-assignment filtering."""
+    u = user or current_user
+    if not u or not getattr(u, 'is_authenticated', False):
+        return False
+    return getattr(u, 'role', None) in ('npd_manager', 'admin')
+
+
+def _filter_npd_projects_for_user(query):
+    """Apply per-user assignment visibility filter to an NPDProject query.
+
+    Returns the same query object (no-op) when the current user is an
+    NPD manager / admin. Otherwise narrows the query to projects where
+    the current user appears in any assignment field (legacy or modern).
+
+    Use this BEFORE pagination — that's how the count and the visible
+    page stay in sync.
+
+    Implementation note (collation-safe):
+      The naive approach was to put everything inside one SQL `WHERE`
+      with `assigned_members LIKE '%u_82%'` style clauses. That blew
+      up on databases where the schema is utf8mb4_unicode_ci but the
+      session/connection default is utf8mb4_0900_ai_ci — MySQL refuses
+      to compare across collations and throws error 1267 ("Illegal mix
+      of collations"). When SQLAlchemy hit that, the entire filter
+      query failed and Flask either errored out OR (worse) silently
+      fell through to an unfiltered list — which is exactly what made
+      Sneha (a normal `user` role with no assignments) see projects
+      she shouldn't.
+
+      The fix here:
+        1. Build a small list of project IDs in Python by scanning
+           the comma-separated `assigned_*_members` columns ourselves
+           — Python string matching is collation-agnostic.
+        2. Combine that with the FK / RDSubAssignment lookups (which
+           are integer comparisons and never have collation issues).
+        3. Final WHERE is `id IN (small list) OR fk_field = uid`.
+
+      This is slightly heavier than a single SQL query but the only
+      lists that get pulled to Python are the *_members text columns,
+      which are at most a few hundred bytes each. Practical impact is
+      negligible for realistic NPD project counts.
+    """
+    if is_npd_manager_user():
+        return query
+
+    from models.npd import NPDProject as _NP, RDSubAssignment as _RDSub
+
+    uid = current_user.id
+
+    # Resolve current user's Employee.id once for the legacy emp-id
+    # comma-separated tokens.
+    my_emp_id = None
+    try:
+        from models.employee import Employee as _Emp
+        _e = _Emp.query.filter_by(user_id=uid, is_deleted=False).first()
+        my_emp_id = _e.id if _e else None
+    except Exception:
+        my_emp_id = None
+
+    # Modern multi-user assignment (RDSubAssignment) — collect project
+    # IDs the user appears in. Pure integer comparison, no collation.
+    sub_pids = {
+        s.project_id for s in _RDSub.query.filter_by(user_id=uid).all()
+    }
+
+    # ── Python-side scan of comma-separated token columns ──
+    # Pull (id, assigned_rd_members, assigned_members) for every NPD/EPD
+    # project that has at least one of those columns populated, then
+    # filter in Python where collation doesn't apply. This sidesteps the
+    # SQL 1267 error completely.
+    u_token = f'u_{uid}'
+    token_pids = set()
+    rows = db.session.query(
+        _NP.id, _NP.assigned_rd_members, _NP.assigned_members
+    ).filter(
+        _NP.is_deleted == False,
+        db.or_(
+            _NP.assigned_rd_members.isnot(None),
+            _NP.assigned_members.isnot(None),
+        )
+    ).all()
+    for pid, rd_mem, mem in rows:
+        for raw in (rd_mem, mem):
+            if not raw:
+                continue
+            tokens = [t.strip() for t in str(raw).split(',') if t.strip()]
+            if u_token in tokens:
+                token_pids.add(pid)
+                break
+            if my_emp_id is not None and str(my_emp_id) in tokens:
+                token_pids.add(pid)
+                break
+
+    # Combine all matching project IDs we found via the various
+    # assignment systems. RDSubAssignment + token scan together.
+    all_assigned_pids = sub_pids | token_pids
+
+    # Final WHERE: any of these match
+    #   • assigned_rd / assigned_sc / npd_poc FK = current user
+    #   • project id ∈ (RDSubAssignment ∪ token-scan results)
+    clauses = [
+        _NP.assigned_rd == uid,
+        _NP.assigned_sc == uid,
+        _NP.npd_poc     == uid,
+    ]
+    if all_assigned_pids:
+        clauses.append(_NP.id.in_(list(all_assigned_pids)))
+    else:
+        # User has zero token/sub assignments — only FK matches matter.
+        # We still need a WHERE clause so SQLAlchemy doesn't no-op the
+        # filter. The three FK clauses above are enough.
+        pass
+
+    return query.filter(db.or_(*clauses))
+
+
+# ── NPD Grid Columns ──
+NPD_COLS_DEFAULT = ['created_at','code','category','client_name','product_name','assigned_members','reference_brand','priority','last_connected','milestones','project_age','status','project_start_date']
+
+NPD_COLS_ALL = {
+    'created_at':        'Create Date',
+    'code':              'Project No',
+    'category':          'Category',
+    'client_name':       'Client Name',
+    'product_name':      'Product Name',
+    'assigned_members':  'Members',
+    'reference_brand':   'Reference Brand',
+    'priority':          'Priority',
+    'last_connected':    'Last Connected',
+    'milestones':        'Milestones',
+    'project_age':       'TAT',
+    'status':            'Status',
+    'project_start_date':'Start Date',
+    'client_company':    'Company',
+    'client_email':      'Client Email',
+    'client_phone':      'Client Phone',
+    'market_level':      'Market Level',
+    'npd_fee_paid':      'NPD Fee',
+    'product_category':  'Product Category',
+    'area_of_application':'Area of Application',
+    'viscosity':         'Viscosity',
+    'ph_value':          'pH',
+    'fragrance':         'Fragrance',
+    'packaging_type':    'Packaging',
+    'costing_range':     'Costing Range',
+}
+
+def _parse_date(val):
+    """Parse DD-MM-YYYY or YYYY-MM-DD date string, return date or None."""
+    if not val or not val.strip(): return None
+    val = val.strip()
+    from datetime import datetime
+    for fmt in ('%d-%m-%Y', '%Y-%m-%d', '%d/%m/%Y'):
+        try: return datetime.strptime(val, fmt).date()
+        except: pass
+    return None
+
+UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'static', 'uploads', 'npd')
+ALLOWED = {'pdf','png','jpg','jpeg','gif','webp','svg','heic','bmp','doc','docx','xls','xlsx','txt','zip'}
+
+# ── Default Milestone types ──
+# Static fallback (used only if DB has no templates yet)
+DEFAULT_MILESTONES = [
+    ('bom',             'BOM',                                '📄', 1),
+    ('ingredients',     'Ingredients List & Marketing Sheet', '📋', 2),
+    ('quotation',       'Quotation',                          '💰', 3),
+    ('packing_material','Packing Material',                   '📦', 4),
+    ('artwork',         'Artwork / Design',                   '🎨', 5),
+    ('artwork_qc',      'Artwork QC Approval',                '✅', 6),
+    ('fda',             'FDA',                                '🏛️', 7),
+    ('barcode',         'Barcode',                            '🔢', 8),
+]
+
+
+def get_milestone_templates(project_type=None):
+    """Load milestone templates from DB. Falls back to DEFAULT_MILESTONES if empty."""
+    try:
+        q = NPDMilestoneTemplate.query.filter_by(is_active=True)
+        if project_type and project_type != 'both':
+            q = q.filter(
+                db.or_(
+                    NPDMilestoneTemplate.applies_to == 'both',
+                    NPDMilestoneTemplate.applies_to == project_type
+                )
+            )
+        templates = q.order_by(NPDMilestoneTemplate.sort_order, NPDMilestoneTemplate.id).all()
+        if templates:
+            return templates  # return ORM objects — template uses .milestone_type, .title, .sort_order
+        # Fallback: return dict-like objects from DEFAULT_MILESTONES
+        return [
+            type('MS', (), {
+                'milestone_type': m[0], 'title': m[1], 'icon': m[2],
+                'sort_order': m[3], 'default_selected': True,
+                'is_mandatory': False, 'applies_to': 'both',
+                'description': '', 'id': None
+            })()
+            for m in DEFAULT_MILESTONES
+        ]
+    except Exception:
+        return [
+            type('MS', (), {
+                'milestone_type': m[0], 'title': m[1], 'icon': m[2],
+                'sort_order': m[3], 'default_selected': True,
+                'is_mandatory': False, 'applies_to': 'both',
+                'description': '', 'id': None
+            })()
+            for m in DEFAULT_MILESTONES
+        ]
+
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED
+
+
+def save_upload(f):
+    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+    fn = secure_filename(f.filename)
+    ts = datetime.now().strftime('%Y%m%d%H%M%S_')
+    fname = ts + fn
+    f.save(os.path.join(UPLOAD_FOLDER, fname))
+    return fname
+
+
+def gen_npd_code():
+    last = NPDProject.query.order_by(NPDProject.id.desc()).first()
+    num  = (last.id + 1) if last else 1
+    return f"NPD-{num:04d}"
+
+
+def log_npd(project_id, action, user_id=None):
+    uid = user_id or (current_user.id if current_user.is_authenticated else None)
+    db.session.add(NPDActivityLog(project_id=project_id, user_id=uid, action=action))
+
+
+def get_users():
+    """Sirf NPD + Management department + admin/manager role wale users.
+    Yeh function NPD project form ke 'Assign Members' dropdown me use hota hai.
+    """
+    from models.employee import Employee
+    # Admin/Manager role wale hamesha included
+    admin_users = User.query.filter(
+        User.is_active == True,
+        User.role.in_(['admin', 'manager'])
+    ).all()
+    admin_ids = {u.id for u in admin_users}
+
+    # Sirf NPD + Management department wale employees
+    dept_emps = Employee.query.filter(
+        Employee.is_deleted == False,
+        Employee.status == 'active',
+        db.or_(
+            Employee.department.ilike('%npd%'),
+            Employee.department.ilike('%management%')
+        )
+    ).all()
+    dept_user_ids = {e.user_id for e in dept_emps if e.user_id}
+
+    all_ids = admin_ids | dept_user_ids
+    if all_ids:
+        return User.query.filter(
+            User.id.in_(all_ids), User.is_active == True
+        ).order_by(User.full_name).all()
+    return admin_users
+
+
+def get_npd_team_employees():
+    """Sirf NPD + Management department wale active employees — NPD form ke
+    'Assign Members' dropdown me yeh use hote hain.
+    Admin/Manager role wale User se linked Employee bhi include hote hain.
+    """
+    from models.employee import Employee
+    # Admin/Manager role users
+    admin_users = User.query.filter(
+        User.is_active == True,
+        User.role.in_(['admin', 'manager'])
+    ).all()
+    admin_user_ids = [u.id for u in admin_users]
+
+    # Department-based employees (NPD + Management)
+    dept_emps = Employee.query.filter(
+        Employee.is_deleted == False,
+        db.or_(
+            Employee.department.ilike('%npd%'),
+            Employee.department.ilike('%management%')
+        )
+    ).all()
+
+    # Admin/Manager ke linked employees (department chahe jo bhi ho)
+    admin_emps = []
+    if admin_user_ids:
+        admin_emps = Employee.query.filter(
+            Employee.is_deleted == False,
+            Employee.user_id.in_(admin_user_ids)
+        ).all()
+
+    # Merge (dedupe by Employee.id)
+    seen = set()
+    merged = []
+    for e in list(dept_emps) + list(admin_emps):
+        if e.id in seen:
+            continue
+        seen.add(e.id)
+        merged.append(e)
+    # Sort by first_name
+    merged.sort(key=lambda e: (e.first_name or '').lower())
+    return merged
+
+
+# ══════════════════════════════════════════════════════════════
+# DASHBOARD
+# ══════════════════════════════════════════════════════════════
+
+@npd.route('/dashboard')
+@login_required
+def dashboard():
+    # ── Dashboard tiles must respect per-user visibility ──
+    # If we just count all projects, a non-manager sees inflated tile
+    # numbers but only some of them in the underlying lists — confusing.
+    # Wrap every count/list query in `_filter_npd_projects_for_user`
+    # so every number on this page is "what THIS user can see".
+    def _scoped(query):
+        return _filter_npd_projects_for_user(query)
+
+    # Stats
+    total       = _scoped(NPDProject.query.filter_by(is_deleted=False)).count()
+    active      = _scoped(NPDProject.query.filter(
+                    NPDProject.is_deleted==False,
+                    NPDProject.status.notin_(['finish','cancelled']))).count()
+    completed   = _scoped(NPDProject.query.filter_by(is_deleted=False, status='complete')).count()
+    cancelled   = _scoped(NPDProject.query.filter_by(is_deleted=False, status='cancelled')).count()
+    npd_count   = _scoped(NPDProject.query.filter_by(is_deleted=False, project_type='npd')).count()
+    epd_count   = _scoped(NPDProject.query.filter_by(is_deleted=False, project_type='existing')).count()
+
+    # Pending milestones
+    pending_milestones = MilestoneMaster.query.filter(
+        MilestoneMaster.status.in_(['pending','in_progress']),
+        MilestoneMaster.is_selected==True
+    ).count()
+
+    # Projects by status — also scoped to user.
+    from sqlalchemy import func
+    status_counts = _scoped(db.session.query(
+        NPDProject.status, func.count(NPDProject.id)
+    ).filter_by(is_deleted=False)).group_by(NPDProject.status).all()
+
+    # Recent projects (scoped)
+    recent = _scoped(NPDProject.query.filter_by(is_deleted=False))\
+                .order_by(NPDProject.created_at.desc()).limit(10).all()
+
+    # Sampling rejection ratio per project (for chart) — scoped
+    projects_all = _scoped(NPDProject.query.filter(
+        NPDProject.is_deleted==False,
+        NPDProject.project_type=='npd'
+    )).all()
+
+    # Milestone completion %
+    ms_total = MilestoneMaster.query.filter_by(is_selected=True).count()
+    ms_done  = MilestoneMaster.query.filter_by(is_selected=True, status='approved').count()
+    ms_pct   = round((ms_done/ms_total)*100, 1) if ms_total else 0
+
+    # SC performance
+    from sqlalchemy import case
+    sc_stats = []
+
+    return render_template('npd/dashboard.html',
+        active_page='npd_dashboard',
+        total=total, active=active, completed=completed, cancelled=cancelled,
+        npd_count=npd_count, epd_count=epd_count,
+        pending_milestones=pending_milestones,
+        status_counts=dict(status_counts),
+        recent=recent,
+        ms_pct=ms_pct, ms_done=ms_done, ms_total=ms_total,
+        sc_stats=sc_stats,
+        projects_all=projects_all,
+    )
+
+
+# ══════════════════════════════════════════════════════════════
+# PROJECT LIST
+# ══════════════════════════════════════════════════════════════
+
+@npd.route('/projects')
+@login_required
+def projects():
+    q        = request.args.get('q','').strip()
+    ptype    = request.args.get('type','')
+    status   = request.args.get('status','')
+    sc_id  = ''
+    page     = request.args.get('page', 1, type=int)
+
+    query = NPDProject.query.filter_by(is_deleted=False)
+
+    # Per-user visibility — same rule as /npd/npd-projects.
+    query = _filter_npd_projects_for_user(query)
+
+    if q:
+        query = query.filter(
+            db.or_(
+                NPDProject.code.ilike(f'%{q}%'),
+                NPDProject.product_name.ilike(f'%{q}%'),
+                NPDProject.client_name.ilike(f'%{q}%'),
+                NPDProject.client_company.ilike(f'%{q}%'),
+            )
+        )
+    if ptype:
+        query = query.filter_by(project_type=ptype)
+    if status:
+        query = query.filter_by(status=status)
+
+    projects = query.order_by(NPDProject.created_at.desc()).paginate(page=page, per_page=25)
+
+    users = get_users()
+    return render_template('npd/projects.html',
+        active_page='npd_projects',
+        projects=projects, q=q, ptype=ptype, status=status, sc_id=sc_id,
+        users=users,
+    )
+
+
+# ══════════════════════════════════════════════════════════════
+# CREATE PROJECT
+# ══════════════════════════════════════════════════════════════
+
+@npd.route('/projects/new', methods=['GET','POST'])
+@login_required
+def new_project():
+    # GET: redirect to type-specific route
+    if request.method == 'GET':
+        from urllib.parse import urlencode
+        ptype = request.args.get('type', 'npd')
+        params = {k: v for k, v in request.args.items() if k != 'type'}
+        qs = ('?' + urlencode(params)) if params else ''
+        if ptype == 'existing':
+            return redirect('/npd/epd-new' + qs)
+        else:
+            return redirect('/npd/npd-new' + qs)
+
+    users = get_users()
+    leads = Lead.query.filter_by(is_deleted=False).order_by(Lead.created_at.desc()).limit(200).all()
+
+    # Pre-fill from lead if lead_id passed in URL
+    prefill_lead = None
+    prefill_lead_id = request.args.get('lead_id') or request.form.get('lead_id')
+    if prefill_lead_id:
+        try:
+            from models import Lead as LeadModel
+            prefill_lead = LeadModel.query.get(int(prefill_lead_id))
+        except: pass
+
+    # Support client_id param — fetch client data securely from DB
+    prefill_url = {'client_id': '', 'client_name': '', 'client_company': '', 'client_email': '', 'client_phone': '', 'product_name': request.args.get('product', '')}
+    _cid = request.args.get('client_id')
+    if _cid:
+        try:
+            from models.client import ClientMaster
+            _cl = ClientMaster.query.get(int(_cid))
+            if _cl:
+                prefill_url['client_id']      = str(_cl.id)
+                prefill_url['client_name']    = _cl.contact_name or ''
+                prefill_url['client_company'] = _cl.company_name or ''
+                prefill_url['client_email']   = _cl.email or ''
+                prefill_url['client_phone']   = _cl.mobile or ''
+        except: pass
+
+    if request.method == 'POST':
+        ptype       = request.form.get('project_type','npd')
+        product_name= request.form.get('product_name','').strip()
+        if not product_name:
+            flash('Product name is required', 'error')
+            return render_template('npd/project_form.html', active_page='npd_projects',
+                                   users=users, leads=leads, edit=None)
+
+        proj = NPDProject(
+            code            = gen_npd_code(),
+            project_type    = ptype,
+            product_name    = product_name,
+            product_category= request.form.get('product_category',''),
+            product_range   = request.form.get('product_range',''),
+            client_name     = request.form.get('client_name',''),
+            client_company  = request.form.get('client_company',''),
+            client_email    = request.form.get('client_email',''),
+            client_phone    = request.form.get('client_phone',''),
+            lead_id         = request.form.get('lead_id') or None,
+            requirement_spec= request.form.get('requirement_spec',''),
+            reference_product= request.form.get('reference_product',''),
+            custom_formulation= 'custom_formulation' in request.form,
+            order_quantity  = request.form.get('order_quantity',''),
+            npd_fee_paid    = 'npd_fee_paid' in request.form,
+            npd_fee_amount  = request.form.get('npd_fee_amount', 10000) or 10000,
+            status          = 'lead_created',
+            created_by      = current_user.id,
+        )
+
+        # Stamp fee-received timestamp if checkbox was ticked at create-time.
+        # Used by /npd/fees-report for from/to date filtering.
+        if proj.npd_fee_paid:
+            proj.npd_fee_paid_at = datetime.now()
+
+        # Handle NPD fee receipt upload
+        if 'npd_fee_receipt' in request.files:
+            f = request.files['npd_fee_receipt']
+            if f and f.filename and allowed_file(f.filename):
+                proj.npd_fee_receipt = save_upload(f)
+
+        db.session.add(proj)
+        db.session.flush()  # get proj.id
+
+        # Create default milestones
+        selected_ms = request.form.getlist('milestones')
+        templates = get_milestone_templates(ptype)
+        for tmpl in templates:
+            ms = MilestoneMaster(
+                project_id    = proj.id,
+                milestone_type= tmpl.milestone_type,
+                title         = tmpl.title,
+                sort_order    = tmpl.sort_order,
+                is_selected   = True if tmpl.is_mandatory else (
+                                    (tmpl.milestone_type in selected_ms) if selected_ms else tmpl.default_selected
+                                ),
+                status        = 'pending',
+                created_by    = current_user.id,
+            )
+            db.session.add(ms)
+
+        proj.milestone_master_created = True
+        db.session.flush()
+        log_npd(proj.id, f"Project created: {proj.code} ({ptype.upper()}) — {product_name}")
+        db.session.commit()
+        flash(f'Project {proj.code} created successfully!', 'success')
+        from_lead = request.form.get('from_lead_id')
+        if from_lead:
+            return redirect(url_for('crm.lead_view', id=from_lead))
+        if ptype == 'npd':
+            return redirect(url_for('npd.npd_dashboard'))
+        else:
+            return redirect(url_for('npd.epd_dashboard'))
+
+    return render_template('npd/project_form.html',
+        active_page='npd_projects',
+        users=users, leads=leads, edit=None,
+        default_milestones=get_milestone_templates(),
+        prefill_lead=prefill_lead,
+        from_lead_id=prefill_lead_id,
+        prefill_url=prefill_url,
+    )
+
+
+# ══════════════════════════════════════════════════════════════
+# PROJECT VIEW (Detail)
+# ══════════════════════════════════════════════════════════════
+
+@npd.route('/projects/<int:pid>')
+@login_required
+def project_view(pid):
+    _pchk = get_perm('npd_projects')
+    if _pchk and not _pchk.can_view:
+        from flask import flash, redirect, url_for
+        flash('Access denied: NPD Project view permission nahi hai.', 'error')
+        return redirect(url_for('npd.npd_projects'))
+    proj    = NPDProject.query.filter_by(id=pid, is_deleted=False).first_or_404()
+    users   = get_users()
+
+    # Milestone completion %
+    selected_ms = [m for m in proj.milestones if m.is_selected]
+    ms_done     = sum(1 for m in selected_ms if m.status=='approved')
+    ms_pct      = round((ms_done/len(selected_ms))*100) if selected_ms else 0
+
+    # Team members — unique from assigned_members + assigned_rd_members
+    # Supports 3 formats:
+    #   1. Plain digit → Employee ID (legacy)
+    #   2. u_<id>     → User ID (newer RD assign flow) → resolve via Employee.user_id
+    #   3. RDSubAssignment table (newest — R&D Projects "Assign" flow)
+    from models.employee import Employee
+    from models.npd import RDSubAssignment as _RDSub
+
+    assigned_emp_ids  = set()   # Direct Employee IDs
+    assigned_user_ids = set()   # User IDs (from u_<id> tokens or RDSubAssignment)
+
+    for field in [proj.assigned_members, proj.assigned_rd_members]:
+        if field:
+            for x in str(field).split(','):
+                x = x.strip()
+                if not x:
+                    continue
+                if x.startswith('u_'):
+                    try:
+                        assigned_user_ids.add(int(x[2:]))
+                    except Exception:
+                        pass
+                elif x.isdigit():
+                    assigned_emp_ids.add(int(x))
+
+    # Pull active RDSubAssignments as well (source of truth for newer assignments)
+    for s in _RDSub.query.filter_by(project_id=proj.id, is_active=True).all():
+        if s.user_id:
+            assigned_user_ids.add(s.user_id)
+
+    # Resolve User IDs → Employee IDs (via Employee.user_id link)
+    if assigned_user_ids:
+        linked_emps = Employee.query.filter(
+            Employee.user_id.in_(assigned_user_ids),
+            Employee.is_deleted == False
+        ).all()
+        for e in linked_emps:
+            assigned_emp_ids.add(e.id)
+
+    team_members = []
+    if assigned_emp_ids:
+        team_members = Employee.query.filter(
+            Employee.id.in_(assigned_emp_ids),
+            Employee.is_deleted == False
+        ).order_by(Employee.first_name).all()
+
+    # ── Build rd_members list with variant codes (for R&D Persons section) ──
+    # Source: active RDSubAssignment rows + legacy assigned_rd fallback
+    # Each item: {'full_name': str, 'variant_code': str}
+    rd_members = []
+    _seen_names = set()
+    for s in _RDSub.query.filter_by(project_id=proj.id, is_active=True).all():
+        u = User.query.get(s.user_id) if s.user_id else None
+        if not u: continue
+        nm = u.full_name or u.username or '—'
+        if nm in _seen_names: continue
+        _seen_names.add(nm)
+        rd_members.append({
+            'full_name'   : nm,
+            'variant_code': s.variant_code or '',
+        })
+    # Legacy fallback — if no RDSubAssignment but assigned_rd is set
+    if not rd_members and proj.rd_user:
+        rd_members.append({
+            'full_name'   : proj.rd_user.full_name or proj.rd_user.username,
+            'variant_code': '',
+        })
+
+    from models.npd import NPDActivityLog, NPDComment, NPDNote
+    activity_logs     = NPDActivityLog.query.filter_by(project_id=pid)                            .order_by(NPDActivityLog.created_at.desc()).all()
+    disc_comments     = NPDComment.query.filter_by(project_id=pid, is_internal=False)                            .order_by(NPDComment.created_at.desc()).all()
+    internal_comments = NPDComment.query.filter_by(project_id=pid, is_internal=True)                            .order_by(NPDComment.created_at.desc()).all()
+    note              = NPDNote.query.filter_by(project_id=pid).first()
+    active_tab        = request.args.get('tab', 'overview')
+
+    from permissions import get_sub_perm as _gsp
+    npd_sub = {
+        'inline_edit'         : _gsp('npd_projects', 'inline_edit'),
+        'print'               : _gsp('npd_projects', 'print'),
+        'overview'            : _gsp('npd_projects', 'overview'),
+        'client_detail'       : _gsp('npd_projects', 'client_detail'),
+        'discussion_board'    : _gsp('npd_projects', 'discussion_board'),
+        'internal_discussion' : _gsp('npd_projects', 'internal_discussion'),
+        'activity_log'        : _gsp('npd_projects', 'activity_log'),
+        'attachments'         : _gsp('npd_projects', 'attachments'),
+        'notes'               : _gsp('npd_projects', 'notes'),
+        'milestone'           : _gsp('npd_projects', 'milestone'),
+        'close_project'       : _gsp('npd_projects', 'close_project'),
+        'restore'             : _gsp('npd_projects', 'restore'),
+        'permanent_delete'    : _gsp('npd_projects', 'permanent_delete'),
+        'view_deleted'        : _gsp('npd_projects', 'view_deleted'),
+    }
+    can_close_project = npd_sub['close_project'] or (current_user.role == 'admin')
+
+    # ── Per-milestone visibility map ──────────────────────────────
+    # Sidebar pe sirf woh milestone items dikhenge jinka permission ON ho.
+    # Key: milestone_type (e.g. 'bom', 'packing_material') → bool
+    #
+    # Mapping rule: sub-perm key = 'ms_' + milestone_type
+    # Admin ko sab True (get_sub_perm khud handle karta hai).
+    # Agar koi milestone_type custom hai (registered key nahi),
+    # default True rakhte hain taaki naye types accidentally hide na ho —
+    # admin baadme master se permission key add kar lega.
+    KNOWN_MS_PERMS = {
+        'bom', 'ingredients', 'quotation', 'packing_material',
+        'artwork', 'artwork_qc', 'fda', 'barcode',
+    }
+    ms_perm_map = {}
+    for _m in selected_ms:
+        _mt = (_m.milestone_type or '').strip()
+        if not _mt:
+            ms_perm_map[_mt] = True
+            continue
+        if _mt in KNOWN_MS_PERMS:
+            ms_perm_map[_mt] = bool(_gsp('npd_projects', 'ms_' + _mt))
+        else:
+            # Unknown / future milestone types — let through by default
+            ms_perm_map[_mt] = True
+
+    # ── can_start: SIRF assigned R&D member ──
+    def _check_assigned(proj, cu):
+        """Check if current user is assigned to this project"""
+        # Check 1: primary assigned_rd (User FK)
+        if proj.assigned_rd == cu.id:
+            return True
+        if not proj.assigned_rd_members:
+            return False
+        from models.employee import Employee as _Emp
+        for token in str(proj.assigned_rd_members).split(','):
+            token = token.strip()
+            if not token: continue
+            # u_<id> = User ID
+            if token.startswith('u_'):
+                try:
+                    if int(token[2:]) == cu.id: return True
+                except: pass
+            # plain int = Employee ID
+            elif token.isdigit():
+                try:
+                    emp = _Emp.query.get(int(token))
+                    if emp and not emp.is_deleted:
+                        if emp.user_id == cu.id: return True
+                        # name fallback (case-insensitive)
+                        if emp.full_name and emp.full_name.strip().lower() == cu.full_name.strip().lower():
+                            return True
+                except: pass
+        return False
+
+    is_assigned = _check_assigned(proj, current_user)
+
+    # If project already in_progress — any assigned member can END
+    # If not started — any assigned member can START
+    can_start = is_assigned
+
+    # All selected milestones done? — check npd_milestone_data JSON (JS writes 'done' there)
+    import json as _json
+    _ms_data = {}
+    try: _ms_data = _json.loads(proj.npd_milestone_data or '{}')
+    except: _ms_data = {}
+    all_ms_done = bool(selected_ms) and all(
+        (_ms_data.get('ms_' + str(i+1), {}).get('status') == 'done')
+        for i, _ in enumerate(selected_ms)
+    )
+
+    # ── My RDSubAssignment for this project ──
+    from models.npd import RDSubAssignment
+    my_sub = RDSubAssignment.query.filter_by(
+        project_id=proj.id, user_id=current_user.id, is_active=True
+    ).first()
+
+    # ── Client Information visibility ────────────────────────────────
+    # STRICT policy (user requirement): Client Information card sirf
+    # in users ko dikhega:
+    #   1. Administrator (role == 'admin')
+    #   2. NPD department wale employees
+    #   3. New Product Development and Management Department wale employees
+    #      (i.e. department naam me 'npd', 'new product development',
+    #       'management' aata ho)
+    # Baki kisi ko bhi nahi — generic 'manager' role (Sales Manager,
+    # HR Manager, etc.) ko bhi nahi.
+    can_see_client_info = False
+    _client_visibility_reason = ''   # for debugging
+    try:
+        u_role = (getattr(current_user, 'role', '') or '').strip().lower()
+        # Administrator ko hamesha allow karo (role-based)
+        if u_role == 'admin':
+            can_see_client_info = True
+            _client_visibility_reason = f'role={u_role} (administrator)'
+        else:
+            # Baki sab cases me Employee.department check karo
+            from models.employee import Employee
+            emp = None
+            # 1) Primary: Employee.user_id == current_user.id
+            emp = Employee.query.filter(
+                Employee.user_id == current_user.id,
+                Employee.is_deleted == False,
+            ).first()
+            # 2) Fallback: match by email (User.email == Employee.official_email
+            #    OR Employee.personal_email if such field exists)
+            if not emp and getattr(current_user, 'email', None):
+                emp_email = current_user.email
+                for col_name in ('official_email', 'email', 'personal_email'):
+                    if hasattr(Employee, col_name):
+                        emp = Employee.query.filter(
+                            getattr(Employee, col_name).ilike(emp_email),
+                            Employee.is_deleted == False,
+                        ).first()
+                        if emp: break
+            # 3) Fallback: match by full_name (User.full_name == Employee full name)
+            if not emp and getattr(current_user, 'full_name', None):
+                full = (current_user.full_name or '').strip()
+                if full:
+                    # Try several name shapes
+                    candidates = Employee.query.filter(
+                        Employee.is_deleted == False,
+                    ).all()
+                    for e in candidates:
+                        e_full = ''
+                        if hasattr(e, 'full_name') and getattr(e, 'full_name', None):
+                            e_full = e.full_name
+                        else:
+                            e_full = ' '.join([
+                                (getattr(e, 'first_name', '') or ''),
+                                (getattr(e, 'middle_name', '') or ''),
+                                (getattr(e, 'last_name',  '') or '')
+                            ]).strip()
+                            e_full = ' '.join(e_full.split())   # collapse spaces
+                        if e_full and e_full.lower() == full.lower():
+                            emp = e
+                            break
+
+            if emp:
+                d = (emp.department or '').strip().lower()
+                # Sirf NPD ya Management/New Product Development department
+                # ke employees ko dikhayega. 'mgmt', 'npd', 'new product',
+                # 'product dev', 'management' jaise tokens match karte hain.
+                if d and any(tok in d for tok in
+                             ('npd', 'n.p.d', 'new product',
+                              'product dev', 'management', 'mgmt')):
+                    can_see_client_info = True
+                    _client_visibility_reason = f'dept={emp.department!r}'
+                else:
+                    _client_visibility_reason = f'dept={emp.department!r} (no match — only Admin/NPD/Management allowed)'
+            else:
+                _client_visibility_reason = 'no Employee row matched (user_id/email/full_name)'
+    except Exception as _e:
+        # If anything goes wrong, default to NOT showing (safer).
+        can_see_client_info = (getattr(current_user, 'role', '') == 'admin')
+        _client_visibility_reason = f'exception: {_e}'
+
+    # Debug log — visible in Flask server console
+    try:
+        import logging
+        logging.getLogger(__name__).info(
+            "[npd.project_view] user=%s role=%s -> can_see_client_info=%s (%s)",
+            getattr(current_user, 'username', '?'),
+            getattr(current_user, 'role', '?'),
+            can_see_client_info, _client_visibility_reason,
+        )
+    except Exception:
+        pass
+
+    # Inline debug mode: append ?debug_visibility=1 to the project URL to get
+    # a JSON dump of how the system resolved the current user's visibility.
+    # Works regardless of whether other new routes have been picked up by Flask.
+    if request.args.get('debug_visibility') == '1':
+        from models.employee import Employee
+        dump = {
+            'user': {
+                'id'       : current_user.id,
+                'username' : getattr(current_user, 'username', ''),
+                'full_name': getattr(current_user, 'full_name', ''),
+                'email'    : getattr(current_user, 'email',    ''),
+                'role'     : getattr(current_user, 'role',     ''),
+            },
+            'can_see_client_info': can_see_client_info,
+            'reason'             : _client_visibility_reason,
+            'employees_with_user_id': [
+                {'id': e.id,
+                 'first_name': getattr(e, 'first_name', ''),
+                 'last_name' : getattr(e, 'last_name',  ''),
+                 'department': getattr(e, 'department', ''),
+                 'user_id'   : getattr(e, 'user_id',   None)}
+                for e in Employee.query.filter(
+                    Employee.user_id == current_user.id,
+                    Employee.is_deleted == False,
+                ).all()
+            ],
+        }
+        # Also: lookup by name (Sneha case — user_id might be NULL)
+        full = (getattr(current_user, 'full_name', '') or '').strip().lower()
+        if full:
+            possible = []
+            for e in Employee.query.filter(Employee.is_deleted == False).all():
+                e_full = ''
+                if hasattr(e, 'full_name') and getattr(e, 'full_name', None):
+                    e_full = (e.full_name or '').strip().lower()
+                else:
+                    e_full = ' '.join([
+                        (getattr(e, 'first_name','') or ''),
+                        (getattr(e, 'middle_name','') or ''),
+                        (getattr(e, 'last_name', '') or '')
+                    ]).strip().lower()
+                    e_full = ' '.join(e_full.split())
+                if e_full and (full in e_full or e_full in full):
+                    possible.append({
+                        'id': e.id, 'name': e_full,
+                        'department': getattr(e, 'department', ''),
+                        'user_id': getattr(e, 'user_id', None),
+                    })
+            dump['employees_by_name_match'] = possible
+        return jsonify(dump)
+
+    return render_template('npd/project_view.html',
+        active_page='npd_projects',
+        proj=proj, users=users,
+        team_members=team_members,
+        rd_members=rd_members,
+        selected_ms=selected_ms, ms_done=ms_done, ms_pct=ms_pct,
+        activity_logs=activity_logs,
+        disc_comments=disc_comments,
+        internal_comments=internal_comments,
+        note=note, active_tab=active_tab,
+        now=datetime.now,
+        can_close_project=can_close_project,
+        all_ms_done=all_ms_done,
+        npd_sub=npd_sub,
+        ms_perm_map=ms_perm_map,
+        can_start=can_start,
+        my_sub=my_sub,
+        can_see_client_info=can_see_client_info,
+    )
+
+
+@npd.route('/projects/<int:pid>/comment', methods=['POST'])
+@login_required
+def add_comment(pid):
+    from models.npd import NPDComment, NPDActivityLog
+    comment_txt = request.form.get('comment','').strip()
+    is_internal = request.form.get('is_internal','0') == '1'
+
+    # Handle file upload
+    attachment = None
+    if 'attachment' in request.files:
+        f = request.files['attachment']
+        if f and f.filename and f.filename.strip():
+            try:
+                os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+                # Use uuid to avoid filename issues
+                import uuid
+                ext = f.filename.rsplit('.', 1)[-1].lower() if '.' in f.filename else 'bin'
+                fname = datetime.now().strftime('%Y%m%d%H%M%S_') + str(uuid.uuid4())[:8] + '.' + ext
+                fpath = os.path.join(UPLOAD_FOLDER, fname)
+                f.save(fpath)
+                if os.path.exists(fpath):
+                    # Store as "savedname|originalname" for display
+                    orig = f.filename
+                    attachment = fname + '|' + orig
+                else:
+                    flash('File could not be saved', 'warning')
+            except Exception as e:
+                import traceback
+                flash(f'Upload error: {traceback.format_exc()[-200:]}', 'warning')
+
+    # Need at least comment or file
+    if not comment_txt and not attachment:
+        flash('Please add a comment or attach a file','error')
+        return redirect(url_for('npd.project_view', pid=pid, tab='internal_discussion' if is_internal else 'discussion'))
+
+    # If only file, use original filename as comment
+    if not comment_txt and attachment:
+        comment_txt = ''  # empty — chip will show
+    db.session.add(NPDComment(
+        project_id=pid, user_id=current_user.id,
+        comment=comment_txt, is_internal=is_internal,
+        attachment=attachment, created_at=datetime.now(),
+    ))
+    db.session.add(NPDActivityLog(
+        project_id=pid, user_id=current_user.id,
+        action=f"{'Internal comment' if is_internal else 'Comment'} added by {current_user.full_name}",
+        created_at=datetime.now(),
+    ))
+    db.session.commit()
+    flash('Comment added!','success')
+    return redirect(url_for('npd.project_view', pid=pid, tab='internal_discussion' if is_internal else 'discussion'))
+
+
+# ─────────────────────────────────────────────────────────────
+# Edit a Discussion / Internal Discussion comment
+# Only the author or an admin can edit.
+# Returns JSON so the row can be updated inline (no reload).
+# ─────────────────────────────────────────────────────────────
+@npd.route('/projects/<int:pid>/comment/<int:cid>/edit', methods=['POST'])
+@login_required
+def edit_comment(pid, cid):
+    from models.npd import NPDComment, NPDActivityLog
+    c = NPDComment.query.filter_by(id=cid, project_id=pid).first()
+    if not c:
+        return jsonify(success=False, error='Comment not found'), 404
+
+    # Permission: ONLY the comment's author can edit (no admin override)
+    if c.user_id != current_user.id:
+        return jsonify(success=False, error='You can only edit your own comments'), 403
+
+    new_text = (request.form.get('comment') or '').strip()
+
+    # Optional new attachment — replaces the existing one if uploaded
+    attachment_replaced = False
+    if 'attachment' in request.files:
+        f = request.files['attachment']
+        if f and f.filename and f.filename.strip():
+            try:
+                os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+                import uuid
+                ext   = f.filename.rsplit('.', 1)[-1].lower() if '.' in f.filename else 'bin'
+                fname = datetime.now().strftime('%Y%m%d%H%M%S_') + str(uuid.uuid4())[:8] + '.' + ext
+                fpath = os.path.join(UPLOAD_FOLDER, fname)
+                f.save(fpath)
+                if os.path.exists(fpath):
+                    # Remove old attachment file (best-effort)
+                    if c.attachment:
+                        try:
+                            old_file = c.attachment.split('|')[0]
+                            old_path = os.path.join(UPLOAD_FOLDER, old_file)
+                            if os.path.exists(old_path):
+                                os.remove(old_path)
+                        except Exception:
+                            pass
+                    c.attachment = fname + '|' + f.filename
+                    attachment_replaced = True
+            except Exception:
+                pass
+
+    # At least text OR an attachment (existing or new) must be present
+    if not new_text and not c.attachment:
+        return jsonify(success=False, error='Comment cannot be empty'), 400
+
+    c.comment   = new_text
+    c.edited_at = datetime.now()
+
+    db.session.add(NPDActivityLog(
+        project_id=pid, user_id=current_user.id,
+        action=f"{'Internal comment' if c.is_internal else 'Comment'} edited by {current_user.full_name}",
+        created_at=datetime.now(),
+    ))
+    db.session.commit()
+
+    return jsonify(
+        success=True,
+        comment=c.comment,
+        edited_at=c.edited_at.strftime('%d-%m-%Y %H:%M:%S'),
+        attachment_replaced=attachment_replaced,
+    )
+
+
+# ─────────────────────────────────────────────────────────────
+# Delete a Discussion / Internal Discussion comment
+# Only the author or an admin can delete.
+# Also removes the attached file from disk if present.
+# ─────────────────────────────────────────────────────────────
+@npd.route('/projects/<int:pid>/comment/<int:cid>/delete', methods=['POST'])
+@login_required
+def delete_comment(pid, cid):
+    from models.npd import NPDComment, NPDActivityLog
+    c = NPDComment.query.filter_by(id=cid, project_id=pid).first()
+    if not c:
+        flash('Comment not found', 'error')
+        return redirect(url_for('npd.project_view', pid=pid))
+
+    # Permission: ONLY the comment's author can delete (no admin override)
+    if c.user_id != current_user.id:
+        flash('You can only delete your own comments', 'error')
+        return redirect(url_for('npd.project_view', pid=pid,
+                                tab='internal_discussion' if c.is_internal else 'discussion'))
+
+    was_internal = bool(c.is_internal)
+
+    # Remove the attached file from disk (best-effort)
+    if c.attachment:
+        try:
+            att_file = c.attachment.split('|')[0]
+            fpath = os.path.join(UPLOAD_FOLDER, att_file)
+            if os.path.exists(fpath):
+                os.remove(fpath)
+        except Exception:
+            pass
+
+    db.session.delete(c)
+    db.session.add(NPDActivityLog(
+        project_id=pid, user_id=current_user.id,
+        action=f"{'Internal comment' if was_internal else 'Comment'} deleted by {current_user.full_name}",
+        created_at=datetime.now(),
+    ))
+    db.session.commit()
+
+    flash('Comment deleted!', 'success')
+    return redirect(url_for('npd.project_view', pid=pid,
+                            tab='internal_discussion' if was_internal else 'discussion'))
+
+
+@npd.route('/projects/<int:pid>/note', methods=['POST'])
+@login_required
+def save_note(pid):
+    from models.npd import NPDNote
+    content_html = request.form.get('note_content','')
+    note = NPDNote.query.filter_by(project_id=pid).first()
+    if note:
+        note.content = content_html
+        note.updated_by = current_user.id
+        note.updated_at = datetime.now()
+    else:
+        db.session.add(NPDNote(project_id=pid, content=content_html,
+                               updated_by=current_user.id, updated_at=datetime.now()))
+    db.session.commit()
+    flash('Note saved!','success')
+    return redirect(url_for('npd.project_view', pid=pid, tab='note'))
+
+
+# ══════════════════════════════════════════════════════════════
+# EDIT PROJECT
+# ══════════════════════════════════════════════════════════════
+
+@npd.route('/projects/<int:pid>/edit', methods=['GET','POST'])
+@login_required
+def edit_project(pid):
+    proj  = NPDProject.query.filter_by(id=pid, is_deleted=False).first_or_404()
+    users = get_users()
+    leads = Lead.query.filter_by(is_deleted=False).order_by(Lead.created_at.desc()).limit(200).all()
+
+    if request.method == 'POST':
+        proj.product_name        = request.form.get('product_name', proj.product_name).strip()
+        proj.product_category    = request.form.get('product_category', '')
+        proj.product_range       = request.form.get('product_range', '')
+        proj.client_name         = request.form.get('client_name', '')
+        proj.client_company      = request.form.get('client_company', '')
+        proj.client_email        = request.form.get('client_email', '')
+        proj.client_phone        = request.form.get('client_phone', '')
+        proj.client_coordinator  = request.form.get('client_coordinator', '')
+        proj.lead_id             = int(request.form.get('lead_id')) if request.form.get('lead_id') and request.form.get('lead_id').strip() not in ('', 'None') else None
+        proj.client_id           = int(request.form.get('client_id')) if request.form.get('client_id') and request.form.get('client_id').strip() not in ('', 'None') else None
+
+        # Status
+        new_status = request.form.get('status', '').strip()
+        if new_status:
+            proj.status = new_status
+
+        # Priority
+        proj.priority            = request.form.get('priority', 'Normal')
+
+        # Members
+        proj.assigned_members     = request.form.get('assigned_members', '')
+        proj.assigned_rd_members  = request.form.get('assigned_rd_members', '')
+        proj.assigned_sc          = int(request.form.get('assigned_sc')) if request.form.get('assigned_sc') and request.form.get('assigned_sc').strip() not in ('', 'None') else None
+        proj.assigned_rd          = int(request.form.get('assigned_rd')) if request.form.get('assigned_rd') and request.form.get('assigned_rd').strip() not in ('', 'None') else None
+        proj.npd_poc              = int(request.form.get('npd_poc')) if request.form.get('npd_poc') and request.form.get('npd_poc').strip() not in ('', 'None') else None
+
+        # Product details
+        proj.area_of_application  = request.form.get('area_of_application', '')
+        proj.market_level         = request.form.get('market_level', '')
+        proj.no_of_samples        = int(request.form.get('no_of_samples') or 0)
+        proj.moq                  = request.form.get('moq', '')
+        proj.product_size         = request.form.get('product_size', '')
+        proj.order_quantity       = request.form.get('order_quantity', '')
+        proj.variant_type         = request.form.get('variant_type', '')
+        proj.appearance           = request.form.get('appearance', '')
+        proj.reference_brand      = request.form.get('reference_brand', '')
+        proj.reference_product_name = request.form.get('reference_product_name', '')
+        proj.reference_product    = request.form.get('reference_product', '')
+
+        # Formulation
+        proj.description          = request.form.get('description', '')
+        proj.ingredients          = request.form.get('ingredients', '')
+        proj.active_ingredients   = request.form.get('active_ingredients', '')
+        proj.product_claim        = request.form.get('product_claim', '')
+        proj.label_claim          = request.form.get('label_claim', '')
+        proj.requirement_spec     = request.form.get('requirement_spec', '')
+        proj.costing_range        = request.form.get('costing_range', '')
+        proj.ph_value             = request.form.get('ph_value', '')
+        proj.packaging_type       = request.form.get('packaging_type', '')
+        proj.fragrance            = request.form.get('fragrance', '')
+        proj.viscosity            = request.form.get('viscosity', '')
+        proj.video_link           = request.form.get('video_link', '')
+
+        # Dates
+        def pd(v):
+            from datetime import date
+            try:
+                from datetime import datetime as _dt
+                return _dt.strptime(v.strip(), '%Y-%m-%d').date() if v and v.strip() else None
+            except Exception:
+                return None
+        proj.project_start_date   = pd(request.form.get('project_start_date', '')) or proj.project_start_date
+        proj.project_end_date     = pd(request.form.get('project_end_date', '')) or proj.project_end_date
+        proj.target_sample_date   = pd(request.form.get('target_sample_date', '')) or proj.target_sample_date
+        proj.project_lead_days    = int(request.form.get('project_lead_days')) if request.form.get('project_lead_days') and request.form.get('project_lead_days').strip() not in ('', 'None') else proj.project_lead_days
+
+        # Fee & misc
+        proj.custom_formulation   = 'custom_formulation' in request.form
+        # Track when fee transitions from unpaid → paid. Re-checking an
+        # already-paid project should NOT reset the original timestamp.
+        _was_paid = bool(proj.npd_fee_paid)
+        proj.npd_fee_paid         = 'npd_fee_paid' in request.form
+        if proj.npd_fee_paid and not _was_paid:
+            proj.npd_fee_paid_at = datetime.now()
+        proj.npd_fee_amount       = request.form.get('npd_fee_amount', proj.npd_fee_amount) or proj.npd_fee_amount
+        proj.delay_reason         = request.form.get('delay_reason', '')
+        proj.updated_by           = current_user.id
+
+        if 'npd_fee_receipt' in request.files:
+            f = request.files['npd_fee_receipt']
+            if f and f.filename and allowed_file(f.filename):
+                proj.npd_fee_receipt = save_upload(f)
+
+        # ── Update milestone selection ──
+        # Template form submits TWO kinds of checkbox values:
+        #   name="milestone_ids" → existing MilestoneMaster row IDs (user is
+        #       keeping/deselecting rows that already exist for this project)
+        #   name="milestones"    → template milestone_type strings for rows that
+        #       don't exist yet in this project but user ticked them
+        # We handle BOTH, and we also deselect any existing row whose
+        # milestone_type is not in the current NPDMilestoneTemplate master
+        # (legacy/orphan rows).
+        from models.npd import MilestoneMaster as _MS, NPDMilestoneTemplate as _TMPL
+        _all_ms = _MS.query.filter_by(project_id=proj.id).all()
+
+        submitted_ids   = set(int(x) for x in request.form.getlist('milestone_ids') if x.isdigit())
+        submitted_types = set(request.form.getlist('milestones'))
+
+        # Current active template types (source of truth for what's valid)
+        active_template_types = {
+            t.milestone_type for t in _TMPL.query.filter_by(is_active=True).all()
+        }
+        _mandatory_types = {
+            t.milestone_type for t in _TMPL.query.filter_by(is_mandatory=True, is_active=True).all()
+        }
+
+        existing_types = set()
+        for _ms in _all_ms:
+            existing_types.add(_ms.milestone_type)
+
+            # Rule 1: legacy row whose type is no longer in the template master → always deselect
+            if _ms.milestone_type not in active_template_types:
+                if _ms.is_selected:
+                    _ms.is_selected = False
+                continue
+
+            # Rule 2: mandatory template types stay selected regardless of form
+            if _ms.milestone_type in _mandatory_types:
+                _ms.is_selected = True
+                continue
+
+            # Rule 3: normal flow — selected iff its id was submitted OR
+            # its type was submitted (covers the case where the checkbox was
+            # rendered with name="milestones" because the Jinja map missed it).
+            _ms.is_selected = (
+                _ms.id in submitted_ids or
+                _ms.milestone_type in submitted_types
+            )
+
+        # Rule 4: any submitted type that doesn't yet have a row in this
+        # project → create a new MilestoneMaster row for it.
+        types_needing_new_row = submitted_types - existing_types
+        if types_needing_new_row:
+            new_templates = _TMPL.query.filter(
+                _TMPL.milestone_type.in_(types_needing_new_row),
+                _TMPL.is_active == True
+            ).all()
+            for _tmpl in new_templates:
+                db.session.add(_MS(
+                    project_id    = proj.id,
+                    milestone_type= _tmpl.milestone_type,
+                    title         = _tmpl.title,
+                    sort_order    = _tmpl.sort_order,
+                    is_selected   = True,
+                    status        = 'pending',
+                    created_by    = current_user.id,
+                ))
+
+        # Rule 5: ensure all mandatory template types exist for this project
+        _missing_mandatory = _mandatory_types - existing_types - types_needing_new_row
+        if _missing_mandatory:
+            _m_templates = _TMPL.query.filter(
+                _TMPL.milestone_type.in_(_missing_mandatory),
+                _TMPL.is_active == True
+            ).all()
+            for _tmpl in _m_templates:
+                db.session.add(_MS(
+                    project_id    = proj.id,
+                    milestone_type= _tmpl.milestone_type,
+                    title         = _tmpl.title,
+                    sort_order    = _tmpl.sort_order,
+                    is_selected   = True,
+                    status        = 'pending',
+                    created_by    = current_user.id,
+                ))
+
+        total_selected = sum(1 for m in _all_ms if m.is_selected) + len(types_needing_new_row) + len(_missing_mandatory)
+        log_npd(proj.id, f"Milestones updated: {total_selected} selected "
+                         f"(existing rows updated, {len(types_needing_new_row)} new rows created)")
+        proj.milestone_master_created = True
+
+        log_npd(proj.id, f"Project updated by {current_user.full_name}")
+        db.session.commit()
+        flash('Project updated!', 'success')
+        if proj.project_type == 'npd':
+            return redirect(url_for('npd.npd_dashboard'))
+        else:
+            return redirect(url_for('npd.epd_dashboard'))
+
+    # Use type-specific form template
+    if proj.project_type == 'npd':
+        tmpl = 'npd/npd_form.html'
+    else:
+        tmpl = 'npd/epd_form.html'
+
+    from models.employee import Employee
+    from models.master import NPDStatus, CategoryMaster
+    from models.client import ClientMaster
+    categories = CategoryMaster.query.filter_by(status=True, is_deleted=False).order_by(CategoryMaster.name).all()
+    # Sirf NPD + Management team ke employees (Assign Members dropdown ke liye)
+    employees = get_npd_team_employees()
+    rd_employees = Employee.query.filter(
+        Employee.is_deleted==False,
+        db.or_(
+            Employee.department.ilike('%r&d%'),
+            Employee.department.ilike('%rd%'),
+            Employee.department.ilike('%research%'),
+            Employee.department.ilike('%r & d%'),
+            Employee.designation.ilike('%r&d%'),
+            Employee.designation.ilike('%r & d%'),
+            Employee.designation.ilike('%formulation%'),
+            Employee.designation.ilike('%scientist%'),
+            Employee.designation.ilike('%chemist%'),
+        )
+    ).order_by(Employee.first_name).all()
+    if not rd_employees:
+        rd_employees = employees
+    npd_statuses = NPDStatus.query.filter_by(is_active=True).order_by(NPDStatus.sort_order).all()
+    clients = ClientMaster.query.filter_by(is_deleted=False).order_by(ClientMaster.contact_name).all()
+
+    # ── Build normalized Employee-ID CSV for R&D member pre-selection ──
+    # assigned_rd_members may contain mixed tokens: "u_<user_id>" or plain Employee IDs.
+    # Also merge active RDSubAssignment records (newest source of truth).
+    from models.npd import RDSubAssignment as _RDSub
+    _rd_emp_ids  = set()
+    _rd_user_ids = set()
+    if proj.assigned_rd_members:
+        for tok in str(proj.assigned_rd_members).split(','):
+            tok = tok.strip()
+            if not tok: continue
+            if tok.startswith('u_'):
+                try: _rd_user_ids.add(int(tok[2:]))
+                except: pass
+            elif tok.isdigit():
+                _rd_emp_ids.add(int(tok))
+    for s in _RDSub.query.filter_by(project_id=proj.id, is_active=True).all():
+        if s.user_id:
+            _rd_user_ids.add(s.user_id)
+    # Resolve User IDs → Employee IDs
+    if _rd_user_ids:
+        for e in Employee.query.filter(
+            Employee.user_id.in_(_rd_user_ids),
+            Employee.is_deleted == False
+        ).all():
+            _rd_emp_ids.add(e.id)
+    edit_assigned_rd_emp_csv = ','.join(str(x) for x in sorted(_rd_emp_ids))
+
+    return render_template(tmpl,
+        active_page='npd_projects',
+        edit=proj, users=users, leads=leads,
+        employees=employees,
+        rd_employees=rd_employees,
+        npd_statuses=npd_statuses,
+        clients=clients,
+        categories=categories,
+        prefill_lead=None, prefill_url={},
+        default_milestones=get_milestone_templates(proj.project_type),
+        edit_assigned_rd_emp_csv=edit_assigned_rd_emp_csv,
+    )
+
+
+# ══════════════════════════════════════════════════════════════
+# STATUS CHANGE
+# ══════════════════════════════════════════════════════════════
+
+@npd.route('/projects/<int:pid>/status', methods=['POST'])
+@login_required
+def change_status(pid):
+    proj       = NPDProject.query.filter_by(id=pid, is_deleted=False).first_or_404()
+    new_status = request.form.get('status','')
+    note       = request.form.get('note','')
+
+    # ── START / FINISH permission check ──
+    # SIRF assigned R&D member — admin bhi nahi kar sakta
+    if new_status in ('in_progress', 'finish', 'finished', 'sample_ready', 'not_started'):
+        # Reuse same _check_can_start logic
+        from models.employee import Employee as _EmpCS
+        def _cs_can(proj, cu):
+            if proj.assigned_rd == cu.id:
+                return True
+            if not proj.assigned_rd_members:
+                return False
+            for token in str(proj.assigned_rd_members).split(','):
+                token = token.strip()
+                if not token: continue
+                if token.startswith('u_'):
+                    try:
+                        if int(token[2:]) == cu.id: return True
+                    except: pass
+                elif token.isdigit():
+                    try:
+                        emp = _EmpCS.query.get(int(token))
+                        if emp and not emp.is_deleted:
+                            if emp.user_id == cu.id: return True
+                            if emp.full_name and emp.full_name.strip().lower() == cu.full_name.strip().lower(): return True
+                    except: pass
+            return False
+
+        if not _cs_can(proj, current_user):
+            flash('Sirf assigned R&D member START/STOP kar sakta hai.', 'error')
+            return redirect(url_for('npd.project_view', pid=pid))
+
+    if new_status == 'cancelled':
+        proj.cancel_reason = request.form.get('cancel_reason', '')
+        proj.cancelled_at  = datetime.now()
+    elif new_status == 'complete':
+        proj.completed_at  = datetime.now()
+    elif new_status == 'commercial':
+        proj.converted_to_commercial   = True
+        proj.commercial_converted_at   = datetime.now()
+    elif new_status == 'in_progress':
+        if not proj.started_at:
+            proj.started_at = datetime.now()
+    elif new_status == 'not_started':
+        proj.started_at = None
+    elif new_status in ('finish', 'finished', 'sample_ready'):
+        if not proj.finished_at:
+            proj.finished_at = datetime.now()
+        if proj.started_at and proj.finished_at:
+            delta = proj.finished_at - proj.started_at
+            proj.total_duration_seconds = int(delta.total_seconds())
+
+    old_status = proj.status
+    proj.status    = new_status
+    proj.updated_by= current_user.id
+
+    log_npd(proj.id,
+            f"Status changed: {old_status} → {new_status}" + (f" | {note}" if note else ""))
+
+    # ── RD Project Log for start/stop/finish ──
+    from models.npd import RDProjectLog
+    _rd_event = None
+    if new_status == 'in_progress':
+        _rd_event = 'started'
+    elif new_status in ('finish', 'finished', 'sample_ready'):
+        _rd_event = 'finished'
+    elif new_status == 'not_started':
+        _rd_event = 'stopped'
+    if _rd_event:
+        # All assigned member names for context
+        _assigned_names = []
+        if proj.rd_user:
+            _assigned_names.append(proj.rd_user.full_name)
+        if proj.assigned_rd_members:
+            try:
+                from models.employee import Employee as _EL
+                _eids2 = [int(x) for x in str(proj.assigned_rd_members).split(',') if x.strip().isdigit()]
+                for _e2 in _EL.query.filter(_EL.id.in_(_eids2), _EL.is_deleted==False).all():
+                    if _e2.full_name not in _assigned_names:
+                        _assigned_names.append(_e2.full_name)
+            except: pass
+        _team_str = ', '.join(_assigned_names) if _assigned_names else '—'
+        db.session.add(RDProjectLog(
+            project_id = proj.id,
+            user_id    = current_user.id,
+            event      = _rd_event,
+            detail     = f"{_rd_event.capitalize()} by {current_user.full_name} | Team: {_team_str}" + (f" | {note}" if note else ""),
+            created_at = datetime.now(),
+        ))
+
+    db.session.commit()
+    flash(f'Status updated to {proj.status_label}', 'success')
+    return redirect(url_for('npd.project_view', pid=pid))
+
+
+# ══════════════════════════════════════════════════════════════
+# SOFT DELETE
+# ══════════════════════════════════════════════════════════════
+
+@npd.route('/projects/<int:pid>/delete', methods=['POST'])
+@login_required
+def delete_project(pid):
+    proj = NPDProject.query.filter_by(id=pid, is_deleted=False).first_or_404()
+    proj.is_deleted = True
+    proj.deleted_at = datetime.now()
+    proj.deleted_by = current_user.id
+    db.session.commit()
+    flash(f'Project {proj.code} deleted.', 'warning')
+    return redirect(url_for('npd.npd_projects'))
+
+
+@npd.route('/projects/<int:pid>/restore', methods=['POST'])
+@login_required
+def restore_project(pid):
+    proj = NPDProject.query.filter_by(id=pid, is_deleted=True).first_or_404()
+    proj.is_deleted = False
+    proj.deleted_at = None
+    proj.deleted_by = None
+    db.session.commit()
+    flash(f'Project {proj.code} restored successfully!', 'success')
+    return redirect(url_for('npd.npd_projects'))
+
+
+# ══════════════════════════════════════════════════════════════
+# MILESTONE — Update
+# ══════════════════════════════════════════════════════════════
+
+@npd.route('/milestone/<int:mid>/update', methods=['POST'])
+@login_required
+def update_milestone(mid):
+    ms     = MilestoneMaster.query.get_or_404(mid)
+    pid    = ms.project_id
+    old_st = ms.status
+    new_st = request.form.get('status', ms.status)
+    note   = request.form.get('note', '')
+
+    ms.status      = new_st
+    ms.notes       = request.form.get('notes', ms.notes or '')
+    ms.reject_reason = request.form.get('reject_reason', '')
+    ms.assigned_to = request.form.get('assigned_to') or ms.assigned_to
+    ms.target_date = request.form.get('target_date') or ms.target_date
+
+    if new_st == 'approved':
+        ms.completed_at = datetime.now()
+        ms.approved_by  = current_user.id
+        ms.approved_at  = datetime.now()
+
+    # Handle file upload
+    if 'attachment' in request.files:
+        f = request.files['attachment']
+        if f and f.filename and allowed_file(f.filename):
+            fname = save_upload(f)
+            existing = ms.attachments or ''
+            ms.attachments = (existing + ',' + fname).strip(',')
+
+    # Log the milestone change
+    db.session.add(MilestoneLog(
+        milestone_id = mid,
+        action       = f"Status: {old_st} → {new_st}" + (f" | {note}" if note else ""),
+        old_status   = old_st,
+        new_status   = new_st,
+        note         = note,
+        created_by   = current_user.id,
+    ))
+    log_npd(pid, f"Milestone '{ms.title}' updated: {old_st} → {new_st}")
+    db.session.commit()
+
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return jsonify(success=True, status=new_st,
+                       icon=ms.status_icon, color=ms.status_color)
+    flash(f'Milestone "{ms.title}" updated!', 'success')
+    return redirect(url_for('npd.project_view', pid=pid))
+
+
+# ══════════════════════════════════════════════════════════════
+# FORMULATION / SAMPLING LOOP
+# ══════════════════════════════════════════════════════════════
+
+@npd.route('/projects/<int:pid>/formulation/add', methods=['POST'])
+@login_required
+def add_formulation(pid):
+    proj = NPDProject.query.filter_by(id=pid, is_deleted=False).first_or_404()
+
+    # Next iteration number
+    last_iter = db.session.query(db.func.max(NPDFormulation.iteration))\
+                    .filter_by(project_id=pid).scalar() or 0
+
+    form = NPDFormulation(
+        project_id        = pid,
+        iteration         = last_iter + 1,
+        formulation_name  = request.form.get('formulation_name',''),
+        formulation_desc  = request.form.get('formulation_desc',''),
+        rd_person         = request.form.get('rd_person') or None,
+        rd_notes          = request.form.get('rd_notes',''),
+        rd_submitted_at   = datetime.now(),
+        feedback_due_date = request.form.get('feedback_due_date') or None,
+        status            = 'pending',
+        created_by        = current_user.id,
+    )
+
+    if 'attachment' in request.files:
+        f = request.files['attachment']
+        if f and f.filename and allowed_file(f.filename):
+            form.attachments = save_upload(f)
+
+    db.session.add(form)
+
+    # Update project status
+    if proj.status == 'lead_created':
+        proj.status = 'formulation'
+
+    log_npd(pid, f"Formulation #{last_iter+1} added by {current_user.full_name}")
+    db.session.commit()
+    flash('Formulation added!', 'success')
+    return redirect(url_for('npd.project_view', pid=pid))
+
+
+@npd.route('/formulation/<int:fid>/review', methods=['POST'])
+@login_required
+def review_formulation(fid):
+    form   = NPDFormulation.query.get_or_404(fid)
+    pid    = form.project_id
+    stage  = request.form.get('stage','sc')   # sc or client
+    status = request.form.get('status','')
+    notes  = request.form.get('notes','')
+
+    if stage == 'sc':
+        form.sc_review_status = status
+        form.sc_review_notes  = notes
+        form.sc_reviewed_by   = current_user.id
+        form.sc_reviewed_at   = datetime.now()
+        if status == 'approved':
+            form.status = 'sc_approved'
+            form.sample_created = True
+        else:
+            form.status = 'sc_rejected'
+    elif stage == 'client':
+        form.client_status    = status
+        form.client_feedback  = notes
+        form.client_responded_at = datetime.now()
+        if status == 'approved':
+            form.status = 'client_approved'
+            # Update project
+            proj = NPDProject.query.get(pid)
+            if proj:
+                proj.status = 'client_approved'
+        else:
+            form.status = 'client_rejected'
+    elif stage == 'dispatch':
+        form.sample_sent_at = datetime.now()
+        form.sample_sent_to = request.form.get('sent_to','')
+        form.status         = 'sample_sent' if form.status == 'sc_approved' else form.status
+        proj = NPDProject.query.get(pid)
+        if proj and proj.status in ('formulation','lead_created'):
+            proj.status = 'sampling'
+
+    log_npd(pid, f"Formulation #{form.iteration} — {stage} review: {status}")
+    db.session.commit()
+    flash('Formulation review updated!', 'success')
+    return redirect(url_for('npd.project_view', pid=pid))
+
+
+# ══════════════════════════════════════════════════════════════
+# PACKING MATERIAL
+# ══════════════════════════════════════════════════════════════
+
+@npd.route('/projects/<int:pid>/packing/add', methods=['POST'])
+@login_required
+def add_packing(pid):
+    proj = NPDProject.query.filter_by(id=pid, is_deleted=False).first_or_404()
+
+    pm = NPDPackingMaterial(
+        project_id  = pid,
+        pm_type     = request.form.get('pm_type',''),
+        description = request.form.get('description',''),
+        source      = request.form.get('source','company_sourced'),
+        supplier    = request.form.get('supplier',''),
+        notes       = request.form.get('notes',''),
+        status      = 'pending',
+        created_by  = current_user.id,
+    )
+    if 'attachment' in request.files:
+        f = request.files['attachment']
+        if f and f.filename and allowed_file(f.filename):
+            pm.attachments = save_upload(f)
+
+    db.session.add(pm)
+    log_npd(pid, f"Packing Material ({pm.pm_type}) added")
+    db.session.commit()
+    flash('Packing material added!', 'success')
+    return redirect(url_for('npd.project_view', pid=pid))
+
+
+@npd.route('/packing/<int:pmid>/update', methods=['POST'])
+@login_required
+def update_packing(pmid):
+    pm  = NPDPackingMaterial.query.get_or_404(pmid)
+    pid = pm.project_id
+    new_status = request.form.get('status', pm.status)
+
+    pm.status      = new_status
+    pm.notes       = request.form.get('notes', pm.notes or '')
+    pm.reject_reason = request.form.get('reject_reason','')
+
+    if new_status == 'sample_sent':
+        pm.sample_sent_at = datetime.now()
+    elif new_status == 'client_approved':
+        pm.client_approved_at = datetime.now()
+    elif new_status == 'filling_trial':
+        pm.filling_trial_done = True
+        pm.filling_trial_at   = datetime.now()
+
+    if 'attachment' in request.files:
+        f = request.files['attachment']
+        if f and f.filename and allowed_file(f.filename):
+            existing = pm.attachments or ''
+            pm.attachments = (existing + ',' + save_upload(f)).strip(',')
+
+    log_npd(pid, f"Packing Material ({pm.pm_type}) → {new_status}")
+    db.session.commit()
+    flash('Packing material updated!', 'success')
+    return redirect(url_for('npd.project_view', pid=pid))
+
+
+# ══════════════════════════════════════════════════════════════
+# PACKING MATERIAL — JSON API (Milestone Table View)
+# ══════════════════════════════════════════════════════════════
+
+@npd.route('/<int:pid>/packing/list', methods=['GET'])
+@login_required
+def packing_list(pid):
+    rows = NPDPackingMaterial.query.filter_by(project_id=pid, is_deleted=False).order_by(NPDPackingMaterial.id).all()
+    result = []
+    for r in rows:
+        result.append({
+            'id':             r.id,
+            'category':       r.pm_type or '',
+            'vendor_name':    r.supplier or '',
+            'cost':           r.cost or '',
+            'image':          r.attachments or '',
+            'filling_image':  getattr(r, 'filling_image', '') or '',
+            'coa_file':       getattr(r, 'coa_file', '') or '',
+            'filling_status': getattr(r, 'filling_status', '') or 'pending',
+        })
+    return jsonify(rows=result)
+
+
+@npd.route('/<int:pid>/packing/row/add', methods=['POST'])
+@login_required
+def packing_row_add(pid):
+    category    = request.form.get('category', '')
+    vendor_name = request.form.get('vendor_name', '')
+    cost        = request.form.get('cost', '')
+    image_file  = None
+    if 'image' in request.files:
+        f = request.files['image']
+        if f and f.filename and allowed_file(f.filename):
+            image_file = save_upload(f)
+    pm = NPDPackingMaterial(
+        project_id  = pid,
+        pm_type     = category,
+        supplier    = vendor_name,
+        cost        = cost,
+        attachments = image_file or '',
+        status      = 'pending',
+        created_by  = current_user.id,
+    )
+    # New fields — sirf tab set karenge jab columns DB me ho (safe migration)
+    try:
+        pm.filling_image  = ''
+        pm.coa_file       = ''
+        pm.filling_status = 'pending'
+    except Exception:
+        pass
+    db.session.add(pm)
+    log_npd(pid, f"Packing Material row added ({category})")
+    db.session.commit()
+    return jsonify(success=True, id=pm.id, image=pm.attachments or '')
+
+
+@npd.route('/<int:pid>/packing/row/<int:pmid>/update', methods=['POST'])
+@login_required
+def packing_row_update(pid, pmid):
+    pm = NPDPackingMaterial.query.filter_by(id=pmid, project_id=pid).first_or_404()
+    pm.pm_type  = request.form.get('category', pm.pm_type)
+    pm.supplier = request.form.get('vendor_name', pm.supplier)
+    pm.cost     = request.form.get('cost', pm.cost)
+
+    # ── Filling Status (dropdown) ────────────────────────────────
+    fs = request.form.get('filling_status')
+    if fs is not None:
+        # whitelist taaki koi galat value DB me na jaaye
+        allowed_fs = {'pending', 'in_process', 'hold', 'cancel', 'done'}
+        fs = (fs or '').strip().lower()
+        if fs in allowed_fs:
+            try:
+                pm.filling_status = fs
+            except Exception:
+                pass
+
+    # ─────────────────────────────────────────────────────────────
+    # Image upload — pehle silently skip kar deta tha agar extension
+    # allowed list me nahi hoti, but client ko success bhejta tha.
+    # Result: "uploaded successfully" toast dikhta tha but DB me
+    # path empty hi rehta tha aur thumbnail render nahi hoti thi.
+    # Ab proper error response bhejte hain validation fail pe.
+    # ─────────────────────────────────────────────────────────────
+    if 'image' in request.files:
+        f = request.files['image']
+        if f and f.filename:
+            if not allowed_file(f.filename):
+                allowed_str = ', '.join(sorted(ALLOWED))
+                return jsonify(
+                    success=False,
+                    error=f"File type not allowed. Allowed: {allowed_str}"
+                ), 400
+            try:
+                pm.attachments = save_upload(f)
+            except Exception as _ex:
+                import traceback; traceback.print_exc()
+                return jsonify(
+                    success=False,
+                    error=f"Could not save file: {str(_ex)}"
+                ), 500
+
+    # ── Filling Image upload ─────────────────────────────────────
+    if 'filling_image' in request.files:
+        f = request.files['filling_image']
+        if f and f.filename:
+            if not allowed_file(f.filename):
+                allowed_str = ', '.join(sorted(ALLOWED))
+                return jsonify(
+                    success=False,
+                    error=f"File type not allowed. Allowed: {allowed_str}"
+                ), 400
+            try:
+                pm.filling_image = save_upload(f)
+            except Exception as _ex:
+                import traceback; traceback.print_exc()
+                return jsonify(
+                    success=False,
+                    error=f"Could not save filling image: {str(_ex)}"
+                ), 500
+
+    # ── COA file upload (PDF / image / doc) ──────────────────────
+    if 'coa_file' in request.files:
+        f = request.files['coa_file']
+        if f and f.filename:
+            if not allowed_file(f.filename):
+                allowed_str = ', '.join(sorted(ALLOWED))
+                return jsonify(
+                    success=False,
+                    error=f"File type not allowed. Allowed: {allowed_str}"
+                ), 400
+            try:
+                pm.coa_file = save_upload(f)
+            except Exception as _ex:
+                import traceback; traceback.print_exc()
+                return jsonify(
+                    success=False,
+                    error=f"Could not save COA file: {str(_ex)}"
+                ), 500
+
+    db.session.commit()
+    return jsonify(
+        success        = True,
+        image          = pm.attachments or '',
+        filling_image  = getattr(pm, 'filling_image', '') or '',
+        coa_file       = getattr(pm, 'coa_file', '') or '',
+        filling_status = getattr(pm, 'filling_status', '') or 'pending',
+    )
+
+
+@npd.route('/<int:pid>/packing/row/<int:pmid>/delete', methods=['POST'])
+@login_required
+def packing_row_delete(pid, pmid):
+    pm = NPDPackingMaterial.query.filter_by(id=pmid, project_id=pid).first_or_404()
+    pm.is_deleted = True
+    db.session.commit()
+    return jsonify(success=True)
+
+
+# ══════════════════════════════════════════════════════════════
+# CLOSE PROJECT — All Milestones Completed
+# ══════════════════════════════════════════════════════════════
+
+@npd.route('/<int:pid>/close-project', methods=['POST'])
+@login_required
+def close_project(pid):
+    from permissions import get_sub_perm
+    if not (get_sub_perm('npd', 'close_project') or (current_user.role == 'admin')):
+        return jsonify(success=False, error='Permission denied'), 403
+
+    proj = NPDProject.query.filter_by(id=pid, is_deleted=False).first_or_404()
+
+    # Verify all selected milestones are done — check npd_milestone_data JSON
+    import json as _json
+    selected_ms = [m for m in proj.milestones if m.is_selected]
+    if not selected_ms:
+        return jsonify(success=False, error='No milestones found'), 400
+    _ms_data = {}
+    try: _ms_data = _json.loads(proj.npd_milestone_data or '{}')
+    except: _ms_data = {}
+    _all_done = all(
+        _ms_data.get('ms_' + str(i+1), {}).get('status') == 'done'
+        for i in range(len(selected_ms))
+    )
+    if not _all_done:
+        return jsonify(success=False, error='Saare milestones complete nahi hue hain'), 400
+
+    # Close NPD project
+    proj.status = 'finish'
+    proj.updated_by = current_user.id
+
+    # Close linked Lead if exists
+    if proj.lead_id:
+        from models import Lead as LeadModel
+        lead = LeadModel.query.get(proj.lead_id)
+        if lead and lead.status not in ('close', 'cancel'):
+            lead.status = 'close'
+            from datetime import datetime as _dt
+            lead.closed_at = _dt.now()
+
+    log_npd(pid, f"Project closed by {current_user.full_name} — all milestones completed")
+    db.session.commit()
+    return jsonify(success=True, message='Project successfully closed!')
+
+
+# ══════════════════════════════════════════════════════════════
+# ARTWORK & DESIGN
+# ══════════════════════════════════════════════════════════════
+
+@npd.route('/projects/<int:pid>/artwork/add', methods=['POST'])
+@login_required
+def add_artwork(pid):
+    last_iter = db.session.query(db.func.max(NPDArtwork.iteration))\
+                    .filter_by(project_id=pid).scalar() or 0
+
+    aw = NPDArtwork(
+        project_id          = pid,
+        iteration           = last_iter + 1,
+        title               = request.form.get('title',''),
+        description         = request.form.get('description',''),
+        designer            = request.form.get('designer') or None,
+        ingredients_included= 'ingredients_included' in request.form,
+        content_included    = 'content_included' in request.form,
+        packaging_details   = 'packaging_details' in request.form,
+        barcode_required    = 'barcode_required' in request.form,
+        status              = 'draft',
+        sc_status           = 'pending',
+        client_status       = 'pending',
+        qc_status           = 'pending',
+        notes               = request.form.get('notes',''),
+        created_by          = current_user.id,
+    )
+
+    if 'artwork_file' in request.files:
+        f = request.files['artwork_file']
+        if f and f.filename and allowed_file(f.filename):
+            aw.artwork_file = save_upload(f)
+
+    db.session.add(aw)
+    log_npd(pid, f"Artwork version #{last_iter+1} uploaded by {current_user.full_name}")
+    db.session.commit()
+    flash('Artwork added!', 'success')
+    return redirect(url_for('npd.project_view', pid=pid))
+
+
+@npd.route('/artwork/<int:awid>/review', methods=['POST'])
+@login_required
+def review_artwork(awid):
+    aw     = NPDArtwork.query.get_or_404(awid)
+    pid    = aw.project_id
+    stage  = request.form.get('stage','sc')
+    status = request.form.get('status','')
+    notes  = request.form.get('notes','')
+
+    if stage == 'sc':
+        aw.sc_status       = status
+        aw.sc_notes        = notes
+        aw.sc_reviewed_by  = current_user.id
+        aw.sc_reviewed_at  = datetime.now()
+        aw.status = 'client_review' if status=='approved' else 'draft'
+    elif stage == 'client':
+        aw.client_status     = status
+        aw.client_feedback   = notes
+        aw.client_approved_at = datetime.now() if status=='approved' else None
+        aw.status = 'qc_review' if status=='approved' else 'sc_review'
+    elif stage == 'qc':
+        aw.qc_status       = status
+        aw.qc_notes        = notes
+        aw.qc_reviewed_by  = current_user.id
+        aw.qc_reviewed_at  = datetime.now()
+        if status == 'approved':
+            aw.status = 'approved'
+            if 'final_file' in request.files:
+                f = request.files['final_file']
+                if f and f.filename and allowed_file(f.filename):
+                    aw.final_file = save_upload(f)
+        else:
+            aw.status = 'client_review'
+    elif stage == 'barcode':
+        aw.barcode_paid     = 'barcode_paid' in request.form
+        aw.barcode_pi       = request.form.get('barcode_pi','')
+        aw.barcode_received = 'barcode_received' in request.form
+        if aw.barcode_received:
+            aw.barcode_received_at = datetime.now()
+        if 'barcode_file' in request.files:
+            f = request.files['barcode_file']
+            if f and f.filename and allowed_file(f.filename):
+                aw.barcode_file = save_upload(f)
+
+    log_npd(pid, f"Artwork v{aw.iteration} — {stage} review: {status}")
+    db.session.commit()
+    flash('Artwork review updated!', 'success')
+    return redirect(url_for('npd.project_view', pid=pid))
+
+
+# ══════════════════════════════════════════════════════════════
+# DELAY REASON UPDATE (weekly)
+# ══════════════════════════════════════════════════════════════
+
+@npd.route('/projects/<int:pid>/delay', methods=['POST'])
+@login_required
+def update_delay(pid):
+    proj = NPDProject.query.filter_by(id=pid, is_deleted=False).first_or_404()
+    proj.delay_reason       = request.form.get('delay_reason','')
+    proj.last_delay_update  = datetime.now()
+    proj.target_sample_date = request.form.get('target_sample_date') or proj.target_sample_date
+    log_npd(pid, f"Delay reason updated: {proj.delay_reason[:60]}")
+    db.session.commit()
+    flash('Delay reason updated!', 'success')
+    return redirect(url_for('npd.project_view', pid=pid))
+
+
+# ══════════════════════════════════════════════════════════════
+# REPORTS PAGE
+# ══════════════════════════════════════════════════════════════
+
+@npd.route('/reports')
+@login_required
+def reports():
+    from sqlalchemy import func, case
+
+    # NPD → Commercial conversion rate
+    npd_total      = NPDProject.query.filter_by(is_deleted=False, project_type='npd').count()
+    npd_commercial = NPDProject.query.filter_by(is_deleted=False, project_type='npd',
+                                                converted_to_commercial=True).count()
+    npd_conv_rate  = round((npd_commercial/npd_total)*100, 1) if npd_total else 0
+
+    # EPD → Commercial
+    epd_total      = NPDProject.query.filter_by(is_deleted=False, project_type='existing').count()
+    epd_commercial = NPDProject.query.filter_by(is_deleted=False, project_type='existing',
+                                                converted_to_commercial=True).count()
+    epd_conv_rate  = round((epd_commercial/epd_total)*100, 1) if epd_total else 0
+
+    # Sampling rejection ratio
+    form_total    = NPDFormulation.query.count()
+    # `status` column was dropped — `client_status` is the real
+    # source of truth for client review state.
+    form_rejected = NPDFormulation.query.filter(NPDFormulation.client_status == 'rejected').count()
+    rejection_ratio = round((form_rejected/form_total)*100, 1) if form_total else 0
+
+    # SC performance
+    sc_stats = []
+
+    # Milestone delay analysis
+    overdue_ms = db.session.query(MilestoneMaster, NPDProject).join(
+        NPDProject, MilestoneMaster.project_id==NPDProject.id
+    ).filter(
+        MilestoneMaster.is_selected==True,
+        MilestoneMaster.status.in_(['pending','in_progress']),
+        MilestoneMaster.target_date < date.today(),
+        NPDProject.is_deleted==False,
+    ).all()
+
+    # Projects with delay reason not updated this week
+    from datetime import timedelta
+    one_week_ago = datetime.now() - timedelta(days=7)
+    stale_delays = NPDProject.query.filter(
+        NPDProject.is_deleted==False,
+        NPDProject.status.in_(['formulation','sampling']),
+        db.or_(
+            NPDProject.last_delay_update == None,
+            NPDProject.last_delay_update < one_week_ago,
+        )
+    ).all()
+
+    return render_template('npd/reports.html',
+        active_page='npd_reports',
+        npd_total=npd_total, npd_commercial=npd_commercial, npd_conv_rate=npd_conv_rate,
+        epd_total=epd_total, epd_commercial=epd_commercial, epd_conv_rate=epd_conv_rate,
+        form_total=form_total, form_rejected=form_rejected, rejection_ratio=rejection_ratio,
+        sc_stats=sc_stats,
+        overdue_ms=overdue_ms,
+        stale_delays=stale_delays,
+    )
+
+
+# ══════════════════════════════════════════════════════════════
+# AJAX — Quick status update
+# ══════════════════════════════════════════════════════════════
+
+@npd.route('/api/project/<int:pid>/status', methods=['POST'])
+@login_required
+def api_status(pid):
+    proj = NPDProject.query.filter_by(id=pid, is_deleted=False).first_or_404()
+    new_status = request.json.get('status','')
+    if not new_status:
+        return jsonify(success=False, error='No status'), 400
+    proj.status = new_status
+    proj.updated_by = current_user.id
+    log_npd(pid, f"Status → {new_status}")
+    db.session.commit()
+    return jsonify(success=True, status=new_status, label=proj.status_label)
+
+
+# ══════════════════════════════════════════════════════════════
+# NPD MILESTONE MASTER — Admin CRUD
+# ══════════════════════════════════════════════════════════════
+
+@npd.route('/milestone-master')
+@login_required
+def milestone_master():
+    templates = NPDMilestoneTemplate.query\
+                    .order_by(NPDMilestoneTemplate.sort_order, NPDMilestoneTemplate.id).all()
+    return render_template('npd/milestone_master.html',
+        active_page='npd_milestone_master',
+        templates=templates,
+    )
+
+
+@npd.route('/milestone-master/add', methods=['POST'])
+@login_required
+def milestone_master_add():
+    mtype = request.form.get('milestone_type', '').strip().lower().replace(' ', '_')
+    title = request.form.get('title', '').strip()
+    if not mtype or not title:
+        flash('Type and Title are required', 'error')
+        return redirect(url_for('npd.milestone_master'))
+    if NPDMilestoneTemplate.query.filter_by(milestone_type=mtype).first():
+        flash(f'Milestone type "{mtype}" already exists', 'warning')
+        return redirect(url_for('npd.milestone_master'))
+
+    obj = NPDMilestoneTemplate(
+        milestone_type   = mtype,
+        title            = title,
+        description      = request.form.get('description', '').strip(),
+        icon             = request.form.get('icon', '📌').strip() or '📌',
+        applies_to       = request.form.get('applies_to', 'both'),
+        default_selected = 'default_selected' in request.form,
+        is_mandatory     = 'is_mandatory' in request.form,
+        sort_order       = int(request.form.get('sort_order', 0) or 0),
+        is_active        = 'is_active' in request.form,
+        created_by       = current_user.id,
+    )
+    db.session.add(obj)
+    db.session.commit()
+    flash(f'Milestone "{title}" added!', 'success')
+    return redirect(url_for('npd.milestone_master'))
+
+
+@npd.route('/milestone-master/<int:mid>/edit', methods=['POST'])
+@login_required
+def milestone_master_edit(mid):
+    obj = NPDMilestoneTemplate.query.get_or_404(mid)
+    obj.title            = request.form.get('title', obj.title).strip()
+    obj.description      = request.form.get('description', obj.description or '').strip()
+    obj.icon             = request.form.get('icon', obj.icon).strip() or '📌'
+    obj.applies_to       = request.form.get('applies_to', obj.applies_to)
+    obj.default_selected = 'default_selected' in request.form
+    obj.is_mandatory     = 'is_mandatory' in request.form
+    obj.sort_order       = int(request.form.get('sort_order', obj.sort_order) or 0)
+    obj.is_active        = 'is_active' in request.form
+    obj.modified_by      = current_user.id
+    obj.modified_at      = datetime.now()
+    db.session.commit()
+    flash(f'"{obj.title}" updated!', 'success')
+    return redirect(url_for('npd.milestone_master'))
+
+
+@npd.route('/milestone-master/<int:mid>/delete', methods=['POST'])
+@login_required
+def milestone_master_delete(mid):
+    obj = NPDMilestoneTemplate.query.get_or_404(mid)
+    name = obj.title
+    db.session.delete(obj)
+    db.session.commit()
+    flash(f'"{name}" deleted', 'success')
+    return redirect(url_for('npd.milestone_master'))
+
+
+@npd.route('/milestone-master/<int:mid>/toggle', methods=['POST'])
+@login_required
+def milestone_master_toggle(mid):
+    obj = NPDMilestoneTemplate.query.get_or_404(mid)
+    obj.is_active   = not obj.is_active
+    obj.modified_by = current_user.id
+    obj.modified_at = datetime.now()
+    db.session.commit()
+    return jsonify(success=True, is_active=obj.is_active)
+
+
+@npd.route('/milestone-master/reorder', methods=['POST'])
+@login_required
+def milestone_master_reorder():
+    """AJAX: receive ordered list of IDs and update sort_order."""
+    ids = request.json.get('ids', [])
+    for i, mid in enumerate(ids):
+        obj = NPDMilestoneTemplate.query.get(mid)
+        if obj:
+            obj.sort_order = i + 1
+    db.session.commit()
+    return jsonify(success=True)
+
+
+# ══════════════════════════════════════════════════════════════
+# AJAX — Get Lead data for auto-fill in NPD project form
+# ══════════════════════════════════════════════════════════════
+
+@npd.route('/api/lead/<int:lid>/info')
+@login_required
+def api_lead_info(lid):
+    from models import Lead as LeadModel
+    lead = LeadModel.query.get_or_404(lid)
+    return jsonify({
+        'id':           lead.id,
+        'contact_name': lead.contact_name or '',
+        'company_name': lead.company_name or '',
+        'email':        lead.email or '',
+        'phone':        lead.phone or lead.alternate_mobile or '',
+        'product_name': lead.product_name or '',
+        'category':     lead.category or '',
+        'product_range':lead.product_range or '',
+        'requirement':  lead.requirement_spec or lead.notes or '',
+        'order_qty':    lead.order_quantity or '',
+        'assigned_to':  lead.assigned_to or '',
+        'code':         lead.code or str(lead.id),
+    })
+
+
+# ══════════════════════════════════════════════════════════════
+# START NPD/EPD PROJECT FROM LEAD (Gate — Check Client Mapping)
+# Lead view → "NPD Project" / "EPD Project" button click hone pe yahan aata hai.
+#
+# Flow:
+#   1. Lead fetch karo, client mapping check karo
+#   2. IF lead.client_id exists:
+#        → Seedha NPD/EPD Project Creation Form open karo
+#        → Client ID, Client Name, Lead ID auto-fill honge
+#   3. IF lead.client_id NOT exists:
+#        → Pehle Client Creation Form open karo (prefilled from lead)
+#        → Client save hone ke baad:
+#            - Client auto-map to lead
+#            - Redirect to NPD/EPD Project Creation Form (prefilled)
+#
+# Validation:
+#   - Project creation not allowed without client (enforced in npd_new/epd_new POST)
+#   - Duplicate client creation prevented (existing client → form direct khulta hai)
+# ══════════════════════════════════════════════════════════════
+
+@npd.route('/start/<int:lead_id>/<project_type>', methods=['GET'])
+@login_required
+def start_from_lead(lead_id, project_type):
+    """
+    Gate route — Lead view se NPD/EPD click hone pe client mapping check karta hai
+    aur appropriate form par redirect karta hai.
+
+    project_type: 'npd' or 'epd' (UI-friendly) — maps to 'npd' / 'existing' internally
+    """
+    from models import Lead
+
+    # Normalize project_type — UI says 'epd', internal schema uses 'existing'
+    if project_type in ('epd', 'existing'):
+        pt_ui       = 'epd'
+        form_route  = 'npd.epd_new'
+    elif project_type == 'npd':
+        pt_ui       = 'npd'
+        form_route  = 'npd.npd_new'
+    else:
+        flash('Invalid project type', 'error')
+        return redirect(url_for('crm.lead_view', id=lead_id))
+
+    lead = Lead.query.get_or_404(lead_id)
+
+    # ── Case 1: Client already mapped → straight to Project Creation Form ──
+    if lead.client_id:
+        flash(
+            f'✅ Client already linked to this lead. Redirecting to '
+            f'{pt_ui.upper()} Project creation form…',
+            'info'
+        )
+        return redirect(url_for(form_route,
+            lead_id   = lead.id,
+            client_id = lead.client_id,
+        ))
+
+    # ── Case 2: No client mapped → Client Creation Form first ──
+    flash(
+        f'ℹ️ No client linked to this lead yet. Please create the client first — '
+        f'after saving, you\'ll be redirected to the {pt_ui.upper()} Project form.',
+        'info'
+    )
+    return redirect(url_for('crm.client_add',
+        lead_id      = lead.id,
+        next_action  = pt_ui,          # <- tells client_add where to send us after save
+        contact_name = lead.contact_name or '',
+        company_name = lead.company_name or '',
+        email        = lead.email or '',
+        mobile       = lead.phone or '',
+        city         = lead.city or '',
+        state        = lead.state or '',
+    ))
+
+
+# ══════════════════════════════════════════════════════════════
+# CONVERT LEAD → NPD/EPD PROJECT (Direct — No Form)  [LEGACY]
+# Kept for backward compatibility. New flow uses /start/<lead_id>/<type>.
+# Lead se seedha project create karo, status update karo
+# ══════════════════════════════════════════════════════════════
+
+@npd.route('/convert-lead/<int:lead_id>/<project_type>', methods=['POST'])
+@login_required
+def convert_lead(lead_id, project_type):
+    """
+    Lead view Actions → NPD / EPD click karne pe yahan aata hai.
+
+    Logic:
+      - Agar lead.client_id pehle se hai:
+          → Lead status update karo
+          → NPD/EPD project create karo (client already linked)
+          → Redirect: client view page
+      - Agar lead.client_id nahi hai:
+          → Lead status update karo
+          → NPD/EPD project create karo
+          → Redirect: NPD project view page
+    """
+    from models import Lead, LeadActivityLog as CRMActivityLog
+
+    if project_type not in ('npd', 'existing'):
+        flash('Invalid project type', 'error')
+        return redirect(url_for('crm.lead_view', id=lead_id))
+
+    lead = Lead.query.get_or_404(lead_id)
+
+    # ── 1. Update Lead Status ──
+    new_status = 'NPD Project' if project_type == 'npd' else 'Existing Project'
+    old_status = lead.status
+    lead.status      = new_status
+    lead.updated_at  = datetime.now()
+    lead.modified_by = current_user.id
+
+    # ── 2. Create NPD/EPD Project from Lead data ──
+    proj = NPDProject(
+        code             = gen_npd_code(),
+        project_type     = project_type,
+        status           = 'lead_created',
+        lead_id          = lead.id,
+        client_name      = lead.contact_name or '',
+        client_company   = lead.company_name or '',
+        client_email     = lead.email or '',
+        client_phone     = lead.phone or '',
+        product_name     = lead.product_name or lead.title or f'Project from Lead #{lead.id}',
+        product_category = lead.category or '',
+        product_range    = lead.product_range or '',
+        order_quantity   = lead.order_quantity or '',
+        requirement_spec = lead.requirement_spec or lead.notes or '',
+        npd_fee_paid     = False,
+        npd_fee_amount   = 10000 if project_type == 'npd' else 0,
+        milestone_master_created = True,
+        created_by       = current_user.id,
+        created_at       = datetime.now(),
+    )
+
+    db.session.add(proj)
+    db.session.flush()  # get proj.id
+
+    # ── 3. Create Milestones from Templates ──
+    templates = get_milestone_templates(project_type)
+    for tmpl in templates:
+        if tmpl.applies_to == 'npd' and project_type != 'npd':
+            continue
+        if tmpl.applies_to == 'existing' and project_type != 'existing':
+            continue
+        db.session.add(MilestoneMaster(
+            project_id     = proj.id,
+            milestone_type = tmpl.milestone_type,
+            title          = tmpl.title,
+            sort_order     = tmpl.sort_order,
+            is_selected    = True if tmpl.is_mandatory else tmpl.default_selected,
+            status         = 'pending',
+            created_by     = current_user.id,
+        ))
+
+    # ── 4. NPD Activity Log ──
+    log_npd(proj.id,
+        f"Project created from Lead #{lead.id} ({lead.contact_name or ''}) "
+        f"— Type: {project_type.upper()} — by {current_user.full_name}"
+        + (f" — Client #{lead.client_id} already linked" if lead.client_id else ""))
+
+    # ── 5. CRM Lead Activity Log ──
+    db.session.add(CRMActivityLog(
+        lead_id    = lead.id,
+        user_id    = current_user.id,
+        action     = (f"Lead converted to {project_type.upper()} Project: {proj.code}"
+                      f" — Status: {old_status} → {new_status}"
+                      + (f" — Client already exists (ID: {lead.client_id})" if lead.client_id else "")),
+        created_at = datetime.now(),
+    ))
+
+    db.session.commit()
+
+    # ── 6. Redirect Logic ──
+    if lead.client_id:
+        # Client pehle se exist karta hai → seedha client view pe bhejo
+        flash(
+            f'✅ {project_type.upper()} Project {proj.code} created! '
+            f'Lead status → "{new_status}". '
+            f'Client already linked — opening client profile.',
+            'success'
+        )
+        return redirect(url_for('crm.client_view', id=lead.client_id))
+    else:
+        # Client nahi hai → client create form pe bhejo
+        # lead_id pass karo taaki client create hone ke baad lead se link ho
+        flash(
+            f'✅ {project_type.upper()} Project {proj.code} created! '
+            f'Lead status → "{new_status}". '
+            f'Ab client create karo — details pre-filled hain.',
+            'info'
+        )
+        return redirect(url_for('crm.client_add',
+            lead_id      = lead.id,
+            proj_id      = proj.id,
+            contact_name = lead.contact_name or '',
+            company_name = lead.company_name or '',
+            email        = lead.email or '',
+            mobile       = lead.phone or '',
+            city         = lead.city or '',
+            state        = lead.state or '',
+        ))
+
+
+# ══════════════════════════════════════════════════════════════
+# UPDATE LEAD client_id after client is created
+# ══════════════════════════════════════════════════════════════
+
+@npd.route('/link-client/<int:project_id>', methods=['POST'])
+@login_required
+def link_client(project_id):
+    """Link a client_master to a lead via the NPD project."""
+    from models import Lead
+    proj      = NPDProject.query.get_or_404(project_id)
+    client_id = request.form.get('client_id', type=int)
+
+    if not client_id:
+        return jsonify(success=False, error='client_id required'), 400
+
+    # Update project
+    proj.updated_by = current_user.id
+    log_npd(project_id, f"Client #{client_id} linked to project")
+
+    # Update linked lead too
+    if proj.lead_id:
+        lead = Lead.query.get(proj.lead_id)
+        if lead:
+            lead.client_id  = client_id
+            lead.updated_at = datetime.now()
+            lead.modified_by= current_user.id
+            db.session.add(lead)
+
+    db.session.commit()
+    return jsonify(success=True)
+
+
+# ══════════════════════════════════════════════════════════════
+# NPD SPECIFIC ROUTES
+# ══════════════════════════════════════════════════════════════
+
+@npd.route('/npd-dashboard')
+@login_required
+@require_perm('npd')
+def npd_dashboard():
+    from sqlalchemy import func, extract
+    from datetime import timedelta
+    from models.npd import (NPDProject, MilestoneMaster, OfficeDispatchItem,
+                            OfficeDispatchToken, ClientDispatch)
+    ptype = 'npd'
+    a = {}
+
+    # ── Period filter (same as R&D) ──
+    period = (request.args.get('period') or 'all').lower()
+    cf = request.args.get('from', ''); ct = request.args.get('to', '')
+    _today = datetime.now().date(); pf = pt = None
+    if period == 'today':
+        pf = datetime.combine(_today, datetime.min.time()); pt = datetime.now()
+    elif period == 'yesterday':
+        _y = _today - timedelta(days=1)
+        pf = datetime.combine(_y, datetime.min.time()); pt = datetime.combine(_y, datetime.max.time())
+    elif period == 'last_7_days':
+        pf = datetime.now() - timedelta(days=7); pt = datetime.now()
+    elif period == 'last_30_days':
+        pf = datetime.now() - timedelta(days=30); pt = datetime.now()
+    elif period == 'custom':
+        try:
+            if cf: pf = datetime.combine(datetime.strptime(cf, '%Y-%m-%d').date(), datetime.min.time())
+            if ct: pt = datetime.combine(datetime.strptime(ct, '%Y-%m-%d').date(), datetime.max.time())
+        except Exception:
+            pf = pt = None
+    else:
+        period = 'all'
+
+    def _proj(q):
+        if pf is not None: q = q.filter(NPDProject.created_at >= pf)
+        if pt is not None: q = q.filter(NPDProject.created_at <= pt)
+        return q
+    def _samp(q):
+        if pf is not None: q = q.filter(OfficeDispatchToken.dispatched_at >= pf)
+        if pt is not None: q = q.filter(OfficeDispatchToken.dispatched_at <= pt)
+        return q
+    _PAL = ['#8b5cf6','#3b82f6','#10b981','#f59e0b','#ef4444','#06b6d4','#ec4899','#64748b']
+
+    def _pcount(**kw):
+        try:
+            q = NPDProject.query.filter_by(is_deleted=False, project_type=ptype)
+            return _proj(q.filter_by(**kw)).count() if kw else _proj(q).count()
+        except Exception:
+            return 0
+
+    # ── Project KPIs ──
+    total_proj = _pcount()
+    try:
+        a['leads_converted'] = _proj(NPDProject.query.filter(NPDProject.is_deleted==False,
+                                  NPDProject.project_type==ptype, NPDProject.lead_id.isnot(None))).count()
+    except Exception:
+        a['leads_converted'] = 0
+    try:
+        a['active_projects'] = _proj(NPDProject.query.filter(NPDProject.is_deleted==False,
+                                  NPDProject.project_type==ptype,
+                                  NPDProject.status.notin_(['complete','completed','cancelled']))).count()
+    except Exception:
+        a['active_projects'] = 0
+    try:
+        _m0 = datetime.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        a['new_this_month'] = NPDProject.query.filter(NPDProject.is_deleted==False,
+                                  NPDProject.project_type==ptype, NPDProject.created_at>=_m0).count()
+    except Exception:
+        a['new_this_month'] = 0
+    a['completed_projects'] = _pcount(status='complete')
+
+    # ── Sample KPIs (join token for period) ──
+    def _scount(st=None, sent=False):
+        try:
+            q = db.session.query(func.count(OfficeDispatchItem.id))\
+                .join(OfficeDispatchToken, OfficeDispatchToken.id==OfficeDispatchItem.token_id)
+            if st: q = q.filter(OfficeDispatchItem.approval_status==st)
+            if sent: q = q.filter(OfficeDispatchItem.sent_to_client_at.isnot(None))
+            return _samp(q).scalar() or 0
+        except Exception:
+            return 0
+    s_total    = _scount()
+    s_pending  = _scount('pending')
+    s_approved = _scount('approved')
+    s_rejected = _scount('rejected')
+    s_sent     = _scount(sent=True)
+    a['total_samples']      = s_total
+    a['in_development']     = s_pending
+    a['internal_approved']  = s_approved
+    a['samples_dispatched'] = s_sent
+    a['internal_rejected']  = s_rejected
+    # client-side metrics: no data field -> blank (0)
+    a['client_approved'] = 0
+    a['client_rejected'] = 0
+    a['rework_samples']  = 0
+    a['pending_feedback']= 0
+    a['in_transit']      = 0
+    a['delivered']       = 0
+    a['overdue']         = 0
+    a['on_time']         = 0
+
+    # total dispatches (ClientDispatch)
+    try:
+        cq = ClientDispatch.query
+        if pf is not None: cq = cq.filter(ClientDispatch.dispatched_at >= pf)
+        if pt is not None: cq = cq.filter(ClientDispatch.dispatched_at <= pt)
+        a['total_dispatches'] = cq.count()
+    except Exception:
+        a['total_dispatches'] = 0
+
+    # avg sample cycle time (dispatch -> action), days
+    try:
+        rows = _samp(db.session.query(OfficeDispatchToken.dispatched_at, OfficeDispatchItem.actioned_at)\
+            .join(OfficeDispatchToken, OfficeDispatchToken.id==OfficeDispatchItem.token_id)\
+            .filter(OfficeDispatchItem.actioned_at.isnot(None))).limit(500).all()
+        difs = [ (act - disp).days for disp, act in rows if disp and act and (act - disp).days >= 0 ]
+        a['avg_cycle'] = round(sum(difs)/len(difs), 1) if difs else 0
+    except Exception:
+        a['avg_cycle'] = 0
+
+    # ── Lifecycle funnel ──
+    a['funnel'] = [
+        {'label': 'Leads Converted',    'value': a['leads_converted'],    'color': '#8b5cf6'},
+        {'label': 'NPD Projects Created','value': total_proj,             'color': '#6366f1'},
+        {'label': 'Samples Created',     'value': s_total,                 'color': '#3b82f6'},
+        {'label': 'Internal Approved',   'value': s_approved,              'color': '#06b6d4'},
+        {'label': 'Client Sent',         'value': s_sent,                  'color': '#10b981'},
+        {'label': 'Client Approved',     'value': a['client_approved'],    'color': '#f59e0b'},
+        {'label': 'Projects Completed',  'value': a['completed_projects'], 'color': '#ef4444'},
+    ]
+
+    # ── Sample status donut ──
+    a['sample_status'] = [x for x in [
+        {'label': 'In Development',   'value': s_pending,  'color': '#3b82f6'},
+        {'label': 'Internal Approval','value': s_approved, 'color': '#06b6d4'},
+        {'label': 'Client Sent',      'value': s_sent,     'color': '#10b981'},
+        {'label': 'Client Rejected',  'value': s_rejected, 'color': '#ef4444'},
+    ] if x['value']]
+
+    # ── Project stage overview (by status) ──
+    a['project_stage'] = []
+    try:
+        rows = _proj(db.session.query(NPDProject.status, func.count(NPDProject.id))\
+            .filter(NPDProject.is_deleted==False, NPDProject.project_type==ptype)).group_by(NPDProject.status).all()
+        st = [{'label': (s_ or 'Unknown').replace('_',' ').title(), 'value': c} for s_, c in rows]
+        st.sort(key=lambda x: x['value'], reverse=True)
+        for i, x in enumerate(st): x['color'] = _PAL[i % len(_PAL)]
+        a['project_stage'] = st[:8]
+    except Exception:
+        a['project_stage'] = []
+
+    # ── Client approval trend: no client-approval data -> blank ──
+    a['client_trend'] = []
+
+    # ── Rejection analysis (internal) ──
+    a['rejection_internal'] = []
+    try:
+        rr = _samp(db.session.query(OfficeDispatchItem.reject_reason, func.count(OfficeDispatchItem.id))\
+            .join(OfficeDispatchToken, OfficeDispatchToken.id==OfficeDispatchItem.token_id)\
+            .filter(OfficeDispatchItem.approval_status=='rejected')).group_by(OfficeDispatchItem.reject_reason).all()
+        rl = [{'label': (r or 'Not specified'), 'value': c} for r, c in rr]
+        rl.sort(key=lambda x: x['value'], reverse=True)
+        for i, x in enumerate(rl[:6]): x['color'] = _PAL[i % len(_PAL)]
+        a['rejection_internal'] = rl[:6]
+    except Exception:
+        a['rejection_internal'] = []
+    # client rejection analysis: no data -> blank
+    a['rejection_client'] = []
+    a['top_rework'] = []
+    a['pending_feedback_rows'] = []
+
+    # ── Recent dispatches (ClientDispatch) ──
+    a['recent_dispatches'] = []
+    try:
+        dq = ClientDispatch.query
+        if pf is not None: dq = dq.filter(ClientDispatch.dispatched_at >= pf)
+        if pt is not None: dq = dq.filter(ClientDispatch.dispatched_at <= pt)
+        for d in dq.order_by(ClientDispatch.dispatched_at.desc()).limit(6).all():
+            pr = NPDProject.query.get(d.project_id) if d.project_id else None
+            a['recent_dispatches'].append({
+                'no': d.token_no or '—',
+                'project': (pr.code if pr else '—'),
+                'client': (pr.client_name if pr and pr.client_name else '—'),
+                'date': d.dispatched_at,
+            })
+    except Exception:
+        a['recent_dispatches'] = []
+
+    # ── Recently rejected samples ──
+    a['rejected_recent'] = []
+    try:
+        q = _samp(db.session.query(OfficeDispatchItem, OfficeDispatchToken.dispatched_at)\
+            .join(OfficeDispatchToken, OfficeDispatchToken.id==OfficeDispatchItem.token_id)\
+            .filter(OfficeDispatchItem.approval_status=='rejected'))\
+            .order_by(OfficeDispatchToken.dispatched_at.desc()).limit(6).all()
+        for it, disp in q:
+            pr = it.project
+            a['rejected_recent'].append({
+                'sample_code': it.sample_code or '—',
+                'project': (pr.code if pr else '—'),
+                'reason': it.reject_reason or '—',
+                'date': (it.actioned_at or disp),
+            })
+    except Exception:
+        a['rejected_recent'] = []
+
+    # ── Team workload (by project assigned R&D) ──
+    a['team_workload'] = []
+    try:
+        rows = _samp(db.session.query(User.full_name, OfficeDispatchItem.approval_status, func.count(OfficeDispatchItem.id))\
+            .join(NPDProject, NPDProject.id==OfficeDispatchItem.project_id)\
+            .join(User, User.id==NPDProject.assigned_rd)\
+            .join(OfficeDispatchToken, OfficeDispatchToken.id==OfficeDispatchItem.token_id))\
+            .group_by(User.full_name, OfficeDispatchItem.approval_status).all()
+        wm = {}
+        for nm, stt, c in rows:
+            d = wm.setdefault(nm, {'name': nm, 'in_process': 0, 'completed': 0, 'rejected': 0})
+            if stt == 'pending': d['in_process'] += c
+            elif stt == 'approved': d['completed'] += c
+            elif stt == 'rejected': d['rejected'] += c
+        a['team_workload'] = sorted(wm.values(), key=lambda x: (x['in_process']+x['completed']+x['rejected']), reverse=True)[:6]
+    except Exception:
+        a['team_workload'] = []
+
+    perm = get_perm('npd')
+    return render_template('npd/npd_dashboard.html',
+        active_page='npd_npd_dashboard', perm=perm,
+        analytics=a, period=period, cust_from=cf, cust_to=ct,
+        now=datetime.now())
+
+
+# ═════════════════════════════════════════════════════════════════
+#  NPD FEES REPORT
+# ─────────────────────────────────────────────────────────────────
+#  Lists all NPD projects where `npd_fee_paid=True`, with:
+#    • From-date / To-date filter (against npd_fee_paid_at)
+#    • Optional search by code/product/client
+#    • Total amount aggregate at the bottom
+#  Date filter uses npd_fee_paid_at (stamped on first paid-checkbox
+#  flip). Legacy paid-but-no-timestamp rows are backfilled to
+#  created_at by the migration script — but as a safety net, the
+#  report also coalesces null fee_paid_at → created_at when filtering
+#  and displaying. That way nothing silently disappears.
+# ═════════════════════════════════════════════════════════════════
+@npd.route('/fees-report')
+@login_required
+def npd_fees_report():
+    from sqlalchemy import func, or_
+
+    q       = (request.args.get('q')         or '').strip()
+    from_dt = (request.args.get('from_date') or '').strip()
+    to_dt   = (request.args.get('to_date')   or '').strip()
+    export  = (request.args.get('export')    or '').strip().lower()
+
+    # Permission: piggyback on the existing 'npd' module permission.
+    perm = get_perm('npd')
+    if perm and not perm.can_view:
+        flash('Access denied: NPD module view permission nahi hai.', 'error')
+        return redirect(url_for('npd.npd_dashboard'))
+
+    # Coalesce so legacy rows with NULL fee_paid_at still show under their
+    # created_at. SQLAlchemy `func.coalesce` works on both MySQL & SQLite.
+    fee_dt_expr = func.coalesce(NPDProject.npd_fee_paid_at,
+                                NPDProject.created_at)
+
+    query = NPDProject.query.filter(
+        NPDProject.is_deleted == False,
+        NPDProject.npd_fee_paid == True,
+    )
+
+    # Per-user visibility — same rule as /npd/npd-projects, so a non-manager
+    # only sees fees for projects they're assigned to. Accounts/managers
+    # who should see ALL paid fees need npd_manager / admin role.
+    query = _filter_npd_projects_for_user(query)
+
+    # ── Date filter ──
+    def _pd(s):
+        # Accepts 'YYYY-MM-DD' (browser <input type=date>) or 'DD-MM-YYYY'
+        if not s: return None
+        for fmt in ('%Y-%m-%d', '%d-%m-%Y'):
+            try:    return datetime.strptime(s, fmt).date()
+            except: pass
+        return None
+
+    from_d = _pd(from_dt)
+    to_d   = _pd(to_dt)
+    if from_d:
+        query = query.filter(fee_dt_expr >= datetime.combine(from_d, datetime.min.time()))
+    if to_d:
+        # Inclusive end-of-day so "to: 23-May" includes everything on May 23.
+        end_of_day = datetime.combine(to_d, datetime.max.time())
+        query = query.filter(fee_dt_expr <= end_of_day)
+
+    # ── Search ──
+    if q:
+        like = f'%{q}%'
+        query = query.filter(or_(
+            NPDProject.code.ilike(like),
+            NPDProject.product_name.ilike(like),
+            NPDProject.client_name.ilike(like),
+            NPDProject.client_company.ilike(like),
+        ))
+
+    # Newest fees first
+    rows = query.order_by(fee_dt_expr.desc()).all()
+
+    # Total — Decimal-safe sum (npd_fee_amount is Numeric).
+    from decimal import Decimal
+    total = Decimal('0')
+    for r in rows:
+        try:
+            if r.npd_fee_amount is not None:
+                total += Decimal(str(r.npd_fee_amount))
+        except Exception:
+            pass
+
+    # Optional CSV export
+    if export == 'csv':
+        si = io.StringIO()
+        writer = csv.writer(si)
+        writer.writerow(['Sr.', 'Project Code', 'Product', 'Client',
+                         'Company', 'Amount (₹)', 'Fee Received On',
+                         'Receipt'])
+        for i, r in enumerate(rows, 1):
+            received = r.npd_fee_paid_at or r.created_at
+            writer.writerow([
+                i, r.code or '', r.product_name or '',
+                r.client_name or '', r.client_company or '',
+                float(r.npd_fee_amount or 0),
+                received.strftime('%d-%m-%Y %H:%M') if received else '',
+                r.npd_fee_receipt or '',
+            ])
+        writer.writerow([])
+        writer.writerow(['', '', '', '', 'TOTAL', float(total), '', ''])
+        from flask import Response
+        return Response(
+            si.getvalue(),
+            mimetype='text/csv',
+            headers={'Content-Disposition': 'attachment; filename="npd_fees_report.csv"'},
+        )
+
+    return render_template('npd/fees_report.html',
+        active_page='npd_fees_report',
+        rows=rows, total=total,
+        q=q, from_date=from_dt, to_date=to_dt,
+        count=len(rows), perm=perm,
+    )
+
+
+@npd.route('/npd-projects')
+@login_required
+def npd_projects():
+    q            = request.args.get('q','').strip()
+    status       = request.args.get('status','')
+    show_deleted = request.args.get('deleted','') == '1'
+    sc_id        = ''
+    page         = request.args.get('page', 1, type=int)
+
+    if show_deleted:
+        query = NPDProject.query.filter_by(is_deleted=True, project_type='npd')
+    else:
+        query = NPDProject.query.filter_by(is_deleted=False, project_type='npd')
+
+    # ── Per-user visibility ──
+    # Non-manager/admin users see only projects where they're an
+    # assignee. See `_filter_npd_projects_for_user` doc for the full
+    # list of fields checked. This must run before pagination so the
+    # count and the displayed page stay consistent.
+    query = _filter_npd_projects_for_user(query)
+
+    if q:
+        query = query.filter(db.or_(
+            NPDProject.code.ilike(f'%{q}%'),
+            NPDProject.product_name.ilike(f'%{q}%'),
+            NPDProject.client_name.ilike(f'%{q}%'),
+            NPDProject.client_company.ilike(f'%{q}%'),
+        ))
+    if status and not show_deleted:
+        query = query.filter_by(status=status)
+
+    # Deleted-tab count must respect the same visibility rule, otherwise
+    # a non-manager would see an inflated counter for a tab they can't
+    # actually populate.
+    deleted_query = NPDProject.query.filter_by(is_deleted=True, project_type='npd')
+    deleted_query = _filter_npd_projects_for_user(deleted_query)
+    deleted_count = deleted_query.count()
+
+    projects = query.order_by(NPDProject.created_at.desc()).paginate(page=page, per_page=25)
+    users    = get_users()
+    perm = get_perm('npd_projects')
+    from models.master import NPDStatus
+    from permissions import get_grid_columns
+    from datetime import datetime as _dt
+    npd_statuses = NPDStatus.query.filter_by(is_active=True).order_by(NPDStatus.sort_order).all()
+    grid_cols = get_grid_columns('npd_projects', NPD_COLS_DEFAULT, list(NPD_COLS_ALL.keys()))
+    from permissions import get_sub_perm as _gsp_npd
+    npd_sub = {
+        'inline_edit'         : _gsp_npd('npd_projects', 'inline_edit'),
+        'print'               : _gsp_npd('npd_projects', 'print'),
+        'overview'            : _gsp_npd('npd_projects', 'overview'),
+        'client_detail'       : _gsp_npd('npd_projects', 'client_detail'),
+        'discussion_board'    : _gsp_npd('npd_projects', 'discussion_board'),
+        'internal_discussion' : _gsp_npd('npd_projects', 'internal_discussion'),
+        'activity_log'        : _gsp_npd('npd_projects', 'activity_log'),
+        'attachments'         : _gsp_npd('npd_projects', 'attachments'),
+        'notes'               : _gsp_npd('npd_projects', 'notes'),
+        'milestone'           : _gsp_npd('npd_projects', 'milestone'),
+        'close_project'       : _gsp_npd('npd_projects', 'close_project'),
+        'restore'             : _gsp_npd('npd_projects', 'restore'),
+        'permanent_delete'    : _gsp_npd('npd_projects', 'permanent_delete'),
+        'view_deleted'        : _gsp_npd('npd_projects', 'view_deleted'),
+    }
+    return render_template('npd/npd_projects.html',
+        active_page='npd_npd_projects',
+        projects=projects, q=q, status=status, sc_id=sc_id, users=users, perm=perm,
+        npd_statuses=npd_statuses,
+        grid_cols=grid_cols, all_cols=NPD_COLS_ALL,
+        now=_dt.now,
+        show_deleted=show_deleted,
+        deleted_count=deleted_count,
+        npd_sub=npd_sub,
+    )
+
+
+@npd.route('/sample-ready')
+@login_required
+def sample_ready():
+    from models.npd import NPDFormulation
+    q    = request.args.get('q', '').strip()
+    page = request.args.get('page', 1, type=int)
+
+    # Fix: NPD projects jinka status = 'sample_ready' ho
+    query = NPDProject.query.filter_by(
+        is_deleted=False,
+        project_type='npd',
+        status='sample_ready'
+    )
+
+    if q:
+        query = query.filter(db.or_(
+            NPDProject.code.ilike(f'%{q}%'),
+            NPDProject.product_name.ilike(f'%{q}%'),
+            NPDProject.client_name.ilike(f'%{q}%'),
+            NPDProject.client_company.ilike(f'%{q}%'),
+        ))
+
+    projects = query.order_by(NPDProject.created_at.desc()).paginate(page=page, per_page=25)
+
+    # Har project ki formulations fetch karo (saari - for context)
+    proj_ids = [p.id for p in projects.items]
+    formulations = []
+    if proj_ids:
+        formulations = NPDFormulation.query.filter(
+            NPDFormulation.project_id.in_(proj_ids)
+        ).order_by(NPDFormulation.iteration).all()
+    form_map = {}
+    for f in formulations:
+        form_map.setdefault(f.project_id, []).append(f)
+
+    perm  = get_perm('npd')
+    users = get_users()
+
+    # R&D members resolve karo — assigned_rd_members = comma-sep Employee IDs
+    from models.employee import Employee
+    rd_members_map = {}  # {project_id: ["Sneha Dagar", "Riya Chandesariya"]}
+
+    # Sab projects ke RD member IDs ek saath collect karo (efficient)
+    all_rd_ids = set()
+    for p in projects.items:
+        if p.assigned_rd_members:
+            for x in str(p.assigned_rd_members).split(','):
+                x = x.strip()
+                if x and x.isdigit():
+                    all_rd_ids.add(int(x))
+
+    # Batch fetch — Employee table se
+    emp_name_map = {}
+    if all_rd_ids:
+        emps = Employee.query.filter(
+            Employee.id.in_(all_rd_ids),
+            Employee.is_deleted == False
+        ).all()
+        for e in emps:
+            emp_name_map[e.id] = e.full_name
+
+    for p in projects.items:
+        names = []
+        # assigned_rd → single User (R&D head)
+        if p.rd_user and p.rd_user.full_name:
+            names.append(p.rd_user.full_name)
+        # assigned_rd_members → multiple Employees
+        if p.assigned_rd_members:
+            for x in str(p.assigned_rd_members).split(','):
+                x = x.strip()
+                if x and x.isdigit():
+                    n = emp_name_map.get(int(x))
+                    if n and n not in names:
+                        names.append(n)
+        rd_members_map[p.id] = names
+
+    # Saare R&D department employees (fallback dropdown)
+    from models.employee import Employee
+    rd_all = Employee.query.filter(
+        Employee.is_deleted == False,
+        Employee.department.ilike('%r&d%')
+    ).order_by(Employee.first_name).all()
+    # Agar R&D department filter se koi nahi mila to emp_name_map ke saare names use karo
+    if rd_all:
+        rd_all_names = [e.full_name for e in rd_all if e.full_name]
+    else:
+        # emp_name_map already built upar — saare assigned RD names
+        rd_all_names = list(set(emp_name_map.values()))
+        rd_all_names.sort()
+
+    return render_template('npd/sample_ready.html',
+        active_page='npd_sample_ready',
+        projects=projects,
+        q=q,
+        form_map=form_map,
+        perm=perm,
+        users=users,
+        rd_members_map=rd_members_map,
+        rd_all_names=rd_all_names,
+        total=projects.total,
+    )
+
+
+# ════════════════════════════════════════════════════════════════
+#  NPD Form PDF generator
+# ════════════════════════════════════════════════════════════════
+#  Produces a filled-in HCP Wellness "NEW PRODUCT DEVELOPMENT FORM"
+#  PDF for any NPDProject. Layout mirrors the printed form clients
+#  receive — logo + title block on top, project meta strip, then a
+#  large product-info table with all the fields populated from the
+#  database row.
+#
+#  The work happens in `_build_npd_form_pdf` which returns the PDF
+#  bytes; the route just wraps it in a Flask Response with a download
+#  filename. Anything that pulls or reformats data lives inside the
+#  builder so it's easy to test in isolation.
+# ════════════════════════════════════════════════════════════════
+def _npd_form_styles():
+    """ReportLab styles for the NPD form PDF. Cached per-call rather
+    than module-level to avoid the global-styles-mutation gotcha
+    when the same name gets registered twice."""
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib import colors
+    from reportlab.lib.enums import TA_CENTER
+    HCP_BLUE = colors.HexColor('#0B2A6B')
+    base = getSampleStyleSheet()
+    return {
+        'HCP_BLUE':    HCP_BLUE,
+        'HCP_LABEL_BG': HCP_BLUE,
+        'HCP_LABEL_FG': colors.white,
+        'HCP_BORDER':  colors.HexColor('#000000'),
+        'title':       ParagraphStyle('npdTitle', parent=base['Heading1'],
+                                      fontName='Helvetica-Bold',
+                                      fontSize=18, leading=22,
+                                      textColor=HCP_BLUE,
+                                      alignment=TA_CENTER),
+        'subtitle':    ParagraphStyle('npdSubtitle', parent=base['Normal'],
+                                      fontName='Helvetica-Bold',
+                                      fontSize=15, leading=18,
+                                      textColor=HCP_BLUE,
+                                      alignment=TA_CENTER),
+        'label':       ParagraphStyle('npdLabel', parent=base['Normal'],
+                                      fontName='Helvetica-Bold',
+                                      fontSize=9, leading=12,
+                                      textColor=colors.white),
+        'value':       ParagraphStyle('npdValue', parent=base['Normal'],
+                                      fontName='Helvetica',
+                                      fontSize=9, leading=12,
+                                      textColor=colors.black),
+    }
+
+
+def _npd_safe(v, dash='—'):
+    """Render any DB value as a non-empty user-friendly string."""
+    if v is None:
+        return dash
+    s = str(v).strip()
+    return s if s else dash
+
+
+def _build_npd_form_pdf(proj):
+    """Generate the NPD Form PDF for the given NPDProject row.
+
+    Returns:
+        (bytes, filename) — PDF binary content plus a suggested
+        download filename of the form `NPD_Form_<code>.pdf`.
+    """
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.units import mm
+    from reportlab.platypus import (
+        SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image,
+    )
+
+    s = _npd_form_styles()
+    HCP_LABEL_BG = s['HCP_LABEL_BG']
+    HCP_LABEL_FG = s['HCP_LABEL_FG']
+    HCP_BORDER   = s['HCP_BORDER']
+
+    # ── Pull values out of the project. Some fields are nullable; we
+    #    use _npd_safe to avoid 'None' text cluttering the form.
+    code         = _npd_safe(proj.code, dash='—')
+    date_str     = (proj.created_at.strftime('%d-%m-%Y %H:%M:%S')
+                    if proj.created_at else '—')
+    coordinator  = _npd_safe(proj.client_coordinator)
+    product_name = _npd_safe(proj.product_name)
+    client_name  = _npd_safe(proj.client_name)
+    client_company = _npd_safe(proj.client_company)
+    market_level   = _npd_safe(proj.market_level)
+    area_app     = _npd_safe(proj.area_of_application)
+    description  = _npd_safe(proj.description)
+    ingredients  = _npd_safe(proj.ingredients)
+    video_link   = _npd_safe(proj.video_link)
+    active_ing   = _npd_safe(proj.active_ingredients)
+    no_samples   = _npd_safe(proj.no_of_samples if proj.no_of_samples is not None else 0,
+                             dash='0')
+    start_date   = (proj.project_start_date.strftime('%Y-%m-%d')
+                    if proj.project_start_date else '—')
+    ref_brand    = _npd_safe(proj.reference_brand)
+    ref_product  = _npd_safe(proj.reference_product_name)
+    variant      = _npd_safe(proj.variant_type)
+    appearance   = _npd_safe(proj.appearance)
+    product_claim= _npd_safe(proj.product_claim)
+    label_claim  = _npd_safe(proj.label_claim)
+    costing      = _npd_safe(proj.costing_range)
+    fragrance    = _npd_safe(proj.fragrance)
+    ph_value     = _npd_safe(proj.ph_value)
+    viscosity    = _npd_safe(proj.viscosity)
+    packaging    = _npd_safe(proj.packaging_type)
+
+    label_p = lambda txt: Paragraph(txt, s['label'])
+    val_p   = lambda txt: Paragraph(_npd_safe(txt), s['value'])
+
+    # ── Header: logo + big title ──
+    logo_path = os.path.join(
+        os.path.dirname(__file__), 'static', 'images', 'icons', 'hcp-logo.png'
+    )
+    if os.path.exists(logo_path):
+        logo = Image(logo_path, width=24*mm, height=24*mm)
+    else:
+        logo = Paragraph('<b>HCP</b>', s['title'])
+
+    title_para = Paragraph('NPD FORM', s['title'])
+    sub_para   = Paragraph('(NEW PRODUCT DEVELOPMENT FORM)', s['subtitle'])
+
+    title_table = Table(
+        [[logo, [title_para, Spacer(1, 4), sub_para]]],
+        colWidths=[40*mm, 130*mm],
+    )
+    title_table.setStyle(TableStyle([
+        ('VALIGN',     (0, 0), (-1, -1), 'MIDDLE'),
+        ('ALIGN',      (0, 0), (0, 0),   'CENTER'),
+        ('ALIGN',      (1, 0), (1, 0),   'CENTER'),
+        ('LEFTPADDING',(0, 0), (-1, -1), 6),
+        ('RIGHTPADDING',(0,0), (-1, -1), 6),
+        ('TOPPADDING', (0, 0), (-1, -1), 4),
+        ('BOTTOMPADDING',(0,0),(-1,-1), 4),
+        ('BOX',        (0, 0), (-1, -1), 1, HCP_BORDER),
+    ]))
+
+    # ── Project meta strip: Project No / Date / Coordinator ──
+    meta_table = Table(
+        [
+            ['PROJECT NO.', 'DATE', 'CLIENT CO-ORDINATOR'],
+            [code, date_str, coordinator],
+        ],
+        colWidths=[60*mm, 50*mm, 60*mm],
+    )
+    meta_table.setStyle(TableStyle([
+        ('FONTNAME',     (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE',     (0, 0), (-1, 0), 9),
+        ('TEXTCOLOR',    (0, 0), (-1, 0), HCP_LABEL_FG),
+        ('BACKGROUND',   (0, 0), (-1, 0), HCP_LABEL_BG),
+        ('FONTNAME',     (0, 1), (-1, 1), 'Helvetica'),
+        ('FONTSIZE',     (0, 1), (-1, 1), 9),
+        ('GRID',         (0, 0), (-1, -1), 0.5, HCP_BORDER),
+        ('VALIGN',       (0, 0), (-1, -1), 'MIDDLE'),
+        ('LEFTPADDING',  (0, 0), (-1, -1), 6),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 6),
+        ('TOPPADDING',   (0, 0), (-1, -1), 4),
+        ('BOTTOMPADDING',(0, 0), (-1, -1), 4),
+    ]))
+
+    # ── Main info table — 4-column grid with SPANs where a field
+    #    needs more space. col widths sum to 175mm = A4 minus margins.
+    LABEL_W1, VAL_W1, LABEL_W2, VAL_W2 = 35*mm, 60*mm, 35*mm, 45*mm
+    col_widths = [LABEL_W1, VAL_W1, LABEL_W2, VAL_W2]
+
+    rows  = []
+    spans = []
+    r = 0
+
+    # PRODUCT NAME [val] | MARKET LEVEL [val spans 3 rows down]
+    rows.append([label_p('PRODUCT NAME'), val_p(product_name),
+                 label_p('MARKET LEVEL'), val_p(market_level)])
+    market_row = r
+    r += 1
+
+    # CLIENT NAME [val] | (market level continues)
+    rows.append([label_p('CLIENT NAME'), val_p(client_name), '', ''])
+    r += 1
+
+    # COMPANY [val]
+    rows.append([label_p('COMPANY'), val_p(client_company), '', ''])
+    r += 1
+
+    # Market-level vertical span: market_row..r-1, both label cell (col 2)
+    # and value cell (col 3) span vertically.
+    spans.append(('SPAN', (2, market_row), (2, r - 1)))
+    spans.append(('SPAN', (3, market_row), (3, r - 1)))
+
+    def _full_width_row(label_text, value_text):
+        nonlocal r
+        rows.append([label_p(label_text), val_p(value_text), '', ''])
+        spans.append(('SPAN', (1, r), (3, r)))
+        r += 1
+
+    _full_width_row('AREA OF APPLICANT', area_app)
+    _full_width_row('DESCRIPTION',       description)
+    _full_width_row('INGREDIENTS',       ingredients)
+    _full_width_row('VIDEO LINK',        video_link)
+    _full_width_row('ACTIVE ING. REQ.',  active_ing)
+    _full_width_row('NO OF SAMPLE',      no_samples)
+
+    # Days [empty middle] [date]
+    rows.append([label_p('Days'), val_p(''), val_p(''), val_p(start_date)])
+    spans.append(('SPAN', (1, r), (2, r)))
+    r += 1
+
+    # 3-column header row: REFERENCE BRAND | REFERENCE PRODUCT NAME | VARIANT
+    rows.append([label_p('REFERENCE BRAND'),
+                 label_p('REFERENCE PRODUCT NAME'),
+                 label_p('VARIANT / VARIETY / TYPE'),
+                 ''])
+    spans.append(('SPAN', (2, r), (3, r)))
+    label_row_3col = r
+    r += 1
+
+    # Values for the 3-column row
+    rows.append([val_p(ref_brand),
+                 val_p(ref_product),
+                 val_p(variant), ''])
+    spans.append(('SPAN', (2, r), (3, r)))
+    r += 1
+
+    _full_width_row('APPEARANCE',    appearance)
+    _full_width_row('PRODUCT CLAIM', product_claim)
+    _full_width_row('LABEL CLAIM',   label_claim)
+
+    # COSTING RANGE [v] | ODOUR/FRAGRANCE [v]
+    rows.append([label_p('COSTING RANGE'), val_p(costing),
+                 label_p('ODOUR/FRAGRANCE'), val_p(fragrance)])
+    costing_row = r
+    r += 1
+
+    # pH : NUMBER [v] | VISCOSITY [v]
+    rows.append([label_p('pH : NUMBER'), val_p(ph_value),
+                 label_p('VISCOSITY'), val_p(viscosity)])
+    ph_row = r
+    r += 1
+
+    # PACKAGING TYPE [val spans 3]
+    _full_width_row('PACKAGING TYPE', packaging)
+
+    tbl = Table(rows, colWidths=col_widths)
+
+    style = [
+        ('GRID',         (0, 0), (-1, -1), 0.5, HCP_BORDER),
+        ('VALIGN',       (0, 0), (-1, -1), 'MIDDLE'),
+        ('LEFTPADDING',  (0, 0), (-1, -1), 5),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 5),
+        ('TOPPADDING',   (0, 0), (-1, -1), 4),
+        ('BOTTOMPADDING',(0, 0), (-1, -1), 4),
+    ]
+    style.extend(spans)
+
+    # Color column-0 (primary label) cells, except the all-label header row
+    for row_i in range(len(rows)):
+        if row_i == label_row_3col:
+            continue
+        style.append(('BACKGROUND', (0, row_i), (0, row_i), HCP_LABEL_BG))
+        style.append(('TEXTCOLOR',  (0, row_i), (0, row_i), HCP_LABEL_FG))
+
+    # Color column-2 label cells (only on the rows where col 2 is used as a label)
+    for row_i in (market_row, costing_row, ph_row):
+        style.append(('BACKGROUND', (2, row_i), (2, row_i), HCP_LABEL_BG))
+        style.append(('TEXTCOLOR',  (2, row_i), (2, row_i), HCP_LABEL_FG))
+
+    # The 3-column header row gets an entirely blue background
+    style.append(('BACKGROUND', (0, label_row_3col), (-1, label_row_3col), HCP_LABEL_BG))
+    style.append(('TEXTCOLOR',  (0, label_row_3col), (-1, label_row_3col), HCP_LABEL_FG))
+
+    tbl.setStyle(TableStyle(style))
+
+    # ── Build the document into a memory buffer ──
+    buf = io.BytesIO()
+    doc = SimpleDocTemplate(
+        buf,
+        pagesize=A4,
+        leftMargin=15*mm, rightMargin=15*mm,
+        topMargin=12*mm,  bottomMargin=12*mm,
+        title=f"NPD Form - {product_name}",
+        author='HCP Wellness',
+    )
+    story = [title_table, meta_table, Spacer(1, 6), tbl]
+    doc.build(story)
+    pdf_bytes = buf.getvalue()
+    buf.close()
+
+    # Filename: NPD_Form_<code>.pdf, with a fallback for projects that
+    # don't have a code yet (rare — typically only freshly created
+    # rows before the auto-numbering job runs).
+    safe_code = (code or f'project_{proj.id}').replace('/', '-').replace(' ', '_')
+    filename = f'NPD_Form_{safe_code}.pdf'
+    return pdf_bytes, filename
+
+
+@npd.route('/projects/<int:pid>/download-form', methods=['GET'])
+@login_required
+def download_npd_form(pid):
+    """Generate and stream the HCP NPD Form PDF for a project.
+
+    Visibility is gated by the same per-user rule that hides projects
+    on the listing page — a user can only download forms for projects
+    they're allowed to see. (Without this, a non-assigned user could
+    enumerate /download-form?pid=1,2,3,... to read every project's
+    client and product details.)
+    """
+    from flask import Response
+
+    proj = NPDProject.query.get_or_404(pid)
+    if proj.is_deleted:
+        flash('Project has been deleted', 'warning')
+        return redirect(url_for('npd.npd_projects'))
+
+    # Visibility check — manager / admin always allowed; others must
+    # be assigned via one of the assignment vectors handled by
+    # _filter_npd_projects_for_user. We re-use that helper by running
+    # a single-row query through it.
+    if not is_npd_manager_user():
+        allowed = _filter_npd_projects_for_user(
+            NPDProject.query.filter_by(id=pid)
+        ).first()
+        if not allowed:
+            flash('You do not have permission to download this form', 'danger')
+            return redirect(url_for('npd.npd_projects'))
+
+    pdf_bytes, filename = _build_npd_form_pdf(proj)
+    return Response(
+        pdf_bytes,
+        mimetype='application/pdf',
+        headers={
+            'Content-Disposition': f'attachment; filename="{filename}"',
+            'Content-Length':       str(len(pdf_bytes)),
+            'Cache-Control':        'no-store',
+        },
+    )
+
+
+@npd.route('/npd-projects/grid-config', methods=['POST'])
+@login_required
+def npd_grid_config():
+    from permissions import save_grid_columns
+    data = request.get_json()
+    cols = data.get('cols', [])
+    valid = [c for c in cols if c in NPD_COLS_ALL]
+    if not valid:
+        return jsonify(success=False, error='No valid columns')
+    save_grid_columns('npd_projects', valid)
+    return jsonify(success=True)
+
+
+# ══════════════════════════════════════════════════════════════
+# NPD EXPORT
+# ══════════════════════════════════════════════════════════════
+
+@npd.route('/npd-projects/bulk-delete', methods=['POST'])
+@login_required
+def npd_bulk_delete():
+    data = request.get_json()
+    ids  = data.get('ids', [])
+    if not ids:
+        return jsonify(success=False, error='No IDs')
+    NPDProject.query.filter(
+        NPDProject.id.in_([int(i) for i in ids]),
+        NPDProject.is_deleted==False
+    ).update({
+        'is_deleted': True,
+        'deleted_at': datetime.now(),
+        'deleted_by': current_user.id
+    }, synchronize_session=False)
+    db.session.commit()
+    return jsonify(success=True, deleted=len(ids))
+
+
+@npd.route('/npd-projects/export')
+@login_required
+def npd_export():
+    from models.employee import Employee
+    q      = request.args.get('q','').strip()
+    status = request.args.get('status','')
+    sc_id  = request.args.get('sc','')
+
+    query = NPDProject.query.filter_by(is_deleted=False, project_type='npd')
+    if q:
+        query = query.filter(db.or_(
+            NPDProject.code.ilike(f'%{q}%'),
+            NPDProject.product_name.ilike(f'%{q}%'),
+            NPDProject.client_name.ilike(f'%{q}%'),
+        ))
+    if status:
+        query = query.filter_by(status=status)
+    projects = query.order_by(NPDProject.created_at.desc()).all()
+
+    # Build employee id→name map
+    emp_map = {str(e.id): e.full_name for e in Employee.query.filter_by(is_deleted=False).all()}
+    user_map = {u.id: u.full_name for u in User.query.filter_by(is_active=True).all()}
+
+    def emp_names(ids_str):
+        if not ids_str: return ''
+        return ', '.join(emp_map.get(i.strip(), i.strip()) for i in ids_str.split(',') if i.strip())
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+
+    headers = [
+        'Project No', 'Type', 'Status', 'Priority',
+        'Product Name', 'Category', 'Product Range',
+        'Client Name', 'Client Company', 'Client Email', 'Client Phone', 'Client Coordinator',
+        'Area of Application', 'Market Level', 'No of Samples', 'MOQ', 'Product Size',
+        'Description', 'Ingredients', 'Active Ingredients',
+        'Reference Brand', 'Reference Product', 'Reference Product Name',
+        'Variant Type', 'Appearance', 'Product Claim', 'Label Claim',
+        'Costing Range', 'pH Value', 'Packaging Type', 'Fragrance', 'Viscosity',
+        'Video Link', 'Custom Formulation', 'Requirement Spec', 'Order Quantity',
+        'NPD Fee Paid', 'NPD Fee Amount',
+        'Assigned Members', 'Assigned RD Members',
+        'Project Start Date', 'Project End Date', 'Lead Days', 'Target Sample Date',
+        'Delay Reason', 'Converted to Commercial',
+        'Created At', 'Created By',
+    ]
+    writer.writerow(headers)
+
+    for p in projects:
+        writer.writerow([
+            p.code, p.project_type, p.status, p.priority,
+            p.product_name, p.product_category or '', p.product_range or '',
+            p.client_name or '', p.client_company or '', p.client_email or '', p.client_phone or '', p.client_coordinator or '',
+            p.area_of_application or '', p.market_level or '', p.no_of_samples or 0, p.moq or '', p.product_size or '',
+            p.description or '', p.ingredients or '', p.active_ingredients or '',
+            p.reference_brand or '', p.reference_product or '', p.reference_product_name or '',
+            p.variant_type or '', p.appearance or '', p.product_claim or '', p.label_claim or '',
+            p.costing_range or '', p.ph_value or '', p.packaging_type or '', p.fragrance or '', p.viscosity or '',
+            p.video_link or '', 'Yes' if p.custom_formulation else 'No', p.requirement_spec or '', p.order_quantity or '',
+            'Yes' if p.npd_fee_paid else 'No', float(p.npd_fee_amount) if p.npd_fee_amount else '',
+            emp_names(p.assigned_members), emp_names(p.assigned_rd_members),
+            p.project_start_date.strftime('%d-%m-%Y') if p.project_start_date else '',
+            p.project_end_date.strftime('%d-%m-%Y') if p.project_end_date else '',
+            p.project_lead_days or '',
+            p.target_sample_date.strftime('%d-%m-%Y') if p.target_sample_date else '',
+            p.delay_reason or '', 'Yes' if p.converted_to_commercial else 'No',
+            p.created_at.strftime('%d-%m-%Y %H:%M') if p.created_at else '',
+            user_map.get(p.created_by, '') if p.created_by else '',
+        ])
+
+    from flask import Response
+    output.seek(0)
+    filename = f"NPD_Projects_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+    return Response(
+        output.getvalue(),
+        mimetype='text/csv',
+        headers={'Content-Disposition': f'attachment; filename={filename}'}
+    )
+
+
+# ══════════════════════════════════════════════════════════════
+# NPD IMPORT
+# ══════════════════════════════════════════════════════════════
+
+@npd.route('/npd-projects/import', methods=['GET', 'POST'])
+@login_required
+def npd_import():
+    if request.method == 'GET':
+        # Return sample CSV template
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow([
+            'Product Name*', 'Category', 'Product Range', 'Status',
+            'Priority', 'Client Name', 'Client Company', 'Client Email', 'Client Phone',
+            'Client Coordinator', 'Area of Application', 'Market Level', 'No of Samples',
+            'MOQ', 'Product Size', 'Description', 'Ingredients', 'Active Ingredients',
+            'Reference Brand', 'Reference Product', 'Variant Type', 'Appearance',
+            'Product Claim', 'Label Claim', 'Costing Range', 'pH Value',
+            'Packaging Type', 'Fragrance', 'Viscosity', 'Order Quantity',
+            'Project Start Date (DD-MM-YYYY)', 'Project End Date (DD-MM-YYYY)',
+            'Target Sample Date (DD-MM-YYYY)', 'Requirement Spec',
+        ])
+        # Sample row
+        writer.writerow([
+            'Sample Face Wash', 'Skin Care', 'Herbal', 'not_started',
+            'Normal', 'John Doe', 'ABC Corp', 'john@abc.com', '9999999999',
+            'Sneha', 'Face', 'Premium', '3',
+            '1000 units', '100ml', 'Gentle face wash', '', '',
+            'Foxtale', 'Oil Face Wash', 'Regular', 'Clear gel',
+            '', '', 'As per benchmark', '5.5-6.5',
+            'Flip cap bottle', 'Fresh', 'Medium', '5000 units',
+            '01-04-2026', '30-06-2026', '15-04-2026', 'Must be SLS free',
+        ])
+        output.seek(0)
+        from flask import Response
+        return Response(
+            output.getvalue(),
+            mimetype='text/csv',
+            headers={'Content-Disposition': 'attachment; filename=NPD_Import_Template.csv'}
+        )
+
+    # POST — process uploaded CSV
+    if 'file' not in request.files:
+        flash('No file uploaded', 'error')
+        return redirect(url_for('npd.npd_projects'))
+
+    f = request.files['file']
+    if not f.filename.endswith('.csv'):
+        flash('Only CSV files are supported', 'error')
+        return redirect(url_for('npd.npd_projects'))
+
+    stream = io.StringIO(f.stream.read().decode('utf-8-sig'))
+    reader = csv.DictReader(stream)
+
+    added = 0
+    errors = []
+
+    for i, row in enumerate(reader, start=2):
+        product_name = (row.get('Product Name*') or row.get('Product Name') or '').strip()
+        if not product_name:
+            errors.append(f'Row {i}: Product Name is required')
+            continue
+        try:
+            def pd(val):
+                v = (val or '').strip()
+                if not v: return None
+                for fmt in ('%d-%m-%Y', '%Y-%m-%d', '%d/%m/%Y'):
+                    try: return datetime.strptime(v, fmt).date()
+                    except: pass
+                return None
+
+            proj = NPDProject(
+                code=gen_npd_code(),
+                project_type='npd',
+                product_name=product_name,
+                product_category=(row.get('Category') or '').strip(),
+                product_range=(row.get('Product Range') or '').strip(),
+                status=(row.get('Status') or 'not_started').strip(),
+                priority=(row.get('Priority') or 'Normal').strip(),
+                client_name=(row.get('Client Name') or '').strip(),
+                client_company=(row.get('Client Company') or '').strip(),
+                client_email=(row.get('Client Email') or '').strip(),
+                client_phone=(row.get('Client Phone') or '').strip(),
+                client_coordinator=(row.get('Client Coordinator') or '').strip(),
+                area_of_application=(row.get('Area of Application') or '').strip(),
+                market_level=(row.get('Market Level') or '').strip(),
+                no_of_samples=int(row.get('No of Samples') or 0),
+                moq=(row.get('MOQ') or '').strip(),
+                product_size=(row.get('Product Size') or '').strip(),
+                description=(row.get('Description') or '').strip(),
+                ingredients=(row.get('Ingredients') or '').strip(),
+                active_ingredients=(row.get('Active Ingredients') or '').strip(),
+                reference_brand=(row.get('Reference Brand') or '').strip(),
+                reference_product=(row.get('Reference Product') or '').strip(),
+                variant_type=(row.get('Variant Type') or '').strip(),
+                appearance=(row.get('Appearance') or '').strip(),
+                product_claim=(row.get('Product Claim') or '').strip(),
+                label_claim=(row.get('Label Claim') or '').strip(),
+                costing_range=(row.get('Costing Range') or '').strip(),
+                ph_value=(row.get('pH Value') or '').strip(),
+                packaging_type=(row.get('Packaging Type') or '').strip(),
+                fragrance=(row.get('Fragrance') or '').strip(),
+                viscosity=(row.get('Viscosity') or '').strip(),
+                order_quantity=(row.get('Order Quantity') or '').strip(),
+                requirement_spec=(row.get('Requirement Spec') or '').strip(),
+                project_start_date=pd(row.get('Project Start Date (DD-MM-YYYY)')),
+                project_end_date=pd(row.get('Project End Date (DD-MM-YYYY)')),
+                target_sample_date=pd(row.get('Target Sample Date (DD-MM-YYYY)')),
+                milestone_master_created=True,
+                created_by=current_user.id,
+            )
+            db.session.add(proj)
+            db.session.flush()
+            # Add default milestones
+            templates = get_milestone_templates('npd')
+            for tmpl in templates:
+                if tmpl.applies_to == 'existing': continue
+                db.session.add(MilestoneMaster(
+                    project_id=proj.id, milestone_type=tmpl.milestone_type,
+                    title=tmpl.title, sort_order=tmpl.sort_order,
+                    is_selected=True if tmpl.is_mandatory else tmpl.default_selected,
+                    status='pending', created_by=current_user.id,
+                ))
+            added += 1
+        except Exception as e:
+            errors.append(f'Row {i}: {str(e)}')
+
+    db.session.commit()
+
+    if added:
+        flash(f'✅ {added} project(s) imported successfully!', 'success')
+    if errors:
+        flash('⚠️ Errors: ' + ' | '.join(errors[:5]), 'warning')
+
+    return redirect(url_for('npd.npd_projects'))
+
+
+@npd.route('/npd-new', methods=['GET', 'POST'])
+@login_required
+def npd_new():
+    """NPD only form"""
+    users = get_users()
+    leads = Lead.query.filter_by(is_deleted=False).order_by(Lead.created_at.desc()).limit(200).all()
+    prefill_lead = None
+    prefill_lead_id = request.args.get('lead_id') or request.form.get('lead_id')
+    if prefill_lead_id:
+        try: prefill_lead = Lead.query.get(int(prefill_lead_id))
+        except: pass
+    prefill_url = {'client_id': '', 'client_name': '', 'client_company': '', 'client_email': '', 'client_phone': ''}
+    _cid = request.args.get('client_id')
+    if _cid:
+        try:
+            from models.client import ClientMaster
+            _cl = ClientMaster.query.get(int(_cid))
+            if _cl:
+                prefill_url['client_id']      = str(_cl.id)
+                prefill_url['client_name']    = _cl.contact_name or ''
+                prefill_url['client_company'] = _cl.company_name or ''
+                prefill_url['client_email']   = _cl.email or ''
+                prefill_url['client_phone']   = _cl.mobile or ''
+        except: pass
+
+    if request.method == 'POST':
+        product_name = request.form.get('product_name','').strip()
+        if not product_name:
+            flash('Product name required','error')
+            return render_template('npd/npd_form.html', active_page='npd_npd_projects',
+                                   users=users, leads=leads, prefill_lead=prefill_lead,
+                                   prefill_url=prefill_url, edit=None)
+
+        # ── Business rule: project cannot be created without a client ──
+        _client_id_raw = request.form.get('client_id', '').strip()
+        if not _client_id_raw:
+            flash('A client is required to create an NPD Project. Please select or create a client first.', 'error')
+            return redirect(url_for('npd.npd_new', lead_id=request.form.get('lead_id') or ''))
+
+        g = request.form.get  # shorthand
+        proj = NPDProject(
+            code=gen_npd_code(), project_type='npd',
+            status=g('status','not_started'),
+            product_name=product_name,
+            product_category=g('product_category',''),
+            product_range=g('product_range',''),
+            client_name=g('client_name',''),
+            client_company=g('client_company',''),
+            client_email=g('client_email',''),
+            client_phone=g('client_phone',''),
+            client_coordinator=g('client_coordinator',''),
+            lead_id=g('lead_id') or None,
+            requirement_spec=g('requirement_spec',''),
+            reference_product=g('reference_product',''),
+            reference_brand=g('reference_brand',''),
+            reference_product_name=g('reference_product_name',''),
+            custom_formulation='custom_formulation' in request.form,
+            order_quantity=g('order_quantity',''),
+            npd_fee_paid='npd_fee_paid' in request.form,
+            npd_fee_amount=g('npd_fee_amount',10000) or 10000,
+            # Extended fields
+            area_of_application=g('area_of_application',''),
+            market_level=g('market_level',''),
+            no_of_samples=int(g('no_of_samples') or 0),
+            moq=g('moq',''),
+            product_size=g('product_size',''),
+            description=g('description',''),
+            ingredients=g('ingredients',''),
+            active_ingredients=g('active_ingredients',''),
+            video_link=g('video_link',''),
+            variant_type=g('variant_type',''),
+            appearance=g('appearance',''),
+            product_claim=g('product_claim',''),
+            label_claim=g('label_claim',''),
+            costing_range=g('costing_range',''),
+            ph_value=g('ph_value',''),
+            packaging_type=g('packaging_type',''),
+            fragrance=g('fragrance',''),
+            viscosity=g('viscosity',''),
+            priority=g('priority','Normal'),
+            project_start_date=_parse_date(g('project_start_date')),
+            project_lead_days=int(g('project_lead_days') or 0) or None,
+            project_end_date=_parse_date(g('project_end_date')),
+            target_sample_date=g('target_sample_date') or None,
+            assigned_members=g('assigned_members',''),
+            assigned_rd_members=g('assigned_rd_members',''),
+            client_id=g('client_id') or None,
+            milestone_master_created=True,
+            created_by=current_user.id,
+        )
+        # Stamp fee-received timestamp if checkbox was ticked at create-time.
+        if proj.npd_fee_paid:
+            proj.npd_fee_paid_at = datetime.now()
+        if 'npd_fee_receipt' in request.files:
+            f = request.files['npd_fee_receipt']
+            if f and f.filename and allowed_file(f.filename):
+                proj.npd_fee_receipt = save_upload(f)
+
+        db.session.add(proj)
+        db.session.flush()
+
+        templates = get_milestone_templates('npd')
+        for tmpl in templates:
+            if tmpl.applies_to == 'existing': continue
+            db.session.add(MilestoneMaster(
+                project_id=proj.id, milestone_type=tmpl.milestone_type,
+                title=tmpl.title, sort_order=tmpl.sort_order,
+                is_selected=True if tmpl.is_mandatory else tmpl.default_selected,
+                status='pending', created_by=current_user.id,
+            ))
+
+        log_npd(proj.id, f"NPD Project created: {proj.code} — {product_name}")
+        db.session.commit()
+        flash(f'NPD Project {proj.code} created!', 'success')
+        return redirect(url_for('npd.project_view', pid=proj.id))
+
+    if request.method == 'GET':
+        from models.employee import Employee
+        from models.master import NPDStatus, CategoryMaster
+        from models.client import ClientMaster
+        categories = CategoryMaster.query.filter_by(status=True, is_deleted=False).order_by(CategoryMaster.name).all()
+        # Sirf NPD + Management team ke employees (Assign Members dropdown ke liye)
+        employees = get_npd_team_employees()
+        rd_employees = Employee.query.filter(
+            Employee.is_deleted==False,
+            db.or_(
+                Employee.department.ilike('%r&d%'),
+                Employee.department.ilike('%rd%'),
+                Employee.department.ilike('%research%'),
+                Employee.department.ilike('%r & d%'),
+                Employee.designation.ilike('%r&d%'),
+                Employee.designation.ilike('%r & d%'),
+                Employee.designation.ilike('%formulation%'),
+                Employee.designation.ilike('%scientist%'),
+                Employee.designation.ilike('%chemist%'),
+            )
+        ).order_by(Employee.first_name).all()
+        # Fallback: if no R&D-tagged employees found, show all employees
+        if not rd_employees:
+            rd_employees = employees
+        npd_statuses = NPDStatus.query.filter_by(is_active=True).order_by(NPDStatus.sort_order).all()
+        clients = ClientMaster.query.filter_by(is_deleted=False).order_by(ClientMaster.contact_name).all()
+        return render_template('npd/npd_form.html',
+            active_page='npd_npd_projects',
+            users=users, leads=leads, edit=None,
+            employees=employees,
+            rd_employees=rd_employees,
+            npd_statuses=npd_statuses,
+            clients=clients,
+            categories=categories,
+            prefill_lead=prefill_lead, prefill_url=prefill_url,
+            default_milestones=get_milestone_templates('npd'),
+        )
+
+
+# ══════════════════════════════════════════════════════════════
+# EPD SPECIFIC ROUTES
+# ══════════════════════════════════════════════════════════════
+
+@npd.route('/epd-dashboard')
+@login_required
+@require_perm('epd')
+def epd_dashboard():
+    from sqlalchemy import func, case
+    ptype = 'existing'
+    projects = NPDProject.query.filter_by(is_deleted=False, project_type=ptype)\
+                   .order_by(NPDProject.created_at.desc()).all()
+    total     = len(projects)
+    active    = sum(1 for p in projects if p.status not in ('finish','cancelled'))
+    completed = sum(1 for p in projects if p.status == 'complete')
+    cancelled = sum(1 for p in projects if p.status == 'cancelled')
+
+    status_counts = {}
+    for p in projects:
+        status_counts[p.status] = status_counts.get(p.status, 0) + 1
+
+    ms_total = MilestoneMaster.query.join(NPDProject, MilestoneMaster.project_id==NPDProject.id)\
+                .filter(NPDProject.project_type==ptype, MilestoneMaster.is_selected==True).count()
+    ms_done  = MilestoneMaster.query.join(NPDProject, MilestoneMaster.project_id==NPDProject.id)\
+                .filter(NPDProject.project_type==ptype, MilestoneMaster.is_selected==True,
+                        MilestoneMaster.status=='approved').count()
+    ms_pct   = round((ms_done/ms_total)*100, 1) if ms_total else 0
+
+    sc_stats = []
+
+    return render_template('npd/epd_dashboard.html',
+        active_page='npd_epd_dashboard',
+        projects=projects, total=total, active=active,
+        completed=completed, cancelled=cancelled,
+        status_counts=status_counts,
+        ms_pct=ms_pct, ms_done=ms_done, ms_total=ms_total,
+        sc_stats=sc_stats,
+    )
+
+
+@npd.route('/epd-projects')
+@login_required
+@require_perm('epd')
+def epd_projects():
+    q      = request.args.get('q','').strip()
+    status = request.args.get('status','')
+    sc_id  = request.args.get('sc','')
+    page   = request.args.get('page', 1, type=int)
+
+    query = NPDProject.query.filter_by(is_deleted=False, project_type='existing')
+
+    # Same per-user visibility filter as npd_projects — non-manager
+    # users only see EPD projects where they're explicitly assigned.
+    query = _filter_npd_projects_for_user(query)
+
+    if q:
+        query = query.filter(db.or_(
+            NPDProject.code.ilike(f'%{q}%'),
+            NPDProject.product_name.ilike(f'%{q}%'),
+            NPDProject.client_name.ilike(f'%{q}%'),
+            NPDProject.client_company.ilike(f'%{q}%'),
+        ))
+    if status:
+        query = query.filter_by(status=status)
+
+    projects = query.order_by(NPDProject.created_at.desc()).paginate(page=page, per_page=25)
+    users    = get_users()
+    return render_template('npd/epd_projects.html',
+        active_page='npd_epd_projects',
+        projects=projects, q=q, status=status, sc_id=sc_id, users=users,
+    )
+
+
+@npd.route('/epd-new', methods=['GET','POST'])
+@login_required
+def epd_new():
+    """EPD only form"""
+    users = get_users()
+    leads = Lead.query.filter_by(is_deleted=False).order_by(Lead.created_at.desc()).limit(200).all()
+    prefill_lead = None
+    prefill_lead_id = request.args.get('lead_id') or request.form.get('lead_id')
+    if prefill_lead_id:
+        try: prefill_lead = Lead.query.get(int(prefill_lead_id))
+        except: pass
+    prefill_url = {'client_id': '', 'client_name': '', 'client_company': '', 'client_email': '', 'client_phone': ''}
+    _cid = request.args.get('client_id')
+    if _cid:
+        try:
+            from models.client import ClientMaster
+            _cl = ClientMaster.query.get(int(_cid))
+            if _cl:
+                prefill_url['client_id']      = str(_cl.id)
+                prefill_url['client_name']    = _cl.contact_name or ''
+                prefill_url['client_company'] = _cl.company_name or ''
+                prefill_url['client_email']   = _cl.email or ''
+                prefill_url['client_phone']   = _cl.mobile or ''
+        except: pass
+
+    if request.method == 'POST':
+        product_name = request.form.get('product_name','').strip()
+        if not product_name:
+            flash('Product name required','error')
+            return render_template('npd/epd_form.html', active_page='npd_epd_projects',
+                                   users=users, leads=leads, prefill_lead=prefill_lead,
+                                   prefill_url=prefill_url, edit=None)
+
+        # ── Business rule: project cannot be created without a client ──
+        _client_id_raw = request.form.get('client_id', '').strip()
+        if not _client_id_raw:
+            flash('A client is required to create an EPD Project. Please select or create a client first.', 'error')
+            return redirect(url_for('npd.epd_new', lead_id=request.form.get('lead_id') or ''))
+
+        proj = NPDProject(
+            code=gen_npd_code(), project_type='existing', status='not_started',
+            product_name=product_name,
+            product_category=request.form.get('product_category',''),
+            product_range=request.form.get('product_range',''),
+            client_name=request.form.get('client_name',''),
+            client_company=request.form.get('client_company',''),
+            client_email=request.form.get('client_email',''),
+            client_phone=request.form.get('client_phone',''),
+            lead_id=request.form.get('lead_id') or None,
+            requirement_spec=request.form.get('requirement_spec',''),
+            reference_product=request.form.get('reference_product',''),
+            order_quantity=request.form.get('order_quantity',''),
+            advance_paid='advance_paid' in request.form,
+            advance_amount=request.form.get('advance_amount',2000) or 2000,
+            milestone_master_created=True,
+            created_by=current_user.id,
+        )
+        # Attach client_id FK so project is linked to a real ClientMaster row
+        try:
+            proj.client_id = int(_client_id_raw)
+        except (ValueError, TypeError):
+            pass
+        db.session.add(proj)
+        db.session.flush()
+
+        templates = get_milestone_templates('existing')
+        for tmpl in templates:
+            if tmpl.applies_to == 'npd': continue
+            db.session.add(MilestoneMaster(
+                project_id=proj.id, milestone_type=tmpl.milestone_type,
+                title=tmpl.title, sort_order=tmpl.sort_order,
+                is_selected=True if tmpl.is_mandatory else tmpl.default_selected,
+                status='pending', created_by=current_user.id,
+            ))
+
+        log_npd(proj.id, f"EPD Project created: {proj.code} — {product_name}")
+        db.session.commit()
+        flash(f'EPD Project {proj.code} created!', 'success')
+        return redirect(url_for('npd.project_view', pid=proj.id))
+
+    from models.master import CategoryMaster
+    categories = CategoryMaster.query.filter_by(status=True, is_deleted=False).order_by(CategoryMaster.name).all()
+    return render_template('npd/epd_form.html',
+        active_page='npd_epd_projects',
+        users=users, leads=leads, edit=None,
+        categories=categories,
+        prefill_lead=prefill_lead, prefill_url=prefill_url,
+        default_milestones=get_milestone_templates('existing'),
+    )
+
+
+
+@npd.route('/uploads/<path:filename>')
+@login_required
+def serve_upload(filename):
+    """Serve uploaded NPD files"""
+    from flask import send_from_directory
+    return send_from_directory(UPLOAD_FOLDER, filename)
+
+
+@npd.route('/sample-history/<int:tid>/delete', methods=['POST'])
+@login_required
+def sample_history_delete(tid):
+    try:
+        token = OfficeDispatchToken.query.get_or_404(tid)
+        # Projects ka status wapas sample_ready karo
+        for item in token.items:
+            proj = NPDProject.query.get(item.project_id)
+            if proj:
+                proj.status = 'sample_ready'
+        db.session.delete(token)
+        db.session.commit()
+        return jsonify(success=True)
+    except Exception as e:
+        db.session.rollback()
+        return jsonify(success=False, error=str(e)), 500
+
+
+@npd.route('/sample-ready/send-to-office', methods=['POST'])
+@login_required
+def send_to_office():
+    data     = request.get_json()
+    proj_ids = data.get('project_ids', [])
+    notes    = data.get('notes', '')
+    if not proj_ids:
+        return jsonify(success=False, error='Koi project select nahi kiya')
+
+    # Same day ka existing token check karo
+    today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    today_end   = datetime.now().replace(hour=23, minute=59, second=59, microsecond=999999)
+    token = OfficeDispatchToken.query.filter(
+        OfficeDispatchToken.dispatched_at >= today_start,
+        OfficeDispatchToken.dispatched_at <= today_end
+    ).order_by(OfficeDispatchToken.dispatched_at.desc()).first()
+
+    is_new_token = False
+    if not token:
+        last     = OfficeDispatchToken.query.order_by(OfficeDispatchToken.id.desc()).first()
+        next_num = (last.id + 1) if last else 1
+        token_no = f'ODT-{next_num:04d}'
+        token    = OfficeDispatchToken(token_no=token_no, dispatched_by=current_user.id,
+                                       dispatched_at=datetime.now(), notes=notes)
+        db.session.add(token)
+        db.session.flush()
+        is_new_token = True
+    else:
+        token_no = token.token_no
+        # Notes append karo agar naya notes hai
+        if notes:
+            token.notes = ((token.notes + ' | ') if token.notes else '') + notes
+    sample_codes  = data.get('sample_codes', {})   # {project_id: "SC-001, SC-002"}
+    handover_map  = data.get('handover_to', {})    # {project_id: "Sneha Dagar"}
+    submitted_map = data.get('submitted_by', {})   # {project_id: "Aaquib"}
+    # Existing items ke project IDs (duplicate avoid)
+    existing_pids = {item.project_id for item in token.items}
+    for pid in proj_ids:
+        if int(pid) in existing_pids:
+            continue  # Already is token mein hai
+        sc  = sample_codes.get(str(pid),  '').strip()
+        ht  = handover_map.get(str(pid),  '').strip()
+        sb  = submitted_map.get(str(pid), '').strip()
+        db.session.add(OfficeDispatchItem(
+            token_id     = token.id,
+            project_id   = int(pid),
+            sample_code  = sc if sc else None,
+            handover_to  = ht if ht else None,
+            submitted_by = sb if sb else None,
+        ))
+    # Project status → send_to_office + list se remove
+    for pid in proj_ids:
+        proj = NPDProject.query.get(int(pid))
+        if proj:
+            proj.status = 'sent_to_office'
+    db.session.commit()
+    return jsonify(success=True, token_no=token_no, token_id=token.id)
+
+
+@npd.route('/sample-history')
+@login_required
+def sample_history():
+    from models.employee import Employee
+    page         = request.args.get('page', 1, type=int)
+    q                = request.args.get('q', '').strip()
+    from_date        = request.args.get('from_date', '').strip()
+    to_date          = request.args.get('to_date', '').strip()
+    submitted_by_list = request.args.getlist('submitted_by')   # multi-select
+    handover_to_list  = request.args.getlist('handover_to')    # multi-select
+    submitted_by_list = [x.strip() for x in submitted_by_list if x.strip()]
+    handover_to_list  = [x.strip() for x in handover_to_list  if x.strip()]
+
+    # Base query
+    query = OfficeDispatchToken.query
+
+    # Date filter
+    if from_date:
+        try:
+            fd = datetime.strptime(from_date, '%Y-%m-%d')
+            query = query.filter(OfficeDispatchToken.dispatched_at >= fd)
+        except: pass
+    if to_date:
+        try:
+            td = datetime.strptime(to_date, '%Y-%m-%d')
+            from datetime import timedelta
+            query = query.filter(OfficeDispatchToken.dispatched_at < td + timedelta(days=1))
+        except: pass
+
+    # Product name / submitted_by / handover_to filter — via items join
+    if q or submitted_by_list or handover_to_list:
+        query = query.join(OfficeDispatchItem, OfficeDispatchItem.token_id == OfficeDispatchToken.id)
+        if q:
+            query = query.join(NPDProject, NPDProject.id == OfficeDispatchItem.project_id)                         .filter(NPDProject.product_name.ilike(f'%{q}%'))
+        if submitted_by_list:
+            query = query.filter(OfficeDispatchItem.submitted_by.in_(submitted_by_list))
+        if handover_to_list:
+            query = query.filter(OfficeDispatchItem.handover_to.in_(handover_to_list))
+        query = query.distinct()
+
+    tokens = query.order_by(OfficeDispatchToken.dispatched_at.desc()).paginate(page=page, per_page=25)
+
+    # Dropdowns — all R&D employees for submitted_by
+    rd_employees = Employee.query.filter(
+        Employee.is_deleted == False,
+        Employee.department.ilike('%r&d%')
+    ).order_by(Employee.first_name).all()
+    rd_names = [e.full_name for e in rd_employees if e.full_name]
+
+    # Handover To — saare employees EXCEPT R&D department
+    from models.employee import Employee as _Emp
+    handover_emps = _Emp.query.filter(
+        _Emp.is_deleted == False,
+        db.or_(
+            _Emp.department == None,
+            _Emp.department == '',
+            ~_Emp.department.ilike('%r&d%')
+        )
+    ).order_by(_Emp.first_name).all()
+    handover_names = [e.full_name for e in handover_emps if e.full_name]
+
+    return render_template('npd/sample_history.html',
+        active_page='npd_sample_history',
+        tokens=tokens,
+        q=q, from_date=from_date, to_date=to_date,
+        submitted_by_list=submitted_by_list, handover_to_list=handover_to_list,
+        rd_names=rd_names,
+        handover_names=handover_names,
+    )
+
+
+@npd.route('/sample-history/item/<int:iid>/delete', methods=['POST'])
+@login_required
+def sample_history_item_delete(iid):
+    try:
+        item = OfficeDispatchItem.query.get_or_404(iid)
+        token = item.token
+        # Project status wapas sample_ready
+        proj = NPDProject.query.get(item.project_id)
+        if proj:
+            proj.status = 'sample_ready'
+        db.session.delete(item)
+        # Agar token mein koi item nahi bacha to token bhi delete
+        db.session.flush()
+        remaining = OfficeDispatchItem.query.filter_by(token_id=token.id).count()
+        if remaining == 0:
+            db.session.delete(token)
+        db.session.commit()
+        return jsonify(success=True, token_deleted=(remaining == 0))
+    except Exception as e:
+        db.session.rollback()
+        return jsonify(success=False, error=str(e)), 500
+
+
+@npd.route('/sample-history/item/<int:iid>/update', methods=['POST'])
+@login_required
+def sample_history_item_update(iid):
+    try:
+        item  = OfficeDispatchItem.query.get_or_404(iid)
+        data  = request.get_json()
+        item.handover_to  = data.get('handover_to',  '').strip() or None
+        item.submitted_by = data.get('submitted_by', '').strip() or None
+        item.sample_code  = data.get('sample_code',  '').strip() or None
+        db.session.commit()
+        return jsonify(success=True)
+    except Exception as e:
+        db.session.rollback()
+        return jsonify(success=False, error=str(e)), 500
+
+
+@npd.route('/sample-history/<int:tid>/items')
+@login_required
+def sample_history_items(tid):
+    token = OfficeDispatchToken.query.get_or_404(tid)
+    items = []
+    for it in token.items:
+        p = it.project
+        items.append({
+            'item_id'     : it.id,
+            'project_id'  : p.id,
+            'code'        : p.code or '—',
+            'product_name': p.product_name,
+            'client_name' : p.client_name or '—',
+            'category'    : p.product_category or '—',
+            'priority'    : p.priority or 'Normal',
+            'status_label': p.status_label,
+            'status_color': p.status_color,
+            'sample_code' : it.sample_code or '',
+            'handover_to' : it.handover_to  or '',
+            'submitted_by': it.submitted_by or '',
+            'rd_sub_assignment_id': it.rd_sub_assignment_id,   # NEW — for Revert button
+            # ── Approval state (NEW)
+            'approval_status': it.approval_status or 'pending',
+            'reject_reason'  : it.reject_reason or '',
+            'actioned_by'    : (it.actioner.full_name if it.actioner else ''),
+            'actioned_at'    : (it.actioned_at.strftime('%d %b %Y, %I:%M %p') if it.actioned_at else ''),
+        })
+    return jsonify(token_no=token.token_no,
+        dispatched_at=token.dispatched_at.strftime('%d %b %Y, %I:%M %p'),
+        dispatcher=token.dispatcher.full_name if token.dispatcher else '—',
+        notes=token.notes or '', count=len(items), items=items)
+
+
+# ═══════════════════════════════════════════════════════════════
+# SAMPLE APPROVE / REJECT  (per-item action)
+#
+# On APPROVE:  project.status → 'sent_to_client'
+# On REJECT :  project.status → 'rejected'
+#              project.assigned_rd → None
+#              all active RDSubAssignment rows deactivated (project moves
+#              to "Unassigned Project List" on R&D dashboard).
+# On RESET :   approval flags cleared. Project status reverts to
+#              'sample_ready' ONLY if no other items in the token are still
+#              approved/rejected (otherwise status is left alone).
+#              Reset does NOT re-assign the R&D person — admin must do that.
+#
+# Every action is audit-logged to sample_approval_logs including
+# whether WhatsApp was sent by the user.
+# ═══════════════════════════════════════════════════════════════
+@npd.route('/sample-history/item/<int:iid>/approve-reject', methods=['POST'])
+@login_required
+def sample_history_item_approve_reject(iid):
+    """
+    Body JSON:
+      { action: 'approve' | 'reject' | 'reset',
+        reason: 'required for reject, optional otherwise',
+        whatsapp_sent: bool (whether user chose to send WhatsApp) }
+    """
+    from models.npd import RDSubAssignment  # local import
+
+    try:
+        item    = OfficeDispatchItem.query.get_or_404(iid)
+        data    = request.get_json(silent=True) or {}
+        action  = (data.get('action') or '').strip().lower()
+        reason  = (data.get('reason') or '').strip()
+        wa_sent = bool(data.get('whatsapp_sent', False))
+
+        if action not in ('approve', 'reject', 'reset'):
+            return jsonify(success=False, error='Invalid action.'), 400
+
+        if action == 'reject' and not reason:
+            return jsonify(success=False, error='Reject reason is required.'), 400
+
+        # Capture snapshot of project state *before* we mutate anything
+        project = NPDProject.query.get(item.project_id)
+        prev_status      = project.status if project else None
+        prev_assigned_rd = project.assigned_rd if project else None
+
+        now = datetime.now()
+
+        if action == 'approve':
+            item.approval_status = 'approved'
+            item.reject_reason   = None
+            item.actioned_by     = current_user.id
+            item.actioned_at     = now
+            # Project status will be derived after — _recompute_project_status
+            # handles aggregate logic: only when ALL items approved →
+            # 'approved_by_office'; mixed → stays 'sent_to_office'.
+
+        elif action == 'reject':
+            item.approval_status = 'rejected'
+            item.reject_reason   = reason
+            item.actioned_by     = current_user.id
+            item.actioned_at     = now
+            if project:
+                # Spec: ANY rejection → project rejected_by_office.
+                # Recompute will set this; here we only handle the
+                # side-effects (unassign R&D, deactivate subs).
+                project.assigned_rd = None
+                active_subs = RDSubAssignment.query.filter_by(
+                    project_id=project.id, is_active=True
+                ).all()
+                for sub in active_subs:
+                    sub.is_active = False
+
+        else:  # reset → back to pending
+            item.approval_status = 'pending'
+            item.reject_reason   = None
+            item.actioned_by     = None
+            item.actioned_at     = None
+            # Project status auto-recomputes — if no items actioned, project
+            # falls back to 'sent_to_office' / 'sample_ready' as appropriate.
+
+        # ── Aggregate project status from current state ──────────────
+        # Pehle direct status set hota tha jisse partial approve/reject
+        # pe project status forward chal jata tha. Spec ke according
+        # ALL items approved → approved_by_office, ANY rejected →
+        # rejected_by_office, otherwise sent_to_office. Recompute helper
+        # ye logic centralised handle karta hai.
+        db.session.flush()
+        try:
+            from rd_routes import _recompute_project_status
+            _recompute_project_status(item.project_id)
+        except Exception:
+            import traceback; traceback.print_exc()
+            # Safety fallback — keep old behaviour if helper fails
+            if project:
+                if action == 'reject':
+                    project.status = 'rejected_by_office'
+                elif action == 'approve' and project.status != 'approved_by_office':
+                    # Only if THIS was the last pending item
+                    pending_left = OfficeDispatchItem.query.filter(
+                        OfficeDispatchItem.project_id == item.project_id,
+                        OfficeDispatchItem.approval_status == 'pending',
+                    ).count()
+                    if pending_left == 0:
+                        project.status = 'approved_by_office'
+
+        # ── Audit log entry ───────────────────────────────────────
+        log = SampleApprovalLog(
+            item_id            = item.id,
+            project_id         = item.project_id,
+            action             = action,
+            reason             = reason or None,
+            user_id            = current_user.id,
+            whatsapp_sent      = wa_sent,
+            created_at         = now,
+            prev_project_status= prev_status,
+            prev_assigned_rd   = prev_assigned_rd,
+        )
+        db.session.add(log)
+
+        db.session.commit()
+
+        return jsonify(
+            success         = True,
+            approval_status = item.approval_status,
+            reject_reason   = item.reject_reason or '',
+            actioned_by     = (item.actioner.full_name if item.actioner else ''),
+            actioned_at     = (item.actioned_at.strftime('%d %b %Y, %I:%M %p') if item.actioned_at else ''),
+            project_status  = (project.status if project else None),
+        )
+    except Exception as e:
+        db.session.rollback()
+        return jsonify(success=False, error=str(e)), 500
+
+# ── Sample Label PDF ──
+@npd.route('/sample-label/<int:pid>')
+@login_required
+def sample_label_pdf(pid):
+    from reportlab.lib.pagesizes import mm
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+    from reportlab.lib.styles import ParagraphStyle
+    from reportlab.lib import colors
+    from reportlab.lib.enums import TA_CENTER
+    from io import BytesIO
+    from flask import Response
+
+    proj = NPDProject.query.filter_by(id=pid, is_deleted=False).first_or_404()
+
+    COPIES    = 3
+    W, H      = 40*mm, 20*mm   # per sticker
+    COLS      = 2
+    PAGE_W    = W * COLS
+    PAGE_H    = H * ((COPIES + COLS - 1) // COLS)
+
+    buf = BytesIO()
+    doc = SimpleDocTemplate(buf,
+        pagesize=(PAGE_W, PAGE_H),
+        leftMargin=0, rightMargin=0,
+        topMargin=0,  bottomMargin=0)
+
+    name_style = ParagraphStyle('n',
+        fontName='Helvetica-Bold', fontSize=7,
+        alignment=TA_CENTER, leading=9, textColor=colors.black)
+    code_style = ParagraphStyle('c',
+        fontName='Courier', fontSize=6,
+        alignment=TA_CENTER, leading=8, textColor=colors.black)
+
+    product_name = (proj.product_name or '-').encode('ascii', 'replace').decode('ascii')
+    project_code = (proj.code or '-').encode('ascii', 'replace').decode('ascii')
+
+    def make_cell(product, code):
+        return [Paragraph(product, name_style),
+                Spacer(1, 1*mm),
+                Paragraph(code, code_style)]
+
+    # Build cells list (COPIES items + padding to multiple of COLS)
+    cells = [make_cell(product_name, project_code) for _ in range(COPIES)]
+    while len(cells) % COLS != 0:
+        cells.append('')   # empty padding cell
+
+    # Group into rows of COLS
+    rows = [cells[i:i+COLS] for i in range(0, len(cells), COLS)]
+
+    tbl = Table(rows,
+        colWidths=[W]*COLS,
+        rowHeights=[H]*len(rows))
+
+    tbl.setStyle(TableStyle([
+        ('BOX',          (0,0), (-1,-1), 0.5, colors.black),
+        ('INNERGRID',    (0,0), (-1,-1), 0.5, colors.black),
+        ('VALIGN',       (0,0), (-1,-1), 'MIDDLE'),
+        ('ALIGN',        (0,0), (-1,-1), 'CENTER'),
+        ('TOPPADDING',   (0,0), (-1,-1), 2),
+        ('BOTTOMPADDING',(0,0), (-1,-1), 2),
+    ]))
+
+    doc.build([tbl])
+    buf.seek(0)
+    return Response(buf.read(),
+        mimetype='application/pdf',
+        headers={'Content-Disposition': 'inline; filename=label_{}.pdf'.format(project_code)})
+
+# ── Token Sample Label PDF ──
+@npd.route('/token-label/<int:tid>')
+@login_required
+def token_label_pdf(tid):
+    from reportlab.lib.pagesizes import mm
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+    from reportlab.lib.styles import ParagraphStyle
+    from reportlab.lib import colors
+    from reportlab.lib.enums import TA_CENTER
+    from io import BytesIO
+    from flask import Response
+
+    token = OfficeDispatchToken.query.get_or_404(tid)
+
+    # 1 label per sample_code entry
+    labels = []
+    for it in token.items:
+        p = it.project
+        codes = [c.strip() for c in (it.sample_code or '').split(',') if c.strip()]
+        if not codes:
+            codes = ['-']
+        for sc in codes:
+            labels.append({
+                'product': (p.product_name or '-').encode('ascii','replace').decode('ascii'),
+                'code':    sc.encode('ascii','replace').decode('ascii'),
+                'client':  (p.client_name or '-').encode('ascii','replace').decode('ascii'),
+            })
+
+    if not labels:
+        return Response('No samples found.', mimetype='text/plain')
+
+    COLS   = 2
+    W, H   = 40*mm, 20*mm
+    PAGE_W = W * COLS
+    total_rows = (len(labels) + COLS - 1) // COLS
+    PAGE_H = H * total_rows
+
+    buf = BytesIO()
+    from reportlab.pdfgen import canvas as pdfcanvas
+    c = pdfcanvas.Canvas(buf, pagesize=(PAGE_W, PAGE_H))
+
+    name_style = ParagraphStyle('n', fontName='Helvetica-Bold', fontSize=7,
+        alignment=TA_CENTER, leading=9, textColor=colors.black)
+    code_style = ParagraphStyle('c', fontName='Helvetica-Bold', fontSize=6,
+        alignment=TA_CENTER, leading=8, textColor=colors.black)
+    client_style = ParagraphStyle('cl', fontName='Helvetica-Bold', fontSize=6,
+        alignment=TA_CENTER, leading=8, textColor=colors.black)
+
+    def make_cell(l):
+        return [Paragraph(l['product'], name_style),
+                Spacer(1, 0.2*mm),
+                Paragraph(l['code'], code_style),
+                Spacer(1, 0.2*mm),
+                Paragraph('_'*20, code_style),
+                Spacer(1, 0.2*mm),
+                Paragraph('HCP WELLNESS', client_style)]
+
+    cells = [make_cell(l) for l in labels]
+    while len(cells) % COLS != 0:
+        cells.append('')
+
+    rows = [cells[i:i+COLS] for i in range(0, len(cells), COLS)]
+
+    tbl = Table(rows, colWidths=[W]*COLS, rowHeights=[H]*total_rows)
+    tbl.setStyle(TableStyle([
+        ('BOX',          (0,0), (-1,-1), 0.5, colors.black),
+        ('INNERGRID',    (0,0), (-1,-1), 0.5, colors.black),
+        ('VALIGN',       (0,0), (-1,-1), 'MIDDLE'),
+        ('ALIGN',        (0,0), (-1,-1), 'CENTER'),
+        ('TOPPADDING',   (0,0), (-1,-1), 1),
+        ('BOTTOMPADDING',(0,0), (-1,-1), 1),
+    ]))
+
+    tbl.wrapOn(c, PAGE_W, PAGE_H)
+    tbl.drawOn(c, 0, 0)
+    c.save()
+    buf.seek(0)
+    return Response(buf.read(), mimetype='application/pdf',
+        headers={'Content-Disposition': 'inline; filename=labels_{}.pdf'.format(token.token_no)})
+
+# ── NPD Milestones GET ──
+@npd.route('/<int:pid>/milestones')
+@login_required
+def get_npd_milestones(pid):
+    import json
+    proj = NPDProject.query.filter_by(id=pid, is_deleted=False).first_or_404()
+    data = {}
+    if proj.npd_milestone_data:
+        try: data = json.loads(proj.npd_milestone_data)
+        except: data = {}
+    return jsonify(milestones=data)
+
+# ── NPD Milestones UPDATE ──
+@npd.route('/<int:pid>/milestones/update', methods=['POST'])
+@login_required
+def update_npd_milestone(pid):
+    import json
+    from datetime import datetime
+    proj = NPDProject.query.filter_by(id=pid, is_deleted=False).first_or_404()
+    body = request.get_json()
+    key    = body.get('key', '')
+    status = body.get('status', 'pending')
+    note   = body.get('note', None)
+    if not key:
+        return jsonify(success=False, error='No key')
+    data = {}
+    if proj.npd_milestone_data:
+        try: data = json.loads(proj.npd_milestone_data)
+        except: data = {}
+    date_str = datetime.now().strftime('%d-%m-%Y') if status == 'done' else (data.get(key, {}).get('date', ''))
+    if key not in data:
+        data[key] = {}
+    data[key]['status'] = status
+    data[key]['date']   = date_str
+    if note is not None:
+        data[key]['note'] = note
+    proj.npd_milestone_data = json.dumps(data)
+    db.session.commit()
+    return jsonify(success=True, date=date_str)
+
+# ── Milestone Discussion — GET comments ──
+def _resolve_ms_key(pid, ms_key):
+    """
+    Return ms_key as-is. Each milestone (Artwork, Artwork QC Approval,
+    etc.) has its OWN independent discussion thread / data — no
+    cross-sharing between milestones.
+
+    Earlier this mapped 'artwork_qc' → 'artwork' so both milestones
+    shared a single thread, but business requirement is that they be
+    fully independent (different stakeholders, different stages).
+    """
+    return ms_key
+
+
+@npd.route('/<int:pid>/milestone-comments/<ms_key>')
+@login_required
+def get_milestone_comments(pid, ms_key):
+    from models.npd import NPDComment
+    ms_key = _resolve_ms_key(pid, ms_key)
+    comments = NPDComment.query.filter_by(
+        project_id=pid, milestone_key=ms_key
+    ).order_by(NPDComment.created_at.desc()).all()
+    result = []
+    for c in comments:
+        result.append({
+            'id'        : c.id,
+            'user'      : c.user.full_name if c.user else 'Unknown',
+            'comment'   : c.comment,
+            'attachment': c.attachment or '',
+            'created_at': c.created_at.strftime('%d-%m-%Y %H:%M') if c.created_at else ''
+        })
+    return jsonify(comments=result)
+
+# ── Milestone Discussion — POST comment ──
+@npd.route('/<int:pid>/milestone-comments/<ms_key>/add', methods=['POST'])
+@login_required
+def add_milestone_comment(pid, ms_key):
+    """
+    Post a comment / attachment to a milestone discussion thread.
+    Returns clear error messages for client display.
+    """
+    import os, time, traceback
+    from models.npd import NPDComment
+    try:
+        ms_key = _resolve_ms_key(pid, ms_key)
+        comment_text = request.form.get('comment', '').strip()
+        file = request.files.get('attachment')
+
+        att_str = ''
+        if file and file.filename:
+            # ── Validate extension against same ALLOWED list ──
+            if not allowed_file(file.filename):
+                allowed_str = ', '.join(sorted(ALLOWED))
+                return jsonify(
+                    success=False,
+                    error=f"File type not allowed. Allowed: {allowed_str}"
+                ), 400
+
+            from werkzeug.utils import secure_filename
+            safe_name = secure_filename(file.filename) or 'file'
+            ts = time.strftime('%Y%m%d%H%M%S')
+            fname = f"{ts}_{safe_name}"
+
+            # ── Use absolute UPLOAD_FOLDER (not relative path) ──
+            # Pehle relative 'static/uploads/npd' use ho raha tha, jo
+            # Flask app launch directory pe depend karta tha — kabhi
+            # kabhi path resolve nahi hota tha aur file save fail ho
+            # jaati thi. Ab absolute path use karte hain (same as
+            # packing material upload).
+            os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+            try:
+                file.save(os.path.join(UPLOAD_FOLDER, fname))
+            except Exception as save_ex:
+                traceback.print_exc()
+                return jsonify(
+                    success=False,
+                    error=f"Could not save file: {str(save_ex)}"
+                ), 500
+
+            att_str = f"{fname}|{safe_name}"
+
+        if not comment_text and not att_str:
+            return jsonify(success=False, error='Empty comment'), 400
+
+        c = NPDComment(
+            project_id    = pid,
+            user_id       = current_user.id,
+            comment       = comment_text or ('📎 ' + (att_str.split('|')[1] if '|' in att_str else att_str)),
+            is_internal   = False,
+            milestone_key = ms_key,
+            attachment    = att_str or None,
+        )
+        db.session.add(c)
+        db.session.commit()
+
+        return jsonify(success=True, comment={
+            'id'        : c.id,
+            'user'      : current_user.full_name,
+            'comment'   : c.comment,
+            'attachment': c.attachment or '',
+            'created_at': c.created_at.strftime('%d-%m-%Y %H:%M') if c.created_at else '',
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        traceback.print_exc()
+        return jsonify(
+            success=False,
+            error=f"Server error: {str(e)}"
+        ), 500
+
+# ── BOM Formulation Sheet — GET ──
+# ── BOM List — GET all BOMs ──
+@npd.route('/<int:pid>/bom/list', methods=['GET'])
+@login_required
+def get_bom_list(pid):
+    import json
+    proj = NPDProject.query.filter_by(id=pid, is_deleted=False).first_or_404()
+    data = {}
+    if proj.npd_milestone_data:
+        try: data = json.loads(proj.npd_milestone_data)
+        except: data = {}
+    boms = data.get('boms', [])
+    return jsonify(boms=boms)
+
+# ── BOM Save (create or update) ──
+@npd.route('/<int:pid>/bom/save', methods=['POST'])
+@login_required
+def save_bom(pid):
+    import json, time
+    proj = NPDProject.query.filter_by(id=pid, is_deleted=False).first_or_404()
+    body = request.get_json(force=True, silent=True) or {}
+    data = {}
+    if proj.npd_milestone_data:
+        try: data = json.loads(proj.npd_milestone_data)
+        except: data = {}
+    boms = data.get('boms', [])
+    bom_id = body.get('bom_id')  # None = new, else = edit
+    bom_entry = {
+        'id'          : bom_id or str(int(time.time() * 1000)),
+        'product_name': body.get('product_name', ''),
+        'product_code': body.get('product_code', ''),
+        'variant'     : body.get('variant', ''),
+        'rows'        : body.get('rows', [])
+    }
+    if bom_id:
+        # Update existing
+        boms = [bom_entry if b['id'] == bom_id else b for b in boms]
+    else:
+        boms.append(bom_entry)
+    data['boms'] = boms
+    proj.npd_milestone_data = json.dumps(data)
+    db.session.commit()
+    return jsonify(success=True, bom_id=bom_entry['id'])
+
+# ── BOM Delete ──
+@npd.route('/<int:pid>/bom/delete', methods=['POST'])
+@login_required
+def delete_bom(pid):
+    import json
+    proj = NPDProject.query.filter_by(id=pid, is_deleted=False).first_or_404()
+    body = request.get_json(force=True, silent=True) or {}
+    bom_id = body.get('bom_id')
+    if not bom_id:
+        return jsonify(success=False, error='No bom_id')
+    data = {}
+    if proj.npd_milestone_data:
+        try: data = json.loads(proj.npd_milestone_data)
+        except: data = {}
+    boms = data.get('boms', [])
+    data['boms'] = [b for b in boms if str(b.get('id','')) != str(bom_id)]
+    proj.npd_milestone_data = json.dumps(data)
+    db.session.commit()
+    return jsonify(success=True)
+
+# ═══ BARCODE MILESTONE ═══════════════════════════════════════
+
+# ── GET all barcode designs ──
+@npd.route('/<int:pid>/barcode/list', methods=['GET'])
+@login_required
+def barcode_list(pid):
+    import json
+    proj = NPDProject.query.filter_by(id=pid, is_deleted=False).first_or_404()
+    data = {}
+    if proj.npd_milestone_data:
+        try: data = json.loads(proj.npd_milestone_data)
+        except: data = {}
+    return jsonify(designs=data.get('barcode_designs', []))
+
+# ── Designer uploads design image ──
+@npd.route('/<int:pid>/barcode/design/add', methods=['POST'])
+@login_required
+def barcode_design_add(pid):
+    import json, time
+    proj = NPDProject.query.filter_by(id=pid, is_deleted=False).first_or_404()
+    f = request.files.get('design_file')
+    if not f or not f.filename:
+        return jsonify(success=False, error='No file')
+    # Save file
+    fname = save_upload(f)
+    data = {}
+    if proj.npd_milestone_data:
+        try: data = json.loads(proj.npd_milestone_data)
+        except: data = {}
+    designs = data.get('barcode_designs', [])
+    designs.append({
+        'id'           : str(int(time.time() * 1000)),
+        'design_file'  : fname,
+        'design_by'    : current_user.full_name,
+        'design_at'    : datetime.now().strftime('%d-%m-%Y %H:%M'),
+        'barcode_file' : None,
+        'barcode_by'   : None,
+        'barcode_at'   : None,
+    })
+    data['barcode_designs'] = designs
+    proj.npd_milestone_data = json.dumps(data)
+    db.session.commit()
+    return jsonify(success=True, fname=fname)
+
+# ── Barcode team uploads barcode file against a design ──
+@npd.route('/<int:pid>/barcode/upload', methods=['POST'])
+@login_required
+def barcode_upload(pid):
+    import json
+    proj = NPDProject.query.filter_by(id=pid, is_deleted=False).first_or_404()
+    design_id = request.form.get('design_id')
+    f = request.files.get('barcode_file')
+    if not f or not f.filename or not design_id:
+        return jsonify(success=False, error='Missing data')
+    fname = save_upload(f)
+    data = {}
+    if proj.npd_milestone_data:
+        try: data = json.loads(proj.npd_milestone_data)
+        except: data = {}
+    designs = data.get('barcode_designs', [])
+    for d in designs:
+        if d['id'] == design_id:
+            d['barcode_file'] = fname
+            d['barcode_by']   = current_user.full_name
+            d['barcode_at']   = datetime.now().strftime('%d-%m-%Y %H:%M')
+            break
+    data['barcode_designs'] = designs
+    proj.npd_milestone_data = json.dumps(data)
+    db.session.commit()
+    return jsonify(success=True, fname=fname)
+
+# ── Delete a design entry ──
+@npd.route('/<int:pid>/barcode/design/delete', methods=['POST'])
+@login_required
+def barcode_design_delete(pid):
+    import json
+    proj = NPDProject.query.filter_by(id=pid, is_deleted=False).first_or_404()
+    body = request.get_json(force=True, silent=True) or {}
+    design_id = body.get('design_id')
+    data = {}
+    if proj.npd_milestone_data:
+        try: data = json.loads(proj.npd_milestone_data)
+        except: data = {}
+    data['barcode_designs'] = [d for d in data.get('barcode_designs', []) if d['id'] != design_id]
+    proj.npd_milestone_data = json.dumps(data)
+    db.session.commit()
+    return jsonify(success=True)
+
+# ═══ FDA MILESTONE ═══════════════════════════════════════════
+
+@npd.route('/<int:pid>/fda/list', methods=['GET'])
+@login_required
+def fda_list(pid):
+    import json
+    proj = NPDProject.query.filter_by(id=pid, is_deleted=False).first_or_404()
+    data = {}
+    if proj.npd_milestone_data:
+        try: data = json.loads(proj.npd_milestone_data)
+        except: data = {}
+    return jsonify(entries=data.get('fda_entries', []))
+
+@npd.route('/<int:pid>/fda/save', methods=['POST'])
+@login_required
+def fda_save(pid):
+    import json, time
+    proj = NPDProject.query.filter_by(id=pid, is_deleted=False).first_or_404()
+    fda_no      = request.form.get('fda_no', '').strip()
+    product_name= request.form.get('product_name', '').strip()
+    entry_id    = request.form.get('entry_id', '').strip()
+    if not fda_no or not product_name:
+        return jsonify(success=False, error='FDA No and Product Name are required')
+
+    # Handle main FDA file
+    fname = None
+    f = request.files.get('fda_file')
+    if f and f.filename:
+        fname = save_upload(f)
+
+    # Handle per-doc-type files (keys like fda_doc_Free_Sale_Certificate)
+    doc_files = {}
+    for key, file_obj in request.files.items():
+        if key.startswith('fda_doc_') and file_obj.filename:
+            doc_key = key[len('fda_doc_'):]
+            doc_files[doc_key] = save_upload(file_obj)
+
+    data = {}
+    if proj.npd_milestone_data:
+        try: data = json.loads(proj.npd_milestone_data)
+        except: data = {}
+    entries = data.get('fda_entries', [])
+    now_str = datetime.now().strftime('%d-%m-%Y %H:%M')
+
+    if entry_id:
+        for e in entries:
+            if e['id'] == entry_id:
+                e['fda_no']      = fda_no
+                e['product_name']= product_name
+                if fname: e['file'] = fname
+                e['updated_by']  = current_user.full_name
+                e['updated_at']  = now_str
+                # Merge doc files
+                if 'documents' not in e: e['documents'] = {}
+                for dk, df in doc_files.items():
+                    e['documents'][dk] = {'file': df, 'uploaded_by': current_user.full_name, 'uploaded_at': now_str}
+                break
+    else:
+        new_entry = {
+            'id'          : str(int(time.time() * 1000)),
+            'fda_no'      : fda_no,
+            'product_name': product_name,
+            'file'        : fname,
+            'added_by'    : current_user.full_name,
+            'added_at'    : now_str,
+            'documents'   : {},
+        }
+        for dk, df in doc_files.items():
+            new_entry['documents'][dk] = {'file': df, 'uploaded_by': current_user.full_name, 'uploaded_at': now_str}
+        entries.append(new_entry)
+
+    data['fda_entries'] = entries
+    proj.npd_milestone_data = json.dumps(data)
+    db.session.commit()
+    return jsonify(success=True)
+
+@npd.route('/<int:pid>/fda/delete', methods=['POST'])
+@login_required
+def fda_delete(pid):
+    import json
+    proj = NPDProject.query.filter_by(id=pid, is_deleted=False).first_or_404()
+    body = request.get_json(force=True, silent=True) or {}
+    entry_id = body.get('entry_id')
+    data = {}
+    if proj.npd_milestone_data:
+        try: data = json.loads(proj.npd_milestone_data)
+        except: data = {}
+    data['fda_entries'] = [e for e in data.get('fda_entries', []) if e['id'] != entry_id]
+    proj.npd_milestone_data = json.dumps(data)
+    db.session.commit()
+    return jsonify(success=True)
+
+
+# ═══ NPD QUOTATION ═══════════════════════════════════════════
+@npd.route('/projects/<int:pid>/quotation', methods=['POST'])
+@login_required
+def npd_create_quotation(pid):
+    """Generate Quotation for NPD project — uses lead_id if linked, else creates with dummy lead."""
+    import json as _json
+    from crm_routes import _next_quot_number
+    from models.lead import Quotation, Lead
+    from models.base import db
+
+    proj = NPDProject.query.filter_by(id=pid, is_deleted=False).first_or_404()
+
+    # Use linked lead_id if exists, else use first lead or error gracefully
+    lead_id = proj.lead_id
+    if not lead_id:
+        # Try to find any lead linked to this client
+        lead = Lead.query.filter_by(company_name=proj.client_name or proj.client_company, is_deleted=False).first()
+        lead_id = lead.id if lead else None
+
+    if not lead_id:
+        return jsonify(success=False, error='No CRM Lead linked to this NPD project. Please link a lead first.'), 400
+
+    quot_number   = request.form.get('quot_number', '') or _next_quot_number()
+    quot_date_s   = request.form.get('quot_date', date.today().strftime('%Y-%m-%d'))
+    valid_until_s = request.form.get('valid_until', '')
+    subject       = request.form.get('quot_subject', '')
+    bill_company  = request.form.get('bill_company', proj.client_company or proj.client_name or '')
+    bill_address  = request.form.get('bill_address', '')
+    bill_phone    = request.form.get('bill_phone', proj.client_phone or '')
+    bill_email    = request.form.get('bill_email', proj.client_email or '')
+    bill_gst      = request.form.get('bill_gst', '')
+    terms         = request.form.get('terms', 'Payment: Advance\nDelivery: 7-10 working days\nQuotation valid as mentioned above.')
+    notes         = request.form.get('notes', '')
+
+    item_names    = request.form.getlist('item_name[]')
+    item_sizes    = request.form.getlist('item_size[]')
+    item_codes    = request.form.getlist('item_code[]')
+    item_uoms     = request.form.getlist('item_uom[]')
+    item_costs    = request.form.getlist('item_cost[]')
+    item_moqs     = request.form.getlist('item_moq[]')
+    item_pm_specs = request.form.getlist('item_pm_spec[]')
+    item_pm_costs = request.form.getlist('item_pm_cost[]')
+    item_cats     = request.form.getlist('item_category[]')
+    item_finals   = request.form.getlist('item_final_cost[]')
+
+    items_list = []
+    sub_total  = 0.0
+    for i, name in enumerate(item_names):
+        if not name.strip(): continue
+        def _f(lst, idx):
+            try: return float(lst[idx]) if idx < len(lst) and lst[idx].strip() else 0.0
+            except: return 0.0
+        def _s(lst, idx): return lst[idx] if idx < len(lst) else ''
+        final_cost = _f(item_finals, i)
+        moq        = _f(item_moqs, i)
+        sub_total += final_cost * moq
+        items_list.append({
+            'name': name, 'size': _s(item_sizes,i), 'code': _s(item_codes,i),
+            'uom': _s(item_uoms,i), 'cost': _f(item_costs,i), 'moq': moq,
+            'pm_spec': _s(item_pm_specs,i), 'pm_cost': _f(item_pm_costs,i),
+            'category': _s(item_cats,i),
+            'final_cost': final_cost,
+        })
+
+    gst_pct      = float(request.form.get('quot_gst_pct', 0) or 0)
+    gst_amount   = sub_total * gst_pct / 100
+    total_amount = sub_total + gst_amount
+
+    try:    quot_date_obj   = datetime.strptime(quot_date_s, '%Y-%m-%d').date()
+    except: quot_date_obj   = date.today()
+    try:    valid_until_obj = datetime.strptime(valid_until_s, '%Y-%m-%d').date() if valid_until_s else None
+    except: valid_until_obj = None
+
+    quot = Quotation(
+        quot_number=quot_number, lead_id=lead_id,
+        quot_date=quot_date_obj, valid_until=valid_until_obj,
+        subject=subject, bill_company=bill_company, bill_address=bill_address,
+        bill_phone=bill_phone, bill_email=bill_email, bill_gst=bill_gst,
+        gst_pct=gst_pct, sub_total=sub_total, gst_amount=gst_amount,
+        total_amount=total_amount, items_json=_json.dumps(items_list),
+        terms=terms, notes=notes, status='draft', created_by=current_user.id,
+    )
+    db.session.add(quot)
+    db.session.commit()
+    flash(f'✅ Quotation {quot_number} created! Download PDF from Quotations list.', 'success')
+    return redirect(url_for('npd.project_view', pid=pid) + '?tab=milestones')
+
+# ── FDA Document Upload (per document type) ──
+@npd.route('/<int:pid>/fda/doc/upload', methods=['POST'])
+@login_required
+def fda_doc_upload(pid):
+    import json
+    proj = NPDProject.query.filter_by(id=pid, is_deleted=False).first_or_404()
+    entry_id = request.form.get('entry_id', '').strip()
+    doc_key  = request.form.get('doc_key', '').strip()
+    f        = request.files.get('fda_doc')
+
+    if not entry_id or not doc_key or not f or not f.filename:
+        return jsonify(success=False, error='Missing data')
+
+    fname = save_upload(f)
+    data = {}
+    if proj.npd_milestone_data:
+        try: data = json.loads(proj.npd_milestone_data)
+        except: data = {}
+
+    entries = data.get('fda_entries', [])
+    for e in entries:
+        if e['id'] == entry_id:
+            if 'documents' not in e:
+                e['documents'] = {}
+            e['documents'][doc_key] = {
+                'file'       : fname,
+                'uploaded_by': current_user.full_name,
+                'uploaded_at': datetime.now().strftime('%d-%m-%Y %H:%M'),
+            }
+            break
+
+    data['fda_entries'] = entries
+    proj.npd_milestone_data = json.dumps(data)
+    db.session.commit()
+    return jsonify(success=True, fname=fname)
+
+
+# ─── Debug helper for "Client Information visibility" ─────────────────────────
+# Open in browser:  /npd/debug/client-info-visibility
+# Shows exactly what the system sees for the logged-in user, so you can
+# verify whether their Employee row is linked / what their department string is.
+@npd.route('/debug/client-info-visibility')
+@login_required
+def debug_client_info_visibility():
+    from flask import jsonify
+    from models.employee import Employee
+
+    info = {
+        'user': {
+            'id'       : current_user.id,
+            'username' : getattr(current_user, 'username', ''),
+            'full_name': getattr(current_user, 'full_name', ''),
+            'email'    : getattr(current_user, 'email',    ''),
+            'role'     : getattr(current_user, 'role',     ''),
+        },
+        'lookups': [],
+        'employee_found_via': None,
+        'employee': None,
+        'verdict': False,
+        'verdict_reason': '',
+    }
+
+    role = (info['user']['role'] or '').lower().strip()
+    if role in ('admin', 'manager', 'npd_manager', 'npd'):
+        info['verdict']        = True
+        info['verdict_reason'] = f'role={role}'
+        return jsonify(info)
+
+    # 1) By user_id
+    emp = Employee.query.filter(
+        Employee.user_id == current_user.id,
+        Employee.is_deleted == False,
+    ).first()
+    info['lookups'].append({
+        'by'   : 'user_id',
+        'found': bool(emp),
+    })
+    if emp: info['employee_found_via'] = 'user_id'
+
+    # 2) By email (try several known column names)
+    if not emp and getattr(current_user, 'email', None):
+        for col_name in ('official_email', 'email', 'personal_email'):
+            if hasattr(Employee, col_name):
+                emp2 = Employee.query.filter(
+                    getattr(Employee, col_name).ilike(current_user.email),
+                    Employee.is_deleted == False,
+                ).first()
+                info['lookups'].append({
+                    'by'   : f'email:{col_name}',
+                    'value': current_user.email,
+                    'found': bool(emp2),
+                })
+                if emp2:
+                    emp = emp2; info['employee_found_via'] = f'email:{col_name}'
+                    break
+
+    # 3) By full_name (case-insensitive, exact)
+    if not emp and getattr(current_user, 'full_name', None):
+        full = (current_user.full_name or '').strip().lower()
+        if full:
+            for e in Employee.query.filter(Employee.is_deleted == False).all():
+                if hasattr(e, 'full_name') and getattr(e, 'full_name', None):
+                    e_full = (e.full_name or '').strip().lower()
+                else:
+                    e_full = ' '.join([
+                        (getattr(e, 'first_name','') or ''),
+                        (getattr(e, 'middle_name','') or ''),
+                        (getattr(e, 'last_name', '') or '')
+                    ]).strip().lower()
+                    e_full = ' '.join(e_full.split())
+                if e_full and e_full == full:
+                    emp = e
+                    info['employee_found_via'] = 'full_name'
+                    info['lookups'].append({
+                        'by'   : 'full_name',
+                        'value': full,
+                        'found': True,
+                    })
+                    break
+            if not emp:
+                info['lookups'].append({
+                    'by'   : 'full_name',
+                    'value': full,
+                    'found': False,
+                })
+
+    if emp:
+        info['employee'] = {
+            'id'         : emp.id,
+            'employee_id': getattr(emp, 'employee_id', ''),
+            'first_name' : getattr(emp, 'first_name', ''),
+            'last_name'  : getattr(emp, 'last_name',  ''),
+            'department' : getattr(emp, 'department', ''),
+            'designation': getattr(emp, 'designation', ''),
+            'user_id'    : getattr(emp, 'user_id', None),
+            'status'     : getattr(emp, 'status', ''),
+        }
+        d = (emp.department or '').strip().lower()
+        matched = [tok for tok in
+                   ('npd', 'n.p.d', 'new product', 'product dev', 'management', 'mgmt')
+                   if tok in d]
+        info['department_match_tokens'] = matched
+        if matched:
+            info['verdict']        = True
+            info['verdict_reason'] = f'dept={emp.department!r} matched {matched}'
+        else:
+            info['verdict_reason'] = (
+                f'employee found but department={emp.department!r} '
+                'has no NPD/Management keyword'
+            )
+    else:
+        info['verdict_reason'] = (
+            'no Employee row matched (tried user_id, email, full_name). '
+            'Ask HR to set the user_id link on Sneha\'s Employee row.'
+        )
+
+    return jsonify(info)

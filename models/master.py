@@ -1,0 +1,174 @@
+﻿"""
+models/master.py â€” Lead Master tables
+  LeadStatus, LeadSource, LeadCategory, ProductRange
+"""
+from datetime import datetime
+from .base import db
+
+class NPDStatus(db.Model):
+    __tablename__ = 'npd_statuses'
+    id         = db.Column(db.Integer, primary_key=True)
+    name       = db.Column(db.String(100), nullable=False, unique=True)
+    slug       = db.Column(db.String(60),  nullable=False, unique=True)   # e.g. 'sample_inprocess'
+    color      = db.Column(db.String(20),  default='#6b7280')
+    icon       = db.Column(db.String(10),  default='ðŸ”µ')
+    sort_order = db.Column(db.Integer,     default=0)
+    is_active  = db.Column(db.Boolean,     default=True)
+    created_at = db.Column(db.DateTime,    default=datetime.now)
+    created_by = db.Column(db.Integer,     nullable=True)
+    modified_by= db.Column(db.Integer,     nullable=True)
+    modified_at= db.Column(db.DateTime,    nullable=True)
+    def __repr__(self): return f'<NPDStatus {self.name}>'
+
+
+class LeadStatus(db.Model):
+    __tablename__ = 'lead_statuses'
+    id         = db.Column(db.Integer, primary_key=True)
+    name       = db.Column(db.String(100), nullable=False, unique=True)
+    color      = db.Column(db.String(20), default='#6b7280')   # hex color
+    icon       = db.Column(db.String(10), default='ðŸ”µ')
+    sort_order = db.Column(db.Integer, default=0)
+    is_active  = db.Column(db.Boolean, default=True)
+    created_at  = db.Column(db.DateTime, default=datetime.now)
+    created_by  = db.Column(db.Integer, nullable=True)
+    modified_by = db.Column(db.Integer, nullable=True)
+    modified_at = db.Column(db.DateTime, nullable=True)
+    def __repr__(self): return f'<LeadStatus {self.name}>'
+
+class LeadSource(db.Model):
+    __tablename__ = 'lead_sources'
+    id         = db.Column(db.Integer, primary_key=True)
+    name       = db.Column(db.String(100), nullable=False, unique=True)
+    icon       = db.Column(db.String(10), default='ðŸ“Œ')
+    sort_order = db.Column(db.Integer, default=0)
+    is_active  = db.Column(db.Boolean, default=True)
+    created_at  = db.Column(db.DateTime, default=datetime.now)
+    created_by  = db.Column(db.Integer, nullable=True)
+    modified_by = db.Column(db.Integer, nullable=True)
+    modified_at = db.Column(db.DateTime, nullable=True)
+    def __repr__(self): return f'<LeadSource {self.name}>'
+
+class LeadCategory(db.Model):
+    __tablename__ = 'lead_categories'
+    id         = db.Column(db.Integer, primary_key=True)
+    name       = db.Column(db.String(100), nullable=False, unique=True)
+    icon       = db.Column(db.String(10), default='ðŸ·ï¸')
+    sort_order = db.Column(db.Integer, default=0)
+    is_active  = db.Column(db.Boolean, default=True)
+    created_at  = db.Column(db.DateTime, default=datetime.now)
+    created_by  = db.Column(db.Integer, nullable=True)
+    modified_by = db.Column(db.Integer, nullable=True)
+    modified_at = db.Column(db.DateTime, nullable=True)
+    def __repr__(self): return f'<LeadCategory {self.name}>'
+
+class ProductRange(db.Model):
+    __tablename__ = 'product_ranges'
+    id         = db.Column(db.Integer, primary_key=True)
+    name       = db.Column(db.String(100), nullable=False, unique=True)
+    icon       = db.Column(db.String(10), default='ðŸ“¦')
+    sort_order = db.Column(db.Integer, default=0)
+    is_active  = db.Column(db.Boolean, default=True)
+    created_at  = db.Column(db.DateTime, default=datetime.now)
+    created_by  = db.Column(db.Integer, nullable=True)
+    modified_by = db.Column(db.Integer, nullable=True)
+    modified_at = db.Column(db.DateTime, nullable=True)
+    def __repr__(self): return f'<ProductRange {self.name}>'
+
+
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# Category Master
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+class CategoryMaster(db.Model):
+    __tablename__ = 'category_masters'
+    id          = db.Column(db.Integer, primary_key=True)
+    name        = db.Column(db.String(150), nullable=False, unique=True)
+    status      = db.Column(db.Boolean, default=True)
+    is_deleted  = db.Column(db.Boolean, default=False)
+    created_at  = db.Column(db.DateTime, default=datetime.now)
+    created_by  = db.Column(db.Integer, nullable=True)
+    modified_at = db.Column(db.DateTime, nullable=True)
+    modified_by = db.Column(db.Integer, nullable=True)
+    def __repr__(self): return f'<CategoryMaster {self.name}>'
+
+
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# UOM Master
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+class UOMMaster(db.Model):
+    __tablename__ = 'uom_masters'
+    id          = db.Column(db.Integer, primary_key=True)
+    code        = db.Column(db.String(30), nullable=False, unique=True)
+    name        = db.Column(db.String(100), nullable=False)
+    status      = db.Column(db.Boolean, default=True)
+    is_deleted  = db.Column(db.Boolean, default=False)
+    created_at  = db.Column(db.DateTime, default=datetime.now)
+    created_by  = db.Column(db.Integer, nullable=True)
+    modified_at = db.Column(db.DateTime, nullable=True)
+    modified_by = db.Column(db.Integer, nullable=True)
+    def __repr__(self): return f'<UOMMaster {self.code}>'
+
+
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# HSN Code Master
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+class HSNCode(db.Model):
+    __tablename__ = 'hsn_codes'
+    id          = db.Column(db.Integer, primary_key=True)
+    hsn_code    = db.Column(db.String(20), nullable=False, unique=True)
+    description = db.Column(db.Text, nullable=True)
+    gst_rate    = db.Column(db.Numeric(5,2), default=0)   # e.g. 18.00
+    cgst        = db.Column(db.Numeric(5,2), default=0)   # half of gst
+    sgst        = db.Column(db.Numeric(5,2), default=0)   # half of gst
+    igst        = db.Column(db.Numeric(5,2), default=0)   # full gst for inter-state
+    cess        = db.Column(db.Numeric(5,2), default=0)
+    status      = db.Column(db.Boolean, default=True)
+    is_deleted  = db.Column(db.Boolean, default=False)
+    created_at  = db.Column(db.DateTime, default=datetime.now)
+    created_by  = db.Column(db.Integer, nullable=True)
+    modified_at = db.Column(db.DateTime, nullable=True)
+    modified_by = db.Column(db.Integer, nullable=True)
+    def __repr__(self): return f'<HSNCode {self.hsn_code}>'
+
+
+class MilestoneStatus(db.Model):
+    __tablename__ = 'milestone_statuses'
+    id         = db.Column(db.Integer, primary_key=True)
+    name       = db.Column(db.String(100), nullable=False, unique=True)
+    slug       = db.Column(db.String(60),  nullable=False, unique=True)
+    color      = db.Column(db.String(20),  default='#6b7280')
+    icon       = db.Column(db.String(10),  default='ðŸ”µ')
+    sort_order = db.Column(db.Integer,     default=0)
+    is_active  = db.Column(db.Boolean,     default=True)
+    created_at = db.Column(db.DateTime,    default=datetime.now)
+    created_by = db.Column(db.Integer,     nullable=True)
+    modified_by= db.Column(db.Integer,     nullable=True)
+    modified_at= db.Column(db.DateTime,    nullable=True)
+    def __repr__(self): return f'<MilestoneStatus {self.name}>'
+
+
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# QC Parameter Option Master
+#   One table for the TRS dropdowns:
+#   Physical State, Appearance, Odour
+#   category = 'physical_state' | 'appearance' | 'odour'
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+class QCParamOption(db.Model):
+    __tablename__ = 'qc_param_options'
+    id          = db.Column(db.Integer, primary_key=True)
+    category    = db.Column(db.String(30), nullable=False, index=True)  # physical_state / appearance / odour
+    value       = db.Column(db.String(120), nullable=False)
+    sort_order  = db.Column(db.Integer, default=0)
+    status      = db.Column(db.Boolean, default=True)
+    is_deleted  = db.Column(db.Boolean, default=False)
+    created_at  = db.Column(db.DateTime, default=datetime.now)
+    created_by  = db.Column(db.Integer, nullable=True)
+    modified_at = db.Column(db.DateTime, nullable=True)
+    modified_by = db.Column(db.Integer, nullable=True)
+
+    __table_args__ = (
+        db.UniqueConstraint('category', 'value', name='uq_qc_param_cat_value'),
+    )
+
+    def __repr__(self): return f'<QCParamOption {self.category}:{self.value}>'
+
+

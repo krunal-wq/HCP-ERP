@@ -1,0 +1,3257 @@
+{% extends "base.html" %}
+{% block title %}{{ lead.name }} — Lead View{% endblock %}
+{% block page_title %}Lead Detail{% endblock %}
+{% block bread %}CRM / Leads / {{ lead.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Lead Header */
+.lead-header { background:#fff; border:1.5px solid var(--border); border-radius:14px; padding:1.25rem 1.5rem; margin-bottom:1rem; }
+.lead-header-top { display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; flex-wrap:wrap; margin-bottom:1rem; }
+.lead-title-block h2 { font-size:1.2rem; font-weight:800; color:var(--text); margin:0 0 4px; }
+.lead-meta { display:flex; align-items:center; gap:1rem; flex-wrap:wrap; margin-top:4px; }
+.lead-meta-item { font-size:0.8rem; color:var(--text2); display:flex; align-items:center; gap:4px; }
+.lead-actions-row { display:flex; gap:0.5rem; flex-wrap:wrap; }
+.badge-open       { background:#e8eaf0 !important; color:#374151 !important; }
+.badge-in_process { background:#1e2d5e !important; color:#fff !important; }
+.badge-close      { background:#0d9488 !important; color:#fff !important; }
+.badge-cancel     { background:#ef4444 !important; color:#fff !important; }
+
+/* Tabs */
+.tab-nav { display:flex; gap:0; border-bottom:2px solid var(--border); margin-bottom:1.25rem; flex-wrap:nowrap; position:relative; }
+.tab-nav-inner { display:flex; gap:0; overflow-x:auto; overflow-y:hidden; flex-wrap:nowrap; -webkit-overflow-scrolling:touch; scrollbar-width:none; flex:1; min-width:0; }
+.tab-nav-inner::-webkit-scrollbar { display:none; }
+.tab-btn { padding:10px 20px; font-size:0.85rem; font-weight:600; color:var(--text2); background:transparent; border:none; border-bottom:2px solid transparent; margin-bottom:-2px; cursor:pointer; transition:all .15s; text-decoration:none; white-space:nowrap; flex-shrink:0; }
+.tab-btn:hover { color:var(--blue); }
+.tab-btn.active { color:var(--blue); border-bottom-color:var(--blue); }
+.tab-pane { display:none; }
+.tab-pane.active { display:block; }
+
+/* Overview layout */
+.overview-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+.info-card { background:#fff; border:1.5px solid var(--border); border-radius:12px; overflow:hidden; }
+.info-card-hdr { background:#f8fafc; padding:10px 14px; border-bottom:1px solid var(--border); font-size:0.82rem; font-weight:800; color:#374151; text-transform:uppercase; letter-spacing:.04em; }
+.info-card-body { padding:4px 14px 8px; }
+.info-row { display:flex; gap:0.5rem; padding:0.45rem 0; border-bottom:1px solid var(--border); font-size:0.875rem; }
+.info-row:last-child { border-bottom:none; }
+.info-lbl { font-weight:600; color:var(--text2); min-width:160px; flex-shrink:0; }
+.info-val { color:var(--text); }
+
+/* Discussion Board */
+.disc-form { background:#f8fafc; border:1.5px solid var(--border); border-radius:12px; padding:1rem; margin-bottom:1.5rem; }
+.disc-input { width:100%; padding:10px 12px; border:1.5px solid var(--border); border-radius:9px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.88rem; resize:vertical; min-height:80px; outline:none; transition:border-color .2s; box-sizing:border-box; }
+.disc-input:focus { border-color:var(--blue); }
+.disc-item { display:flex; gap:0.85rem; padding:1rem 0; border-bottom:1px solid var(--border); }
+.disc-item:last-child { border-bottom:none; }
+.disc-avatar { width:40px; height:40px; border-radius:50%; background:var(--blue); color:#fff; font-size:0.82rem; font-weight:700; display:flex;align-items:center;justify-content:center; flex-shrink:0; }
+.disc-content { flex:1; }
+.disc-meta { font-size:0.78rem; color:var(--text3); margin-bottom:4px; }
+.disc-text { font-size:0.88rem; color:var(--text); line-height:1.5; }
+.disc-attach { margin-top:0.5rem; display:flex; flex-wrap:wrap; gap:6px; }
+.attach-chip { display:inline-flex; align-items:center; gap:4px; padding:3px 10px; background:#eff6ff; color:var(--blue); border-radius:6px; font-size:0.78rem; text-decoration:none; }
+.attach-chip:hover { background:#dbeafe; }
+
+/* Drag & Drop Zone */
+.drop-zone {
+    margin-top: 0.65rem;
+    border: 2px dashed #cbd5e1;
+    border-radius: 10px;
+    padding: 1rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all .2s;
+    background: #f8fafc;
+    position: relative;
+}
+.drop-zone.drag-over {
+    border-color: var(--blue);
+    background: #eff6ff;
+    transform: scale(1.01);
+    box-shadow: 0 0 0 3px rgba(59,130,246,.15);
+}
+.drop-zone-inner { display:flex; flex-direction:column; align-items:center; gap:4px; pointer-events:none; }
+.drop-icon { font-size: 1.4rem; }
+.drop-text { font-size: .82rem; color: var(--text2); font-weight: 500; }
+.drop-browse { color: var(--blue); text-decoration: underline; cursor: pointer; pointer-events: all; font-weight: 600; }
+.drop-hint { font-size: .72rem; color: var(--text3); }
+
+/* File preview chips */
+.file-preview-wrap {
+    display: flex; flex-wrap: wrap; gap: 6px;
+    margin-top: 0.6rem;
+}
+.file-chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 10px; background: #eff6ff;
+    border: 1.5px solid #bfdbfe; border-radius: 20px;
+    font-size: .76rem; font-weight: 600; color: #1e40af;
+}
+.file-chip .chip-rm {
+    cursor: pointer; color: #93c5fd; font-size: .85rem; line-height: 1;
+    font-weight: 700; padding: 0 2px;
+}
+.file-chip .chip-rm:hover { color: #dc2626; }
+
+/* Activity Log */
+.activity-item { display:flex; gap:0.75rem; padding:0.85rem 0; border-bottom:1px solid var(--border); position:relative; }
+.activity-item:last-child { border-bottom:none; }
+.activity-avatar { width:36px; height:36px; border-radius:50%; background:#e2e8f0; color:var(--text2); font-size:0.78rem; font-weight:700; display:flex;align-items:center;justify-content:center; flex-shrink:0; }
+.activity-line { position:absolute; left:17px; top:52px; bottom:-10px; width:2px; background:var(--border); }
+.activity-action { font-size:0.85rem; color:var(--text); }
+.activity-when { font-size:0.75rem; color:var(--text3); margin-top:2px; }
+.time-badge { background:#f1f5f9; color:var(--text2); font-size:0.72rem; font-weight:600; padding:2px 8px; border-radius:100px; }
+
+/* Attachment List */
+.att-item { display:flex; align-items:center; gap:0.75rem; padding:0.75rem; border:1.5px solid var(--border); border-radius:10px; margin-bottom:0.5rem; }
+.att-icon { font-size:1.5rem; }
+.att-name { font-weight:600; font-size:0.88rem; color:var(--text); }
+.att-meta { font-size:0.78rem; color:var(--text3); }
+
+/* Reminders */
+.reminder-item { display:flex; align-items:start; gap:0.75rem; padding:0.85rem; border:1.5px solid var(--border); border-radius:10px; margin-bottom:0.6rem; transition:background .15s; }
+.reminder-item.done { opacity:0.55; }
+.reminder-item.overdue { border-color:#fca5a5; background:#fff7f7; }
+.reminder-check { width:20px; height:20px; accent-color:var(--blue); cursor:pointer; flex-shrink:0; margin-top:2px; }
+.reminder-title { font-weight:600; font-size:0.9rem; color:var(--text); }
+.reminder-when { font-size:0.78rem; color:var(--text2); }
+.reminder-done-txt { text-decoration:line-through; }
+
+/* CKEditor rendered content */
+.ck-content p { margin:0 0 6px; }
+.ck-content p:last-child { margin-bottom:0; }
+.ck-content ul, .ck-content ol { padding-left:1.2rem; margin:4px 0; }
+.ck-content h3 { font-size:0.9rem; font-weight:700; margin:6px 0 3px; }
+.ck-content strong { font-weight:700; }
+.ck-content em { font-style:italic; }
+
+/* ── Sample Order & Quotation Modal – layout & visibility fix ── */
+#sampleOrderModal { overflow:auto; }
+#quotationModal { overflow:auto; }
+.so-section-lbl { font-size:0.7rem; font-weight:800; color:#94a3b8; text-transform:uppercase; letter-spacing:.06em; margin-bottom:.65rem; }
+.so-total-row { display:flex; justify-content:space-between; padding:8px 14px; border-bottom:1px solid #e2e8f0; font-size:0.88rem; }
+.so-total-final { display:flex; justify-content:space-between; padding:10px 14px; font-size:1rem; font-weight:800; color:#1e3a5f; background:#f0f6ff; }
+/* so-item-card – mobile card style */
+.so-item-card { background:#fff; border:1.5px solid #e2e8f0; border-radius:10px; padding:12px 12px 10px; margin-bottom:10px; position:relative; }
+.so-item-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-top:4px; }
+.so-item-row label { font-size:0.7rem; font-weight:700; color:#94a3b8; text-transform:uppercase; display:block; margin-bottom:3px; }
+.so-item-amt { font-size:0.9rem; font-weight:700; color:#1e3a5f; padding:8px 0; }
+.so-item-del { position:absolute; top:10px; right:10px; background:#fee2e2; color:#dc2626; border:none; border-radius:6px; width:26px; height:26px; font-size:0.85rem; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+.so-mobile-cards { display:block; }
+/* qt-item-card – quotation mobile card style */
+.qt-item-card { background:#fff; border:1.5px solid #e2e8f0; border-radius:10px; padding:12px; margin-bottom:10px; position:relative; }
+.qt-item-grid2 { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px; }
+.qt-item-grid3 { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.qt-item-field label { font-size:0.65rem; font-weight:700; color:#94a3b8; text-transform:uppercase; display:block; margin-bottom:3px; }
+.qt-item-del { position:absolute; top:10px; right:10px; background:#fee2e2; color:#dc2626; border:none; border-radius:6px; width:26px; height:26px; font-size:0.85rem; cursor:pointer; }
+.qt-mobile-only { display:block; }
+/* qt-total */
+.qt-total-box { border:1.5px solid #e2e8f0; border-radius:10px; overflow:hidden; margin-bottom:14px; }
+.qt-total-row { display:flex; justify-content:space-between; padding:9px 16px; border-bottom:1px solid #e2e8f0; font-size:0.88rem; }
+.qt-total-final { display:flex; justify-content:space-between; padding:11px 16px; font-size:1rem; font-weight:800; color:#1e3a5f; background:#f0f6ff; }
+/* qt desktop top - two column layout */
+.qt-desktop-top { display:grid; grid-template-columns:1fr auto 1fr; gap:0; margin-bottom:1.25rem; }
+.qt-desktop-divider { width:1px; margin:0 1.25rem; display:block !important; background:#e5e7eb; }
+@media (max-width:900px) {
+    .qt-desktop-top { grid-template-columns:1fr; }
+    .qt-desktop-divider { display:none !important; }
+}
+/* Error messages – absolute so they don't push layout */
+.so-err-msg { position:absolute; bottom:-17px; left:0; font-size:0.72rem; color:#ef4444; font-weight:500; line-height:1; white-space:nowrap; pointer-events:none; display:none; }
+.so-err-msg.show { display:block; }
+#soErrItems, #qtErrItems { position:static; display:none; font-size:0.78rem; color:#ef4444; font-weight:500; }
+#soErrItems.show, #qtErrItems.show { display:block; }
+@media (max-width:600px) {
+    #sampleOrderModal .so-unified-top { grid-template-columns:1fr !important; }
+}
+
+/* Notes */
+.note-item { background:#fffbeb; border:1.5px solid #fde68a; border-radius:10px; padding:0.85rem 1rem; margin-bottom:0.6rem; }
+.note-text { font-size:0.88rem; color:var(--text); line-height:1.5; white-space:pre-wrap; }
+.note-meta { font-size:0.75rem; color:var(--text3); margin-top:6px; display:flex; align-items:center; justify-content:space-between; }
+
+/* ═══════════════════════════════════════
+   MOBILE RESPONSIVE — Lead View
+   ═══════════════════════════════════════ */
+@media (max-width: 767px) {
+
+    /* Header card */
+    .lead-header { padding:14px 14px 12px; border-radius:12px; margin-bottom:10px; }
+    .lead-header-top { flex-direction:column; gap:10px; margin-bottom:10px; }
+    .lead-title-block h2 { font-size:1rem; line-height:1.4; }
+    .lead-meta { gap:6px; }
+    .lead-meta-item { font-size:0.75rem; }
+    .lead-actions-row { gap:8px; }
+    .lead-actions-row > button,
+    .lead-actions-row > a { font-size:0.85rem; padding:9px 16px; flex:1; justify-content:center; }
+    /* Actions dropdown — full width on mobile */
+    #leadActionMenu { flex:1; }
+    #leadActionMenu > button { width:100%; justify-content:center; }
+    #leadActionDropdown { left:0; right:0; min-width:unset; }
+
+    /* Tabs — horizontal scroll */
+    /* Tabs sticky + scroll */
+    .tab-nav {
+        position:sticky;
+        top:0;
+        background:#fff;
+        z-index:10;
+        margin-left:-12px;
+        margin-right:-12px;
+        margin-bottom:14px;
+        box-shadow:0 2px 8px rgba(0,0,0,0.06);
+    }
+    .tab-nav-inner {
+        padding-left:12px;
+        overflow-x:auto !important;
+        -webkit-overflow-scrolling:touch !important;
+        scroll-behavior:smooth;
+    }
+    .tab-btn { padding:10px 14px; font-size:0.8rem; }
+
+    /* Reminder & Notes grid — stack vertically */
+    .reminder-grid { grid-template-columns:1fr !important; }
+
+    /* Form fields full width */
+    .reminder-grid input[type=text],
+    .reminder-grid input[type=datetime-local],
+    .reminder-grid textarea { width:100%; box-sizing:border-box; font-size:0.9rem; }
+
+    /* Overview — single column */
+    .overview-grid { grid-template-columns:1fr; gap:10px; }
+
+    /* Info rows — stack label above value on very small screens */
+    .info-row { flex-direction:column; gap:2px; padding:8px 0; }
+    .info-lbl { min-width:unset; font-size:0.75rem; color:#94a3b8; }
+    .info-val { font-size:0.88rem; font-weight:600; }
+
+    /* Info cards (Lead Info, Requirement Info) */
+    .card { border-radius:12px; }
+    .card-hdr { padding:10px 14px; }
+    .card-body { padding:10px 14px; }
+
+    /* Discussion */
+    .disc-form { padding:12px; border-radius:10px; }
+    .disc-input { font-size:0.85rem; min-height:70px; }
+    .disc-item { gap:10px; padding:12px 0; }
+    .disc-avatar { width:34px; height:34px; font-size:0.75rem; }
+    .disc-text { font-size:0.84rem; }
+
+    /* Activity */
+    .activity-item { gap:10px; padding:10px 0; }
+    .activity-avatar { width:32px; height:32px; font-size:0.72rem; }
+    .activity-action { font-size:0.82rem; }
+
+    /* Attachments */
+    .att-item { padding:10px 12px; border-radius:8px; }
+
+    /* Reminders */
+    .reminder-item { padding:10px 12px; border-radius:8px; }
+    .reminder-title { font-size:0.85rem; }
+
+    /* Notes */
+    .note-item { padding:10px 12px; border-radius:8px; }
+    .note-text { font-size:0.84rem; }
+
+    /* Quotation / Sample Order mini tables inside lead view */
+    .tbl-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+    table { min-width:600px; }
+}
+/* ── Custom Rich Text Editor ── */
+.rte-wrap { border:1.5px solid #d1d5db; border-radius:10px; overflow:hidden; background:#fff; margin-bottom:6px; }
+.rte-toolbar { display:flex; align-items:center; gap:2px; padding:6px 8px; background:#f8fafc; border-bottom:1px solid #e2e8f0; flex-wrap:wrap; }
+.rte-toolbar button { padding:3px 9px; border:1px solid #e2e8f0; border-radius:5px; background:#fff; cursor:pointer; font-size:.78rem; font-family:inherit; color:#374151; transition:all .12s; }
+.rte-toolbar button:hover { background:#eff6ff; border-color:#93c5fd; color:#2563eb; }
+.rte-sep { width:1px; height:18px; background:#e2e8f0; margin:0 3px; }
+.rte-body { min-height:120px; max-height:300px; overflow-y:auto; padding:10px 14px; font-size:.88rem; line-height:1.6; color:#1f2937; outline:none; }
+.rte-body:empty::before { content:attr(data-placeholder); color:#9ca3af; pointer-events:none; }
+.rte-body ul,.rte-body ol { padding-left:1.4em; margin:4px 0; }
+.rte-body b,.rte-body strong { font-weight:700; }
+/* @mention dropdown */
+.mention-dropdown { position:absolute; background:#fff; border:1.5px solid #e2e8f0; border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,.12); z-index:9999; min-width:200px; max-height:220px; overflow-y:auto; display:none; }
+.mention-item { display:flex; align-items:center; gap:8px; padding:8px 12px; cursor:pointer; font-size:.85rem; transition:background .1s; }
+.mention-item:hover,.mention-item.active { background:#eff6ff; }
+.mention-av { width:28px; height:28px; border-radius:50%; background:linear-gradient(135deg,#6366f1,#2563eb); color:#fff; font-size:.65rem; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.mention-name { font-weight:600; color:#1e293b; }
+.mention-tag { background:#eff6ff; color:#2563eb; border-radius:4px; padding:1px 6px; font-weight:700; font-size:.82rem; }
+
+/* ── File-error modal (used by discussion board attachment validation) ── */
+.fe-overlay {
+  position: fixed; inset: 0; z-index: 10050;
+  background: rgba(15, 23, 42, 0.55);
+  display: none; align-items: center; justify-content: center;
+  padding: 1rem; backdrop-filter: blur(2px);
+  animation: feFade 0.18s ease-out;
+}
+/* Either CSS class OR inline display:flex (as set by showFileErrorModal()
+   in the script block) makes the modal visible. */
+.fe-overlay.show { display: flex; }
+.fe-modal {
+  background: #fff; border-radius: 16px; width: 460px; max-width: 100%;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.30);
+  overflow: hidden; animation: feSlide 0.22s cubic-bezier(.16,1,.3,1);
+}
+.fe-head {
+  display: flex; align-items: center; gap: 12px;
+  padding: 18px 22px;
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  border-bottom: 1px solid #fecaca;
+}
+.fe-icon {
+  width: 38px; height: 38px; border-radius: 50%;
+  background: #fff; color: #dc2626; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.25rem; box-shadow: 0 2px 6px rgba(220, 38, 38, .15);
+}
+.fe-title {
+  font-weight: 700; font-size: 1rem; color: #991b1b; line-height: 1.3;
+}
+.fe-sub {
+  font-size: 0.78rem; color: #b91c1c; margin-top: 2px;
+}
+.fe-close {
+  margin-left: auto; background: transparent; border: none;
+  font-size: 1.4rem; color: #991b1b; cursor: pointer;
+  width: 28px; height: 28px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .15s;
+}
+.fe-close:hover { background: rgba(153, 27, 27, .12); }
+.fe-body {
+  padding: 16px 22px 18px; max-height: 320px; overflow-y: auto;
+}
+/* The list items are rendered by showFileErrorModal() with inline
+   alert-card styling (red background, red border per item). We don't
+   re-style them here — inline wins over class anyway, and the alert-card
+   look gives errors a clear visual punch. */
+.fe-list { list-style: none; padding: 0; margin: 0;
+  display: flex; flex-direction: column; gap: 8px; }
+.fe-foot {
+  padding: 12px 22px 18px; display: flex; justify-content: flex-end;
+}
+.fe-btn-ok {
+  background: #dc2626; color: #fff; border: none; cursor: pointer;
+  padding: 9px 22px; border-radius: 8px;
+  font-size: 0.86rem; font-weight: 700;
+  transition: background .15s;
+}
+.fe-btn-ok:hover { background: #b91c1c; }
+
+@keyframes feFade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes feSlide {
+  from { opacity: 0; transform: translateY(-12px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+</style>
+{% endblock %}
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/modules/crm-lead-view.css') }}">
+{% block content %}
+<!-- Lead Header -->
+<div class="lead-header">
+    <div class="lead-header-top">
+        <div class="lead-title-block">
+            <h2>
+                {{ lead.name }}
+                {% if lead.city %} — {{ lead.city }}{% endif %}
+                {% if lead.product_name %} — {{ lead.product_name }}{% endif %}
+                &nbsp;
+                {% set _lv_color = '#6b7280' %}{% set _lv_icon = '' %}
+                {% for ls in lead_statuses if ls.name == lead.status %}{% set _lv_color = ls.color %}{% set _lv_icon = ls.icon %}{% endfor %}
+                {% if lead.status == 'open' %}<span class="badge badge-open">Open</span>
+                {% elif lead.status == 'in_process' %}<span class="badge badge-in_process">In Process</span>
+                {% elif lead.status == 'close' %}<span class="badge badge-close">Close</span>
+                {% elif lead.status == 'cancel' %}<span class="badge badge-cancel">Cancel</span>
+                {% else %}<span class="badge" style="background:{{ _lv_color }}18;color:{{ _lv_color }};border:1px solid {{ _lv_color }}33;">{{ _lv_icon }} {{ (lead.status or '')|replace('_',' ')|title }}</span>
+                {% endif %}
+            </h2>
+            <div class="lead-meta">
+                <span class="lead-meta-item">📅 Create Date: <strong>{{ lead.created_at.strftime('%d-%m-%Y %I:%M:%S %p') }}</strong></span>
+                <span class="lead-meta-item">🕐 Last Connected: <strong>
+                    {% if lead.last_contact %}{{ lead.last_contact.strftime('%d-%m-%Y') }}{% else %}—{% endif %}
+                </strong></span>
+                <span class="lead-meta-item">📌 Follow Up Date: <strong>
+                    {% if lead.follow_up_date %}{{ lead.follow_up_date.strftime('%d-%m-%Y') }}{% else %}N/A{% endif %}
+                </strong></span>
+            </div>
+        </div>
+        <div class="lead-actions-row">
+            <!-- WhatsApp Button -->
+            {% if sub_perms.whatsapp %}
+            <button onclick="openWaModal()" style="background:#25D366;color:#fff;border:none;border-radius:8px;padding:7px 14px;cursor:pointer;display:flex;align-items:center;gap:6px;font-size:0.85rem;font-weight:600;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                WhatsApp
+            </button>
+            {% endif %}
+
+            <!-- Email Button (opens compose modal like WhatsApp) -->
+            <button onclick="openEmailModal()" style="background:#2563eb;color:#fff;border:none;border-radius:8px;padding:7px 14px;cursor:pointer;display:flex;align-items:center;gap:6px;font-size:0.85rem;font-weight:600;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                Email
+            </button>
+
+            <div style="position:relative;" id="leadActionMenu">
+                <button onclick="toggleLeadMenu()" style="background:#fff;border:1.5px solid #d1d5db;border-radius:8px;padding:7px 12px;cursor:pointer;display:flex;align-items:center;gap:6px;font-size:0.85rem;font-weight:600;color:#374151;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+                    Actions
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+                <div id="leadActionDropdown" style="display:none;position:absolute;right:0;top:calc(100% + 6px);background:#fff;border:1.5px solid #e5e7eb;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,0.12);min-width:190px;z-index:200;overflow:hidden;">
+                    {% if perm and perm.can_edit %}
+                    <a href="{{ url_for('crm.lead_edit', id=lead.id) }}" style="display:flex;align-items:center;gap:10px;padding:10px 14px;font-size:0.85rem;color:#374151;text-decoration:none;transition:background .12s;">
+                        <span style="width:20px;text-align:center;">✏️</span> Edit Lead
+                    </a>
+                    {% endif %}
+                    {% if sub_perms.sample_order %}
+                    <button onclick="openSampleOrderModal();toggleLeadMenu();" style="width:100%;display:flex;align-items:center;gap:10px;padding:10px 14px;font-size:0.85rem;color:#374151;background:none;border:none;cursor:pointer;text-align:left;transition:background .12s;">
+                        <span style="width:20px;text-align:center;">📋</span> Sample Order
+                    </button>
+                    {% endif %}
+                    {% if sub_perms.quotation %}
+                    <button onclick="openQuotationModal();toggleLeadMenu();" style="width:100%;display:flex;align-items:center;gap:10px;padding:10px 14px;font-size:0.85rem;color:#374151;background:none;border:none;cursor:pointer;text-align:left;transition:background .12s;">
+                        <span style="width:20px;text-align:center;">📄</span> Create Quotation
+                    </button>
+                    {% endif %}
+                    {% if sub_perms.send_npd %}
+                    <button onclick="openNpdModal();toggleLeadMenu();" style="width:100%;display:flex;align-items:center;gap:10px;padding:10px 14px;font-size:0.85rem;color:#374151;background:none;border:none;cursor:pointer;text-align:left;transition:background .12s;">
+                        <span style="width:20px;text-align:center;">✉️</span> Send NPD Project
+                    </button>
+                    {% endif %}
+                    <div style="border-top:1px solid #f1f5f9;margin:2px 0;"></div>
+
+                    {# Hidden POST forms — kept for backward compatibility (legacy convert-lead endpoint) #}
+                    <form id="form-npd-convert" method="POST" action="/npd/convert-lead/{{ lead.id }}/npd"></form>
+                    <form id="form-epd-convert" method="POST" action="/npd/convert-lead/{{ lead.id }}/existing"></form>
+
+                    {# ── NPD Button → new gate flow (GET /npd/start/<lead_id>/npd) ── #}
+                    {% if sub_perms.create_npd %}
+                    <button type="button"
+                        onclick="openConvertModal('npd', {% if lead.client_id %}true{% else %}false{% endif %}); toggleLeadMenu();"
+                        style="width:100%;display:flex;align-items:center;gap:10px;padding:10px 14px;font-size:0.85rem;color:#7c3aed;background:none;border:none;cursor:pointer;text-align:left;transition:background .12s;font-weight:600;">
+                        <span style="width:20px;text-align:center;">🧪</span>
+                        <span>
+                            NPD Project
+                            <span style="display:block;font-size:0.72rem;color:#9ca3af;font-weight:400;">
+                                {% if lead.client_id %}Client linked → Project Form{% else %}Create Client → Project Form{% endif %}
+                            </span>
+                        </span>
+                    </button>
+                    {% endif %}
+
+                    {# ── EPD Button → new gate flow (GET /npd/start/<lead_id>/epd) ── #}
+                    {% if sub_perms.create_epd %}
+                    <button type="button"
+                        onclick="openConvertModal('epd', {% if lead.client_id %}true{% else %}false{% endif %}); toggleLeadMenu();"
+                        style="width:100%;display:flex;align-items:center;gap:10px;padding:10px 14px;font-size:0.85rem;color:#059669;background:none;border:none;cursor:pointer;text-align:left;transition:background .12s;font-weight:600;">
+                        <span style="width:20px;text-align:center;">📦</span>
+                        <span>
+                            EPD Project
+                            <span style="display:block;font-size:0.72rem;color:#9ca3af;font-weight:400;">
+                                {% if lead.client_id %}Client linked → Project Form{% else %}Create Client → Project Form{% endif %}
+                            </span>
+                        </span>
+                    </button>
+                    {% endif %}
+
+                    <div style="border-top:1px solid #f1f5f9;margin:2px 0;"></div>
+                    {% if sub_perms.change_status %}
+                    <button onclick="document.getElementById('statusModal').style.display='flex';toggleLeadMenu();" style="width:100%;display:flex;align-items:center;gap:10px;padding:10px 14px;font-size:0.85rem;color:#374151;background:none;border:none;cursor:pointer;text-align:left;transition:background .12s;">
+                        <span style="width:20px;text-align:center;">🔄</span> Change Status
+                    </button>
+                    {% endif %}
+                    <div style="border-top:1px solid #f1f5f9;margin:2px 0;"></div>
+                    {% if perm and perm.can_delete %}
+                    <form method="POST" action="{{ url_for('crm.lead_delete', id=lead.id) }}" onsubmit="return confirm('Delete this lead permanently?')">
+                        <button type="submit" style="width:100%;display:flex;align-items:center;gap:10px;padding:10px 14px;font-size:0.85rem;color:#dc2626;background:none;border:none;cursor:pointer;text-align:left;transition:background .12s;">
+                            <span style="width:20px;text-align:center;">🗑️</span> Delete Lead
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabs Navigation -->
+<div class="tab-nav">
+    <div class="tab-nav-inner" id="tabNavInner">
+        <a href="#" class="tab-btn {% if tab=='overview' %}active{% endif %}" onclick="switchTab('overview',this); return false;">Overview</a>
+        {% if sub_perms.discussion_board %}
+        <a href="#" class="tab-btn {% if tab=='discussion' %}active{% endif %}" onclick="switchTab('discussion',this); return false;">Discussion Board</a>
+        {% endif %}
+        {% if sub_perms.activity_log %}
+        <a href="#" class="tab-btn {% if tab=='activity' %}active{% endif %}" onclick="switchTab('activity',this); return false;">Activity Log</a>
+        {% endif %}
+        {% if sub_perms.attachments %}
+        <a href="#" class="tab-btn {% if tab=='attachments' %}active{% endif %}" onclick="switchTab('attachments',this); return false;">Attachments List</a>
+        {% endif %}
+        {% if sub_perms.reminder %}
+        <a href="#" class="tab-btn {% if tab=='reminder' %}active{% endif %}" onclick="switchTab('reminder',this); return false;">Reminder</a>
+        {% endif %}
+        {% if sub_perms.personal_notes %}
+        <a href="#" class="tab-btn {% if tab=='notes' %}active{% endif %}" onclick="switchTab('notes',this); return false;">Personal Notes</a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- TAB 1: OVERVIEW -->
+<div id="tab-overview" class="tab-pane {% if tab=='overview' %}active{% endif %}">
+    <div class="overview-grid">
+        <!-- Lead Info -->
+        <div class="card">
+            <div class="card-hdr"><div class="card-title">Lead Information</div></div>
+            <div class="card-body">
+                <div class="info-row"><span class="info-lbl">Name</span><span class="info-val">{{ lead.name }}</span></div>
+                <div class="info-row">
+                    <span class="info-lbl">Lead Type</span>
+                    <span class="info-val">
+                        {% if lead.lead_type == 'Non-Quality' %}
+                            <span style="background:#fee2e2;color:#dc2626;padding:2px 12px;border-radius:100px;font-size:0.82rem;font-weight:700;">❌ Non-Quality</span>
+                        {% else %}
+                            <span style="background:#dcfce7;color:#166634;padding:2px 12px;border-radius:100px;font-size:0.82rem;font-weight:700;">✅ Quality</span>
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="info-row"><span class="info-lbl">Position</span><span class="info-val">{{ lead.position or 'N/A' }}</span></div>
+                <div class="info-row"><span class="info-lbl">Email Address</span><span class="info-val"><a href="mailto:{{ lead.email }}" style="color:var(--blue);">{{ lead.email or 'N/A' }}</a></span></div>
+                <div class="info-row"><span class="info-lbl">Website</span><span class="info-val">{% if lead.website %}<a href="{{ lead.website }}" target="_blank" style="color:var(--blue);">{{ lead.website }}</a>{% else %}N/A{% endif %}</span></div>
+                <div class="info-row"><span class="info-lbl">Mobile</span><span class="info-val"><a href="tel:{{ lead.mobile }}" style="color:var(--blue);">{{ lead.mobile or 'N/A' }}</a></span></div>
+                <div class="info-row"><span class="info-lbl">Alternate Mobile</span><span class="info-val">{% if lead.alternate_mobile %}<a href="tel:{{ lead.alternate_mobile }}" style="color:var(--blue);">{{ lead.alternate_mobile }}</a>{% else %}N/A{% endif %}</span></div>
+                <div class="info-row"><span class="info-lbl">Average Cost</span><span class="info-val">{{ lead.average_cost or '0.00' }}</span></div>
+                <div class="info-row"><span class="info-lbl">Company</span><span class="info-val">{{ lead.company or 'N/A' }}</span></div>
+                <div class="info-row"><span class="info-lbl">Address</span><span class="info-val">{{ lead.address or 'N/A' }}</span></div>
+                <div class="info-row"><span class="info-lbl">City</span><span class="info-val">{{ lead.city or 'N/A' }}</span></div>
+                <div class="info-row"><span class="info-lbl">State</span><span class="info-val">{{ lead.state or 'N/A' }}</span></div>
+                <div class="info-row"><span class="info-lbl">Country</span><span class="info-val">{{ lead.country or 'N/A' }}</span></div>
+                <div class="info-row"><span class="info-lbl">Zip Code</span><span class="info-val">{{ lead.zip_code or 'N/A' }}</span></div>
+            </div>
+        </div>
+
+        <!-- Requirement Info -->
+        <div class="card">
+            <div class="card-hdr"><div class="card-title">Requirement Information</div></div>
+            <div class="card-body">
+                <div class="info-row"><span class="info-lbl">Client Attachments</span><span class="info-val">{{ lead.client_attachment or 'No Files' }}</span></div>
+                <div class="info-row"><span class="info-lbl">Product Name</span><span class="info-val">{{ lead.product_name or 'N/A' }}</span></div>
+                <div class="info-row"><span class="info-lbl">Category</span><span class="info-val">{{ lead.category or 'N/A' }}</span></div>
+                <div class="info-row"><span class="info-lbl">Requirement Spec</span><div class="info-val ck-content" style="font-size:0.87rem;line-height:1.6;">{% if lead.requirement_spec %}{{ lead.requirement_spec|safe }}{% else %}N/A{% endif %}</div></div>
+                <div class="info-row"><span class="info-lbl">Tags</span><span class="info-val">{{ lead.tags or 'N/A' }}</span></div>
+                <div class="info-row"><span class="info-lbl">Product Range</span><span class="info-val">{{ lead.product_range or 'N/A' }}</span></div>
+                <div class="info-row"><span class="info-lbl">Order Quantity</span><span class="info-val">{{ lead.order_quantity or 'N/A' }}</span></div>
+                <div class="info-row"><span class="info-lbl">Remark</span><div class="info-val ck-content" style="font-size:0.87rem;line-height:1.6;">{% if lead.remark %}{{ lead.remark|safe }}{% else %}N/A{% endif %}</div></div>
+                <div class="info-row"><span class="info-lbl">Source</span><span class="info-val">{{ lead.source or 'N/A' }}</span></div>
+                <div class="info-row"><span class="info-lbl">Created Date</span><span class="info-val">{{ lead.created_at.strftime('%d-%m-%Y %I:%M:%S %p') }}</span></div>
+                <div class="info-row"><span class="info-lbl">Last Contact</span><span class="info-val">{% if lead.last_contact %}{{ lead.last_contact.strftime('%d-%m-%Y') }}{% else %}N/A{% endif %}</span></div>
+                <div class="info-row">
+                    <span class="info-lbl">Lead Age</span>
+                    <span class="info-val">
+                        {% set age = lead.lead_age %}
+                        {% if lead.status in ('close','cancel') %}
+                            <span style="background:#dcfce7;color:#166534;padding:2px 10px;border-radius:100px;font-size:0.82rem;font-weight:700;">{{ age }} days (Closed)</span>
+                            {% if lead.closed_at %}<span style="font-size:0.78rem;color:var(--text3);margin-left:6px;">Closed on {{ lead.closed_at.strftime('%d-%m-%Y') }}</span>{% endif %}
+                        {% elif age > 30 %}
+                            <span style="background:#fee2e2;color:#dc2626;padding:2px 10px;border-radius:100px;font-size:0.82rem;font-weight:700;">{{ age }} days 🔴</span>
+                        {% elif age > 15 %}
+                            <span style="background:#fef9c3;color:#92400e;padding:2px 10px;border-radius:100px;font-size:0.82rem;font-weight:700;">{{ age }} days 🟡</span>
+                        {% else %}
+                            <span style="background:#eff6ff;color:#1d4ed8;padding:2px 10px;border-radius:100px;font-size:0.82rem;font-weight:700;">{{ age }} days 🟢</span>
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="info-row"><span class="info-lbl">Followup Date</span><span class="info-val">{% if lead.follow_up_date %}{{ lead.follow_up_date.strftime('%d-%m-%Y') }}{% else %}N/A{% endif %}</span></div>
+                <div class="info-row">
+                    <span class="info-lbl">Team Member</span>
+                    <span class="info-val">
+                        {% set members = team_members %}
+                        {% if members %}
+                            {{ members | map(attribute='full_name') | join(', ') }}
+                        {% else %}N/A{% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Latest Discussion Preview -->
+    {% if discussions %}
+    <div class="card" style="margin-top:1rem;">
+        <div class="card-hdr">
+            <div class="card-title">Latest Discussion</div>
+            <a href="#" class="btn-outline" style="font-size:0.78rem;padding:4px 10px;" onclick="switchTab('discussion',null); return false;">View All →</a>
+        </div>
+        <div class="card-body">
+            {% set d = discussions[0] %}
+            <div class="disc-item" style="border:none;padding:0;">
+                <div class="disc-avatar">{{ d.user.full_name[:2]|upper if d.user else 'NA' }}</div>
+                <div class="disc-content">
+                    <div class="disc-meta">{{ d.user.full_name if d.user else 'Unknown' }} · {{ d.created_at.strftime('%d-%m-%Y %H:%M') }}</div>
+                    <div class="disc-text">{{ d.comment|safe }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Contributors -->
+    <div class="card" style="margin-top:1rem;">
+        <div class="card-hdr">
+            <div class="card-title">🏆 Lead Contributors</div>
+            <div style="font-size:0.75rem;color:var(--text3);">Points: Comment=1 · Edit=1 · Status Change=2 · Cancel=2 · Close=5</div>
+        </div>
+        <div class="card-body" id="contribBody">
+            <div style="text-align:center;color:var(--text3);padding:1rem;font-size:0.82rem;">Loading...</div>
+        </div>
+    </div>
+</div>
+
+<!-- TAB 2: DISCUSSION BOARD -->
+{% if sub_perms.discussion_board %}
+<div id="tab-discussion" class="tab-pane {% if tab=='discussion' %}active{% endif %}">
+    <div class="card">
+        <div class="card-hdr"><div class="card-title">Discussion Board</div></div>
+        <div class="card-body">
+            {# ── NPD-style compose area: bordered box with toolbar / editor / footer ──
+               - Single bordered box, no big drag-drop zone above
+               - Toolbar: B/I/U • lists • image-inline • file-attach
+               - Drop directly into editor (images go inline, other files go to attach list)
+               - Filename chips appear in footer next to Send button #}
+            <form method="POST" action="{{ url_for('crm.lead_discussion_add', id=lead.id) }}" enctype="multipart/form-data" id="discussionForm" novalidate>
+                <div style="display:flex;gap:.75rem;align-items:flex-start;margin-bottom:1rem;">
+                    <div class="disc-avatar" style="width:36px;height:36px;flex-shrink:0;">{{ current_user.full_name[:2]|upper }}</div>
+                    <div style="flex:1;min-width:0;">
+                        <div style="border:1.5px solid var(--border);border-radius:10px;overflow:hidden;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.06);">
+                            {# Toolbar #}
+                            <div style="display:flex;align-items:center;gap:2px;padding:5px 8px;background:#f8fafc;border-bottom:1px solid var(--border);flex-wrap:wrap;">
+                                <button type="button" onclick="document.execCommand('bold')" style="width:28px;height:28px;border:none;background:none;cursor:pointer;border-radius:4px;font-weight:800;font-size:.85rem;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='none'" title="Bold"><b>B</b></button>
+                                <button type="button" onclick="document.execCommand('italic')" style="width:28px;height:28px;border:none;background:none;cursor:pointer;border-radius:4px;font-style:italic;font-size:.85rem;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='none'" title="Italic"><i>I</i></button>
+                                <button type="button" onclick="document.execCommand('underline')" style="width:28px;height:28px;border:none;background:none;cursor:pointer;border-radius:4px;text-decoration:underline;font-size:.85rem;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='none'" title="Underline"><u>U</u></button>
+                                <div style="width:1px;height:18px;background:var(--border);margin:0 3px;"></div>
+                                <button type="button" onclick="document.execCommand('insertUnorderedList')" style="width:28px;height:28px;border:none;background:none;cursor:pointer;border-radius:4px;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='none'" title="Bullet List">•≡</button>
+                                <button type="button" onclick="document.execCommand('insertOrderedList')" style="width:28px;height:28px;border:none;background:none;cursor:pointer;border-radius:4px;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='none'" title="Numbered List">1≡</button>
+                                <div style="width:1px;height:18px;background:var(--border);margin:0 3px;"></div>
+                                <button type="button" onclick="document.getElementById('discImgPaste').click()" style="width:28px;height:28px;border:none;background:none;cursor:pointer;border-radius:4px;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='none'" title="Insert Image Inline">🖼</button>
+                                <button type="button" onclick="document.getElementById('fileInput').click()" style="width:28px;height:28px;border:none;background:none;cursor:pointer;border-radius:4px;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='none'" title="Attach File">📎</button>
+                                <input type="file" id="discImgPaste" accept="image/*" style="display:none;" onchange="leadInsertImgInline(this,'rte-main-ed')">
+                                {# Multi-file: keep name="attachments[]" so the existing
+                                   crm.lead_discussion_add handler keeps working unchanged. #}
+                                <input type="file" name="attachments[]" multiple id="fileInput" style="display:none;" onchange="handleFiles(this.files)">
+                            </div>
+
+                            {# Editor #}
+                            <div id="rte-main-ed" class="rte-body" contenteditable="true"
+                                 data-placeholder="Write a message..."
+                                 style="min-height:80px;max-height:240px;overflow-y:auto;padding:10px 14px;font-size:.88rem;font-family:inherit;outline:none;line-height:1.6;color:var(--text);"
+                                 oninput="document.getElementById('commentBoxHidden').value=this.innerHTML;"
+                                 onpaste="leadHandleImgPaste(event,'rte-main-ed')"
+                                 ondragover="event.preventDefault();this.style.outline='2px dashed var(--blue)';this.style.background='#f0f7ff'"
+                                 ondragleave="this.style.outline='';this.style.background=''"
+                                 ondrop="leadDropToEditor(event,'rte-main-ed','fileInput')"></div>
+
+                            {# Footer with file-chips and Send button #}
+                            <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 12px;border-top:1px solid var(--border);background:#f8fafc;gap:.75rem;">
+                                <div id="filePreview" style="flex:1;min-width:0;display:flex;flex-wrap:wrap;gap:6px;font-size:.75rem;"></div>
+                                {# Single-click submit fix:
+                                   Pehle button type="submit" tha — click event aur form submit event
+                                   dono fire hote the, aur kabhi-kabhi browser focus-shift ke karan
+                                   pehla click miss ho jaata tha. Ab type="button" hai aur click pe
+                                   directly leadSendDiscussion() function chalti hai — sync + validate
+                                   + disable + form.submit() — sab ek hi click cycle me. #}
+                                <button type="button" id="postCommentBtn" class="btn-add-new"
+                                        onclick="leadSendDiscussion(); return false;"
+                                        style="font-size:.83rem;padding:6px 20px;flex-shrink:0;">Send ➤</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <input type="hidden" name="comment" id="commentBoxHidden">
+            </form>
+
+            <!-- Discussion list -->
+            {% if discussions %}
+                {% for d in discussions %}
+                <div class="disc-item" id="disc-{{ d.id }}">
+                    <div class="disc-avatar">{{ d.user.full_name[:2]|upper if d.user else 'NA' }}</div>
+                    <div class="disc-content" style="flex:1;">
+                        <div class="disc-meta" style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+                            <span><strong>{{ d.user.full_name if d.user else 'Unknown' }}</strong> · {{ d.created_at.strftime('%d-%m-%Y %H:%M:%S') }}</span>
+                            {% if d.user_id == current_user.id or current_user.role in ("admin","manager") %}
+                            <div style="display:flex;gap:4px;flex-shrink:0;">
+                                <button onclick="discEdit({{ d.id }}, this)" title="Edit" style="background:#eff6ff;border:none;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:.75rem;color:#2563eb;font-weight:700;">✏️ Edit</button>
+                                <button onclick="discDelete({{ d.id }}, this)" title="Delete" style="background:#fef2f2;border:none;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:.75rem;color:#dc2626;font-weight:700;">🗑️</button>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="disc-text" id="disc-text-{{ d.id }}">{{ d.comment|safe }}</div>
+                        <div id="disc-edit-box-{{ d.id }}" style="display:none;margin-top:8px;">
+                            <div class="rte-wrap" id="rte-edit-{{ d.id }}">
+                              <div class="rte-toolbar">
+                                <button type="button" onclick="rteCmd('rte-edit-{{ d.id }}-ed','bold')"><b>B</b></button>
+                                <button type="button" onclick="rteCmd('rte-edit-{{ d.id }}-ed','italic')"><i>I</i></button>
+                                <button type="button" onclick="rteCmd('rte-edit-{{ d.id }}-ed','underline')"><u>U</u></button>
+                                <span class="rte-sep"></span>
+                                <button type="button" onclick="rteCmd('rte-edit-{{ d.id }}-ed','insertUnorderedList')">• List</button>
+                                <button type="button" onclick="rteCmd('rte-edit-{{ d.id }}-ed','insertOrderedList')">1. List</button>
+                                <span class="rte-sep"></span>
+                                <button type="button" onclick="rteCmd('rte-edit-{{ d.id }}-ed','removeFormat')">✕ Clear</button>
+                              </div>
+                              <div id="rte-edit-{{ d.id }}-ed" class="rte-body" contenteditable="true"></div>
+                            </div>
+                            <!-- File upload in edit -->
+                            <div style="margin-top:8px;">
+                                <label style="font-size:.78rem;font-weight:700;color:var(--text3);display:block;margin-bottom:4px;">📎 Add/Change Files</label>
+                                <input type="file" id="disc-edit-files-{{ d.id }}" multiple style="font-size:.8rem;border:1px solid #e2e8f0;border-radius:6px;padding:4px 8px;width:100%;box-sizing:border-box;">
+                                {% if d.attachments %}
+                                <div style="margin-top:6px;font-size:.75rem;color:var(--text3);">Existing: {% for att in d.attachments %}<span style="background:#f1f5f9;border-radius:4px;padding:2px 7px;margin-right:4px;">📎 {{ att.file_name }}</span>{% endfor %}</div>
+                                {% endif %}
+                            </div>
+                            <div style="display:flex;gap:6px;margin-top:8px;justify-content:flex-end;">
+                                <button onclick="discCancelEdit({{ d.id }})" style="padding:5px 16px;border:1px solid #e2e8f0;border-radius:6px;background:#f8fafc;font-size:.82rem;cursor:pointer;">Cancel</button>
+                                <button onclick="discSaveEdit({{ d.id }})" style="padding:5px 16px;background:#2563eb;color:#fff;border:none;border-radius:6px;font-size:.82rem;font-weight:700;cursor:pointer;">💾 Save</button>
+                            </div>
+                        </div>
+                        <div class="disc-attach" id="disc-att-{{ d.id }}">
+                        {% if d.attachments %}
+                            {% for att in d.attachments %}
+                            <a href="/static/{{ att.file_path }}" target="_blank" class="attach-chip">📎 {{ att.file_name }}</a>
+                            {% endfor %}
+                        {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p style="color:var(--text3);text-align:center;padding:2rem;">No comments yet. Add first comment above.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- TAB 3: ACTIVITY LOG -->
+{% endif %}{# end discussion_board #}
+{% if sub_perms.activity_log %}
+<div id="tab-activity" class="tab-pane {% if tab=='activity' %}active{% endif %}">
+    <div class="card">
+        <div class="card-hdr"><div class="card-title">Activity Log</div></div>
+        <div class="card-body">
+            {% if activity %}
+                {% for a in activity %}
+                <div class="activity-item">
+                    {% if loop.index < activity|length %}
+                    <div class="activity-line"></div>
+                    {% endif %}
+                    <div class="activity-avatar">{{ a.user.full_name[:2]|upper if a.user else '?' }}</div>
+                    <div>
+                        <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+                            <strong style="font-size:0.88rem;">{{ a.user.full_name if a.user else 'System' }}</strong>
+                            <span class="time-badge">{{ a.created_at.strftime('%d-%m-%Y') }}</span>
+                        </div>
+                        <div class="activity-action">{{ a.action }}</div>
+                        <div class="activity-when">{{ a.created_at.strftime('%d-%m-%Y %H:%M:%S') }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p style="color:var(--text3);text-align:center;padding:2rem;">No activity recorded yet.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- TAB 4: ATTACHMENTS -->
+{% endif %}{# end activity_log #}
+{% if sub_perms.attachments %}
+<div id="tab-attachments" class="tab-pane {% if tab=='attachments' %}active{% endif %}">
+    <div class="card">
+        <div class="card-hdr">
+            <div class="card-title">Attachments List</div>
+            <small style="color:var(--text3);">Files attached in discussions appear here</small>
+        </div>
+        <div class="card-body">
+            {% if attachments %}
+                {% for att in attachments %}
+                <div class="att-item">
+                    <span class="att-icon">
+                        {% if att.file_name.endswith('.pdf') %}📄
+                        {% elif att.file_name.endswith(('.png','.jpg','.jpeg','.gif')) %}🖼️
+                        {% elif att.file_name.endswith(('.xls','.xlsx')) %}📊
+                        {% elif att.file_name.endswith(('.doc','.docx')) %}📝
+                        {% else %}📎{% endif %}
+                    </span>
+                    <div style="flex:1;">
+                        <div class="att-name">{{ att.file_name }}</div>
+                        <div class="att-meta">
+                            Uploaded by {{ att.uploader.full_name if att.uploader else 'Unknown' }}
+                            · {{ att.created_at.strftime('%d-%m-%Y %H:%M') }}
+                            {% if att.file_size %}· {{ (att.file_size / 1024)|round(1) }} KB{% endif %}
+                        </div>
+                    </div>
+                    <a href="/static/{{ att.file_path }}" target="_blank" class="btn-outline" style="font-size:0.78rem;padding:5px 10px;">Download</a>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p style="color:var(--text3);text-align:center;padding:2rem;">No attachments found. Add files through Discussion Board.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- TAB 5: REMINDER (Followup) -->
+{% endif %}{# end attachments #}
+{% if sub_perms.reminder %}
+<div id="tab-reminder" class="tab-pane {% if tab=='reminder' %}active{% endif %}">
+    <div class="reminder-grid" style="display:grid;grid-template-columns:1fr 350px;gap:1rem;align-items:start;">
+        <div class="card">
+            <div class="card-hdr"><div class="card-title">Reminders / Follow-ups</div></div>
+            <div class="card-body" id="reminder-list">
+                {% if reminders %}
+                    {% for r in reminders %}
+                    {% set is_overdue = r.remind_at < now and not r.is_done %}
+                    <div class="reminder-item {{ 'done' if r.is_done }} {{ 'overdue' if is_overdue }}" id="rem-{{ r.id }}">
+                        <input type="checkbox" class="reminder-check" {{ 'checked' if r.is_done }}
+                               onchange="toggleReminderDone({{ r.id }}, this)">
+                        <div style="flex:1;">
+                            <div class="reminder-title {{ 'reminder-done-txt' if r.is_done }}" id="rem-title-{{ r.id }}">{{ r.title }}</div>
+                            <div class="reminder-when" id="rem-when-{{ r.id }}">
+                                📅 {{ r.remind_at.strftime('%d-%m-%Y %H:%M') }}
+                                {% if is_overdue %}<span style="color:#dc2626;font-weight:700;"> (Overdue!)</span>{% endif %}
+                                {% if r.is_done %}<span class="rem-done-lbl" style="color:var(--green);"> ✓ Done</span>{% endif %}
+                            </div>
+                            {% if r.description %}<div style="font-size:0.82rem;color:var(--text2);margin-top:4px;">{{ r.description }}</div>{% endif %}
+                        </div>
+                        <button onclick="deleteReminder({{ r.id }}, this)" class="ra-btn danger" title="Delete">🗑️</button>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p id="rem-empty" style="color:var(--text3);text-align:center;padding:2rem;">No reminders set. Add one from the form.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Add Reminder Form -->
+        <div class="card">
+            <div class="card-hdr"><div class="card-title">➕ Add Reminder</div></div>
+            <div class="card-body">
+                <form id="rem-add-form" onsubmit="addReminder(event)">
+                    <div class="fg" style="margin-bottom:0.75rem;">
+                        <label class="fl">Title *</label>
+                        <input type="text" id="rem-title-inp" class="fi" required placeholder="Follow up call, Send sample...">
+                    </div>
+                    <div class="fg" style="margin-bottom:0.75rem;">
+                        <label class="fl">Reminder Date & Time *</label>
+                        <input type="datetime-local" id="rem-dt-inp" class="fi" required>
+                    </div>
+                    <div class="fg" style="margin-bottom:1rem;">
+                        <label class="fl">Description</label>
+                        <textarea id="rem-desc-inp" class="fi" rows="3" placeholder="Details..."></textarea>
+                    </div>
+                    <button type="submit" id="rem-submit-btn" class="btn-primary" style="width:100%;">Set Reminder</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- TAB 6: PERSONAL NOTES -->
+{% endif %}{# end reminder #}
+{% if sub_perms.personal_notes %}
+<div id="tab-notes" class="tab-pane {% if tab=='notes' %}active{% endif %}">
+    <div class="reminder-grid" style="display:grid;grid-template-columns:1fr 350px;gap:1rem;align-items:start;">
+        <div class="card">
+            <div class="card-hdr">
+                <div class="card-title">📝 Personal Notes</div>
+                <small style="color:var(--text3);">Only visible to you</small>
+            </div>
+            <div class="card-body">
+                {% if notes_list %}
+                    {% for n in notes_list %}
+                    <div class="note-item">
+                        <div class="note-text">{{ n.note }}</div>
+                        <div class="note-meta">
+                            <span>{{ n.created_at.strftime('%d-%m-%Y %H:%M') }}</span>
+                            <form method="POST" action="{{ url_for('crm.lead_note_delete', nid=n.id) }}" onsubmit="return confirm('Delete this note?')" style="margin:0;">
+                                <button type="submit" style="background:none;border:none;color:#dc2626;cursor:pointer;font-size:0.78rem;">🗑️ Delete</button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p style="color:var(--text3);text-align:center;padding:2rem;">No personal notes yet.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-hdr"><div class="card-title">➕ Add Note</div></div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('crm.lead_note_add', id=lead.id) }}" novalidate>
+                    <textarea name="note" class="fi" rows="5" required placeholder="Write your private note here..."></textarea>
+                    <button type="submit" class="btn-primary" style="width:100%;margin-top:0.75rem;">Save Note</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}{# end personal_notes #}
+
+<!-- NPD Send Modal -->
+<div id="npdModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:1000;align-items:center;justify-content:center;padding:1rem;">
+    <div style="background:#fff;border-radius:12px;width:100%;max-width:700px;max-height:92vh;overflow-y:auto;box-shadow:0 25px 80px rgba(0,0,0,0.25);">
+        <!-- Header -->
+        <div style="background:#1e3a5f;color:#fff;padding:0.9rem 1.5rem;border-radius:12px 12px 0 0;display:flex;align-items:center;justify-content:space-between;">
+            <div>
+                <div style="font-size:1rem;font-weight:700;">✉️ Send NPD Project Email</div>
+                <div style="font-size:0.78rem;opacity:0.75;" id="npdLeadInfo">{{ lead.name }}{% if lead.company_name %} — {{ lead.company_name }}{% endif %}</div>
+            </div>
+            <button onclick="document.getElementById('npdModal').style.display='none'" style="background:rgba(255,255,255,0.15);border:none;color:#fff;width:28px;height:28px;border-radius:50%;font-size:1rem;cursor:pointer;">✕</button>
+        </div>
+
+        <!-- Loading state -->
+        <div id="npdLoading" style="padding:3rem;text-align:center;color:var(--text3);">
+            <div style="font-size:1.5rem;margin-bottom:0.5rem;">⏳</div>
+            Loading template...
+        </div>
+
+        <!-- Form (shown after load) -->
+        <form method="POST" action="{{ url_for('mail.lead_send_npd', id=lead.id) }}" id="npdForm" style="display:none;">
+            <div style="padding:1.25rem 1.5rem;">
+
+                <!-- To & From -->
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:0.85rem;">
+                    <div>
+                        <label style="font-size:0.8rem;font-weight:600;color:#374151;display:block;margin-bottom:3px;">To (Email) *</label>
+                        <input type="email" name="to_email" id="npdToEmail" class="fi" style="font-size:0.85rem;" required>
+                    </div>
+                    <div>
+                        <label style="font-size:0.8rem;font-weight:600;color:#374151;display:block;margin-bottom:3px;">From Name</label>
+                        <input type="text" name="from_name" id="npdFromName" class="fi" style="font-size:0.85rem;">
+                    </div>
+                </div>
+                <div style="margin-bottom:0.85rem;">
+                    <label style="font-size:0.8rem;font-weight:600;color:#374151;display:block;margin-bottom:3px;">From Email</label>
+                    <input type="email" name="from_email" id="npdFromEmail" class="fi" style="font-size:0.85rem;">
+                </div>
+
+                <!-- Subject -->
+                <div style="margin-bottom:0.85rem;">
+                    <label style="font-size:0.8rem;font-weight:600;color:#374151;display:block;margin-bottom:3px;">Subject *</label>
+                    <input type="text" name="subject" id="npdSubject" class="fi" style="font-size:0.85rem;" required>
+                </div>
+
+                <!-- Body Preview -->
+                <div style="margin-bottom:0.85rem;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+                        <label style="font-size:0.8rem;font-weight:600;color:#374151;">Email Body <span style="font-weight:400;color:#9ca3af;font-size:0.72rem;">(directly type to edit)</span></label>
+                        <div style="display:flex;gap:4px;">
+                            <button type="button" onclick="npdSwitchView('preview')" id="npdBtnPreview" style="background:#1e3a5f;color:#fff;border:none;padding:3px 10px;border-radius:5px;font-size:0.75rem;cursor:pointer;">Preview</button>
+                            <button type="button" onclick="npdSwitchView('html')" id="npdBtnHtml" style="background:#f1f5f9;color:#374151;border:none;padding:3px 10px;border-radius:5px;font-size:0.75rem;cursor:pointer;">HTML</button>
+                        </div>
+                    </div>
+                    <!-- Preview -->
+                    <div id="npdBodyPreview" contenteditable="true" spellcheck="true" style="border:1.5px solid #e5e7eb;border-radius:8px;padding:1rem;max-height:300px;overflow-y:auto;font-size:0.85rem;line-height:1.6;background:#fff;outline:none;" onfocus="this.style.borderColor='#1e3a5f';this.style.boxShadow='0 0 0 3px rgba(30,58,95,0.12)';" onblur="this.style.borderColor='#e5e7eb';this.style.boxShadow='none';"></div>
+                    <!-- HTML edit -->
+                    <textarea name="body" id="npdBodyHtml" style="display:none;width:100%;min-height:300px;font-family:monospace;font-size:0.78rem;padding:0.75rem;border:1.5px solid #e5e7eb;border-radius:8px;resize:vertical;box-sizing:border-box;outline:none;"></textarea>
+                </div>
+
+                <div style="font-size:0.78rem;color:#6b7280;background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:8px 12px;">
+                    ⚠️ SMTP password <code>config.py</code> mein set karna hoga. Template edit karne ke liye: <a href="{{ url_for('mail.mail_master') }}" target="_blank" style="color:#1e3a5f;font-weight:600;">Mail Master →</a>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div style="padding:1rem 1.5rem;border-top:1px solid #e5e7eb;display:flex;justify-content:flex-end;gap:0.5rem;background:#f9fafb;border-radius:0 0 12px 12px;">
+                <button type="button" onclick="document.getElementById('npdModal').style.display='none'" class="btn-outline" style="font-size:0.83rem;">Cancel</button>
+                <button type="submit" style="background:#1e3a5f;color:#fff;border:none;padding:8px 22px;border-radius:8px;font-size:0.83rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                    Send Email
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<!-- ── NPD / EPD Convert Modal ── -->
+<div id="convertModal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.55);z-index:2000;align-items:center;justify-content:center;backdrop-filter:blur(3px);">
+    <div style="background:#fff;border-radius:20px;padding:0;width:440px;max-width:95vw;box-shadow:0 25px 60px rgba(0,0,0,0.25);overflow:hidden;animation:modalIn .2s ease;">
+        <!-- Header -->
+        <div id="convertModalHeader" style="padding:1.25rem 1.5rem 1rem;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;gap:.75rem;">
+            <div id="convertModalIcon" style="width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;"></div>
+            <div>
+                <div id="convertModalTitle" style="font-size:1rem;font-weight:800;color:#0f172a;"></div>
+                <div id="convertModalSub" style="font-size:.78rem;color:#64748b;margin-top:2px;"></div>
+            </div>
+            <button onclick="closeConvertModal()" style="margin-left:auto;width:30px;height:30px;border-radius:8px;border:none;background:#f1f5f9;color:#64748b;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;">✕</button>
+        </div>
+        <!-- Body -->
+        <div style="padding:1.25rem 1.5rem;">
+            <div id="convertModalBody" style="font-size:.87rem;color:#374151;line-height:1.7;"></div>
+
+            <!-- Info row -->
+            <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:.85rem 1rem;margin-top:1rem;display:flex;flex-direction:column;gap:.4rem;">
+                <div style="display:flex;gap:.5rem;font-size:.8rem;">
+                    <span style="color:#94a3b8;width:90px;flex-shrink:0;">Lead</span>
+                    <span style="font-weight:700;color:#0f172a;">{{ lead.contact_name }}{% if lead.company_name %} / {{ lead.company_name }}{% endif %}</span>
+                </div>
+                <div style="display:flex;gap:.5rem;font-size:.8rem;">
+                    <span style="color:#94a3b8;width:90px;flex-shrink:0;">Product</span>
+                    <span style="font-weight:600;color:#374151;">{{ lead.product_name or '—' }}</span>
+                </div>
+                <div style="display:flex;gap:.5rem;font-size:.8rem;" id="convertClientRow" style="display:none;">
+                    <span style="color:#94a3b8;width:90px;flex-shrink:0;">Client</span>
+                    <span style="font-weight:600;color:#059669;">{% if lead.client_id %}✅ Already Linked{% else %}—{% endif %}</span>
+                </div>
+            </div>
+
+            <!-- What will happen -->
+            <div style="margin-top:1rem;">
+                <div style="font-size:.72rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.5rem;">Yeh hoga:</div>
+                <div id="convertModalSteps" style="display:flex;flex-direction:column;gap:.35rem;"></div>
+            </div>
+        </div>
+        <!-- Footer -->
+        <div style="padding:.9rem 1.5rem 1.25rem;display:flex;gap:.6rem;justify-content:flex-end;">
+            <button onclick="closeConvertModal()" style="padding:.55rem 1.1rem;border:1.5px solid #e2e8f0;border-radius:10px;background:#fff;color:#374151;font-size:.85rem;font-weight:600;cursor:pointer;">Cancel</button>
+            <button id="convertModalConfirmBtn" onclick="submitConvertForm()" style="padding:.55rem 1.4rem;border:none;border-radius:10px;font-size:.85rem;font-weight:700;cursor:pointer;color:#fff;display:flex;align-items:center;gap:.4rem;">
+                <span id="convertModalBtnIcon"></span>
+                <span id="convertModalBtnText">Confirm</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+
+
+<script>
+var _convertType = 'npd';          // 'npd' | 'epd'
+var _convertHasClient = false;     // lead.client_id ? true : false
+var _leadId = {{ lead.id }};
+
+function openConvertModal(type, hasClient) {
+    _convertType       = type;
+    _convertHasClient  = !!hasClient;
+    var modal = document.getElementById('convertModal');
+    var icon  = document.getElementById('convertModalIcon');
+    var title = document.getElementById('convertModalTitle');
+    var sub   = document.getElementById('convertModalSub');
+    var body  = document.getElementById('convertModalBody');
+    var steps = document.getElementById('convertModalSteps');
+    var btn   = document.getElementById('convertModalConfirmBtn');
+    var btnIc = document.getElementById('convertModalBtnIcon');
+    var btnTx = document.getElementById('convertModalBtnText');
+    var hdr   = document.getElementById('convertModalHeader');
+
+    // Reset button state (in case it was left in "Creating..." from a prior open)
+    btn.disabled = false;
+
+    if (type === 'npd') {
+        icon.textContent  = '🧪';
+        icon.style.background = '#f3e8ff';
+        title.textContent = 'Create NPD Project';
+        sub.textContent   = 'New Product Development';
+        hdr.style.borderBottom = '1px solid #f3e8ff';
+        btn.style.background   = '#7c3aed';
+        btnIc.textContent = '🧪';
+        btnTx.textContent = hasClient ? 'Open NPD Project Form' : 'Create Client First';
+
+        body.innerHTML = hasClient
+            ? '✅ <strong>Client already linked</strong> to this lead. Aap seedha <strong>NPD Project Creation Form</strong> par redirect ho jayenge — client & lead details auto-filled honge.'
+            : '⚠️ Is lead ka <strong>koi client mapped nahi hai</strong>. Pehle <strong>Client Creation Form</strong> khulega — details pre-filled milenge. Save karte hi <strong>NPD Project Form</strong> par redirect ho jayenge.';
+
+        steps.innerHTML = hasClient ? [
+            '✅ Client mapping verified',
+            '✅ NPD Project Form opens with Client ID, Client Name, Lead ID pre-filled',
+            '✅ You review/edit details and click Save',
+            '✅ Project will be linked to the existing client'
+        ].map(stepHtml).join('') : [
+            '1️⃣  Client Creation Form opens (pre-filled from lead)',
+            '2️⃣  On Save — client auto-maps to this lead',
+            '3️⃣  NPD Project Form opens (Client ID, Name, Lead ID auto-filled)',
+            '4️⃣  Review & Save → Project created with linked client'
+        ].map(stepHtml).join('');
+    } else {
+        icon.textContent  = '📦';
+        icon.style.background = '#d1fae5';
+        title.textContent = 'Create EPD Project';
+        sub.textContent   = 'Existing Product Development';
+        hdr.style.borderBottom = '1px solid #d1fae5';
+        btn.style.background   = '#059669';
+        btnIc.textContent = '📦';
+        btnTx.textContent = hasClient ? 'Open EPD Project Form' : 'Create Client First';
+
+        body.innerHTML = hasClient
+            ? '✅ <strong>Client already linked</strong> to this lead. Aap seedha <strong>EPD Project Creation Form</strong> par redirect ho jayenge — client & lead details auto-filled honge.'
+            : '⚠️ Is lead ka <strong>koi client mapped nahi hai</strong>. Pehle <strong>Client Creation Form</strong> khulega — details pre-filled milenge. Save karte hi <strong>EPD Project Form</strong> par redirect ho jayenge.';
+
+        steps.innerHTML = hasClient ? [
+            '✅ Client mapping verified',
+            '✅ EPD Project Form opens with Client ID, Client Name, Lead ID pre-filled',
+            '✅ You review/edit details and click Save',
+            '✅ Project will be linked to the existing client'
+        ].map(stepHtml).join('') : [
+            '1️⃣  Client Creation Form opens (pre-filled from lead)',
+            '2️⃣  On Save — client auto-maps to this lead',
+            '3️⃣  EPD Project Form opens (Client ID, Name, Lead ID auto-filled)',
+            '4️⃣  Review & Save → Project created with linked client'
+        ].map(stepHtml).join('');
+    }
+
+    modal.style.display = 'flex';
+}
+
+function stepHtml(s) {
+    return '<div style="font-size:.82rem;color:#374151;display:flex;align-items:flex-start;gap:.4rem;"><span style="margin-top:1px;">' + s + '</span></div>';
+}
+
+function closeConvertModal() {
+    document.getElementById('convertModal').style.display = 'none';
+}
+
+function submitConvertForm() {
+    // ── New gate flow: simple GET to /npd/start/<lead_id>/<npd|epd>
+    //    Backend decides whether to show client form first or project form directly.
+    var btn   = document.getElementById('convertModalConfirmBtn');
+    var btnTx = document.getElementById('convertModalBtnText');
+
+    // Loader state
+    btn.disabled = true;
+    btnTx.innerHTML = '<span style="opacity:.85;">⏳ Checking client mapping…</span>';
+
+    // Friendly intermediate message (optional enhancement from spec)
+    var body = document.getElementById('convertModalBody');
+    body.innerHTML = _convertHasClient
+        ? '<div style="color:#065f46;font-weight:600;">✅ Client already exists. Redirecting to project creation…</div>'
+        : '<div style="color:#92400e;font-weight:600;">ℹ️ No client found. Opening client creation form first…</div>';
+
+    // Small delay so the user actually sees the status change, then navigate.
+    setTimeout(function () {
+        var pt = (_convertType === 'npd') ? 'npd' : 'epd';
+        window.location.href = '/npd/start/' + _leadId + '/' + pt;
+    }, 350);
+}
+
+// Close on backdrop click
+document.getElementById('convertModal').addEventListener('click', function(e) {
+    if (e.target === this) closeConvertModal();
+});
+</script>
+
+
+<!-- Sample Order Modal -->
+
+
+<div id="sampleOrderModal" style="display:none;position:fixed;inset:0;z-index:1050;background:rgba(0,0,0,0.55);align-items:center;justify-content:center;padding:1rem;">
+    <div class="so-val-toast" id="soValToast"></div>
+    <div class="so-box" style="background:#fff;border-radius:16px;width:100%;max-width:680px;max-height:92vh;overflow-y:auto;box-shadow:0 25px 80px rgba(0,0,0,0.3);display:flex;flex-direction:column;position:relative;">
+        <div class="so-hdr" style="background:#1e3a5f;color:#fff;padding:1rem 1.25rem;border-radius:16px 16px 0 0;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+            <span style="font-size:1rem;font-weight:700;">📋 Sample Order</span>
+            <button onclick="closeSampleOrderModal()" style="background:rgba(255,255,255,0.18);border:none;color:#fff;width:30px;height:30px;border-radius:50%;font-size:1rem;cursor:pointer;">✕</button>
+        </div>
+
+        <form method="POST" action="{{ url_for('crm.lead_sample_order', id=lead.id) }}" id="soForm" novalidate>
+            <div class="so-body" style="padding:1.25rem;overflow-y:auto;flex:1;">
+                <!-- ── SINGLE UNIFIED FORM (CSS handles desktop/mobile layout) ── -->
+                <div class="so-unified-top" style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.25rem;">
+                    <!-- Billing Address -->
+                    <div class="so-bill-section">
+                        <div class="so-section-lbl">Billing Address</div>
+                        <div style="position:relative;margin-bottom:20px;">
+                            <input type="text" name="bill_company" id="soBillCompany" value="{{ lead.company_name or '' }}" placeholder="Company Name *" class="fi" style="font-weight:600;">
+                            <span class="so-err-msg" id="soErrBillCo">Company Name is required</span>
+                        </div>
+                        <div style="position:relative;margin-bottom:20px;">
+                            <textarea name="bill_address" id="soBillAddress" class="fi" rows="2" placeholder="Address *" style="resize:none;">{{ ((lead.address or '') + (', ' + lead.city if lead.city else '') + (', ' + lead.state if lead.state else '') + (' - ' + lead.zip_code if lead.zip_code else '')) | trim(', ') }}</textarea>
+                            <span class="so-err-msg" id="soErrBillAddr">Address is required</span>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px;">
+                            <div style="position:relative;">
+                                <input type="text" name="bill_phone" id="soBillPhone" value="{{ lead.mobile or lead.phone or '' }}" placeholder="Mobile *" class="fi">
+                                <span class="so-err-msg" id="soErrBillPhone">Mobile number is required</span>
+                            </div>
+                            <div style="position:relative;">
+                                <input type="text" name="bill_email" id="soBillEmail" value="{{ lead.email or '' }}" placeholder="Email (optional)" class="fi">
+                                <span class="so-err-msg" id="soErrBillEmail">Please enter a valid email</span>
+                            </div>
+                        </div>
+                        <input type="text" name="bill_gst" id="soBillGst" value="" placeholder="GST Number (optional)" class="fi">
+                    </div>
+                    <!-- Order Details -->
+                    <div class="so-order-section">
+                        <div class="so-section-lbl">Order Details</div>
+                        <div style="margin-bottom:20px;position:relative;">
+                            <label style="font-size:0.75rem;font-weight:700;color:#64748b;display:block;margin-bottom:4px;">Date *</label>
+                            <input type="date" name="so_date" id="soDate" class="fi" data-no-flatpickr>
+                            <span class="so-err-msg" id="soErrDate">Date is required</span>
+                        </div>
+                        <div style="margin-bottom:20px;position:relative;">
+                            <label style="font-size:0.75rem;font-weight:700;color:#64748b;display:block;margin-bottom:4px;">Order ID *</label>
+                            <input type="text" name="so_number" id="soNumber" value="" class="fi" style="background:#f8fafc;">
+                            <span class="so-err-msg" id="soErrNumber">Order ID is required</span>
+                        </div>
+                        <div>
+                            <label style="font-size:0.75rem;font-weight:700;color:#64748b;display:block;margin-bottom:4px;">GST %</label>
+                            <select name="so_gst_pct" id="soGstPct" class="fi" onchange="soCalcTotal()">
+                                <option value="0">0% (No GST)</option>
+                                <option value="5">5%</option>
+                                <option value="12">12%</option>
+                                <option value="18" selected>18%</option>
+                                <option value="28">28%</option>
+                            </select>
+                        </div>
+                        <input type="hidden" name="so_category" value="Sample Order">
+                    </div>
+                </div>
+
+                <!-- Products — shared between mobile and desktop -->
+                <div class="so-section-lbl" style="margin-bottom:8px;">Products</div>
+                <div id="soItemCards" class="so-mobile-cards"></div>
+
+                <!-- Desktop table -->
+                <div class="so-desktop-table" id="soDesktopTable" style="display:none;margin-bottom:10px;">
+                    <div style="overflow-x:auto;border:1px solid #e2e8f0;border-radius:10px;">
+                        <table style="width:100%;border-collapse:collapse;" id="soItemsTable">
+                            <thead>
+                                <tr style="background:#f1f5f9;">
+                                    <th style="padding:9px 10px;text-align:left;font-size:0.78rem;font-weight:700;color:#374151;border-bottom:2px solid #e2e8f0;white-space:nowrap;">Product Name</th>
+                                    <th style="padding:9px 10px;text-align:right;font-size:0.78rem;font-weight:700;color:#374151;border-bottom:2px solid #e2e8f0;width:120px;">Rate (₹)</th>
+                                    <th style="padding:9px 10px;text-align:center;font-size:0.78rem;font-weight:700;color:#374151;border-bottom:2px solid #e2e8f0;width:100px;">Quantity</th>
+                                    <th style="padding:9px 10px;text-align:right;font-size:0.78rem;font-weight:700;color:#374151;border-bottom:2px solid #e2e8f0;width:120px;">Amount (₹)</th>
+                                    <th style="padding:9px 10px;border-bottom:2px solid #e2e8f0;width:40px;"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="soItems"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <span class="so-err-msg" id="soErrItems" style="margin-bottom:6px;">At least one product is required</span>
+                <button type="button" onclick="soAddRow()" style="width:100%;background:#fff;color:#1e3a5f;border:1.5px dashed #1e3a5f;padding:10px;border-radius:10px;font-size:0.85rem;font-weight:700;cursor:pointer;margin-bottom:14px;">+ Add Item</button>
+
+                <!-- Totals -->
+                <div style="border:1.5px solid #e2e8f0;border-radius:10px;overflow:hidden;">
+                    <div class="so-total-row"><span style="color:#6b7280;">Sub Total</span><span id="soSubTotal" style="font-weight:600;">0.00</span></div>
+                    <div class="so-total-row"><span style="color:#6b7280;">GST (<span id="soGstLabel">18</span>%)</span><span id="soGstAmt" style="font-weight:600;">0.00</span></div>
+                    <div class="so-total-final"><span>Total Amount</span><span id="soTotal">0.00</span></div>
+                </div>
+
+                <input type="hidden" name="terms" value="Payment: Advance&#10;Delivery: 7-10 working days&#10;Samples are for evaluation purpose only.">
+            </div>
+
+        </form>
+        <div class="so-foot" style="padding:0.9rem 1.25rem;border-top:1.5px solid #e2e8f0;display:flex;justify-content:flex-end;gap:0.5rem;background:#f9fafb;border-radius:0 0 16px 16px;flex-shrink:0;">
+                <span class="so-foot-hint" style="display:none;font-size:0.78rem;color:#94a3b8;align-self:center;">Sample Order PDF generate hogi</span>
+                <button type="button" onclick="closeSampleOrderModal()" style="background:#f1f5f9;color:#374151;border:1.5px solid #e2e8f0;border-radius:9px;padding:8px 18px;font-size:0.85rem;font-weight:600;cursor:pointer;">Cancel</button>
+                <button type="button" id="soSubmitBtn" onclick="soSubmit()" style="background:#1e3a5f;color:#fff;border:none;border-radius:9px;padding:8px 22px;font-size:0.85rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                    SEND
+                </button>
+            </div>
+    </div>
+</div>
+
+
+<!-- Quotation Modal -->
+
+
+<div id="quotationModal" style="display:none;position:fixed;inset:0;z-index:1050;background:rgba(0,0,0,0.55);align-items:center;justify-content:center;padding:1rem;overflow:auto;">
+    <div class="so-val-toast" id="qtValToast"></div>
+    <div class="qt-box" style="background:#fff;border-radius:16px;width:100%;max-width:1100px;max-height:94vh;overflow-y:auto;box-shadow:0 25px 80px rgba(0,0,0,0.3);display:flex;flex-direction:column;position:relative;">
+        <div class="qt-hdr" style="background:#1e3a5f;color:#fff;padding:1rem 1.25rem;border-radius:16px 16px 0 0;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+            <span style="font-size:1rem;font-weight:700;">📄 Create Quotation</span>
+            <button onclick="closeQuotationModal()" style="background:rgba(255,255,255,0.18);border:none;color:#fff;width:30px;height:30px;border-radius:50%;font-size:1rem;cursor:pointer;">✕</button>
+        </div>
+
+        <form method="POST" action="{{ url_for('crm.lead_create_quotation', id=lead.id) }}" id="qtForm" novalidate>
+            <div class="qt-body" style="padding:1.25rem;overflow-y:auto;flex:1;">
+
+                <!-- ── DESKTOP: side-by-side ── -->
+                <div class="qt-desktop-top qt-desktop-only" style="display:none;">
+                    <div>
+                        <div style="font-size:0.7rem;font-weight:700;letter-spacing:.08em;color:#6b7280;text-transform:uppercase;margin-bottom:.6rem;">Bill To</div>
+                        <input type="text" name="bill_company" value="{{ lead.company_name or '' }}" placeholder="Company Name" class="fi" style="font-size:0.84rem;margin-bottom:.35rem;font-weight:600;">
+                        <textarea name="bill_address" class="fi" rows="2" placeholder="Address" style="font-size:0.82rem;resize:none;margin-bottom:.35rem;">{{ ((lead.address or '') + (', ' + lead.city if lead.city else '') + (', ' + lead.state if lead.state else '')) | trim(', ') }}</textarea>
+                        <input type="text" name="bill_phone" value="{{ lead.phone or '' }}" placeholder="Phone" class="fi" style="font-size:0.82rem;margin-bottom:.35rem;">
+                        <input type="text" name="bill_email" value="{{ lead.email or '' }}" placeholder="Email" class="fi" style="font-size:0.82rem;margin-bottom:.35rem;">
+                        <input type="text" name="bill_gst" placeholder="GST Number (optional)" class="fi" style="font-size:0.82rem;">
+                    </div>
+                    <div class="qt-desktop-divider" style="display:none;background:#e5e7eb;"></div>
+                    <div>
+                        <div style="font-size:0.7rem;font-weight:700;letter-spacing:.08em;color:#6b7280;text-transform:uppercase;margin-bottom:.6rem;">Quotation Details</div>
+                        <div style="display:grid;grid-template-columns:auto 1fr;gap:.45rem .9rem;align-items:center;">
+                            <label style="font-size:0.82rem;color:#374151;font-weight:500;white-space:nowrap;">Quot. No :</label>
+                            <input type="text" name="quot_number" id="qtNumberD" class="fi" style="font-size:0.82rem;background:#f8fafc;" required>
+                            <label style="font-size:0.82rem;color:#374151;font-weight:500;white-space:nowrap;">Date :</label>
+                            <input type="date" name="quot_date" id="qtDateD" class="fi" style="font-size:0.82rem;" required data-no-flatpickr>
+                            <label style="font-size:0.82rem;color:#374151;font-weight:500;white-space:nowrap;">Valid Until :</label>
+                            <input type="date" name="valid_until" id="qtValidUntilD" class="fi" style="font-size:0.82rem;" data-no-flatpickr>
+                            <label style="font-size:0.82rem;color:#374151;font-weight:500;white-space:nowrap;">GST % :</label>
+                            <select name="quot_gst_pct" id="qtGstPctD" class="fi" style="font-size:0.82rem;" onchange="qtCalcTotal();document.getElementById('qtGstPct')&&(document.getElementById('qtGstPct').value=this.value)">
+                                <option value="0">0%</option><option value="5">5%</option><option value="12">12%</option><option value="18" selected>18%</option><option value="28">28%</option>
+                            </select>
+                            <label style="font-size:0.82rem;color:#374151;font-weight:500;white-space:nowrap;">Subject :</label>
+                            <input type="text" name="quot_subject" value="Quotation for {{ lead.company_name or '' }}" class="fi" style="font-size:0.82rem;">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── MOBILE: stacked cards ── -->
+                <div class="qt-mobile-only">
+                <!-- Bill To -->
+                <div class="qt-section">
+                    <div class="qt-section-lbl">Bill To</div>
+                    <input type="text" name="bill_company" value="{{ lead.company_name or '' }}" placeholder="Company Name" class="fi" style="font-size:0.88rem;margin-bottom:8px;font-weight:600;">
+                    <textarea name="bill_address" class="fi" rows="2" placeholder="Address" style="font-size:0.85rem;resize:none;margin-bottom:8px;">{{ ((lead.address or '') + (', ' + lead.city if lead.city else '') + (', ' + lead.state if lead.state else '')) | trim(', ') }}</textarea>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                        <input type="text" name="bill_phone" value="{{ lead.phone or '' }}" placeholder="Phone" class="fi" style="font-size:0.85rem;">
+                        <input type="text" name="bill_email" value="{{ lead.email or '' }}" placeholder="Email" class="fi" style="font-size:0.85rem;">
+                    </div>
+                    <input type="text" name="bill_gst" placeholder="GST Number (optional)" class="fi" style="font-size:0.85rem;margin-top:8px;">
+                </div>
+
+                <!-- Quotation Details -->
+                <div class="qt-section">
+                    <div class="qt-section-lbl">Quotation Details</div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+                        <div>
+                            <label style="font-size:0.72rem;font-weight:700;color:#64748b;display:block;margin-bottom:4px;">Quot. No</label>
+                            <input type="text" name="quot_number" id="qtNumber" class="fi" style="font-size:0.85rem;background:#f8fafc;" required>
+                        </div>
+                        <div>
+                            <label style="font-size:0.72rem;font-weight:700;color:#64748b;display:block;margin-bottom:4px;">Date</label>
+                            <input type="date" name="quot_date" id="qtDate" class="fi" style="font-size:0.85rem;" required data-no-flatpickr>
+                        </div>
+                        <div>
+                            <label style="font-size:0.72rem;font-weight:700;color:#64748b;display:block;margin-bottom:4px;">Valid Until</label>
+                            <input type="date" name="valid_until" id="qtValidUntil" class="fi" style="font-size:0.85rem;" data-no-flatpickr>
+                        </div>
+                        <div>
+                            <label style="font-size:0.72rem;font-weight:700;color:#64748b;display:block;margin-bottom:4px;">GST %</label>
+                            <select name="quot_gst_pct" id="qtGstPct" class="fi" style="font-size:0.85rem;" onchange="qtCalcTotal()">
+                                <option value="0">0% (No GST)</option>
+                                <option value="5">5%</option>
+                                <option value="12">12%</option>
+                                <option value="18" selected>18%</option>
+                                <option value="28">28%</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label style="font-size:0.72rem;font-weight:700;color:#64748b;display:block;margin-bottom:4px;">Subject</label>
+                        <input type="text" name="quot_subject" value="Quotation for {{ lead.company_name or '' }}" class="fi" style="font-size:0.85rem;">
+                    </div>
+                </div>
+
+                </div><!-- end mobile-only -->
+
+                <!-- Products — desktop table + mobile cards -->
+                <div class="qt-section-lbl">Products / Items</div>
+
+                <!-- Mobile cards -->
+                <div id="qtItemCards" class="qt-mobile-only"></div>
+
+                <!-- Desktop table -->
+                <div class="qt-desktop-only" id="qtDesktopTable" style="display:none;margin-bottom:10px;">
+                    <div style="overflow-x:auto;border:1px solid #e2e8f0;border-radius:10px;">
+                        <table style="width:100%;border-collapse:collapse;min-width:1050px;" id="qtItemsTable">
+                            <thead>
+                                <tr style="background:linear-gradient(135deg,#1e3a5f,#2d5a8e);">
+                                    <th style="padding:10px 8px;font-size:0.72rem;font-weight:700;color:#fff;text-align:left;letter-spacing:.05em;text-transform:uppercase;border-right:1px solid rgba(255,255,255,.15);min-width:140px;">Product Name</th>
+                                    <th style="padding:10px 6px;font-size:0.72rem;font-weight:700;color:#fff;text-align:center;letter-spacing:.05em;text-transform:uppercase;border-right:1px solid rgba(255,255,255,.15);width:60px;">Size</th>
+                                    <th style="padding:10px 8px;font-size:0.72rem;font-weight:700;color:#fff;text-align:center;letter-spacing:.05em;text-transform:uppercase;border-right:1px solid rgba(255,255,255,.15);width:90px;">Code</th>
+                                    <th style="padding:10px 8px;font-size:0.72rem;font-weight:700;color:#fff;text-align:center;letter-spacing:.05em;text-transform:uppercase;border-right:1px solid rgba(255,255,255,.15);width:100px;">UOM</th>
+                                    <th style="padding:10px 8px;font-size:0.72rem;font-weight:700;color:#fff;text-align:right;letter-spacing:.05em;text-transform:uppercase;border-right:1px solid rgba(255,255,255,.15);width:85px;">Cost (₹)</th>
+                                    <th style="padding:10px 8px;font-size:0.72rem;font-weight:700;color:#fff;text-align:center;letter-spacing:.05em;text-transform:uppercase;border-right:1px solid rgba(255,255,255,.15);width:75px;">MOQ</th>
+                                    <th style="padding:10px 8px;font-size:0.72rem;font-weight:700;color:#fff;text-align:left;letter-spacing:.05em;text-transform:uppercase;border-right:1px solid rgba(255,255,255,.15);min-width:140px;">PM Spec.</th>
+                                    <th style="padding:10px 8px;font-size:0.72rem;font-weight:700;color:#fff;text-align:right;letter-spacing:.05em;text-transform:uppercase;border-right:1px solid rgba(255,255,255,.15);width:80px;">PM Cost</th>
+
+                                    <th style="padding:10px 8px;font-size:0.72rem;font-weight:700;color:#fff;text-align:center;letter-spacing:.05em;text-transform:uppercase;border-right:1px solid rgba(255,255,255,.15);width:120px;">Category</th>
+                                    <th style="padding:10px 8px;font-size:0.72rem;font-weight:700;color:#fff;text-align:right;letter-spacing:.05em;text-transform:uppercase;border-right:1px solid rgba(255,255,255,.15);width:95px;">Final Cost</th>
+                                    <th style="padding:10px 8px;font-size:0.72rem;font-weight:700;color:#fff;text-align:center;letter-spacing:.05em;text-transform:uppercase;width:80px;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="qtItems"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <button type="button" onclick="qtAddRowBtn()" style="width:100%;background:#fff;color:#1e3a5f;border:1.5px dashed #1e3a5f;padding:10px;border-radius:10px;font-size:0.85rem;font-weight:700;cursor:pointer;margin-bottom:6px;">+ Add Row</button>
+                <span id="qtErrItems" class="so-err-msg" style="display:none;margin-bottom:8px;">At least one product is required</span>
+
+                <!-- Totals -->
+                <div class="qt-total-box">
+                    <div class="qt-total-row"><span style="color:#6b7280;">Sub Total</span><span id="qtSubTotal" style="font-weight:600;">₹ 0.00</span></div>
+                    <div class="qt-total-row"><span style="color:#6b7280;">GST (<span id="qtGstLabel">18</span>%)</span><span id="qtGstAmt" style="font-weight:600;">₹ 0.00</span></div>
+                    <div class="qt-total-final"><span>Total Amount</span><span id="qtTotal">₹ 0.00</span></div>
+                </div>
+
+                <!-- Terms & Notes -->
+                <div style="display:grid;grid-template-columns:1fr;gap:10px;">
+                    <div>
+                        <label style="font-size:0.75rem;font-weight:700;color:#374151;display:block;margin-bottom:5px;">Terms & Conditions</label>
+                        <textarea name="terms" class="fi" rows="3" style="font-size:0.83rem;resize:vertical;">Payment: Advance
+Delivery: 7-10 working days
+Prices are exclusive of GST and transportation charges.
+Quotation valid for 30 days from date of issue.</textarea>
+                    </div>
+                    <div>
+                        <label style="font-size:0.75rem;font-weight:700;color:#374151;display:block;margin-bottom:5px;">Notes (optional)</label>
+                        <textarea name="notes" class="fi" rows="3" placeholder="Any additional notes..." style="font-size:0.83rem;resize:vertical;"></textarea>
+                    </div>
+                </div>
+
+                <!-- (items rendered above in desktop table or mobile cards) -->
+            </div>
+
+            <div class="qt-foot" style="display:flex;align-items:center;gap:10px;padding:0.9rem 1.25rem;border-top:1.5px solid #e2e8f0;background:#f9fafb;border-radius:0 0 16px 16px;flex-shrink:0;">
+                <span class="qt-foot-hint" style="display:none;font-size:0.78rem;color:#94a3b8;flex:1;">📋 PDF (A4) generate hogi — Quotations list se email bhi bhej sakte hain</span>
+                <button type="button" onclick="closeQuotationModal()" style="padding:10px 20px;border-radius:9px;background:#f1f5f9;color:#374151;border:none;font-size:0.85rem;font-weight:700;cursor:pointer;">Cancel</button>
+                <button type="button" id="qtSubmitBtn" onclick="qtSubmit()" style="flex:1;padding:11px;border-radius:9px;background:#1e3a5f;color:#fff;border:none;font-size:0.88rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Generate PDF
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- WhatsApp Modal -->
+<div id="waModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:1000;align-items:center;justify-content:center;padding:1rem;">
+    <div style="background:#fff;border-radius:14px;width:100%;max-width:520px;box-shadow:0 25px 80px rgba(0,0,0,0.2);overflow:hidden;">
+        <!-- Header -->
+        <div style="background:#25D366;color:#fff;padding:1rem 1.5rem;display:flex;align-items:center;justify-content:space-between;">
+            <div style="display:flex;align-items:center;gap:10px;">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                <span style="font-size:1rem;font-weight:700;">WhatsApp Share</span>
+            </div>
+            <button onclick="document.getElementById('waModal').style.display='none'" style="background:rgba(255,255,255,0.2);border:none;color:#fff;width:28px;height:28px;border-radius:50%;font-size:1rem;cursor:pointer;">✕</button>
+        </div>
+
+        <div style="padding:1.25rem 1.5rem;">
+
+            <!-- Message Preview -->
+            <div style="margin-bottom:1rem;">
+                <label style="font-size:0.8rem;font-weight:600;color:#374151;display:block;margin-bottom:6px;">Message Preview</label>
+                <textarea id="waMessage" rows="10" style="width:100%;border:1.5px solid #e5e7eb;border-radius:8px;padding:10px 12px;font-size:0.82rem;font-family:monospace;resize:vertical;outline:none;box-sizing:border-box;line-height:1.5;background:#f9fafb;">{{ lead.contact_name }}
+🏢 {{ lead.company_name or 'N/A' }}
+📞 {{ lead.phone or 'N/A' }}
+✉️ {{ lead.email or 'N/A' }}
+📍 {{ lead.city or '' }}{% if lead.state %}, {{ lead.state }}{% endif %}
+
+🛒 Product: {{ lead.product_name or 'N/A' }}
+📦 Category: {{ lead.category or 'N/A' }}
+📊 Qty: {{ lead.order_quantity or 'N/A' }}
+💰 Avg Cost: {{ lead.average_cost or 'N/A' }}
+
+📋 Status: {{ lead.status|replace('_',' ')|title }}
+🏷️ Type: {{ lead.lead_type or 'Quality' }}
+{% if lead.requirement_spec %}📝 Spec: {{ lead.requirement_spec|striptags|truncate(100,True,"") }}{% endif %}
+{% if lead.remark %}💬 Remark: {{ lead.remark|striptags|truncate(80,True,"") }}{% endif %}
+
+🔗 Lead URL: {{ request.host_url }}crm/leads/{{ lead.id }}</textarea>
+            </div>
+
+            <!-- Send Action -->
+            <div style="display:flex;flex-direction:column;gap:0.6rem;">
+                <!-- Send via WhatsApp Web: opens WA Web with the message pre-filled, user picks the contact manually -->
+                <button onclick="openWaWeb()" style="display:flex;align-items:center;justify-content:center;gap:10px;padding:12px 18px;background:#25D366;border:none;border-radius:8px;cursor:pointer;color:#fff;font-weight:700;font-size:0.95rem;width:100%;box-shadow:0 4px 12px rgba(37,211,102,0.3);">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="#fff"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                    Send via WhatsApp Web
+                </button>
+                <div style="font-size:0.72rem;color:#6b7280;text-align:center;margin-top:-2px;">
+                    WhatsApp Web khulega, message pre-filled hoga — number manually select karke Send dabaiye.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Email Modal — rich compose form (mirrors NPD modal UX) -->
+<div id="emailModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:1000;align-items:center;justify-content:center;padding:1rem;">
+    <div style="background:#fff;border-radius:12px;width:100%;max-width:720px;max-height:92vh;overflow-y:auto;box-shadow:0 25px 80px rgba(0,0,0,0.25);">
+        <!-- Header -->
+        <div style="background:#2563eb;color:#fff;padding:0.9rem 1.5rem;border-radius:12px 12px 0 0;display:flex;align-items:center;justify-content:space-between;">
+            <div>
+                <div style="font-size:1rem;font-weight:700;display:flex;align-items:center;gap:8px;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                    Compose Email
+                </div>
+                <div style="font-size:0.78rem;opacity:0.85;margin-top:2px;">{{ lead.contact_name }}{% if lead.company_name %} — {{ lead.company_name }}{% endif %}</div>
+            </div>
+            <button onclick="document.getElementById('emailModal').style.display='none'" style="background:rgba(255,255,255,0.18);border:none;color:#fff;width:28px;height:28px;border-radius:50%;font-size:1rem;cursor:pointer;">✕</button>
+        </div>
+
+        <div style="padding:1.25rem 1.5rem;">
+
+            <!-- Status / Feedback -->
+            <div id="emailStatus" style="display:none;margin-bottom:0.85rem;padding:9px 12px;border-radius:8px;font-size:0.82rem;font-weight:600;text-align:center;"></div>
+
+            <!-- To & From Name -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:0.85rem;">
+                <div>
+                    <label style="font-size:0.8rem;font-weight:600;color:#374151;display:block;margin-bottom:3px;">To (Email) *</label>
+                    <input type="email" id="emailTo" value="{{ lead.email or '' }}" placeholder="recipient@example.com" class="fi" style="font-size:0.85rem;" required>
+                </div>
+                <div>
+                    <label style="font-size:0.8rem;font-weight:600;color:#374151;display:block;margin-bottom:3px;">From Name</label>
+                    <input type="text" id="emailFromName" value="{{ config.get('MAIL_FROM_NAME','HCP Wellness Pvt. Ltd.') }}" class="fi" style="font-size:0.85rem;">
+                </div>
+            </div>
+
+            <!-- From Email -->
+            <div style="margin-bottom:0.85rem;">
+                <label style="font-size:0.8rem;font-weight:600;color:#374151;display:block;margin-bottom:3px;">From Email</label>
+                <input type="email" id="emailFromEmail" value="{{ config.get('MAIL_DEFAULT_SENDER') or config.get('MAIL_USERNAME','') }}" class="fi" style="font-size:0.85rem;">
+            </div>
+
+            <!-- Subject -->
+            <div style="margin-bottom:0.85rem;">
+                <label style="font-size:0.8rem;font-weight:600;color:#374151;display:block;margin-bottom:3px;">Subject *</label>
+                <input type="text" id="emailSubject" value="Regarding {{ lead.product_name or 'your inquiry' }}{% if lead.company_name %} — {{ lead.company_name }}{% endif %}" class="fi" style="font-size:0.85rem;" required>
+            </div>
+
+            <!-- Body (Preview / HTML toggle) -->
+            <div style="margin-bottom:0.85rem;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+                    <label style="font-size:0.8rem;font-weight:600;color:#374151;">Email Body <span style="font-weight:400;color:#9ca3af;font-size:0.72rem;">(directly type to edit)</span></label>
+                    <div style="display:flex;gap:4px;">
+                        <button type="button" onclick="emailSwitchView('preview')" id="emailBtnPreview" style="background:#2563eb;color:#fff;border:none;padding:3px 10px;border-radius:5px;font-size:0.75rem;cursor:pointer;">Preview</button>
+                        <button type="button" onclick="emailSwitchView('html')" id="emailBtnHtml" style="background:#f1f5f9;color:#374151;border:none;padding:3px 10px;border-radius:5px;font-size:0.75rem;cursor:pointer;">HTML</button>
+                    </div>
+                </div>
+                <!-- Preview pane -->
+                <div id="emailBodyPreview" contenteditable="true" spellcheck="true" style="border:1.5px solid #e5e7eb;border-radius:8px;padding:1rem;min-height:240px;max-height:340px;overflow-y:auto;font-size:0.88rem;line-height:1.6;background:#fff;color:#1f2937;outline:none;" onfocus="this.style.borderColor='#2563eb';this.style.boxShadow='0 0 0 3px rgba(37,99,235,0.1)';" onblur="this.style.borderColor='#e5e7eb';this.style.boxShadow='none';"></div>
+                <!-- HTML edit pane -->
+                <textarea id="emailBodyHtml" style="display:none;width:100%;min-height:280px;font-family:monospace;font-size:0.78rem;padding:0.75rem;border:1.5px solid #e5e7eb;border-radius:8px;resize:vertical;box-sizing:border-box;outline:none;"><p>Dear {{ lead.contact_name }},</p>
+<p>Greetings.</p>
+<p>Regarding your inquiry:</p>
+<ul>
+  <li><strong>Product:</strong> {{ lead.product_name or 'N/A' }}</li>
+  <li><strong>Category:</strong> {{ lead.category or 'N/A' }}</li>
+  <li><strong>Quantity:</strong> {{ lead.order_quantity or 'N/A' }}</li>
+</ul>
+<p>[Apna message yahan likhein]</p>
+<p>Best regards,<br>{{ current_user.full_name if current_user and current_user.is_authenticated else 'HCP Team' }}</p></textarea>
+            </div>
+
+            <!-- Hint -->
+            <div style="font-size:0.78rem;color:#6b7280;background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:8px 12px;">
+                ⚠️ Email server (SMTP) ke through direct chala jayega. SMTP <code>config.py</code> mein set karein — Gmail/Outlook nahi khulega.
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div style="padding:1rem 1.5rem;border-top:1px solid #e5e7eb;display:flex;justify-content:flex-end;gap:0.5rem;background:#f9fafb;border-radius:0 0 12px 12px;">
+            <button type="button" onclick="document.getElementById('emailModal').style.display='none'" class="btn-outline" style="font-size:0.83rem;">Cancel</button>
+            <button id="emailSendBtn" onclick="sendEmailDirect()" style="background:#2563eb;color:#fff;border:none;padding:8px 22px;border-radius:8px;font-size:0.83rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                <span id="emailSendBtnText">Send Email</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+{% if sub_perms.change_status %}
+<!-- Status Change Modal -->
+<div id="statusModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:1000;align-items:center;justify-content:center;">
+    <div style="background:#fff;border-radius:16px;padding:1.5rem;min-width:300px;box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+        <h3 style="margin:0 0 1rem;font-size:1rem;">Change Lead Status</h3>
+        <form method="POST" action="{{ url_for('crm.lead_status_change', id=lead.id) }}">
+            <div class="fg" style="margin-bottom:1rem;">
+                <select name="status" class="fi">
+                    {% for ls in lead_statuses %}
+                    <option value="{{ ls.name }}" {{ 'selected' if lead.status==ls.name }}>
+                        {{ ls.icon }} {{ ls.name.replace('_',' ')|title }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div style="display:flex;gap:0.5rem;">
+                <button type="submit" class="btn-primary" style="flex:1;">Update</button>
+                <button type="button" class="btn-outline" onclick="document.getElementById('statusModal').style.display='none'">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<script>
+const now = new Date();
+
+// ── Tab touch scroll ─────────────────────────────────────────
+(function() {
+    var el = document.getElementById('tabNavInner');
+    if (!el) return;
+    var isDown = false, startX, scrollLeft;
+    el.addEventListener('mousedown', function(e) { isDown=true; startX=e.pageX-el.offsetLeft; scrollLeft=el.scrollLeft; });
+    ['mouseleave','mouseup'].forEach(ev => el.addEventListener(ev, ()=>{ isDown=false; }));
+    el.addEventListener('mousemove', function(e) { if(!isDown)return; e.preventDefault(); el.scrollLeft=scrollLeft-(e.pageX-el.offsetLeft-startX); });
+    el.addEventListener('touchstart', function(e) { startX=e.touches[0].pageX; scrollLeft=el.scrollLeft; }, {passive:true});
+    el.addEventListener('touchmove',  function(e) { el.scrollLeft=scrollLeft-(e.touches[0].pageX-startX); }, {passive:true});
+    // Auto-scroll active tab into view on load
+    setTimeout(function() {
+        var active = el.querySelector('.tab-btn.active');
+        if (active) el.scrollLeft = active.offsetLeft - (el.offsetWidth/2) + (active.offsetWidth/2);
+    }, 50);
+})();
+
+function switchTab(name, el) {
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    if (el) {
+        el.classList.add('active');
+        // Scroll tab into view smoothly
+        var inner = document.getElementById('tabNavInner') || document.querySelector('.tab-nav-inner');
+        if (inner) {
+            var scrollTo = el.offsetLeft - (inner.offsetWidth/2) + (el.offsetWidth/2);
+            inner.scrollTo({ left: scrollTo, behavior: 'smooth' });
+        }
+    } else {
+        document.querySelectorAll('.tab-btn').forEach(b => {
+            if (b.getAttribute('onclick') && b.getAttribute('onclick').includes("'" + name + "'")) {
+                b.classList.add('active');
+            }
+        });
+    }
+    history.replaceState(null, '', '?tab=' + name);
+}
+
+// ════════════════════════════════════════════════════════════════
+//  Discussion Board Compose — NPD-style behaviour
+//
+//  Mirrors the lightweight UX of the NPD project_view.html discussion
+//  board. Key differences from the previous implementation:
+//
+//    • No separate drag-drop zone. Drop happens directly into the
+//      contenteditable editor (#rte-main-ed). Images get inlined as
+//      base64 inside the comment HTML; non-image files attach.
+//    • No client-side extension whitelist or size limit — server
+//      decides what to accept (matches NPD behaviour). The error
+//      popup still fires when the SERVER rejects a file (after
+//      submit), so the user is never left wondering why an upload
+//      vanished.
+//    • Multiple files supported (the server already accepts
+//      `attachments[]` as a list — kept that contract intact).
+//    • Filename chips render in the footer of the bordered box,
+//      not in a separate preview area.
+// ════════════════════════════════════════════════════════════════
+
+let selectedFiles = [];
+
+const fileInput = document.getElementById('fileInput');
+const preview   = document.getElementById('filePreview');
+const editor    = document.getElementById('rte-main-ed');
+
+function handleFiles(fileList) {
+    // Append unique files to selectedFiles. Dedup by name+size so the
+    // same file can't sneak in twice from picker + drop combo.
+    Array.from(fileList).forEach(f => {
+        if (!f || !f.name) return;
+        if (selectedFiles.find(x => x.name === f.name && x.size === f.size))
+            return;
+        selectedFiles.push(f);
+    });
+    syncInputFiles();
+    renderPreview();
+    // NOTE: do NOT clear fileInput.value here. Setting `value = ''`
+    // on a file input wipes fileInput.files too, undoing the work
+    // syncInputFiles() just did and resulting in zero files being
+    // sent on form submit. Re-picking the same file is rare; a few
+    // browser quirks around it are worth the robustness of having
+    // files actually attach.
+}
+
+function syncInputFiles() {
+    // Mirror selectedFiles back into the actual <input type="file">
+    // via DataTransfer so the form-submit picks up exactly what the
+    // user sees in the chips list.
+    const dt = new DataTransfer();
+    selectedFiles.forEach(f => dt.items.add(f));
+    if (fileInput) fileInput.files = dt.files;
+}
+
+function renderPreview() {
+    if (!preview) return;
+    if (selectedFiles.length === 0) {
+        preview.innerHTML = '';
+        return;
+    }
+    preview.innerHTML = selectedFiles.map((f, i) =>
+        '<span style="display:inline-flex;align-items:center;gap:5px;'
+        + 'padding:3px 9px;background:#eff6ff;border:1px solid #bfdbfe;'
+        + 'border-radius:14px;color:#1d4ed8;font-weight:600;'
+        + 'max-width:200px;overflow:hidden;text-overflow:ellipsis;'
+        + 'white-space:nowrap;" title="' + _escapeHtml(f.name) + '">'
+        + fileIcon(f.name) + ' '
+        + '<span style="overflow:hidden;text-overflow:ellipsis;">'
+        +   _escapeHtml(f.name)
+        + '</span>'
+        + '<span onclick="removeFile(' + i + ')" '
+        +   'style="cursor:pointer;color:#dc2626;font-weight:700;'
+        +   'margin-left:2px;flex-shrink:0;" '
+        +   'title="Remove">✕</span>'
+        + '</span>'
+    ).join('');
+}
+
+function removeFile(idx) {
+    selectedFiles.splice(idx, 1);
+    syncInputFiles();
+    renderPreview();
+}
+
+function fileIcon(name) {
+    const ext = (name && name.indexOf('.') > -1
+                 ? name.split('.').pop().toLowerCase() : '');
+    if (['jpg','jpeg','png','gif','webp','bmp','svg','heic'].includes(ext)) return '🖼️';
+    if (ext === 'pdf') return '📄';
+    if (['doc','docx'].includes(ext)) return '📝';
+    if (['xls','xlsx','csv'].includes(ext)) return '📊';
+    if (['ppt','pptx'].includes(ext)) return '📑';
+    if (['zip','rar','7z','tar','gz'].includes(ext)) return '🗜️';
+    if (['mp4','mov','avi','mkv','webm'].includes(ext)) return '🎬';
+    if (['mp3','wav','ogg','m4a'].includes(ext)) return '🎵';
+    if (ext === 'sql') return '🗄️';
+    return '📎';
+}
+
+// ── NPD-style helpers (renamed with `lead` prefix to avoid clashing
+//    with anything else on the page).
+//
+//    leadInsertImgInline()    — Toolbar 🖼 button → file picker → uploads
+//                               image to server, embeds <img src="URL">.
+//    leadHandleImgPaste()     — Ctrl+V of an image into the editor.
+//    leadDropToEditor()       — Drop onto the editor. Images upload+embed,
+//                               other files added to attach list.
+//
+// IMPORTANT: images are NOT base64-embedded into the comment HTML.
+// The lead_discussions.comment column is TEXT (65 KB ceiling), and a
+// single screenshot in base64 easily blows past that. Instead, we
+// upload each image to /upload-inline-image, get back a /static/
+// URL, and insert a small <img src="URL"> tag. The DB row stays tiny
+// and the browser caches the image like any other static asset.
+
+function _leadUploadInlineImage(file) {
+    // Returns a Promise that resolves to the public image URL.
+    const fd = new FormData();
+    fd.append('image', file);
+    return fetch('/crm/leads/' + _leadId + '/discussion/upload-inline-image', {
+        method: 'POST',
+        body: fd,
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (!d || !d.ok) {
+            throw new Error((d && d.error) || 'Upload failed');
+        }
+        return d.url;
+    });
+}
+
+/**
+ * Force-sync the editor's current HTML into the hidden input. The
+ * editor has `oninput` for live syncing on user keystrokes, but
+ * programmatic DOM changes (image insertion, placeholder→image
+ * replacement, paste handling) don't always fire `input`. This
+ * helper covers those cases so the hidden input never goes stale.
+ */
+function _leadSyncEditorToHidden() {
+    const ed = document.getElementById('rte-main-ed');
+    const hidden = document.getElementById('commentBoxHidden');
+    if (ed && hidden) hidden.value = ed.innerHTML;
+}
+
+function _leadInsertImgFromUrl(editorId, url, atRange) {
+    const ed = document.getElementById(editorId);
+    if (!ed) return;
+    ed.focus();
+    if (atRange) {
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(atRange);
+    }
+    const img = document.createElement('img');
+    img.src = url;
+    img.style.maxWidth = '100%';
+    img.style.borderRadius = '6px';
+    img.style.margin = '4px 0';
+    img.style.display = 'block';
+    const sel = window.getSelection();
+    if (sel.rangeCount) {
+        const range = sel.getRangeAt(0);
+        range.insertNode(img);
+        // Move caret AFTER the image so subsequent typing flows naturally
+        range.setStartAfter(img);
+        range.setEndAfter(img);
+        sel.removeAllRanges();
+        sel.addRange(range);
+    } else {
+        ed.appendChild(img);
+    }
+}
+
+function _leadShowUploadProgress(editorId, file) {
+    // Insert a placeholder span so the user sees something is happening.
+    // Returns the placeholder element so it can be removed/replaced.
+    const ed = document.getElementById(editorId);
+    if (!ed) return null;
+    const ph = document.createElement('span');
+    ph.contentEditable = 'false';
+    ph.style.cssText = 'display:inline-block;padding:6px 12px;background:#eff6ff;'
+                     + 'border:1px dashed #93c5fd;border-radius:6px;color:#1d4ed8;'
+                     + 'font-size:.78rem;margin:2px 0;';
+    ph.textContent = '⏳ Uploading ' + (file.name || 'image') + '…';
+    const sel = window.getSelection();
+    if (sel.rangeCount && ed.contains(sel.getRangeAt(0).startContainer)) {
+        sel.getRangeAt(0).insertNode(ph);
+    } else {
+        ed.appendChild(ph);
+    }
+    return ph;
+}
+
+function leadInsertImgInline(input, editorId) {
+    if (!input.files.length) return;
+    const file = input.files[0];
+    const ph = _leadShowUploadProgress(editorId, file);
+    _leadUploadInlineImage(file)
+        .then(url => {
+            // Replace placeholder with real <img>
+            if (ph && ph.parentNode) {
+                const img = document.createElement('img');
+                img.src = url;
+                img.style.maxWidth = '100%';
+                img.style.borderRadius = '6px';
+                img.style.margin = '4px 0';
+                img.style.display = 'block';
+                ph.parentNode.replaceChild(img, ph);
+                _leadSyncEditorToHidden();
+            }
+        })
+        .catch(err => {
+            if (ph && ph.parentNode) {
+                ph.style.background = '#fef2f2';
+                ph.style.borderColor = '#fecaca';
+                ph.style.color = '#991b1b';
+                ph.textContent = '❌ Image upload failed: ' + err.message;
+                // Auto-remove failed placeholder after 5s so it doesn't
+                // get stored as part of the comment HTML.
+                setTimeout(() => { if (ph.parentNode) { ph.remove(); _leadSyncEditorToHidden(); } }, 5000);
+            }
+        });
+    input.value = '';   // allow re-picking the same image
+}
+
+function leadHandleImgPaste(e, editorId) {
+    const items = (e.clipboardData || e.originalEvent.clipboardData || {}).items;
+    if (!items) return;
+    for (let i = 0; i < items.length; i++) {
+        if (items[i].type && items[i].type.indexOf('image') !== -1) {
+            e.preventDefault();
+            const file = items[i].getAsFile();
+            // Carry a useful filename for the server log
+            const fakeName = (file && file.name) || ('pasted_' + Date.now() + '.png');
+            const ph = _leadShowUploadProgress(editorId, { name: fakeName });
+            _leadUploadInlineImage(file)
+                .then(url => {
+                    if (ph && ph.parentNode) {
+                        const img = document.createElement('img');
+                        img.src = url;
+                        img.style.maxWidth = '100%';
+                        img.style.borderRadius = '6px';
+                        img.style.margin = '4px 0';
+                        img.style.display = 'block';
+                        ph.parentNode.replaceChild(img, ph);
+                        _leadSyncEditorToHidden();
+                    }
+                })
+                .catch(err => {
+                    if (ph && ph.parentNode) {
+                        ph.style.background = '#fef2f2';
+                        ph.style.borderColor = '#fecaca';
+                        ph.style.color = '#991b1b';
+                        ph.textContent = '❌ Paste upload failed: ' + err.message;
+                        setTimeout(() => { if (ph.parentNode) { ph.remove(); _leadSyncEditorToHidden(); } }, 5000);
+                    }
+                });
+            return;
+        }
+    }
+}
+
+function leadDropToEditor(e, editorId, fileInputId) {
+    e.preventDefault();
+    const ed = document.getElementById(editorId);
+    if (ed) { ed.style.outline = ''; ed.style.background = ''; }
+    const files = e.dataTransfer.files;
+    const nonImages = [];
+    // Capture drop position once, before we start any async uploads —
+    // by the time the upload promise resolves the cursor will likely
+    // have moved.
+    let dropRange = null;
+    if (document.caretRangeFromPoint) {
+        try { dropRange = document.caretRangeFromPoint(e.clientX, e.clientY); }
+        catch(_) { dropRange = null; }
+    }
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (file.type && file.type.indexOf('image') !== -1) {
+            if (ed && dropRange) {
+                const sel = window.getSelection();
+                sel.removeAllRanges();
+                sel.addRange(dropRange);
+            }
+            const ph = _leadShowUploadProgress(editorId, file);
+            _leadUploadInlineImage(file)
+                .then(url => {
+                    if (ph && ph.parentNode) {
+                        const img = document.createElement('img');
+                        img.src = url;
+                        img.style.maxWidth = '100%';
+                        img.style.borderRadius = '6px';
+                        img.style.margin = '4px 0';
+                        img.style.display = 'block';
+                        ph.parentNode.replaceChild(img, ph);
+                        _leadSyncEditorToHidden();
+                    }
+                })
+                .catch(err => {
+                    if (ph && ph.parentNode) {
+                        ph.style.background = '#fef2f2';
+                        ph.style.borderColor = '#fecaca';
+                        ph.style.color = '#991b1b';
+                        ph.textContent = '❌ Drop upload failed: ' + err.message;
+                        setTimeout(() => { if (ph.parentNode) { ph.remove(); _leadSyncEditorToHidden(); } }, 5000);
+                    }
+                });
+        } else {
+            nonImages.push(file);
+        }
+    }
+    if (nonImages.length) handleFiles(nonImages);
+}
+
+function _escapeHtml(str) {
+    return String(str || '')
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+
+// ── WhatsApp Modal ──
+document.getElementById('waModal').addEventListener('click', function(e) {
+    if (e.target === this) document.getElementById('waModal').style.display = 'none';
+});
+
+function openWaModal() {
+    document.getElementById('waModal').style.display = 'flex';
+}
+
+function openWaWeb() {
+    // Opens WhatsApp Web with the textarea message pre-filled.
+    // User picks the contact / number manually inside WhatsApp Web.
+    const msg = encodeURIComponent(document.getElementById('waMessage').value);
+    window.open('https://web.whatsapp.com/send?text=' + msg, '_blank');
+}
+
+// ── Email Modal ──
+document.getElementById('emailModal').addEventListener('click', function(e) {
+    if (e.target === this) document.getElementById('emailModal').style.display = 'none';
+});
+
+function openEmailModal() {
+    document.getElementById('emailModal').style.display = 'flex';
+    // Render preview from current HTML content
+    emailSwitchView('preview');
+}
+
+// Track current body view (preview/html) so we know where the latest edits live
+let _emailView = 'preview';
+
+// Toggle between Preview (rendered HTML — directly editable) and HTML (raw source)
+function emailSwitchView(view) {
+    const preview = document.getElementById('emailBodyPreview');
+    const html    = document.getElementById('emailBodyHtml');
+    const btnP    = document.getElementById('emailBtnPreview');
+    const btnH    = document.getElementById('emailBtnHtml');
+    if (!preview || !html) return;
+
+    if (view === 'preview') {
+        // Switching to Preview: load latest HTML from textarea into preview
+        preview.innerHTML = html.value;
+        preview.style.display = 'block';
+        html.style.display    = 'none';
+        btnP.style.background = '#2563eb'; btnP.style.color = '#fff';
+        btnH.style.background = '#f1f5f9'; btnH.style.color = '#374151';
+        _emailView = 'preview';
+    } else {
+        // Switching to HTML: pull edited preview HTML back into textarea
+        if (_emailView === 'preview') {
+            html.value = preview.innerHTML;
+        }
+        preview.style.display = 'none';
+        html.style.display    = 'block';
+        btnP.style.background = '#f1f5f9'; btnP.style.color = '#374151';
+        btnH.style.background = '#2563eb'; btnH.style.color = '#fff';
+        _emailView = 'html';
+    }
+}
+
+function _emailShowStatus(msg, kind) {
+    const el = document.getElementById('emailStatus');
+    if (!el) return;
+    el.style.display = 'block';
+    el.textContent = msg;
+    if (kind === 'success') {
+        el.style.background = '#dcfce7';
+        el.style.color      = '#166534';
+        el.style.border     = '1px solid #86efac';
+    } else if (kind === 'error') {
+        el.style.background = '#fee2e2';
+        el.style.color      = '#991b1b';
+        el.style.border     = '1px solid #fca5a5';
+    } else {
+        el.style.background = '#eff6ff';
+        el.style.color      = '#1d4ed8';
+        el.style.border     = '1px solid #bfdbfe';
+    }
+}
+
+function _emailSetSending(isSending) {
+    const btn  = document.getElementById('emailSendBtn');
+    const txt  = document.getElementById('emailSendBtnText');
+    if (!btn || !txt) return;
+    btn.disabled = isSending;
+    btn.style.opacity = isSending ? '0.65' : '1';
+    btn.style.cursor  = isSending ? 'wait'  : 'pointer';
+    txt.textContent   = isSending ? 'Sending…' : 'Send Email';
+}
+
+// Send email DIRECTLY via server SMTP. No external client opens.
+function sendEmailDirect() {
+    // If user was editing in Preview, sync their changes into the HTML textarea first
+    if (_emailView === 'preview') {
+        document.getElementById('emailBodyHtml').value =
+            document.getElementById('emailBodyPreview').innerHTML;
+    }
+    const to        = document.getElementById('emailTo').value.trim();
+    const subject   = document.getElementById('emailSubject').value.trim();
+    const body      = document.getElementById('emailBodyHtml').value.trim();   // HTML body
+    const fromName  = (document.getElementById('emailFromName')  || {}).value || '';
+    const fromEmail = (document.getElementById('emailFromEmail') || {}).value || '';
+
+    if (!to)      { _emailShowStatus('To address daalein.',   'error'); return; }
+    if (!subject) { _emailShowStatus('Subject daalein.',      'error'); return; }
+    if (!body)    { _emailShowStatus('Message body daalein.', 'error'); return; }
+
+    _emailShowStatus('Email bheja ja raha hai…', 'info');
+    _emailSetSending(true);
+
+    fetch('{{ url_for("mail.lead_send_email", id=lead.id) }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify({
+            to: to,
+            subject: subject,
+            body: body,
+            from_name:  fromName.trim(),
+            from_email: fromEmail.trim()
+        })
+    })
+    .then(r => r.json().then(d => ({ ok: r.ok, data: d })))
+    .then(({ ok, data }) => {
+        _emailSetSending(false);
+        if (ok && data.success) {
+            _emailShowStatus('✅ ' + (data.message || 'Email sent!'), 'success');
+            setTimeout(() => {
+                document.getElementById('emailModal').style.display = 'none';
+                document.getElementById('emailStatus').style.display = 'none';
+            }, 1500);
+        } else {
+            _emailShowStatus('❌ ' + (data.error || 'Send failed'), 'error');
+        }
+    })
+    .catch(err => {
+        _emailSetSending(false);
+        _emailShowStatus('❌ Network error: ' + err.message, 'error');
+    });
+}
+
+// ── Load Contributors ──
+fetch('/crm/api/lead/{{ lead.id }}/contributions')
+    .then(r => r.json())
+    .then(d => {
+        const el = document.getElementById('contribBody');
+        if (!d.contributions || !d.contributions.length) {
+            el.innerHTML = '<div style="text-align:center;color:var(--text3);padding:1rem;font-size:0.82rem;">No contributions recorded yet.</div>';
+            return;
+        }
+        const colors = ['#f59e0b','#94a3b8','#cd7c3a'];
+        const medals = ['🥇','🥈','🥉'];
+        el.innerHTML = d.contributions.map((c, i) => `
+            <div style="display:flex;align-items:center;gap:0.75rem;padding:8px 0;border-bottom:1px solid #f1f5f9;">
+                <div style="font-size:1.2rem;width:28px;text-align:center;">${medals[i] || (i+1)+'.'}</div>
+                <div style="width:36px;height:36px;border-radius:50%;background:#1e3a5f;color:#fff;display:flex;align-items:center;justify-content:center;font-size:0.78rem;font-weight:700;flex-shrink:0;">
+                    ${c.name.substring(0,2).toUpperCase()}
+                </div>
+                <div style="flex:1;">
+                    <div style="font-weight:600;font-size:0.88rem;">${c.name}</div>
+                    <div style="font-size:0.75rem;color:var(--text3);">${c.actions} actions</div>
+                </div>
+                <div style="text-align:right;">
+                    <div style="font-size:1.1rem;font-weight:900;color:${colors[i]||'#64748b'};">${c.points} pts</div>
+                    <div style="font-size:0.68rem;color:var(--text3);">score</div>
+                </div>
+            </div>`).join('');
+    }).catch(() => {
+        document.getElementById('contribBody').innerHTML = '<div style="color:var(--text3);font-size:0.82rem;">Could not load contributors.</div>';
+    });
+
+// ── Lead Action Dropdown ──
+function toggleLeadMenu() {
+    const dd = document.getElementById('leadActionDropdown');
+    dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
+}
+// Hover effect on dropdown items
+document.querySelectorAll('#leadActionDropdown a, #leadActionDropdown button').forEach(el => {
+    if (el.type === 'submit') return;
+    el.addEventListener('mouseenter', () => el.style.background = '#f8fafc');
+    el.addEventListener('mouseleave', () => el.style.background = '');
+});
+// Close on outside click
+document.addEventListener('click', function(e) {
+    const menu = document.getElementById('leadActionMenu');
+    if (menu && !menu.contains(e.target)) {
+        document.getElementById('leadActionDropdown').style.display = 'none';
+    }
+});
+
+// ── NPD Modal ──
+document.getElementById('npdModal').addEventListener('click', function(e) {
+    if (e.target === this) document.getElementById('npdModal').style.display = 'none';
+});
+
+let _npdView = 'preview';
+
+function openNpdModal() {
+    document.getElementById('npdModal').style.display = 'flex';
+    document.getElementById('npdLoading').style.display = 'block';
+    document.getElementById('npdForm').style.display = 'none';
+
+    fetch('{{ url_for("mail.lead_npd_preview", id=lead.id) }}')
+        .then(r => r.json())
+        .then(data => {
+            document.getElementById('npdToEmail').value   = data.to_email;
+            document.getElementById('npdFromEmail').value = data.from_email;
+            document.getElementById('npdFromName').value  = data.from_name;
+            document.getElementById('npdSubject').value   = data.subject;
+            document.getElementById('npdBodyPreview').innerHTML = data.body;
+            document.getElementById('npdBodyHtml').value        = data.body;
+            document.getElementById('npdLoading').style.display = 'none';
+            document.getElementById('npdForm').style.display    = 'block';
+        })
+        .catch(() => {
+            document.getElementById('npdLoading').innerHTML = '❌ Template load failed. Reload karein.';
+        });
+}
+
+function npdSwitchView(mode) {
+    _npdView = mode;
+    const preview = document.getElementById('npdBodyPreview');
+    const html    = document.getElementById('npdBodyHtml');
+    const btnP    = document.getElementById('npdBtnPreview');
+    const btnH    = document.getElementById('npdBtnHtml');
+    if (mode === 'html') {
+        preview.style.display = 'none';
+        html.style.display    = 'block';
+        btnH.style.background = '#1e3a5f'; btnH.style.color = '#fff';
+        btnP.style.background = '#f1f5f9'; btnP.style.color = '#374151';
+    } else {
+        html.style.display    = 'none';
+        preview.style.display = 'block';
+        preview.innerHTML     = html.value;
+        btnP.style.background = '#1e3a5f'; btnP.style.color = '#fff';
+        btnH.style.background = '#f1f5f9'; btnH.style.color = '#374151';
+    }
+}
+
+// Sync html textarea to body on submit
+document.getElementById('npdForm').addEventListener('submit', function() {
+    if (_npdView === 'preview') {
+        document.getElementById('npdBodyHtml').value = document.getElementById('npdBodyPreview').innerHTML;
+    }
+});
+
+// Close modal on outside click
+document.getElementById('statusModal').addEventListener('click', function(e) {
+    if (e.target === this) document.getElementById('statusModal').style.display = 'none';
+});
+document.getElementById('sampleOrderModal').addEventListener('click', function(e) {
+    if (e.target === this) closeSampleOrderModal();
+});
+
+// ── Sample Order JS ──
+// Set today's date
+document.getElementById('soDate').value = new Date().toISOString().split('T')[0];
+
+// ── soAddRow — mobile cards on mobile, table rows on desktop ──
+let soRowCount = 0;
+function soAddRow(name='', rate='', qty='1', amount='') {
+    soRowCount++;
+    const rid = 'sorow_' + soRowCount;
+    const isMobile = window.innerWidth < 768;
+
+    if (isMobile) {
+        // ── Mobile: card ──
+        const cards = document.getElementById('soItemCards');
+        document.getElementById('soDesktopTable').style.display = 'none';
+        cards.style.display = 'block';
+        const card  = document.createElement('div');
+        card.className = 'so-item-card';
+        card.id = rid;
+        card.innerHTML =
+            '<input type="text" name="item_name[]" value="' + name + '" placeholder="Product Name" class="fi so-item-name" style="font-size:0.88rem;padding:9px 12px;margin-bottom:8px;">' +
+            '<input type="hidden" name="item_desc[]" value="">' +
+            '<input type="hidden" name="item_unit[]" value="pcs">' +
+            '<div class="so-item-row">' +
+                '<div><label>Rate (₹)</label><input type="number" name="item_rate[]" value="' + rate + '" min="0" step="any" placeholder="0.00" class="fi so-rate" style="font-size:0.88rem;padding:8px 10px;text-align:right;"></div>' +
+                '<div><label>Qty</label><input type="number" name="item_qty[]" value="' + qty + '" min="0" step="any" class="fi so-qty" style="font-size:0.88rem;padding:8px 10px;text-align:center;"></div>' +
+                '<div><label>Amount</label><div class="so-item-amt so-amt" id="amt_' + rid + '">&#8377; ' + (amount || '0.00') + '</div></div>' +
+            '</div>';
+        // Add event listeners
+        const rateInp = card.querySelector('.so-rate');
+        const qtyInp  = card.querySelector('.so-qty');
+        if (rateInp) rateInp.addEventListener('input', function() { soSyncAndCalc(rid); });
+        if (qtyInp)  qtyInp.addEventListener('input',  function() { soSyncAndCalc(rid); });
+        // Delete button
+        const delBtn = document.createElement('button');
+        delBtn.type = 'button';
+        delBtn.className = 'so-item-del';
+        delBtn.id = 'delbtn_' + rid;
+        if (soRowCount === 1) {
+            delBtn.disabled = true;
+            delBtn.style.cssText = 'position:absolute;top:10px;right:10px;background:#f1f5f9;color:#94a3b8;border:none;border-radius:6px;width:26px;height:26px;font-size:0.85rem;cursor:not-allowed;opacity:0.4;display:flex;align-items:center;justify-content:center;';
+            delBtn.textContent = '🔒';
+        } else {
+            delBtn.textContent = '✕';
+            delBtn.addEventListener('click', function() { soRemoveRow(rid); });
+        }
+        card.appendChild(delBtn);
+        cards.appendChild(card);
+        const nameInp = card.querySelector('input[name="item_name[]"]');
+        if (nameInp) nameInp.focus();
+
+    } else {
+        // ── Desktop: table row ──
+        document.getElementById('soDesktopTable').style.display = 'block';
+        document.getElementById('soItemCards').style.display = 'none';
+        const tbody = document.getElementById('soItems');
+        const tr = document.createElement('tr');
+        tr.id = rid;
+        tr.className = 'so-item-card';
+        tr.style.borderBottom = '1px solid #f1f5f9';
+        const inp = 'width:100%;border:1.5px solid #e8edf5;border-radius:6px;padding:6px 8px;font-size:0.83rem;outline:none;';
+
+        // Product name cell
+        const td1 = document.createElement('td');
+        td1.style.cssText = 'padding:6px 8px;border:1px solid #e2e8f0;';
+        const nameEl = document.createElement('input');
+        nameEl.type = 'text'; nameEl.name = 'item_name[]'; nameEl.value = name;
+        nameEl.placeholder = 'Product name'; nameEl.style.cssText = inp;
+        nameEl.className = 'so-name';
+        const descEl = document.createElement('input');
+        descEl.type = 'hidden'; descEl.name = 'item_desc[]'; descEl.value = '';
+        const unitEl = document.createElement('input');
+        unitEl.type = 'hidden'; unitEl.name = 'item_unit[]'; unitEl.value = 'pcs';
+        td1.appendChild(nameEl); td1.appendChild(descEl); td1.appendChild(unitEl);
+
+        // Rate cell
+        const td2 = document.createElement('td');
+        td2.style.cssText = 'padding:6px 8px;border:1px solid #e2e8f0;';
+        const rateEl = document.createElement('input');
+        rateEl.type = 'number'; rateEl.name = 'item_rate[]'; rateEl.value = rate;
+        rateEl.min = '0'; rateEl.step = 'any'; rateEl.placeholder = '0.00';
+        rateEl.style.cssText = inp + 'text-align:right;';
+        rateEl.className = 'fi so-rate';
+        rateEl.addEventListener('input', function() { soSyncAndCalc(rid); });
+        td2.appendChild(rateEl);
+
+        // Qty cell
+        const td3 = document.createElement('td');
+        td3.style.cssText = 'padding:6px 8px;border:1px solid #e2e8f0;';
+        const qtyEl = document.createElement('input');
+        qtyEl.type = 'number'; qtyEl.name = 'item_qty[]'; qtyEl.value = qty;
+        qtyEl.min = '0'; qtyEl.step = 'any';
+        qtyEl.style.cssText = inp + 'text-align:center;';
+        qtyEl.className = 'fi so-qty';
+        qtyEl.addEventListener('input', function() { soSyncAndCalc(rid); });
+        td3.appendChild(qtyEl);
+
+        // Amount cell
+        const td4 = document.createElement('td');
+        td4.style.cssText = 'padding:6px 8px;border:1px solid #e2e8f0;text-align:right;font-weight:600;color:#1e3a5f;';
+        td4.className = 'so-amt';
+        td4.id = 'amt_' + rid;
+        td4.textContent = '₹ ' + (amount || '0.00');
+
+        // Delete cell
+        const td5 = document.createElement('td');
+        td5.style.cssText = 'padding:6px 8px;border:1px solid #e2e8f0;text-align:center;';
+        const dBtn = document.createElement('button');
+        dBtn.type = 'button';
+        if (soRowCount === 1) {
+            dBtn.disabled = true;
+            dBtn.textContent = '🔒';
+            dBtn.style.cssText = 'background:#f1f5f9;color:#94a3b8;border:none;width:26px;height:26px;border-radius:5px;font-size:0.8rem;cursor:not-allowed;opacity:0.4;';
+        } else {
+            dBtn.textContent = '✕';
+            dBtn.style.cssText = 'background:#fee2e2;color:#dc2626;border:none;width:26px;height:26px;border-radius:5px;font-size:0.8rem;cursor:pointer;';
+            dBtn.addEventListener('click', function() { soRemoveRow(rid); });
+        }
+        td5.appendChild(dBtn);
+
+        tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3);
+        tr.appendChild(td4); tr.appendChild(td5);
+        tbody.appendChild(tr);
+        nameEl.focus();
+    }
+    soCalcTotal();
+}
+function soRemoveRow(rid) {
+    // Count current items — prevent deleting if only 1 left
+    const allItems = document.querySelectorAll('#soForm input[name="item_name[]"]');
+    const total = document.querySelectorAll('#soItemCards .so-item-card').length + 
+                  document.querySelectorAll('#soItems tr.so-item-card').length;
+    if (total <= 1) {
+        soShowValToast('At least one product is required');
+        return;
+    }
+    document.getElementById(rid)?.remove();
+    soCalcTotal();
+}
+
+function soSyncAndCalc(rid) {
+    const el = document.getElementById(rid);
+    if (!el) return;
+    const qty  = parseFloat(el.querySelector('.so-qty')  ? el.querySelector('.so-qty').value  : 0) || 0;
+    const rate = parseFloat(el.querySelector('.so-rate') ? el.querySelector('.so-rate').value : 0) || 0;
+    const amt  = qty * rate;
+    const fmt  = function(v) { return '₹ ' + v.toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2}); };
+    const amtEl = document.getElementById('amt_' + rid) || el.querySelector('.so-amt');
+    if (amtEl) amtEl.textContent = fmt(amt);
+    soCalcTotal();
+}
+
+// ── Sample Order Validation ──────────────────────────────
+function soShowValToast(msg) {
+    const t = document.getElementById('soValToast');
+    if (!t) return;
+    t.textContent = '⚠️ ' + msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+function soClearErrors() {
+    document.querySelectorAll('.so-field-error').forEach(el => el.classList.remove('so-field-error'));
+    document.querySelectorAll('.so-err-msg.show').forEach(el => el.classList.remove('show'));
+}
+
+function qtClearErrors() {
+    document.querySelectorAll('#qtForm .so-field-error').forEach(el => el.classList.remove('so-field-error'));
+    document.querySelectorAll('#quotationModal .so-err-msg.show, #quotationModal .qt-err-msg.show').forEach(el => el.classList.remove('show'));
+    var itemErr = document.getElementById('qtErrItems');
+    if (itemErr) itemErr.style.display = 'none';
+}
+
+function soValidate() {
+    soClearErrors();
+    const errors = [];
+    function isValidEmail(v) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim()); }
+
+    function chk(id, errId, label) {
+        const el = document.getElementById(id);
+        if (!el || !el.value.trim()) {
+            if (el) el.classList.add('so-field-error');
+            const e = document.getElementById(errId);
+            if (e) e.classList.add('show');
+            errors.push(label);
+            return false;
+        }
+        return true;
+    }
+
+    chk('soDate',        'soErrDate',     'Date');
+    chk('soNumber',      'soErrNumber',   'Order ID');
+    chk('soBillCompany', 'soErrBillCo',   'Company Name');
+    chk('soBillAddress', 'soErrBillAddr', 'Address');
+    chk('soBillPhone',   'soErrBillPhone','Mobile');
+
+    // Email — optional but validate format
+    const emailEl = document.getElementById('soBillEmail');
+    if (emailEl && emailEl.value.trim() && !isValidEmail(emailEl.value)) {
+        emailEl.classList.add('so-field-error');
+        const e = document.getElementById('soErrBillEmail');
+        if (e) e.classList.add('show');
+        errors.push('Valid Email');
+    }
+
+    // Products — name required + rate > 0 + qty > 0
+    const allItemNames = document.querySelectorAll('#soForm input[name="item_name[]"]');
+    const filledItems  = Array.from(allItemNames).filter(i => i.value.trim());
+    if (allItemNames.length === 0 || filledItems.length === 0) {
+        const e = document.getElementById('soErrItems');
+        if (e) { e.textContent = 'At least one product is required'; e.classList.add('show'); }
+        errors.push('At least one product required');
+    } else {
+        let itemError = false;
+        document.querySelectorAll('#soForm .so-item-card').forEach(function(card) {
+            const nameEl = card.querySelector('input[name="item_name[]"]');
+            if (!nameEl || !nameEl.value.trim()) return;
+            const rateEl = card.querySelector('input[name="item_rate[]"]');
+            const qtyEl  = card.querySelector('input[name="item_qty[]"]');
+            const rate = parseFloat(rateEl ? rateEl.value : 0) || 0;
+            const qty  = parseFloat(qtyEl  ? qtyEl.value  : 0) || 0;
+            if (rate <= 0 && rateEl) rateEl.classList.add('so-field-error');
+            if (qty  <= 0 && qtyEl)  qtyEl.classList.add('so-field-error');
+            if (rate <= 0 || qty <= 0) itemError = true;
+        });
+        if (itemError) {
+            const e = document.getElementById('soErrItems');
+            if (e) { e.textContent = 'Har product ka Rate aur Quantity bharna zaroori hai'; e.classList.add('show'); }
+            errors.push('Product Rate & Quantity required');
+        }
+    }
+
+    if (errors.length > 0) {
+        soShowValToast(errors[0] + (errors.length > 1 ? ' and ' + (errors.length-1) + ' more field' : '') + ' is required');
+        const firstErr = document.querySelector('#sampleOrderModal .so-field-error');
+        if (firstErr) firstErr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return false;
+    }
+    return true;
+}
+
+// Sample Order submit handler
+function soSubmit() {
+    if (!soValidate()) return;
+    var btn = document.getElementById('soSubmitBtn');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation:spin .7s linear infinite"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Processing...';
+    }
+    document.getElementById('soForm').submit();
+}
+
+// Clear field error on input
+function soBindClearError(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('input', function() { this.classList.remove('so-field-error'); });
+    el.addEventListener('change', function() { this.classList.remove('so-field-error'); });
+}
+['soDate','soNumber','soBillCompany','soBillAddress','soBillPhone','soBillEmail'].forEach(soBindClearError);
+
+function soCalcTotal() {
+    let subTotal = 0;
+    document.querySelectorAll('.so-item-card').forEach(el => {
+        const q = parseFloat(el.querySelector('.so-qty')?.value)  || 0;
+        const r = parseFloat(el.querySelector('.so-rate')?.value) || 0;
+        subTotal += q * r;
+    });
+    const gstPct = parseFloat(document.getElementById('soGstPct')?.value || document.getElementById('soGstPctM')?.value) || 0;
+    const gstAmt = subTotal * gstPct / 100;
+    const total  = subTotal + gstAmt;
+    const fmt    = v => v.toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2});
+    document.getElementById('soSubTotal').textContent = fmt(subTotal);
+    document.getElementById('soGstAmt').textContent   = fmt(gstAmt);
+    document.getElementById('soTotal').textContent    = fmt(total);
+    document.getElementById('soGstLabel').textContent = gstPct;
+}
+
+// GST dropdown change
+document.getElementById('soGstPct')?.addEventListener('change', soCalcTotal);
+
+// Pre-fill handled in openSampleOrderModal()
+
+// ── Quotation Modal: open with reset, close with reset ──
+function closeQuotationModal() {
+    document.getElementById('quotationModal').style.display = 'none';
+    // Reset item cards and table rows
+    var cards = document.getElementById('qtItemCards');
+    if (cards) cards.innerHTML = '';
+    var tbody = document.getElementById('qtItems');
+    if (tbody) tbody.innerHTML = '';
+    qtRowCount = 0;
+    // Reset quot number (both mobile + desktop IDs)
+    ['qtNumber','qtNumberD'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+    // Reset bill_gst
+    var gst = document.querySelector('#qtForm input[name="bill_gst"]');
+    if (gst) gst.value = '';
+    // Reset notes
+    var notes = document.querySelector('#qtForm textarea[name="notes"]');
+    if (notes) notes.value = '';
+    // Reset billing fields to lead defaults
+    var bc = document.querySelector('#qtForm input[name="bill_company"]');
+    if (bc) bc.value = '{{ lead.company_name or "" }}';
+    var bp = document.querySelector('#qtForm input[name="bill_phone"]');
+    if (bp) bp.value = '{{ lead.phone or "" }}';
+    var be = document.querySelector('#qtForm input[name="bill_email"]');
+    if (be) be.value = '{{ lead.email or "" }}';
+    var subj = document.querySelector('#qtForm input[name="quot_subject"]');
+    if (subj) subj.value = 'Quotation for {{ lead.company_name or "" }}';
+}
+
+function openQuotationModal() {
+    // Reset first
+    closeQuotationModal();
+    // Show modal
+    document.getElementById('quotationModal').style.display = 'flex';
+    // Show correct layout sections based on screen width
+    var isMobile = window.innerWidth < 768;
+    document.querySelectorAll('.qt-desktop-only').forEach(function(el) {
+        el.style.display = isMobile ? 'none' : (el.tagName === 'DIV' ? 'block' : 'grid');
+    });
+    document.querySelectorAll('.qt-mobile-only').forEach(function(el) {
+        el.style.display = isMobile ? 'block' : 'none';
+    });
+    // qt-desktop-top needs grid
+    var dtop = document.querySelector('.qt-desktop-top');
+    if (dtop && !isMobile) dtop.style.display = 'grid';
+    // qt-desktop-divider
+    var ddiv = document.querySelector('.qt-desktop-divider');
+    if (ddiv && !isMobile) ddiv.style.display = 'block';
+    // Scroll to top of modal
+    var box = document.querySelector('#quotationModal .qt-box'); if (box) box.scrollTop = 0;
+    // Set today + valid until dates (both mobile and desktop IDs)
+    var today = new Date().toISOString().split('T')[0];
+    ['qtDate','qtDateD'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=today; });
+    var d30 = new Date(); d30.setDate(d30.getDate()+30);
+    var d30str = d30.toISOString().split('T')[0];
+    ['qtValidUntil','qtValidUntilD'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=d30str; });
+    // Fetch next quotation number
+    fetch('/crm/quotations/next-number')
+        .then(r => r.json())
+        .then(data => {
+            ['qtNumber','qtNumberD'].forEach(function(id){ var f=document.getElementById(id); if(f && data.quot_number) f.value=data.quot_number; });
+        })
+        .catch(err => console.error('Quot number fetch failed:', err));
+    // Fetch UOM + Category options fresh, then add row
+    Promise.all([
+        fetch('/masters/uom-options').then(r => r.json()).catch(() => []),
+        fetch('/masters/category-options').then(r => r.json()).catch(() => [])
+    ]).then(function(results) {
+        window._qtUomOptions = results[0];
+        window._qtCatOptions = results[1];
+        qtAddRow();  // Add row after options loaded
+    });
+}
+
+document.getElementById('quotationModal').addEventListener('click', function(e) {
+    if (e.target === this) closeQuotationModal();
+});
+
+function qtAutoCalcFinal(input) {
+    var card = input.closest('.qt-item-card');
+    if (!card) return;
+    var cost    = parseFloat(card.querySelector('input[name="item_cost[]"]')?.value)    || 0;
+    var pmCost  = parseFloat(card.querySelector('input[name="item_pm_cost[]"]')?.value) || 0;
+    var final   = cost + pmCost;
+    var fcInput = card.querySelector('input[name="item_final_cost[]"]');
+    if (fcInput) {
+        fcInput.value = final.toFixed(2);
+        fcInput.style.background = '#fffbe6';
+        setTimeout(function(){ fcInput.style.background = '#f0f6ff'; }, 600);
+    }
+    qtCalcTotal();
+}
+
+// ── Quotation Submit handler (same pattern as soSubmit) ──────
+function qtSubmit() {
+    if (!qtValidate()) return;
+    var btn = document.getElementById('qtSubmitBtn');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation:spin .7s linear infinite"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Generating...';
+    }
+    document.getElementById('qtForm').submit();
+}
+
+// ── Quotation Validation ─────────────────────────────────────
+function qtShowValToast(msg) {
+    var t = document.getElementById('qtValToast');
+    if (!t) return;
+    t.textContent = '⚠️ ' + msg;
+    t.classList.add('show');
+    setTimeout(function(){ t.classList.remove('show'); }, 3500);
+}
+
+function qtValidate() {
+    qtClearErrors();
+    var errors = [];
+
+    function qtChkField(el, label) {
+        if (!el || !el.value.trim()) {
+            if (el) el.classList.add('so-field-error');
+            errors.push(label);
+            return false;
+        }
+        return true;
+    }
+
+    // Quot Number
+    var qtNum = document.getElementById('qtNumber') || document.getElementById('qtNumberD');
+    qtChkField(qtNum, 'Quotation Number');
+
+    // Date
+    var qtDt = document.getElementById('qtDate') || document.getElementById('qtDateD');
+    qtChkField(qtDt, 'Date');
+
+    // Bill To — Company / Name
+    var billCoEl = document.querySelector('#qtForm input[name="bill_company"]');
+    qtChkField(billCoEl, 'Bill To (Company Name)');
+
+    // Bill Phone
+    var billPhEl = document.querySelector('#qtForm input[name="bill_phone"]');
+    qtChkField(billPhEl, 'Mobile Number');
+
+    // Products — each row: name required + final cost > 0
+    var allItemCards = document.querySelectorAll('#qtForm .qt-item-card');
+    var hasAtLeastOne = false;
+    var itemRowError = false;
+
+    allItemCards.forEach(function(card) {
+        var nameEl      = card.querySelector('input[name="item_name[]"]');
+        var finalCostEl = card.querySelector('input[name="item_final_cost[]"]');
+        var moqEl       = card.querySelector('input[name="item_moq[]"]');
+
+        var name      = nameEl      ? nameEl.value.trim()      : '';
+        var finalCost = finalCostEl ? parseFloat(finalCostEl.value) || 0 : 0;
+        var moq       = moqEl       ? parseFloat(moqEl.value)  || 0 : 0;
+
+        // Skip completely blank rows (no name, no cost, no qty)
+        if (!name && finalCost === 0 && moq === 0) return;
+
+        hasAtLeastOne = true;
+
+        if (!name && nameEl) {
+            nameEl.classList.add('so-field-error');
+            itemRowError = true;
+        }
+        if (finalCost <= 0 && finalCostEl) {
+            finalCostEl.classList.add('so-field-error');
+            itemRowError = true;
+        }
+        if (moq <= 0 && moqEl) {
+            moqEl.classList.add('so-field-error');
+            itemRowError = true;
+        }
+    });
+
+    if (!hasAtLeastOne) {
+        errors.push('At least one product required');
+        var qtErrItems = document.getElementById('qtErrItems');
+        if (qtErrItems) { qtErrItems.textContent = 'At least one product is required'; qtErrItems.style.display='block'; }
+    } else if (itemRowError) {
+        errors.push('Product Name, Final Cost & MOQ/Qty required');
+        var qtErrItems = document.getElementById('qtErrItems');
+        if (qtErrItems) { qtErrItems.textContent = 'Har product ka Name, Final Cost aur MOQ/Qty bharna zaroori hai'; qtErrItems.style.display='block'; }
+    }
+    if (errors.length > 0) {
+        qtShowValToast(errors[0] + (errors.length > 1 ? ' and ' + (errors.length-1) + ' more field' : '') + ' is required');
+        return false;
+    }
+    // Disable submit button
+    var btn = document.querySelector('#qtForm button[type="submit"]');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation:spin .7s linear infinite"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Generating...';
+    }
+    return true;
+}
+
+function qtCalcTotal() {
+    var subTotal = 0;
+    document.querySelectorAll('.qt-item-card').forEach(function(card) {
+        var fc  = parseFloat(card.querySelector('input[name="item_final_cost[]"]')?.value) || 0;
+        var moq = parseFloat(card.querySelector('input[name="item_moq[]"]')?.value) || 0;
+        subTotal += fc * moq;
+    });
+    var gstPct = parseFloat(document.getElementById('qtGstPct')?.value || document.getElementById('qtGstPctD')?.value) || 0;
+    var gstAmt = subTotal * gstPct / 100;
+    var total  = subTotal + gstAmt;
+    var fmt = function(v) { return '₹ ' + v.toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2}); };
+    var el = document.getElementById('qtSubTotal'); if(el) el.textContent = fmt(subTotal);
+    var el2 = document.getElementById('qtGstAmt');  if(el2) el2.textContent = fmt(gstAmt);
+    var el3 = document.getElementById('qtTotal');   if(el3) el3.textContent = fmt(total);
+    var el4 = document.getElementById('qtGstLabel');if(el4) el4.textContent = gstPct;
+}
+
+let qtRowCount = 0;
+function qtAddRowBtn() {
+    const allNames = document.querySelectorAll('#qtItemTable tbody input[name="item_name[]"], #qtItemCards input[name="item_name[]"]');
+    if (allNames.length > 0) {
+        const lastName = allNames[allNames.length - 1];
+        if (!lastName.value.trim()) {
+            lastName.focus();
+            lastName.style.borderColor = '#dc2626';
+            setTimeout(() => lastName.style.borderColor = '', 2000);
+            return;
+        }
+    }
+    qtAddRow();
+}
+function qtAddRow(name='', size='', code='', uom='', cost='', moq='', pmSpec='', pmCost='', cat='', finalCost='') {
+    
+	qtRowCount++;
+	
+    const rid = 'qtrow_' + qtRowCount;
+    var allQtRows = document.querySelectorAll('#qtItemTable tbody tr, #qtItemCards .qt-item-card');
+    const isFirstRow = (allQtRows.length === 0);
+    const isMobile = window.innerWidth < 768;
+
+    function populateDropdowns(el) {
+        var uomSel = el.querySelector('.qt-uom-sel');
+        if (uomSel && window._qtUomOptions) window._qtUomOptions.forEach(o => { var opt=document.createElement('option'); opt.value=o.code; opt.textContent=o.code+(o.name?' - '+o.name:''); if(uom&&o.code===uom) opt.selected=true; uomSel.appendChild(opt); });
+        var catSel = el.querySelector('.qt-cat-sel');
+        if (catSel && window._qtCatOptions) window._qtCatOptions.forEach(o => { var opt=document.createElement('option'); opt.value=o.name; opt.textContent=o.name; if(cat&&o.name===cat) opt.selected=true; catSel.appendChild(opt); });
+    }
+
+    if (isMobile) {
+        // ── Mobile: card UI ──
+        const cards = document.getElementById('qtItemCards');
+        document.getElementById('qtDesktopTable').style.display = 'none';
+        cards.style.display = 'block';
+        const card  = document.createElement('div');
+        card.className = 'qt-item-card'; card.id = rid;
+		
+		 var delBtnHtml = '';
+		var delBtnD = '';
+		if(qtRowCount > 1){
+		delBtnD = '<button type="button" class="qt-item-del" onclick="document.getElementById(\'' + rid + '\').remove();qtCalcTotal();">✕</button>';
+		}else{
+		delBtnD = '<button type="button" class="qt-item-del" style="visibility:hidden;">✕</button>';
+		}
+		
+		
+        var delBtnHtml = isFirstRow
+            ? '<button type="button" class="qt-item-del" style="visibility:hidden;">✕</button>'
+            : '<button type="button" class="qt-item-del" onclick="document.getElementById(\'' + rid + '\').remove();qtCalcTotal();">✕</button>';
+        card.innerHTML = `
+            ${delBtnHtml}
+            <input type="text" name="item_name[]" value="${name}" placeholder="Product Name" class="fi" style="font-size:0.88rem;padding:9px 12px;margin-bottom:8px;">
+            <div class="qt-item-grid2">
+                <div class="qt-item-field"><label>Size</label><input type="number" name="item_size[]" value="${size}" placeholder="0.0" min="0" step="any" class="fi"></div>
+                <div class="qt-item-field"><label>UOM</label><select name="item_uom[]" class="fi qt-uom-sel"><option value="">-- UOM --</option></select></div>
+                <div class="qt-item-field"><label>Product Code</label><input type="text" name="item_code[]" value="${code}" placeholder="Code" class="fi"></div>
+                <div class="qt-item-field"><label>Category</label><select name="item_category[]" class="fi qt-cat-sel"><option value="">-- Category --</option></select></div>
+            </div>
+            <div class="qt-item-grid3" style="margin-top:8px;">
+                <div class="qt-item-field"><label>Cost (₹)</label><input type="number" name="item_cost[]" value="${cost}" placeholder="0.00" min="0" step="any" class="fi" oninput="qtAutoCalcFinal(this)"></div>
+                <div class="qt-item-field"><label>MOQ / Qty</label><input type="number" name="item_moq[]" value="${moq}" placeholder="0" min="0" step="1" class="fi" oninput="qtCalcTotal()"></div>
+                <div class="qt-item-field"><label>Final Cost (₹) *</label><input type="number" name="item_final_cost[]" value="${finalCost}" placeholder="0.00" min="0" step="any" class="fi" style="background:#f0f6ff;border-color:#c7d7f5;font-weight:700;" oninput="qtCalcTotal()"></div>
+                <div class="qt-item-field"><label>PM Cost (₹)</label><input type="number" name="item_pm_cost[]" value="${pmCost}" placeholder="0.00" min="0" step="any" class="fi" oninput="qtAutoCalcFinal(this)"></div>
+
+            </div>
+            <div style="margin-top:8px;"><label style="font-size:0.65rem;font-weight:700;color:#94a3b8;text-transform:uppercase;display:block;margin-bottom:3px;">PM Specification</label>
+            <textarea name="item_pm_spec[]" placeholder="PM specification..." rows="2" class="fi" style="font-size:0.85rem;resize:none;">${pmSpec}</textarea></div>`;
+        cards.appendChild(card);
+        populateDropdowns(card);
+        card.querySelector('input[name="item_name[]"]').focus();
+    } else {
+	
+        // ── Desktop: table row ──
+        document.getElementById('qtDesktopTable').style.display = 'block';
+        document.getElementById('qtItemCards').style.display = 'none';
+        var tbody = document.getElementById('qtItems');
+        var tr = document.createElement('tr');
+        tr.id = rid; tr.className = 'qt-item-card';
+        tr.style.cssText = 'border-bottom:1px solid #f1f5f9;';
+        var inp = 'width:100%;border:1.5px solid #e8edf5;border-radius:6px;padding:5px 7px;font-size:0.81rem;outline:none;background:transparent;';
+        var delBtnHtml = '';
+		var delBtnD = '';
+		if(qtRowCount > 1){
+		delBtnD = '<button type="button" class="qt-item-del" onclick="document.getElementById(\'' + rid + '\').remove();qtCalcTotal();">✕</button>';
+		}else{
+		delBtnD = '<button type="button" class="qt-item-del" style="visibility:hidden;">✕</button>';
+		}
+        tr.innerHTML =
+            '<td style="padding:5px 7px;border-right:1px solid #f1f5f9;"><input type="text" name="item_name[]" value="' + name + '" placeholder="Product name" style="' + inp + '"></td>' +
+            '<td style="padding:5px 5px;border-right:1px solid #f1f5f9;"><input type="number" name="item_size[]" value="' + size + '" placeholder="0.0" min="0" step="any" style="' + inp + 'text-align:center;width:55px;"></td>' +
+            '<td style="padding:5px 7px;border-right:1px solid #f1f5f9;"><input type="text" name="item_code[]" value="' + code + '" placeholder="Code" style="' + inp + 'text-align:center;"></td>' +
+            '<td style="padding:5px 6px;border-right:1px solid #f1f5f9;"><select name="item_uom[]" class="qt-uom-sel" style="width:100%;border:1.5px solid #e8edf5;border-radius:6px;padding:5px 4px;font-size:0.81rem;"><option value="">-- UOM --</option></select></td>' +
+            '<td style="padding:5px 7px;border-right:1px solid #f1f5f9;"><input type="number" name="item_cost[]" value="' + cost + '" placeholder="0.00" min="0" step="any" style="' + inp + 'text-align:right;" oninput="qtAutoCalcFinal(this)"></td>' +
+            '<td style="padding:5px 7px;border-right:1px solid #f1f5f9;"><input type="number" name="item_moq[]" value="' + moq + '" placeholder="Qty" min="0" style="' + inp + 'text-align:center;" oninput="qtCalcTotal()"></td>' +
+            '<td style="padding:5px 7px;border-right:1px solid #f1f5f9;"><textarea name="item_pm_spec[]" placeholder="PM spec..." rows="2" style="' + inp + 'resize:vertical;min-height:36px;">' + pmSpec + '</textarea></td>' +
+            '<td style="padding:5px 7px;border-right:1px solid #f1f5f9;"><input type="number" name="item_pm_cost[]" value="' + pmCost + '" placeholder="0.00" min="0" step="any" style="' + inp + 'text-align:right;" oninput="qtAutoCalcFinal(this)"></td>' +
+            '<td style="padding:5px 6px;border-right:1px solid #f1f5f9;"><select name="item_category[]" class="qt-cat-sel" style="width:100%;border:1.5px solid #e8edf5;border-radius:6px;padding:5px 4px;font-size:0.81rem;"><option value="">-- Category --</option></select></td>' +
+            '<td style="padding:5px 7px;border-right:1px solid #f1f5f9;"><input type="number" name="item_final_cost[]" value="' + finalCost + '" placeholder="0.00" min="0" step="any" style="' + inp + 'text-align:right;font-weight:700;background:#f0f6ff;border-color:#c7d7f5;" oninput="qtCalcTotal()"></td>' +
+            '<td style="padding:5px 6px;text-align:center;">' + delBtnD + '</td>';
+        tbody.appendChild(tr);
+        populateDropdowns(tr);
+        tr.querySelector('input[name="item_name[]"]').focus();
+    }
+    qtCalcTotal();
+}
+
+
+// Load UOM + Category options once on page load
+window._qtUomOptions = [];
+window._qtCatOptions = [];
+(function() {
+    fetch('/masters/uom-options')
+        .then(r => r.json()).then(d => { window._qtUomOptions = d; })
+        .catch(e => console.warn('UOM load failed:', e));
+    fetch('/masters/category-options')
+        .then(r => r.json()).then(d => { window._qtCatOptions = d; })
+        .catch(e => console.warn('Category load failed:', e));
+})();
+
+
+// ── Sample Order Modal: open with reset, close with reset ──
+function closeSampleOrderModal() {
+    document.getElementById('sampleOrderModal').style.display = 'none';
+    // Reset item cards
+    var cards = document.getElementById('soItemCards');
+    if (cards) cards.innerHTML = '';
+    soRowCount = 0;
+    // Reset totals
+    ['soSubTotal','soGstAmt','soTotal'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) el.textContent = '0.00';
+    });
+    var soNum = document.getElementById('soNumber');
+    if (soNum) soNum.value = '';
+    var gstSel = document.getElementById('soGstPct');
+    if (gstSel) gstSel.value = '18';
+    var billGst = document.getElementById('soBillGst');
+    if (billGst) billGst.value = '';
+    // Also reset so_date and so_number
+    soClearErrors();
+}
+
+function openSampleOrderModal() {
+    // First reset everything
+    closeSampleOrderModal();
+    // Then open
+    document.getElementById('sampleOrderModal').style.display = 'flex';
+    // Set today date
+    var dateField = document.getElementById('soDate');
+    if (dateField) dateField.value = new Date().toISOString().split('T')[0];
+    // Auto-add first row
+    soAddRow('{{ lead.product_name | e }}', '', '{{ lead.order_quantity or "1" }}', '');
+    // Fetch next order number
+    fetch('/crm/sample-orders/next-number')
+        .then(r => {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.json();
+        })
+        .then(data => {
+            var field = document.getElementById('soNumber')
+                     || document.querySelector('input[name="so_number"]');
+            if (field && data.order_number) {
+                field.value = data.order_number;
+            }
+        })
+        .catch(err => console.error('Order number fetch failed:', err));
+}
+
+// ═══ REMINDER AJAX ═══════════════════════════════════════
+var LEAD_ID = {{ lead.id }};
+
+function remFetch(url, cb) {
+  return fetch(url, {
+    method: "POST",
+    headers: { "X-Requested-With": "XMLHttpRequest", "Accept": "application/json" }
+  }).then(function(r) {
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    return r.json();
+  });
+}
+
+function toggleReminderDone(rid, cb) {
+  remFetch("/crm/leads/reminder/" + rid + "/done")
+    .then(function(d) {
+      var item = document.getElementById("rem-" + rid);
+      if (!item) return;
+      cb.checked = d.is_done;
+      if (d.is_done) {
+        item.classList.add("done");
+        item.classList.remove("overdue");
+        document.getElementById("rem-title-" + rid) && document.getElementById("rem-title-" + rid).classList.add("reminder-done-txt");
+        var when = document.getElementById("rem-when-" + rid);
+        if (when && !when.querySelector(".rem-done-lbl")) {
+          var lbl = document.createElement("span");
+          lbl.className = "rem-done-lbl";
+          lbl.style.cssText = "color:#16a34a;font-weight:700;";
+          lbl.textContent = " ✓ Done";
+          when.appendChild(lbl);
+        }
+      } else {
+        item.classList.remove("done");
+        document.getElementById("rem-title-" + rid) && document.getElementById("rem-title-" + rid).classList.remove("reminder-done-txt");
+        var lbl = item.querySelector(".rem-done-lbl");
+        if (lbl) lbl.remove();
+      }
+    })
+    .catch(function(e) { console.error("Reminder done error:", e); cb.checked = !cb.checked; });
+}
+
+function deleteReminder(rid, btn) {
+  if (!confirm("Delete this reminder?")) return;
+  btn.disabled = true;
+  remFetch("/crm/leads/reminder/" + rid + "/delete")
+    .then(function(d) {
+      if (d.success) {
+        var item = document.getElementById("rem-" + rid);
+        if (item) item.remove();
+        var list = document.getElementById("reminder-list");
+        if (list && !list.querySelector(".reminder-item")) {
+          list.innerHTML = '<p style="color:var(--text3);text-align:center;padding:2rem;">No reminders set.</p>';
+        }
+      }
+    })
+    .catch(function(e) { console.error("Delete error:", e); btn.disabled = false; });
+}
+
+function addReminder(e) {
+  e.preventDefault();
+  var title = document.getElementById("rem-title-inp").value.trim();
+  var dt    = document.getElementById("rem-dt-inp").value;
+  var desc  = document.getElementById("rem-desc-inp").value.trim();
+  if (!title || !dt) { alert("Title and Date/Time required!"); return; }
+  var btn = document.getElementById("rem-submit-btn");
+  btn.disabled = true; btn.textContent = "Saving...";
+  var fd = new FormData();
+  fd.append("title", title);
+  fd.append("remind_at", dt);
+  fd.append("description", desc);
+  fetch("/crm/leads/" + LEAD_ID + "/reminder/add", {
+    method: "POST",
+    headers: { "X-Requested-With": "XMLHttpRequest", "Accept": "application/json" },
+    body: fd
+  }).then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.success) {
+        // Remove empty message
+        var empty = document.getElementById("rem-empty");
+        if (empty) empty.remove();
+        // Append new reminder to list
+        var list = document.getElementById("reminder-list");
+        var div = document.createElement("div");
+        div.id = "rem-" + d.id;
+        div.className = "reminder-item";
+        div.innerHTML =
+          '<input type="checkbox" class="reminder-check" onchange="toggleReminderDone(' + d.id + ', this)">' +
+          '<div style="flex:1;">' +
+            '<div class="reminder-title" id="rem-title-' + d.id + '">' + d.title + '</div>' +
+            '<div class="reminder-when" id="rem-when-' + d.id + '">📅 ' + d.remind_at + '</div>' +
+            (d.description ? '<div style="font-size:0.82rem;color:var(--text2);margin-top:4px;">' + d.description + '</div>' : '') +
+          '</div>' +
+          '<button onclick="deleteReminder(' + d.id + ', this)" class="ra-btn danger">🗑️</button>';
+        list.appendChild(div);
+        // Reset form
+        document.getElementById("rem-title-inp").value = "";
+        document.getElementById("rem-dt-inp").value = "";
+        document.getElementById("rem-desc-inp").value = "";
+      } else {
+        alert(d.error || "Error adding reminder.");
+      }
+      btn.disabled = false; btn.textContent = "Set Reminder";
+    })
+    .catch(function(e) { console.error('Add reminder error:', e); btn.disabled = false; btn.textContent = 'Set Reminder'; });
+}
+
+// ═══ MENTION USERS DATA ══════════════════════════════════
+var MENTION_USERS = [
+{% for u in mention_users %}  { id: {{ u.id }}, name: {{ u.full_name | tojson }}, initials: {{ (u.full_name[:2]|upper) | tojson }} }{% if not loop.last %},{% endif %}
+{% endfor %}];
+
+// ═══ CUSTOM RICH TEXT EDITOR ═══════════════════════════
+// ═══ @MENTION SYSTEM ════════════════════════════════════
+var _mentionActive = false;
+var _mentionEdId   = null;
+var _mentionStart  = 0;
+var _mentionIdx    = -1;
+
+function mentionSetup(edId) {
+  var ed = document.getElementById(edId);
+  if (!ed) return;
+  ed.addEventListener("input", function() { mentionCheck(edId); });
+  ed.addEventListener("keydown", function(e) {
+    if (!_mentionActive) return;
+    var dd = document.getElementById("mention-dd-" + edId);
+    if (!dd || dd.style.display === "none") return;
+    var items = dd.querySelectorAll(".mention-item");
+    if (!items.length) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      _mentionIdx = (_mentionIdx + 1) % items.length;
+      mentionHighlight(dd);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      _mentionIdx = (_mentionIdx <= 0) ? items.length - 1 : _mentionIdx - 1;
+      mentionHighlight(dd);
+    } else if (e.key === "Enter" || e.key === "Tab") {
+      e.preventDefault();
+      var idx = _mentionIdx >= 0 ? _mentionIdx : 0;
+      var selected = items[idx];
+      if (selected) {
+        mentionInsert(e, selected.getAttribute("data-edid"), selected.getAttribute("data-name"));
+      }
+    } else if (e.key === "Escape") {
+      mentionClose();
+    }
+  });
+  ed.addEventListener("blur", function() { setTimeout(mentionClose, 200); });
+}
+
+function mentionCheck(edId) {
+  var ed = document.getElementById(edId);
+  if (!ed) return;
+  var sel = window.getSelection();
+  if (!sel.rangeCount) return;
+  var range = sel.getRangeAt(0);
+  var text  = range.startContainer.textContent || "";
+  var pos   = range.startOffset;
+  var atIdx = text.lastIndexOf("@", pos - 1);
+  if (atIdx === -1) { mentionClose(); return; }
+  var query = text.slice(atIdx + 1, pos).toLowerCase();
+  var filtered = MENTION_USERS.filter(function(u) { return u.name.toLowerCase().includes(query); });
+  if (!filtered.length) { mentionClose(); return; }
+  _mentionActive = true; _mentionEdId = edId; _mentionStart = atIdx; _mentionIdx = 0;
+  mentionShow(edId, filtered, query);
+}
+
+function mentionShow(edId, users, query) {
+  var ddId = "mention-dd-" + edId;
+  var dd = document.getElementById(ddId);
+  if (!dd) {
+    dd = document.createElement("div");
+    dd.id = ddId; dd.className = "mention-dropdown";
+    document.body.appendChild(dd);
+  }
+  dd.innerHTML = "";
+  users.forEach(function(u) {
+    var item = document.createElement("div");
+    item.className = "mention-item";
+    item.setAttribute("data-name", u.name);
+    item.setAttribute("data-edid", edId);
+    item.innerHTML = '<div class="mention-av">' + u.initials + '</div><span class="mention-name">@ ' + u.name + '</span>';
+    item.addEventListener("mousedown", function(e) {
+      mentionInsert(e, this.getAttribute("data-edid"), this.getAttribute("data-name"));
+    });
+    dd.appendChild(item);
+  });
+  // Position near cursor
+  var ed = document.getElementById(edId);
+  var rect = ed.getBoundingClientRect();
+  dd.style.display = "block";
+  dd.style.left = (rect.left + window.scrollX) + "px";
+  dd.style.top  = (rect.bottom + window.scrollY + 4) + "px";
+  // Auto-highlight first item
+  mentionHighlight(dd);
+}
+
+function mentionHighlight(dd) {
+  dd.querySelectorAll(".mention-item").forEach(function(el, i) {
+    el.classList.toggle("active", i === _mentionIdx);
+  });
+}
+
+function mentionInsert(e, edId, name) {
+  e.preventDefault();
+  var ed = document.getElementById(edId);
+  if (!ed) return;
+  ed.focus();
+  var sel = window.getSelection();
+  if (!sel.rangeCount) return;
+  var range = sel.getRangeAt(0);
+  var node  = range.startContainer;
+  var pos   = range.startOffset;
+  var text  = node.textContent || "";
+  var atIdx = text.lastIndexOf("@", pos - 1);
+  // Replace @query with styled mention
+  var before = text.slice(0, atIdx);
+  var after  = text.slice(pos);
+  var mention = document.createElement("span");
+  mention.className = "mention-tag";
+  mention.contentEditable = "false";
+  mention.textContent = "@" + name;
+  var space = document.createTextNode(" ");
+  node.textContent = before;
+  var parent = node.parentNode;
+  var next   = node.nextSibling;
+  parent.insertBefore(mention, next);
+  parent.insertBefore(space, mention.nextSibling);
+  // Move cursor after space
+  var newRange = document.createRange();
+  newRange.setStartAfter(space); newRange.collapse(true);
+  sel.removeAllRanges(); sel.addRange(newRange);
+  mentionClose();
+}
+
+function mentionClose() {
+  _mentionActive = false; _mentionIdx = -1;
+  document.querySelectorAll(".mention-dropdown").forEach(function(d) { d.style.display = "none"; });
+}
+
+function rteCmd(edId, cmd) {
+  var el = document.getElementById(edId);
+  if (el) el.focus();
+  document.execCommand(cmd, false, null);
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+  // Init @mention on main editor
+  mentionSetup("rte-main-ed");
+});
+
+// ════════════════════════════════════════════════════════════════
+// leadSendDiscussion()
+// ─────────────────────────────────────────────────────────────────
+// Direct click handler for the Send button. Purane code me button
+// type="submit" tha aur form ke "submit" event pe handler tha. Us
+// approach me browser focus-shift / event-race ke karan kabhi pehla
+// click miss ho jaata tha aur user ko 2 baar click karna padta tha.
+//
+// Yeh function single click pe pura kaam karta hai:
+//   1. contenteditable ka HTML hidden input me sync
+//   2. empty-submit validation
+//   3. anti-double-submit guard (button disable)
+//   4. form.submit() programmatically — koi browser event race nahi
+//
+// Button ab type="button" hai, aur sirf inline onclick="leadSendDiscussion()"
+// trigger karta hai. Kahin se bhi yeh function call karne pe form submit
+// hota hai (e.g. agar future me Ctrl+Enter shortcut add karna ho).
+// ════════════════════════════════════════════════════════════════
+function leadSendDiscussion() {
+  var form    = document.getElementById('discussionForm');
+  var postBtn = document.getElementById('postCommentBtn');
+  var ed      = document.getElementById('rte-main-ed');
+  var hidden  = document.getElementById('commentBoxHidden');
+
+  if (!form || !postBtn) return;
+
+  // 1. Sync RTE → hidden input (covers the case where oninput missed
+  //    something — e.g. images inserted programmatically, paste, drop)
+  if (ed && hidden) hidden.value = ed.innerHTML;
+
+  // 2. Empty-submit check — must have either text OR a file OR an inline image
+  var plain = (hidden ? hidden.value : '')
+                .replace(/<[^>]*>/g, '')          // strip all tags
+                .replace(/&nbsp;/g, ' ')          // contenteditable noise
+                .trim();
+  var hasFile = (typeof selectedFiles !== 'undefined'
+                 && selectedFiles && selectedFiles.length > 0);
+  var hasInlineImage = !!(hidden && hidden.value && /<img\b/i.test(hidden.value));
+  if (!plain && !hasFile && !hasInlineImage) {
+    alert('Please write a message or attach a file.');
+    return;
+  }
+
+  // 3. Anti-double-submit — agar already submit ho raha hai, ignore
+  if (postBtn.disabled) return;
+  postBtn.disabled       = true;
+  postBtn.style.opacity  = '0.6';
+  postBtn.textContent    = 'Sending…';
+
+  // 4. Submit form programmatically. form.submit() does NOT fire
+  //    "submit" event listeners — that's intentional: hum sab kaam
+  //    upar already kar chuke hain, koi double-handling nahi chahiye.
+  form.submit();
+}
+
+
+// ═══ DISCUSSION EDIT/DELETE ══════════════════════════════
+function discEdit(did, btn) {
+  var textEl  = document.getElementById("disc-text-" + did);
+  var editBox = document.getElementById("disc-edit-box-" + did);
+  var rteBody = document.getElementById("rte-edit-" + did + "-ed");
+  textEl.style.display = "none";
+  editBox.style.display = "block";
+  // Load existing HTML into RTE body
+  if (rteBody && !rteBody._loaded) {
+    rteBody.innerHTML = textEl.innerHTML || "";
+    rteBody._loaded = true;
+    mentionSetup("rte-edit-" + did + "-ed");
+  }
+  if (rteBody) rteBody.focus();
+}
+
+function discCancelEdit(did) {
+  document.getElementById("disc-text-" + did).style.display = "";
+  document.getElementById("disc-edit-box-" + did).style.display = "none";
+}
+
+function discSaveEdit(did) {
+  var rteBody = document.getElementById("rte-edit-" + did + "-ed");
+  var newHtml = rteBody ? rteBody.innerHTML.trim() : "";
+  if (!newHtml || newHtml === "<br>") { alert("Comment cannot be empty!"); return; }
+
+  // Send everything to the server — it decides what to accept.
+  var fileInput = document.getElementById("disc-edit-files-" + did);
+  var fd = new FormData();
+  fd.append("comment", newHtml);
+  if (fileInput && fileInput.files.length > 0) {
+    for (var i = 0; i < fileInput.files.length; i++) {
+      fd.append("attachments[]", fileInput.files[i]);
+    }
+  }
+
+  fetch("/crm/leads/discussion/" + did + "/edit", {
+    method: "POST",
+    headers: { "X-Requested-With": "XMLHttpRequest" },
+    body: fd
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    if (d.success) {
+      document.getElementById("disc-text-" + did).innerHTML = d.comment;
+      discCancelEdit(did);
+      // Refresh attachments if returned
+      if (d.attachments && d.attachments.length) {
+        var attWrap = document.getElementById("disc-att-" + did);
+        if (attWrap) {
+          attWrap.innerHTML = d.attachments.map(function(a) {
+            return '<a href="/static/' + a.path + '" target="_blank" class="attach-chip">📎 ' + a.name + '</a>';
+          }).join("");
+        }
+      }
+      // Server-side warnings — show them as a simple alert so the
+      // user knows specific files were rejected even though the
+      // comment itself saved.
+      if (Array.isArray(d.warnings) && d.warnings.length) {
+        alert('Comment saved, but some files were not attached:\n\n'
+              + d.warnings.join('\n'));
+      }
+    } else {
+      alert(d.error || "Error saving edit.");
+    }
+  })
+  .catch(function(e) { console.error("Edit error:", e); });
+}
+
+function discDelete(did, btn) {
+  if (!confirm("Is comment ko delete karna hai?")) return;
+  btn.disabled = true;
+  fetch("/crm/leads/discussion/" + did + "/delete", {
+    method: "POST",
+    headers: { "X-Requested-With": "XMLHttpRequest" }
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    if (d.success) {
+      var item = document.getElementById("disc-" + did);
+      if (item) { item.style.opacity="0"; item.style.transition="opacity .3s"; setTimeout(function(){ item.remove(); }, 300); }
+    } else {
+      alert(d.error || "Error deleting."); btn.disabled = false;
+    }
+  })
+  .catch(function(e) { console.error("Delete error:", e); btn.disabled = false; });
+}
+</script>
+
+{% endblock %}

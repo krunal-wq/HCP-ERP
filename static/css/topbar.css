@@ -1,0 +1,289 @@
+/* ═══ VARIABLES (Ensure these exist in your root) ═══ */
+:root {
+    --topbar-h: 64px;
+    --bg: #f8fafc;
+    --white: #ffffff;
+    --border: #e2e8f0;
+    --text: #1e293b;
+    --text2: #475569;
+    --text3: #64748b;
+    --blue: #2563eb;
+    --blue-border: #bfdbfe;
+}
+
+/* ═══ TOPBAR ═══ */
+.topbar {
+    position: fixed; top: 0; left: 0; right: 0;
+    height: var(--topbar-h);
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center;
+    padding: 0 1.25rem; gap: 0.75rem;
+    z-index: 200; transition: left 0.3s ease;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+}
+
+.hbg {
+    display: flex; align-items: center; justify-content: center;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px; cursor: pointer;
+    color: var(--text2); line-height: 1;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+.hbg:hover {
+    background: var(--bg);
+    color: var(--blue);
+}
+
+.tb-sep { width: 1px; height: 24px; background: var(--border); flex-shrink: 0; }
+
+.tb-page-title { font-weight: 700; font-size: 16px; color: var(--text); letter-spacing: -0.01em; }
+.tb-bread { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text3); margin-top: 2px; font-weight: 500; }
+.tb-bread .sep { opacity: 0.5; }
+
+.tb-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+
+/* Dark mode toggle */
+.dark-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 48px;
+    height: 32px;
+    padding: 0;
+    cursor: pointer;
+    background: transparent;
+    border: none;
+}
+
+.dark-toggle-track {
+    position: relative;
+    width: 46px;
+    height: 26px;
+    padding: 3px;
+    background: #e2e8f0;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.08);
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.dark-toggle-thumb {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    color: #f59e0b;
+    background: #ffffff;
+    border-radius: 50%;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.18);
+    transition: transform 0.2s ease, color 0.2s ease, background 0.2s ease;
+}
+
+.dark-toggle-icon {
+    position: absolute;
+    transition: opacity 0.16s ease, transform 0.16s ease;
+}
+
+.dark-toggle-moon {
+    opacity: 0;
+    transform: scale(0.7) rotate(-20deg);
+}
+
+.dark-toggle-sun {
+    opacity: 1;
+    transform: scale(1) rotate(0);
+}
+
+.dark-toggle:hover .dark-toggle-track {
+    border-color: var(--blue-border);
+}
+
+.dark-toggle.is-dark .dark-toggle-track {
+    background: #111827;
+    border-color: #334155;
+}
+
+.dark-toggle.is-dark .dark-toggle-thumb {
+    color: #93c5fd;
+    background: #1e293b;
+    transform: translateX(20px);
+}
+
+.dark-toggle.is-dark .dark-toggle-moon {
+    opacity: 1;
+    transform: scale(1) rotate(0);
+}
+
+.dark-toggle.is-dark .dark-toggle-sun {
+    opacity: 0;
+    transform: scale(0.7) rotate(20deg);
+}
+
+/* 🟢 High Visibility Date Fix 🟢 */
+.tb-date {
+    font-size: 13px; font-weight: 600; color: #1d4ed8;
+    background: #eff6ff; padding: 6px 14px; border-radius: 20px;
+    border: 1px solid #bfdbfe; font-family: 'JetBrains Mono', monospace;
+    white-space: nowrap; box-shadow: 0 1px 2px rgba(37, 99, 235, 0.1);
+    letter-spacing: 0.02em;
+}
+
+.tb-btn {
+    position: relative;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px; color: var(--text2); cursor: pointer;
+    transition: all 0.2s ease;
+}
+.tb-btn:hover {
+    background: var(--white);
+    border-color: var(--blue-border);
+    color: var(--blue);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+/* ── Topbar user profile ── */
+.tb-user { position: relative; flex-shrink: 0; }
+.tb-user-btn {
+    display: flex; align-items: center; gap: 10px;
+    background: transparent; border: 1px solid transparent;
+    border-radius: 20px; padding: 4px 10px 4px 4px;
+    cursor: pointer; font-family: 'Inter', sans-serif;
+    transition: all 0.2s ease;
+}
+.tb-user-btn:hover {
+    background: rgba(124,58,237,.05);
+    border-color: rgba(124,58,237,.1);
+}
+
+.tb-user-av {
+    width: 36px; height: 36px; flex-shrink: 0;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #2563eb, #7c3aed);
+    color: #fff; font-size: 14px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 3px 8px rgba(124,58,237,.25);
+}
+
+.tb-user-meta { display: flex; flex-direction: column; line-height: 1.2; text-align: left; }
+.tb-user-name { font-size: 13px; font-weight: 600; color: var(--text); }
+.tb-user-role { font-size: 11px; font-weight: 500; color: #64748b; }
+.tb-user-caret { color: #94a3b8; transition: transform 0.2s; display: flex; align-items: center; }
+
+/* ── User Dropdown Menu (NEW & IMPROVED) ── */
+/* ── User Dropdown Menu (Fix for Background & Height) ── */
+.u-menu {
+    position: absolute;
+    top: calc(100% + 14px);
+    right: 0;
+    background-color: var(--white) !important;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+    padding: 8px !important;
+    min-width: 220px;
+    z-index: 9999;
+
+    /* 🟢 Ye 3 lines important hain shrink issue rokle ke liye 🟢 */
+    display: flex !important;
+    flex-direction: column;
+    height: auto !important;
+    max-height: max-content;
+
+    visibility: hidden;
+    opacity: 0;
+    transform: translateY(-8px) scale(0.96);
+    transform-origin: top right;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    pointer-events: none;
+}
+
+/* Tooltip Arrow */
+.u-menu::before {
+    content: '';
+    position: absolute;
+    top: -6px;
+    right: 22px;
+    width: 12px;
+    height: 12px;
+    background-color: var(--white);
+    border-left: 1px solid var(--border);
+    border-top: 1px solid var(--border);
+    transform: rotate(45deg);
+    border-radius: 2px 0 0 0;
+    z-index: -1; /* Taki text ke upar na aaye */
+}
+
+/* Jab menu open hoga */
+.u-menu.open {
+    visibility: visible !important;
+    opacity: 1 !important;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+}
+
+/* Dropdown Items */
+.u-menu-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px;
+    font-size: 13.5px; font-weight: 500;
+    color: var(--text2); text-decoration: none;
+    border-radius: 8px; transition: all 0.15s ease;
+    margin-bottom: 2px;
+}
+
+.u-menu-item:last-child {
+    margin-bottom: 0;
+}
+
+.u-menu-item svg {
+    color: #94a3b8;
+    transition: all 0.15s ease;
+}
+
+.u-menu-item:hover {
+    background: var(--bg);
+    color: var(--blue);
+    transform: translateX(4px); /* Hover pe slide effect */
+}
+.u-menu-item:hover svg {
+    color: var(--blue);
+}
+
+.u-menu-sep {
+    height: 1px;
+    background: var(--border);
+    margin: 6px 0;
+}
+
+.u-menu-logout { color: #ef4444; }
+.u-menu-logout svg { color: #ef4444; }
+.u-menu-logout:hover { background: #fef2f2; color: #dc2626; }
+.u-menu-logout:hover svg { color: #dc2626; }
+
+/* Mobile View Adjustments */
+@media (max-width: 640px) {
+    .tb-date { display: none; }
+    .tb-user-meta, .tb-user-caret { display: none; }
+    .tb-user-btn { padding: 3px; }
+    .tb-right { gap: 8px; }
+}
+
+/* 🟢 Main Content Overlap Fix 🟢 */
+.main {
+    padding-top: calc(var(--topbar-h) + 20px);
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+.content { padding: clamp(1rem, 2.5vw, 1.5rem); }
