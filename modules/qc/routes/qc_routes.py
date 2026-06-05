@@ -14,8 +14,7 @@ from models.trs import (
 from models.grn import GrnMaster, GrnItem, GrnBatchStock, GrnStockLedger
 
 
-qc_bp = Blueprint('qc', __name__, url_prefix='/qc',
-                  template_folder='../templates')
+qc_bp = Blueprint('qc', __name__, url_prefix='/qc')
 
 
 def _username():

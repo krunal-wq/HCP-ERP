@@ -16,7 +16,7 @@ from flask import render_template
 from flask_login import login_required
 
 # Reuse the existing blueprint â€” DO NOT create a new one
-from routes.npd_daily_report_routes import npd_report_bp
+from modules.npd.routes.npd_daily_report_routes import npd_report_bp
 
 # â”€â”€ Import API handlers (registers their routes automatically) â”€â”€
 try:

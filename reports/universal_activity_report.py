@@ -21,7 +21,7 @@ from datetime import datetime, date
 from collections import defaultdict, OrderedDict
 from flask import request, jsonify, render_template
 from flask_login import login_required
-from routes.npd_daily_report_routes import npd_report_bp   # reuse existing blueprint
+from modules.npd.routes.npd_daily_report_routes import npd_report_bp   # reuse existing blueprint
 
 
 # â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€

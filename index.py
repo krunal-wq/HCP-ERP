@@ -5,34 +5,34 @@ from core.audit_helper import audit
 from models import db, User, LoginLog, Lead, ClientMaster, LeadReminder, Employee, WishLog
 from core.config import Config
 
-from routes.crm_routes  import crm
-from routes.master_routes import masters
-from routes.hr_routes   import hr
-from routes.user_routes import users_bp
-from routes.approval_routes import approval_bp
-from routes.mail_routes import mail_bp
-from routes.npd_routes  import npd
-from routes.rd_routes   import rd
-from routes.rd_sample_log_routes import rd_sample_log_bp   # â† NEW: R&D Sample Log menu
-from routes.client_dispatch_routes import client_dispatch_bp   # â† NEW: Client Dispatch menu
-from routes.raw_material_sample_routes import raw_material_sample_bp   # â† NEW: Raw Material Sample Request
-from routes.attendance_routes import attendance_bp
-from routes.qr_scan_routes import qr_scan_bp   # â† NEW: QR Scanner kiosk page
-from routes.hr_master_routes import hr_masters
-from routes.late_rule_routes import late_rules_bp
-from routes.hr_rules_routes import hr_rules_bp
-from routes.packing_routes  import packing
-from routes.material_routes import material_bp
-from routes.formulation_routes import formulation_bp   # â† NEW: Formulation Master under Raw Material
-from routes.packing_bom_routes import packing_bom_bp   # â† NEW: Packing Material BOM
-from routes.supplier_routes import supplier_bp
-from routes.module_settings_routes import module_settings  # â† Module enable/disable
-from routes.daily_report_share import daily_report_bp   # â† Daily Report Share
-from routes.purchase_order_routes import po_bp           # â† NEW: Purchase Order Module
-from routes.grn_routes import grn_bp                     # â† NEW: GRN (Goods Receipt Note) Module
+from modules.crm.routes.crm_routes  import crm
+from modules.settings.routes.master_routes import masters
+from modules.hr.routes.hr_routes  import hr
+from modules.administration.routes.user_routes import users_bp
+from modules.administration.routes.approval_routes import approval_bp
+from modules.administration.routes.mail_routes import mail_bp
+from modules.npd.routes.npd_routes  import npd
+from modules.rnd.routes.rd_routes  import rd
+from modules.rnd.routes.rd_sample_log_routes import rd_sample_log_bp   # â† NEW: R&D Sample Log menu
+from modules.crm.routes.client_dispatch_routes import client_dispatch_bp   # â† NEW: Client Dispatch menu
+from modules.rnd.routes.raw_material_sample_routes import raw_material_sample_bp   # â† NEW: Raw Material Sample Request
+from modules.hr.routes.attendance_routes import attendance_bp
+from modules.hr.routes.qr_scan_routes import qr_scan_bp   # â† NEW: QR Scanner kiosk page
+from modules.hr.routes.hr_master_routes import hr_masters
+from modules.hr.routes.late_rule_routes import late_rules_bp
+from modules.hr.routes.hr_rules_routes import hr_rules_bp
+from modules.production.routes.packing_routes  import packing
+from modules.inventory.routes.material_routes import material_bp
+from modules.inventory.routes.formulation_routes import formulation_bp   # â† NEW: Formulation Master under Raw Material
+from modules.inventory.routes.packing_bom_routes import packing_bom_bp   # â† NEW: Packing Material BOM
+from modules.purchase.routes.supplier_routes import supplier_bp
+from modules.settings.routes.module_settings_routes import module_settings  # â† Module enable/disable
+from modules.reports.routes.daily_report_share import daily_report_bp   # â† Daily Report Share
+from modules.purchase.routes.purchase_order_routes import po_bp           # â† NEW: Purchase Order Module
+from modules.purchase.routes.grn_routes import grn_bp                     # â† NEW: GRN (Goods Receipt Note) Module
 from modules.qc.routes.trs_routes import trs_bp           # TRS (Testing Requisition Slip)
 from modules.qc.routes.qc_routes  import qc_bp            # QC Module (TRS lists, approvals)
-from routes.depreciation_note_routes import dn_bp        # â† NEW: Depreciation Note Module
+from modules.accounts.routes.depreciation_note_routes import dn_bp        # â† NEW: Depreciation Note Module
 from core.error_handlers import register_error_handlers          # â† 403/404/500 pages
 
 app = Flask(__name__)
@@ -41,6 +41,18 @@ app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024
 import json as _json
 app.jinja_env.filters['from_json'] = lambda s: _json.loads(s) if s else []   # 100MB â€” base64 photos + docs
 db.init_app(app)
+
+# ── Module-wise templates ─────────────────────────────────────────
+# Each business module keeps its own templates under modules/<m>/templates/<ns>/.
+# We add every modules/*/templates folder to the Jinja search path so that
+# render_template('<ns>/file.html') keeps working unchanged, AND cross-module
+# template references (e.g. R&D pages that render npd/* templates) still resolve.
+# Shared templates (base.html, macros/, partials/, errors/) stay in templates/.
+import os as _os, glob as _glob
+from jinja2 import ChoiceLoader as _ChoiceLoader, FileSystemLoader as _FSLoader
+_module_template_dirs = sorted(_glob.glob(_os.path.join(app.root_path, 'modules', '*', 'templates')))
+if _module_template_dirs:
+    app.jinja_loader = _ChoiceLoader([app.jinja_loader, _FSLoader(_module_template_dirs)])
 
 # â”€â”€ Anti-cache: force browser to always fetch fresh HTML â”€â”€
 # Without this, browsers and proxies cache rendered pages, so updated
@@ -127,12 +139,12 @@ app.jinja_env.globals['get_module_active'] = _get_module_active
 # Seed HR master defaults
 with app.app_context():
     try:
-        from hr_master_routes import seed_defaults
+        from modules.hr.routes.hr_master_routes import seed_defaults
         seed_defaults()
     except Exception:
         pass
     try:
-        from permissions import seed_permissions
+        from core.permissions import seed_permissions
         seed_permissions()
     except Exception:
         pass
@@ -310,7 +322,7 @@ def logout():
 @app.route('/seed-modules')
 def seed_modules():
     """Seed missing modules without full setup â€” call once after adding new modules."""
-    from permissions import seed_permissions
+    from core.permissions import seed_permissions
     try:
         seed_permissions()
         return 'âœ… Modules seeded successfully! New modules added to DB.'
@@ -418,7 +430,7 @@ def fix_admin_perms():
 
 @app.route('/setup')
 def setup():
-    from permissions import seed_permissions
+    from core.permissions import seed_permissions
     db.create_all()
     seed_permissions()
 

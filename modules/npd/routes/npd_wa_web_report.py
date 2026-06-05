@@ -16,7 +16,7 @@ from datetime import datetime, date
 from collections import defaultdict
 from flask import request, jsonify
 from flask_login import login_required, current_user
-from routes.npd_daily_report_routes import npd_report_bp   # reuse existing blueprint
+from modules.npd.routes.npd_daily_report_routes import npd_report_bp   # reuse existing blueprint
 
 
 # â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€

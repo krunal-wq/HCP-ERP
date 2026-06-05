@@ -18,7 +18,7 @@ from flask import Blueprint, request, jsonify, render_template
 from flask_login import login_required, current_user
 
 # Uses the same blueprint as the dashboard
-from routes.npd_daily_report_routes import npd_report_bp
+from modules.npd.routes.npd_daily_report_routes import npd_report_bp
 
 
 # â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
