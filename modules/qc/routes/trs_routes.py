@@ -28,7 +28,8 @@ from models.grn import GrnMaster, GrnItem
 from models.supplier import Supplier
 
 
-trs_bp = Blueprint('trs', __name__, url_prefix='/trs')
+trs_bp = Blueprint('trs', __name__, url_prefix='/trs',
+                   template_folder='../templates')
 
 
 # â”€â”€â”€ tiny helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€

@@ -30,8 +30,8 @@ from routes.module_settings_routes import module_settings  # â† Module enab
 from routes.daily_report_share import daily_report_bp   # â† Daily Report Share
 from routes.purchase_order_routes import po_bp           # â† NEW: Purchase Order Module
 from routes.grn_routes import grn_bp                     # â† NEW: GRN (Goods Receipt Note) Module
-from routes.trs_routes import trs_bp           # TRS (Testing Requisition Slip)
-from routes.qc_routes  import qc_bp            # QC Module (TRS lists, approvals)
+from modules.qc.routes.trs_routes import trs_bp           # TRS (Testing Requisition Slip)
+from modules.qc.routes.qc_routes  import qc_bp            # QC Module (TRS lists, approvals)
 from routes.depreciation_note_routes import dn_bp        # â† NEW: Depreciation Note Module
 from core.error_handlers import register_error_handlers          # â† 403/404/500 pages
 
