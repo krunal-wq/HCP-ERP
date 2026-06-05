@@ -6,442 +6,577 @@
 
 {% block extra_css %}
 <style>
-  :root {
-    --premium-bg: #f8fafc;
-    --card-bg: #ffffff;
-    --text-main: #0f172a;
-    --text-muted: #64748b;
-    --text-light: #94a3b8;
-    --border-soft: #e2e8f0;
-    --border-lighter: #f1f5f9;
-    --primary: #2563eb;
-    --primary-hover: #1d4ed8;
-    --primary-light: #eff6ff;
-    --danger: #ef4444;
-    --danger-bg: #fef2f2;
-    --success: #10b981;
-    --success-bg: #ecfdf5;
-    --radius-sm: 8px;
-    --radius-md: 12px;
-    --radius-lg: 16px;
-    --shadow-soft: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.03);
-    --shadow-hover: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.04);
+  .clp {
+    --cl-accent: #2563eb;
+    --cl-accent-2: #1d4ed8;
+    --cl-soft: #eff6ff;
+    --cl-bg: #f8fafc;
+    --cl-card: #ffffff;
+    --cl-text: #0f172a;
+    --cl-text2: #334155;
+    --cl-muted: #64748b;
+    --cl-light: #94a3b8;
+    --cl-border: #e2e8f0;
+    --cl-border-l: #f1f5f9;
+    --cl-danger: #dc2626;
+    --cl-danger-bg: #fef2f2;
+    --cl-success: #16a34a;
+    --cl-success-bg: #f0fdf4;
+    --cl-r-sm: 9px;
+    --cl-r-md: 12px;
+    --cl-r-lg: 16px;
   }
 
-  /* Page Header */
-  .page-hdr h1 {
-    font-size: 1.5rem;
-    font-weight: 800;
-    color: var(--text-main);
-    letter-spacing: -0.03em;
-    margin-bottom: 4px;
-  }
-  .page-hdr p {
-    color: var(--text-muted);
-    font-size: 0.875rem;
-    font-weight: 500;
-  }
+  .lucide-ic, .lucide-ic svg { width:1em; height:1em; vertical-align:-0.125em; }
+  button { -webkit-tap-highlight-color: transparent; }
 
-  /* Grid Card (Main Container) */
+  /* ════ Main Card ════ */
   .grid-card {
-    background: var(--card-bg);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-soft);
-    border: 1px solid rgba(226, 232, 240, 0.8);
-    overflow: hidden;
+    background:var(--cl-card);
+    border-radius:var(--cl-r-lg);
+    border:1px solid var(--cl-border);
+    box-shadow:0 1px 2px rgba(15,23,42,.04), 0 10px 30px -22px rgba(15,23,42,.25);
+    overflow:hidden;
   }
 
-  /* Responsive Toolbar */
-  .grid-toolbar {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 12px;
-    padding: 16px 20px;
-    border-bottom: 1px solid var(--border-soft);
-    background: #ffffff;
+  /* ════ Header bar (icon + title + search) — Sample Orders style ════ */
+  .cl-hdr {
+    display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+    padding:16px 20px;
+    border-bottom:1px solid var(--cl-border);
+    background:#fff;
   }
-
+  .cl-hdr .hd-ic {
+    width:34px; height:34px; border-radius:10px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    background:var(--cl-soft); color:var(--cl-accent-2); font-size:1rem;
+  }
+  .cl-hdr h1 {
+    font-size:1.15rem; font-weight:800; color:var(--cl-text);
+    letter-spacing:-0.02em; margin:0;
+  }
   .grid-search-wrap {
-    display: flex; align-items: center; gap: 8px;
-    background: var(--premium-bg);
-    border: 1px solid var(--border-soft);
-    border-radius: 999px; /* Pill Shape Updated */
-    padding: 8px 16px;
-    transition: all 0.2s;
-    flex: 1;
-    min-width: 200px;
-    max-width: 320px;
-    height: 38px;
+    display:flex; align-items:center; gap:8px;
+    background:var(--cl-bg);
+    border:1.5px solid var(--cl-border);
+    border-radius:999px;
+    padding:0 16px;
+    transition:all .18s;
+    margin-left:auto;
+    width:300px;
+    max-width:30%; height:38px;
+    color:var(--cl-light);
   }
   .grid-search-wrap:focus-within {
-    background: #fff; border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    background:#fff; border-color:var(--cl-accent);
+    box-shadow:0 0 0 3px rgba(37,99,235,.12);
   }
   .grid-search-input {
-    border: none; background: transparent; outline: none;
-    font-size: 0.85rem; color: var(--text-main); font-weight: 500;
-    width: 100%;
+    border:none; background:transparent; outline:none;
+    font-size:.84rem; color:var(--cl-text); font-weight:500;
+    width:100%; font-family:inherit;
   }
-  .grid-search-input::placeholder { color: var(--text-light); }
+  .grid-search-input::placeholder { color:var(--cl-light); }
 
-  .grid-toolbar-right {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-left: auto;
+  /* ════ Tabs row (pill tabs) + toolbar ════ */
+  .cl-tabsbar {
+    display:flex; align-items:center; flex-wrap:wrap; gap:10px;
+    padding:13px 20px;
+    border-bottom:1px solid var(--cl-border);
+    background:#fff;
+  }
+  .tab-pill {
+    display:inline-flex; align-items:center; gap:7px;
+    height:38px; padding:0 18px; border-radius:999px;
+    font-size:.82rem; font-weight:700; text-decoration:none;
+    border:1.5px solid var(--cl-border);
+    background:#fff; color:var(--cl-text2);
+    transition:all .16s; white-space:nowrap;
+  }
+  .tab-pill .lucide-ic { font-size:.95em; }
+  .tab-pill:hover { border-color:#bfdbfe; color:var(--cl-accent-2); }
+  .tab-pill .tcount {
+    font-size:.66rem; font-weight:800;
+    background:var(--cl-border-l); color:var(--cl-text2);
+    min-width:20px; height:20px; padding:0 7px;
+    border-radius:999px; display:inline-flex; align-items:center; justify-content:center;
+  }
+  .tab-pill.selected {
+    background:linear-gradient(180deg,#3b82f6,#1d4ed8);
+    color:#fff; border-color:transparent;
+    box-shadow:0 2px 8px rgba(37,99,235,.35), inset 0 1px 0 rgba(255,255,255,.25);
+  }
+  .tab-pill.selected .tcount { background:rgba(255,255,255,.25); color:#fff; }
+  .tab-pill.trash.selected {
+    background:linear-gradient(180deg,#ef4444,#dc2626);
+    box-shadow:0 2px 8px rgba(220,38,38,.35), inset 0 1px 0 rgba(255,255,255,.2);
   }
 
-  /* Buttons Optimization & Styling */
+  .cl-tools { display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin-left:auto; }
+
   .btn-add-new {
-    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-    background: var(--primary); color: #fff; /* Updated to Blue */
-    padding: 0 18px; border-radius: 999px; /* Pill Shape Updated */
-    font-size: 0.85rem; font-weight: 600; text-decoration: none;
-    height: 38px;
-    white-space: nowrap; flex-shrink: 0;
-    transition: all 0.2s;
-    box-shadow: 0 2px 4px rgba(37, 99, 235, 0.15); /* Blue Shadow */
+    display:inline-flex; align-items:center; justify-content:center; gap:7px;
+    background:linear-gradient(180deg,#3b82f6,#1d4ed8);
+    color:#fff; padding:0 18px; border-radius:999px;
+    font-size:.82rem; font-weight:700; text-decoration:none;
+    height:38px; white-space:nowrap; flex-shrink:0;
+    box-shadow:0 2px 8px rgba(37,99,235,.35), inset 0 1px 0 rgba(255,255,255,.25);
+    transition:all .18s;
   }
-  .btn-add-new:hover { background: var(--primary-hover); transform: translateY(-1px); box-shadow: 0 4px 8px rgba(37, 99, 235, 0.25); }
+  .btn-add-new:hover { transform:translateY(-1px); color:#fff; box-shadow:0 5px 16px rgba(37,99,235,.45); }
+  .btn-add-new:active { transform:translateY(0) scale(.97); }
 
   .btn-grid-action {
-    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-    background: #fff; color: var(--text-main);
-    border: 1px solid var(--border-soft);
-    padding: 0 16px; border-radius: 999px; /* Pill Shape Updated */
-    font-size: 0.8rem; font-weight: 600; cursor: pointer;
-    height: 38px;
-    white-space: nowrap; flex-shrink: 0;
-    transition: all 0.2s; text-decoration: none;
+    display:inline-flex; align-items:center; justify-content:center; gap:6px;
+    background:#fff; color:var(--cl-text2);
+    border:1.5px solid var(--cl-border);
+    padding:0 14px; border-radius:999px;
+    font-size:.78rem; font-weight:650; cursor:pointer;
+    height:36px; white-space:nowrap; flex-shrink:0;
+    transition:all .16s; text-decoration:none; font-family:inherit;
   }
-  .btn-grid-action:hover { background: var(--border-lighter); color: var(--text-main); }
-  .btn-grid-action.danger { color: var(--danger); border-color: #fca5a5; background: var(--danger-bg); }
+  .btn-grid-action .lucide-ic { color:var(--cl-muted); transition:color .16s; }
+  .btn-grid-action:hover { border-color:#bfdbfe; color:var(--cl-accent-2); background:var(--cl-soft); }
+  .btn-grid-action:hover .lucide-ic { color:var(--cl-accent-2); }
+  .btn-grid-action:active { transform:scale(.96); }
+  .btn-grid-action.active { background:var(--cl-soft); color:var(--cl-accent-2); border-color:#93c5fd; }
+  .btn-grid-action.active .lucide-ic { color:var(--cl-accent-2); }
+  .btn-grid-action.danger { color:var(--cl-danger); border-color:#fecaca; background:var(--cl-danger-bg); }
+  .btn-grid-action.danger .lucide-ic { color:var(--cl-danger); }
+  .btn-grid-action.danger:hover { background:#fee2e2; border-color:#fca5a5; }
 
-  .toolbar-divider {
-    width: 1px; height: 24px; background: var(--border-soft); margin: 0 4px;
+  .fcount {
+    background:var(--cl-accent); color:#fff;
+    font-size:.62rem; font-weight:800;
+    padding:2px 7px; border-radius:999px; margin-left:2px;
   }
 
-  /* ── Tabs as Pills Updated ── */
-  .grid-filter-tabs {
-    padding: 12px 20px;
-    border-bottom: 1px solid var(--border-soft);
-    background: #ffffff;
-    display: flex;
-    gap: 12px;
-    align-items: center;
+  /* ════ Filter panel ════ */
+  .fs-panel {
+    padding:16px 20px; border-bottom:1px solid var(--cl-border);
+    background:var(--cl-bg); overflow:visible;
   }
-  .gft {
-    padding: 8px 18px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    text-decoration: none;
-    border-radius: 999px; /* Pill Shape Updated */
-    border: 1px solid var(--border-soft);
-    background: #fff;
-    color: var(--text-muted);
-    transition: all 0.2s;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
+  .fs-grid { display:flex; gap:14px; flex-wrap:wrap; overflow:visible; }
+  .fs-field { flex:1; min-width:200px; }
+  .fs-field > label {
+    font-size:.68rem; font-weight:800; color:var(--cl-muted);
+    text-transform:uppercase; letter-spacing:.06em;
+    display:block; margin-bottom:6px;
   }
-  .gft:hover { background: var(--border-lighter); color: var(--text-main); }
-  .gft.active { background: var(--primary); color: #fff; border-color: var(--primary); }
-  .gft.trash-tab.active { background: var(--danger); border-color: var(--danger); color: #fff; }
+  .fs-input, .ms-trigger {
+    width:100%; padding:9px 13px;
+    border:1.5px solid var(--cl-border); border-radius:var(--cl-r-sm);
+    background:#fff; font-size:.83rem; color:var(--cl-text);
+    outline:none; font-family:inherit;
+    transition:border-color .15s, box-shadow .15s;
+  }
+  .fs-input:focus { border-color:var(--cl-accent); box-shadow:0 0 0 3px rgba(37,99,235,.1); }
+  .ms-trigger { cursor:pointer; display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  .ms-trigger:hover { border-color:#bfdbfe; }
+  .ms-label { color:var(--cl-light); }
+  .ms-label.has-val { color:var(--cl-text); font-weight:600; }
+  .ms-wrap { position:relative; }
+  .ms-dropdown {
+    display:none; position:absolute; top:calc(100% + 6px); left:0; width:100%;
+    background:#fff; border:1px solid var(--cl-border);
+    border-radius:var(--cl-r-md); z-index:120;
+    box-shadow:0 12px 30px -12px rgba(15,23,42,.25);
+    overflow:hidden;
+  }
+  .ms-wrap.open .ms-dropdown { display:block !important; animation:clPop .16s ease; }
+  @keyframes clPop { from{opacity:0;transform:translateY(-4px);} to{opacity:1;transform:translateY(0);} }
+  .ms-search { padding:8px; border-bottom:1px solid var(--cl-border-l); }
+  .ms-search input {
+    width:100%; padding:7px 10px; border:1.5px solid var(--cl-border);
+    border-radius:7px; font-size:.8rem; outline:none; font-family:inherit;
+  }
+  .ms-search input:focus { border-color:var(--cl-accent); }
+  .ms-options { max-height:160px; overflow-y:auto; padding:4px 8px; }
+  .ms-opt {
+    display:flex; align-items:center; gap:8px; padding:5px 6px;
+    font-size:.82rem; cursor:pointer; border-radius:6px; color:var(--cl-text2);
+  }
+  .ms-opt:hover { background:var(--cl-bg); }
+  .ms-opt input { accent-color:var(--cl-accent); width:14px; height:14px; }
+  .ms-footer { padding:8px; border-top:1px solid var(--cl-border-l); display:flex; gap:5px; }
+  .ms-footer button {
+    flex:1; padding:6px; font-size:.72rem; font-weight:700; cursor:pointer;
+    background:var(--cl-bg); border:1px solid var(--cl-border); border-radius:7px;
+    color:var(--cl-text2); font-family:inherit; transition:all .14s;
+  }
+  .ms-footer button:hover { background:var(--cl-border-l); }
+  .ms-footer .ms-apply { background:var(--cl-accent); color:#fff; border-color:var(--cl-accent); }
+  .ms-footer .ms-apply:hover { background:var(--cl-accent-2); }
 
-  /* Premium Table */
-  .tbl-wrap { overflow-x: auto; width: 100%; }
-  #clientsTable { width: 100%; border-collapse: collapse; text-align: left; }
+  .fs-chips { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; align-items:center; }
+  .fs-chips > span:first-child { font-size:.7rem; color:var(--cl-muted); font-weight:800; text-transform:uppercase; letter-spacing:.05em; }
+  .fs-chip {
+    background:var(--cl-soft); color:var(--cl-accent-2);
+    padding:4px 11px; border-radius:999px;
+    font-size:.74rem; font-weight:650;
+    display:inline-flex; align-items:center; gap:6px;
+    border:1px solid #bfdbfe; text-decoration:none;
+  }
+  .fs-chip a { cursor:pointer; font-weight:900; color:inherit; text-decoration:none; }
+  .fs-chip.clear { background:var(--cl-danger-bg); color:var(--cl-danger); border-color:#fecaca; }
+  .fs-chip.clear:hover { background:#fee2e2; }
 
+  /* ════ Trash banner ════ */
+  .trash-banner {
+    background:#fffbeb; border-bottom:1px solid #fde68a;
+    padding:11px 20px; font-size:.82rem; color:#92400e;
+    display:flex; align-items:center; gap:8px;
+  }
+  .trash-banner a { color:#b45309; font-weight:800; text-decoration:none; margin-left:auto; }
+  .trash-banner a:hover { text-decoration:underline; }
+
+  /* ════ Table ════ */
+  .tbl-wrap { overflow-x:auto; width:100%; }
+  #clientsTable { width:100%; border-collapse:collapse; text-align:left; }
   #clientsTable th {
-    background: #f8fafc;
-    color: var(--text-muted);
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    padding: 14px 16px;
-    border-bottom: 1px solid var(--border-soft);
-    white-space: nowrap;
+    background:var(--cl-bg);
+    color:var(--cl-muted);
+    font-size:.68rem; font-weight:800;
+    text-transform:uppercase; letter-spacing:.07em;
+    padding:12px 16px;
+    border-bottom:1px solid var(--cl-border);
+    white-space:nowrap;
+    position:sticky; top:0; z-index:5;
   }
-
+  #clientsTable th.sortable:hover { color:var(--cl-accent-2); }
+  .sort-ic { color:var(--cl-light); font-size:.8em; }
   #clientsTable td {
-    padding: 14px 16px;
-    font-size: 0.85rem;
-    color: var(--text-main);
-    border-bottom: 1px solid var(--border-lighter);
-    vertical-align: middle;
+    padding:12px 16px; font-size:.83rem; color:var(--cl-text);
+    border-bottom:1px solid var(--cl-border-l); vertical-align:middle;
   }
+  #clientsTable tbody tr { transition:background .12s; }
+  #clientsTable tbody tr:hover { background:#f8fbff; }
+  #clientsTable tbody tr:last-child td { border-bottom:none; }
 
-  #clientsTable tbody tr:hover { background: #fdfdfe; }
-  #clientsTable tbody tr:last-child td { border-bottom: none; }
-
-  /* Tags & Badges */
   code {
-    background: var(--primary-light);
-    color: var(--primary);
-    padding: 4px 8px;
-    border-radius: 6px;
-    font-size: 0.75rem !important;
-    font-weight: 700;
-    font-family: 'JetBrains Mono', monospace;
+    background:var(--cl-soft); color:var(--cl-accent-2);
+    padding:3px 9px; border-radius:7px;
+    font-size:.72rem !important; font-weight:800;
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    letter-spacing:.02em;
+  }
+  .sbadge {
+    padding:3px 11px !important; border-radius:999px !important;
+    font-size:.7rem !important; font-weight:800 !important;
+    display:inline-flex; align-items:center; gap:5px;
+  }
+  .sbadge::before { content:''; width:6px; height:6px; border-radius:50%; }
+  .sbadge.active   { background:var(--cl-success-bg) !important; color:var(--cl-success) !important; border:1px solid #bbf7d0; }
+  .sbadge.active::before { background:var(--cl-success); }
+  .sbadge.inactive { background:var(--cl-danger-bg) !important; color:var(--cl-danger) !important; border:1px solid #fecaca; }
+  .sbadge.inactive::before { background:var(--cl-danger); }
+
+  .brand-tag {
+    background:var(--cl-soft); color:var(--cl-accent-2);
+    padding:2px 9px; border-radius:999px;
+    font-size:.7rem; font-weight:700; border:1px solid #dbeafe;
   }
 
-  .sbadge.active, .cl-status-active {
-    background: var(--success-bg) !important;
-    color: var(--success) !important;
-    padding: 4px 10px !important;
-    border-radius: 20px !important;
-    font-size: 0.75rem !important;
-    font-weight: 700 !important;
-    border: 1px solid #a7f3d0;
-  }
-  .sbadge.inactive, .cl-status-inactive {
-    background: var(--danger-bg) !important;
-    color: var(--danger) !important;
-    padding: 4px 10px !important;
-    border-radius: 20px !important;
-    font-size: 0.75rem !important;
-    font-weight: 700 !important;
-    border: 1px solid #fecaca;
-  }
+  .entity-link { color:var(--cl-text); font-weight:650; text-decoration:none; transition:color .15s; }
+  .entity-link:hover { color:var(--cl-accent); }
+  .row-cb { width:16px; height:16px; accent-color:var(--cl-accent); cursor:pointer; border-radius:4px; }
 
-  .entity-link { color: var(--text-main); font-weight: 600; text-decoration: none; transition: color 0.2s; }
-  .entity-link:hover { color: var(--primary); }
-
-  .row-cb { width: 16px; height: 16px; accent-color: var(--primary); cursor: pointer; border-radius: 4px; }
-
-  /* Actions Dropdown */
-  .cl-dots-btn {
-    background: transparent; border: none; font-size: 1.2rem;
-    color: var(--text-muted); cursor: pointer; padding: 4px 8px; border-radius: var(--radius-sm);
+  /* ════ Inline action icon buttons (Sample Orders style) ════ */
+  .act-wrap { display:inline-flex; gap:7px; align-items:center; }
+  .act-btn {
+    width:30px; height:30px; border-radius:9px;
+    display:inline-flex; align-items:center; justify-content:center;
+    font-size:.85rem; cursor:pointer; border:1px solid transparent;
+    text-decoration:none; transition:all .14s;
+    background:none; padding:0; font-family:inherit;
   }
-  .cl-dots-btn:hover { background: var(--border-lighter); color: var(--text-main); }
-
-  .cl-dd-menu {
-    box-shadow: var(--shadow-hover); border-radius: var(--radius-md);
-    border: 1px solid var(--border-soft); background: #fff; padding: 6px;
+  .act-btn:active { transform:scale(.92); }
+  .act-btn.view { background:#ecfdf5; color:#059669; border-color:#a7f3d0; }
+  .act-btn.view:hover { background:#d1fae5; }
+  .act-btn.edit { background:var(--cl-soft); color:var(--cl-accent-2); border-color:#bfdbfe; }
+  .act-btn.edit:hover { background:#dbeafe; }
+  .act-btn.del { background:var(--cl-danger-bg); color:var(--cl-danger); border-color:#fecaca; }
+  .act-btn.del:hover { background:#fee2e2; }
+  .btn-restore {
+    display:inline-flex; align-items:center; gap:6px;
+    height:30px; padding:0 13px; border-radius:999px;
+    background:var(--cl-success-bg); color:#059669;
+    border:1px solid #a7f3d0;
+    font-size:.74rem; font-weight:750; cursor:pointer;
+    font-family:inherit; transition:all .14s; white-space:nowrap;
   }
-  .cl-dd-item {
-    font-size: 0.8rem; font-weight: 500; padding: 8px 12px; border-radius: 6px;
-    transition: background 0.2s; display: flex; align-items: center; gap: 8px; color: var(--text-main);
-  }
-  .cl-dd-item:hover { background: var(--border-lighter); }
-  .cl-dd-item.danger:hover { background: var(--danger-bg); color: var(--danger); }
+  .btn-restore:hover { background:#d1fae5; border-color:#6ee7b7; }
+  .btn-restore:active { transform:scale(.95); }
 
+  /* ════ Footer / pagination ════ */
   .grid-footer {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 14px 20px; border-top: 1px solid var(--border-soft);
-    background: #fff; font-size: 0.8rem;
+    display:flex; align-items:center; justify-content:space-between;
+    flex-wrap:wrap; gap:10px;
+    padding:13px 20px; border-top:1px solid var(--cl-border);
+    background:#fff; font-size:.78rem; color:var(--cl-muted);
+  }
+  #rowCountSel {
+    border:1.5px solid var(--cl-border); border-radius:7px;
+    padding:3px 8px; outline:none; font-family:inherit;
+    font-size:.76rem; font-weight:600; color:var(--cl-text2);
+    background:#fff; cursor:pointer;
   }
   .pgn-btn {
-    background: #fff; border: 1px solid var(--border-soft);
-    padding: 6px 12px; border-radius: var(--radius-sm); font-weight: 600;
-    color: var(--text-muted); cursor: pointer; transition: all 0.2s;
+    background:#fff; border:1.5px solid var(--cl-border);
+    min-width:32px; height:32px; padding:0 10px;
+    border-radius:9px; font-weight:700; font-size:.76rem;
+    color:var(--cl-muted); cursor:pointer; transition:all .15s;
+    font-family:inherit;
   }
-  .pgn-btn:hover:not(:disabled) { background: var(--border-lighter); color: var(--text-main); }
-  .pgn-btn.active { background: var(--text-main); color: #fff; border-color: var(--text-main); }
-  .pgn-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .pgn-btn:hover:not(:disabled):not(.active) { background:var(--cl-soft); color:var(--cl-accent-2); border-color:#bfdbfe; }
+  .pgn-btn.active {
+    background:linear-gradient(180deg,#3b82f6,#1d4ed8);
+    color:#fff; border-color:transparent;
+    box-shadow:0 2px 6px rgba(37,99,235,.35);
+  }
+  .pgn-btn:disabled { opacity:.4; cursor:not-allowed; }
 
-  /* Mobile Cards */
+  /* ════ Columns panel ════ */
+  #colPanel {
+    position:absolute; top:calc(100% + 8px); right:0; z-index:300;
+    background:#fff; border-radius:var(--cl-r-md);
+    box-shadow:0 14px 34px -14px rgba(15,23,42,.35);
+    border:1px solid var(--cl-border); padding:14px; width:240px;
+  }
+  #colPanel .cp-title { font-size:.74rem; font-weight:800; color:var(--cl-text); margin-bottom:10px; text-transform:uppercase; letter-spacing:.05em; }
+  #colPanel label {
+    display:flex; align-items:center; gap:8px;
+    font-size:.8rem; color:var(--cl-text2); cursor:pointer;
+    padding:5px 6px; border-radius:7px;
+  }
+  #colPanel label:hover { background:var(--cl-bg); }
+  #colPanel input[type=checkbox] { accent-color:var(--cl-accent); width:14px; height:14px; }
+  .cp-apply {
+    flex:1; padding:8px; border-radius:8px;
+    background:linear-gradient(180deg,#3b82f6,#1d4ed8); color:#fff;
+    border:none; font-size:.78rem; font-weight:700; cursor:pointer; font-family:inherit;
+  }
+  .cp-cancel {
+    padding:8px 12px; border-radius:8px; background:var(--cl-bg);
+    color:var(--cl-text2); border:1px solid var(--cl-border);
+    font-size:.78rem; font-weight:700; cursor:pointer; font-family:inherit;
+  }
+
+  /* ════ Mobile cards ════ */
   .cl-card {
-    background: #fff; border-radius: var(--radius-md);
-    border: 1px solid var(--border-soft); margin-bottom: 12px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.02); overflow: hidden;
+    background:#fff; border-radius:var(--cl-r-md);
+    border:1px solid var(--cl-border); margin:12px;
+    box-shadow:0 1px 3px rgba(15,23,42,.06); overflow:hidden;
   }
   .cl-card-hdr {
-    background: var(--text-main); color: #fff;
-    padding: 16px; display: flex; gap: 12px; align-items: flex-start;
+    background:linear-gradient(135deg,#1e3a8a,#1d4ed8);
+    color:#fff; padding:14px 16px;
+    display:flex; gap:12px; align-items:flex-start;
   }
-  .cl-card-name a, .cl-card-name span { font-size: 1rem; font-weight: 700; color: #fff; }
-  .cl-card-company { font-size: 0.8rem; color: var(--text-light); margin-top: 4px; }
-  .cl-card-body { padding: 16px; background: #fff; }
-  .cl-card-field label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 700; display: block; margin-bottom: 2px; }
-  .cl-card-field span { font-size: 0.85rem; font-weight: 500; color: var(--text-main); }
-  .cl-brand-tag { background: #f1f5f9; color: #334155; font-size: 0.7rem; padding: 3px 8px; border-radius: 12px; font-weight: 600; border: 1px solid #e2e8f0; }
-  .cl-card-footer { padding: 12px 16px; background: #f8fafc; border-top: 1px solid var(--border-soft); display: flex; justify-content: space-between; align-items: center; }
+  .cl-card-name a, .cl-card-name span { font-size:.95rem; font-weight:750; color:#fff; }
+  .cl-card-company { font-size:.76rem; color:#bfdbfe; margin-top:3px; }
+  .cl-card-code { background:rgba(255,255,255,.18) !important; color:#fff !important; }
+  .cl-card-body { padding:14px 16px; background:#fff; }
+  .cl-card-field label {
+    font-size:.64rem; text-transform:uppercase; letter-spacing:.06em;
+    color:var(--cl-muted); font-weight:800; display:block; margin-bottom:2px;
+  }
+  .cl-card-field span { font-size:.83rem; font-weight:550; color:var(--cl-text); }
+  .cl-card-footer {
+    padding:10px 16px; background:var(--cl-bg);
+    border-top:1px solid var(--cl-border);
+    display:flex; justify-content:space-between; align-items:center;
+  }
 
-  /* Mobile Responsiveness */
-  @media (min-width: 769px) { #clMobileCards { display: none; } }
-  @media (max-width: 768px) {
-    .tbl-wrap, .grid-footer { display: none; }
-    .grid-toolbar { flex-direction: column; align-items: stretch; padding: 16px; gap: 16px; }
-    .grid-search-wrap { max-width: 100% !important; order: -1; }
-    .grid-toolbar-right { justify-content: flex-start; margin-left: 0; width: 100%; }
-    .btn-add-new { width: 100%; }
-    .toolbar-divider { display: none; }
+  .cl-empty { padding:50px 20px; text-align:center; color:var(--cl-light); }
+  .cl-empty .lucide-ic { font-size:2rem; margin-bottom:8px; display:inline-block; }
+  .cl-empty p { margin:6px 0 0; font-weight:600; font-size:.85rem; color:var(--cl-muted); }
+
+  .tbl-wrap::-webkit-scrollbar, .ms-options::-webkit-scrollbar { height:9px; width:8px; }
+  .tbl-wrap::-webkit-scrollbar-thumb, .ms-options::-webkit-scrollbar-thumb {
+    background:var(--cl-border); border-radius:99px;
+  }
+
+  /* ════ Responsive ════ */
+  @media (min-width:769px) { #clMobileCards { display:none; } }
+  @media (max-width:768px) {
+    .tbl-wrap, .grid-footer { display:none; }
+    .cl-hdr { padding:14px; }
+    .grid-search-wrap { margin-left:0; width:100%; order:5; }
+    .cl-tabsbar { flex-direction:column; align-items:stretch; padding:14px; }
+    .cl-tools { justify-content:flex-start; margin-left:0; width:100%; }
+    .btn-add-new { width:100%; }
+    .fs-field { min-width:100%; }
   }
 </style>
 {% endblock %}
 
 {% block content %}
-
-<div class="page-hdr" style="margin-bottom:1.5rem;">
-  <div><h1>Client Master</h1><p>Manage billing, brands, contacts</p></div>
-</div>
+<div class="clp">
 
 {% set _fc = [search,city,state,status_f]|select|list|length %}
+{% set _active_n = active_count if active_count is defined else (clients|length if not show_trash else none) %}
+{% set _deleted_n = deleted_count if deleted_count else (clients|length if show_trash else 0) %}
 
 <div class="grid-card">
 
+  {# ── Header bar: icon + title + search (Sample Orders style) ── #}
+  <div class="cl-hdr">
+    <div class="hd-ic"><i data-lucide="users" class="lucide-ic"></i></div>
+    <h1>Client Master</h1>
+    <div class="grid-search-wrap">
+      <i data-lucide="search" class="lucide-ic"></i>
+      <input type="text" class="grid-search-input" id="gSearchInput" placeholder="Search name, company, city..." oninput="gridGlobalSearch(this.value)">
+    </div>
+  </div>
+
   {% if show_trash %}
-  <div class="trash-banner" style="background: #fffbeb; border-bottom: 1px solid #fde68a; padding: 12px 20px; font-size: 0.85rem; color: #92400e; display: flex; align-items: center; gap: 8px;">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+  <div class="trash-banner">
+    <i data-lucide="trash-2" class="lucide-ic"></i>
     Showing <strong>{{ clients|length }}</strong> deleted client{{ 's' if clients|length != 1 else '' }} — records can be restored.
-    <a href="{{ url_for('crm.clients') }}" style="color:#b45309;font-weight:700;text-decoration:none; margin-left: auto;">← Back to Clients</a>
+    <a href="{{ url_for('crm.clients') }}">← Back to Clients</a>
   </div>
   {% endif %}
 
-  <div class="grid-toolbar">
-    {% if not show_trash %}
-    {% if perm and perm.can_add %}
-    <a href="{{ url_for('crm.client_add') }}" class="btn-add-new">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add Client
+  {# ── Tabs (pill style with counts) + toolbar ── #}
+  <div class="cl-tabsbar">
+    <a href="{{ url_for('crm.clients') }}" class="tab-pill {{ 'selected' if not show_trash }}">
+      <i data-lucide="users" class="lucide-ic"></i>Active
+      {% if _active_n is not none %}<span class="tcount">{{ _active_n }}</span>{% endif %}
+    </a>
+    {% if can_view_deleted %}
+    <a href="{{ url_for('crm.clients', trash=1) }}" class="tab-pill trash {{ 'selected' if show_trash }}">
+      <i data-lucide="trash-2" class="lucide-ic"></i>Deleted
+      <span class="tcount">{{ _deleted_n }}</span>
     </a>
     {% endif %}
-    {% endif %}
 
-    <div class="grid-search-wrap">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-light);"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <input type="text" class="grid-search-input" id="gSearchInput" placeholder="Search clients..." oninput="gridGlobalSearch(this.value)">
-    </div>
+    <div class="cl-tools">
+      {% if not show_trash %}
+      {% if perm and perm.can_add %}
+      <a href="{{ url_for('crm.client_add') }}" class="btn-add-new">
+        <i data-lucide="plus" class="lucide-ic"></i>Add Client
+      </a>
+      {% endif %}
+      {% endif %}
 
-    <div class="grid-toolbar-right">
       {% if can_filter %}
-      <button id="fsTabFilter" class="btn-grid-action {{ 'active' if _fc > 0 }}"
-        onclick="toggleFsTab('filter')"
-        style="{{ 'background:#eff6ff;color:#2563eb;border-color:#bfdbfe;' if _fc > 0 }}">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
-        Filter {% if _fc > 0 %}<span style="background:#2563eb;color:#fff;font-size:0.65rem;font-weight:800;padding:2px 6px;border-radius:12px;margin-left:4px;">{{ _fc }}</span>{% endif %}
+      <button id="fsTabFilter" class="btn-grid-action {{ 'active' if _fc > 0 }}" onclick="toggleFsTab('filter')">
+        <i data-lucide="funnel" class="lucide-ic"></i>
+        Filter {% if _fc > 0 %}<span class="fcount">{{ _fc }}</span>{% endif %}
       </button>
       {% endif %}
 
       {% if can_sort %}
-      <button id="fsTabSort" class="btn-grid-action {{ 'active' if sort_by != 'created_at' or sort_dir != 'desc' }}"
-        onclick="toggleFsTab('sort')"
-        style="{{ 'background:#eff6ff;color:#2563eb;border-color:#bfdbfe;' if sort_by != 'created_at' or sort_dir != 'desc' }}">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
-        Sort {% if sort_by != 'created_at' or sort_dir != 'desc' %}<span style="background:#2563eb;width:6px;height:6px;border-radius:50%;margin-left:4px;display:inline-block;"></span>{% endif %}
+      <button id="fsTabSort" class="btn-grid-action {{ 'active' if sort_by != 'created_at' or sort_dir != 'desc' }}" onclick="toggleFsTab('sort')">
+        <i data-lucide="arrow-down-up" class="lucide-ic"></i>
+        Sort
       </button>
       {% endif %}
-
-      <div class="toolbar-divider"></div>
 
       {% if can_columns %}
       <div style="position:relative;">
         <button class="btn-grid-action" onclick="toggleColPanel(event)">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+          <i data-lucide="sliders-horizontal" class="lucide-ic"></i>
           Columns
         </button>
-        <div id="colPanel" style="display:none;position:absolute;top:calc(100% + 8px);right:0;z-index:300;background:#fff;border-radius:var(--radius-md);box-shadow:var(--shadow-hover);border:1px solid var(--border-soft);padding:1rem;width:240px;">
-          <div style="font-size:0.8rem;font-weight:700;color:var(--text-main);margin-bottom:0.8rem;">Display Columns</div>
-          <div style="display:flex;flex-direction:column;gap:0.4rem;max-height:260px;overflow-y:auto;">
+        <div id="colPanel" style="display:none;">
+          <div class="cp-title">Display Columns</div>
+          <div style="display:flex;flex-direction:column;gap:2px;max-height:260px;overflow-y:auto;">
             {% for key, label in all_cols.items() %}
-            <label style="display:flex;align-items:center;gap:8px;font-size:0.8rem;color:var(--text-main);cursor:pointer;padding:4px 0;">
-              <input type="checkbox" value="{{ key }}" {{ 'checked' if key in grid_cols else '' }} style="accent-color:var(--primary);width:14px;height:14px;" onchange="colChanged()">
+            <label>
+              <input type="checkbox" value="{{ key }}" {{ 'checked' if key in grid_cols else '' }} onchange="colChanged()">
               {{ label }}
             </label>
             {% endfor %}
           </div>
-          <div style="margin-top:1rem;display:flex;gap:0.5rem;">
-            <button onclick="saveClientCols()" style="flex:1;padding:8px;border-radius:var(--radius-sm);background:var(--text-main);color:#fff;border:none;font-size:0.8rem;font-weight:600;cursor:pointer;">Apply</button>
-            <button onclick="document.getElementById('colPanel').style.display='none'" style="padding:8px 12px;border-radius:var(--radius-sm);background:#f1f5f9;color:var(--text-main);border:1px solid var(--border-soft);font-size:0.8rem;font-weight:600;cursor:pointer;">Cancel</button>
+          <div style="margin-top:12px;display:flex;gap:6px;">
+            <button onclick="saveClientCols()" class="cp-apply">Apply</button>
+            <button onclick="document.getElementById('colPanel').style.display='none'" class="cp-cancel">Cancel</button>
           </div>
         </div>
       </div>
       {% endif %}
 
-      <div class="toolbar-divider"></div>
-
+      {% if not show_trash %}
       <button class="btn-grid-action danger" id="bulkDeleteBtn" style="display:none;" onclick="bulkDelete()">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>Delete
+        <i data-lucide="trash-2" class="lucide-ic"></i>Delete
       </button>
+      {% endif %}
 
       {% if perm and perm.can_export %}
       <button class="btn-grid-action" onclick="doExport()">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export
+        <i data-lucide="download" class="lucide-ic"></i>Export
       </button>
       {% endif %}
 
       {% if perm and perm.can_import %}
       <a href="{{ url_for('crm.client_import') }}" class="btn-grid-action">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Import
+        <i data-lucide="upload" class="lucide-ic"></i>Import
       </a>
       {% endif %}
     </div>
   </div>
 
-  <div class="grid-filter-tabs">
-    <a href="{{ url_for('crm.clients') }}" class="gft {{ 'active' if not show_trash }}">All Clients</a>
-    {% if can_view_deleted %}
-    <a href="{{ url_for('crm.clients', trash=1) }}" class="gft trash-tab {{ 'active' if show_trash }}">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
-      Deleted
-      {% if deleted_count %} <span class="trash-badge" style="background:{% if show_trash %}rgba(255,255,255,0.2){% else %}var(--border-soft){% endif %};padding:2px 6px;border-radius:10px;font-size:0.7rem;margin-left:4px;color:currentColor;">{{ deleted_count }}</span>{% endif %}
-    </a>
-    {% endif %}
-  </div>
-
-  <div id="fsPanelFilter_cl" style="display:{% if _fc > 0 %}block{% else %}none{% endif %};padding:16px 20px;border-bottom:1px solid var(--border-soft);background:#fafbfc;overflow:visible;">
-    <div class="fs-grid" style="overflow:visible; display:flex; gap:16px; flex-wrap: wrap;">
-      <div class="fs-field" style="flex:1; min-width: 200px;">
-        <label style="font-size:0.75rem;font-weight:700;color:var(--text-muted);display:block;margin-bottom:6px;">Keyword</label>
-        <input type="text" id="cl_search" value="{{ search }}" placeholder="Name, company, email…" oninput="fsDebounce()" style="width:100%;padding:8px 12px;border:1px solid var(--border-soft);border-radius:var(--radius-sm);outline:none;">
+  <div id="fsPanelFilter_cl" class="fs-panel" style="display:{% if _fc > 0 %}block{% else %}none{% endif %};">
+    <div class="fs-grid">
+      <div class="fs-field">
+        <label>Keyword</label>
+        <input type="text" class="fs-input" id="cl_search" value="{{ search }}" placeholder="Name, company, email…" oninput="fsDebounce()">
       </div>
 
-      <div class="fs-field" style="flex:1; min-width: 200px;">
-        <label style="font-size:0.75rem;font-weight:700;color:var(--text-muted);display:block;margin-bottom:6px;">City</label>
-        <div class="ms-wrap" id="ms_cl_city" style="position:relative;">
-          <div class="ms-trigger" onclick="toggleMs('ms_cl_city')" style="padding:8px 12px;border:1px solid var(--border-soft);background:#fff;border-radius:var(--radius-sm);cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-size:0.85rem;">
+      <div class="fs-field">
+        <label>City</label>
+        <div class="ms-wrap" id="ms_cl_city">
+          <div class="ms-trigger" onclick="toggleMs('ms_cl_city')">
             <span class="ms-label {{ 'has-val' if city }}" id="ms_cl_city_lbl">
               {%- if city -%}{{ city }}{%- else -%}All Cities{%- endif -%}
             </span>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+            <i data-lucide="chevron-down" class="lucide-ic"></i>
           </div>
-          <div class="ms-dropdown" style="display:none;position:absolute;top:100%;left:0;width:100%;background:#fff;border:1px solid var(--border-soft);border-radius:var(--radius-sm);z-index:100;box-shadow:var(--shadow-md);margin-top:4px;">
-            <div class="ms-search" style="padding:8px;"><input type="text" placeholder="Search cities…" oninput="msSearch(this,'ms_cl_city')" style="width:100%;padding:6px;border:1px solid var(--border-soft);border-radius:4px;"></div>
-            <div class="ms-options" style="max-height:150px;overflow-y:auto;padding:0 8px;">
+          <div class="ms-dropdown">
+            <div class="ms-search"><input type="text" placeholder="Search cities…" oninput="msSearch(this,'ms_cl_city')"></div>
+            <div class="ms-options">
               {% for c in all_cities %}
-              <label class="ms-opt" style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:0.85rem;cursor:pointer;">
-                <input type="checkbox" value="{{ c }}" {{ 'checked' if c in (city or '').split(',') and city }} onchange="msChange('ms_cl_city','cl_city','All Cities')" style="accent-color:var(--primary);">
+              <label class="ms-opt">
+                <input type="checkbox" value="{{ c }}" {{ 'checked' if c in (city or '').split(',') and city }} onchange="msChange('ms_cl_city','cl_city','All Cities')">
                 <span>{{ c }}</span>
               </label>
               {% endfor %}
             </div>
-            <div class="ms-footer" style="padding:8px;border-top:1px solid var(--border-soft);display:flex;gap:4px;">
-              <button type="button" onclick="msSelectAll('ms_cl_city','cl_city','All Cities')" style="flex:1;padding:4px;font-size:0.75rem;cursor:pointer;background:#f1f5f9;border:1px solid var(--border-soft);border-radius:4px;">All</button>
-              <button type="button" onclick="msClearAll('ms_cl_city','cl_city','All Cities')" style="flex:1;padding:4px;font-size:0.75rem;cursor:pointer;background:#f1f5f9;border:1px solid var(--border-soft);border-radius:4px;">Clear</button>
-              <button type="button" class="ms-apply" onclick="closeMs('ms_cl_city')" style="flex:1;padding:4px;font-size:0.75rem;cursor:pointer;background:var(--text-main);color:#fff;border:none;border-radius:4px;">Done</button>
+            <div class="ms-footer">
+              <button type="button" onclick="msSelectAll('ms_cl_city','cl_city','All Cities')">All</button>
+              <button type="button" onclick="msClearAll('ms_cl_city','cl_city','All Cities')">Clear</button>
+              <button type="button" class="ms-apply" onclick="closeMs('ms_cl_city')">Done</button>
             </div>
           </div>
         </div>
         <input type="hidden" id="cl_city" value="{{ city }}">
       </div>
 
-      <div class="fs-field" style="flex:1; min-width: 200px;">
-        <label style="font-size:0.75rem;font-weight:700;color:var(--text-muted);display:block;margin-bottom:6px;">State</label>
-        <div class="ms-wrap" id="ms_cl_state" style="position:relative;">
-          <div class="ms-trigger" onclick="toggleMs('ms_cl_state')" style="padding:8px 12px;border:1px solid var(--border-soft);background:#fff;border-radius:var(--radius-sm);cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-size:0.85rem;">
+      <div class="fs-field">
+        <label>State</label>
+        <div class="ms-wrap" id="ms_cl_state">
+          <div class="ms-trigger" onclick="toggleMs('ms_cl_state')">
             <span class="ms-label {{ 'has-val' if state }}" id="ms_cl_state_lbl">
               {%- if state -%}{{ state }}{%- else -%}All States{%- endif -%}
             </span>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+            <i data-lucide="chevron-down" class="lucide-ic"></i>
           </div>
-          <div class="ms-dropdown" style="display:none;position:absolute;top:100%;left:0;width:100%;background:#fff;border:1px solid var(--border-soft);border-radius:var(--radius-sm);z-index:100;box-shadow:var(--shadow-md);margin-top:4px;">
-            <div class="ms-search" style="padding:8px;"><input type="text" placeholder="Search states…" oninput="msSearch(this,'ms_cl_state')" style="width:100%;padding:6px;border:1px solid var(--border-soft);border-radius:4px;"></div>
-            <div class="ms-options" style="max-height:150px;overflow-y:auto;padding:0 8px;">
+          <div class="ms-dropdown">
+            <div class="ms-search"><input type="text" placeholder="Search states…" oninput="msSearch(this,'ms_cl_state')"></div>
+            <div class="ms-options">
               {% for s in all_states %}
-              <label class="ms-opt" style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:0.85rem;cursor:pointer;">
-                <input type="checkbox" value="{{ s }}" {{ 'checked' if s in (state or '').split(',') and state }} onchange="msChange('ms_cl_state','cl_state','All States')" style="accent-color:var(--primary);">
+              <label class="ms-opt">
+                <input type="checkbox" value="{{ s }}" {{ 'checked' if s in (state or '').split(',') and state }} onchange="msChange('ms_cl_state','cl_state','All States')">
                 <span>{{ s }}</span>
               </label>
               {% endfor %}
             </div>
-            <div class="ms-footer" style="padding:8px;border-top:1px solid var(--border-soft);display:flex;gap:4px;">
-              <button type="button" onclick="msSelectAll('ms_cl_state','cl_state','All States')" style="flex:1;padding:4px;font-size:0.75rem;cursor:pointer;background:#f1f5f9;border:1px solid var(--border-soft);border-radius:4px;">All</button>
-              <button type="button" onclick="msClearAll('ms_cl_state','cl_state','All States')" style="flex:1;padding:4px;font-size:0.75rem;cursor:pointer;background:#f1f5f9;border:1px solid var(--border-soft);border-radius:4px;">Clear</button>
-              <button type="button" class="ms-apply" onclick="closeMs('ms_cl_state')" style="flex:1;padding:4px;font-size:0.75rem;cursor:pointer;background:var(--text-main);color:#fff;border:none;border-radius:4px;">Done</button>
+            <div class="ms-footer">
+              <button type="button" onclick="msSelectAll('ms_cl_state','cl_state','All States')">All</button>
+              <button type="button" onclick="msClearAll('ms_cl_state','cl_state','All States')">Clear</button>
+              <button type="button" class="ms-apply" onclick="closeMs('ms_cl_state')">Done</button>
             </div>
           </div>
         </div>
@@ -450,10 +585,10 @@
     </div>
 
     {% if search or city or state or status_f %}
-    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;align-items:center;">
-      <span style="font-size:0.75rem;color:var(--text-muted);font-weight:700;">Filters:</span>
-      {% if search %}<span class="fs-chip" style="background:#eff6ff;color:var(--primary);padding:4px 10px;border-radius:12px;font-size:0.75rem;font-weight:600;display:flex;align-items:center;gap:6px;border:1px solid #bfdbfe;">Search: {{ search }}<a onclick="chipClear('cl_search')" style="cursor:pointer;font-weight:bold;">×</a></span>{% endif %}
-      <a href="{{ url_for('crm.clients') }}" class="fs-chip" style="background:#fef2f2;color:var(--danger);padding:4px 10px;border-radius:12px;font-size:0.75rem;font-weight:600;text-decoration:none;border:1px solid #fecaca;">✕ Clear All</a>
+    <div class="fs-chips">
+      <span>Filters:</span>
+      {% if search %}<span class="fs-chip">Search: {{ search }}<a onclick="chipClear('cl_search')">×</a></span>{% endif %}
+      <a href="{{ url_for('crm.clients') }}" class="fs-chip clear">✕ Clear All</a>
     </div>
     {% endif %}
   </div>
@@ -472,26 +607,45 @@
     <div class="cl-card" id="clcard-{{ c.id }}">
       <div class="cl-card-hdr">
         <input type="checkbox" class="row-cb row-check-item" value="{{ c.id }}" onchange="updateBulkBtn();" style="margin-top:3px; flex-shrink:0;">
-        <div class="cl-card-hdr-info" style="flex: 1;">
+        <div class="cl-card-hdr-info" style="flex:1;">
           <div class="cl-card-name">
             {% if perm and perm.can_view %}<a href="{{ url_for('crm.client_view', id=c.id) }}" style="color:#fff;text-decoration:none;">{{ c.contact_name }}</a>{% else %}<span style="color:#fff;">{{ c.contact_name }}</span>{% endif %}
           </div>
           {% if c.company_name %}<div class="cl-card-company">{{ c.company_name }}</div>{% endif %}
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
-          <code class="cl-card-code" style="background: rgba(255,255,255,0.2); color: #fff;">{{ c.code }}</code>
+          <code class="cl-card-code">{{ c.code }}</code>
         </div>
       </div>
       <div class="cl-card-body">
-         <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+         <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
           <div class="cl-card-field"><label>Mobile</label><span>{{ c.mobile or '—' }}</span></div>
           <div class="cl-card-field"><label>City</label><span>{{ c.city or '—' }}</span></div>
-          <div class="cl-card-field" style="grid-column: span 2;"><label>Email</label><span style="word-break: break-all;">{{ c.email or '—' }}</span></div>
+          <div class="cl-card-field" style="grid-column:span 2;"><label>Email</label><span style="word-break:break-all;">{{ c.email or '—' }}</span></div>
         </div>
       </div>
       <div class="cl-card-footer">
-        <span style="font-size:0.75rem;color:var(--text-light);font-weight:600;">{{ c.created_at.strftime('%d %b %Y') if c.created_at else '—' }}</span>
+        <span style="font-size:.72rem;color:var(--cl-light);font-weight:650;">{{ c.created_at.strftime('%d %b %Y') if c.created_at else '—' }}</span>
+        <div class="act-wrap">
+          {% if show_trash %}
+          <form method="POST" action="{{ url_for('crm.client_restore', id=c.id) }}" onsubmit="return confirm('Restore {{ c.contact_name }}?')" style="display:inline;">
+            <button type="submit" class="btn-restore" title="Restore"><i data-lucide="rotate-ccw" class="lucide-ic"></i>Restore</button>
+          </form>
+          {% else %}
+          {% if perm and perm.can_view %}
+          <a href="{{ url_for('crm.client_view', id=c.id) }}" class="act-btn view" title="View"><i data-lucide="eye" class="lucide-ic"></i></a>
+          {% endif %}
+          {% if perm and perm.can_edit %}
+          <a href="{{ url_for('crm.client_edit', id=c.id) }}" class="act-btn edit" title="Edit"><i data-lucide="pencil" class="lucide-ic"></i></a>
+          {% endif %}
+          {% if perm and perm.can_delete %}
+          <form method="POST" action="{{ url_for('crm.client_delete', id=c.id) }}" onsubmit="return confirm('Move {{ c.contact_name }} to trash?')" style="display:inline;">
+            <button type="submit" class="act-btn del" title="Delete"><i data-lucide="trash-2" class="lucide-ic"></i></button>
+          </form>
+          {% endif %}
+          {% endif %}
         </div>
+      </div>
     </div>
     {% endfor %}
   </div>
@@ -504,48 +658,48 @@
           <th style="width:40px;">#</th>
           {% for col in grid_cols %}
           <th class="sortable" onclick="colSort(this,'{{ col }}')" style="cursor:pointer;">
-            <div style="display:flex; align-items:center; gap:4px;">
+            <div style="display:flex; align-items:center; gap:5px;">
               {{ all_cols.get(col, col) }}
-              <span class="sort-ic" style="color:var(--text-light);">↕</span>
+              <span class="sort-ic"><i data-lucide="chevrons-up-down" class="lucide-ic"></i></span>
             </div>
           </th>
           {% endfor %}
-          <th style="width:90px; text-align:right;">Actions</th>
+          <th style="width:130px; text-align:right;">Actions</th>
         </tr>
       </thead>
       <tbody>
         {% for c in clients %}
         <tr class="client-row" data-id="{{ c.id }}" data-search="{{ [c.contact_name, c.company_name or '', c.mobile or '', c.email or '', c.city or '', c.state or '']|join(' ')|lower }}">
           <td><input type="checkbox" class="row-cb row-check-item" value="{{ c.id }}" onchange="updateBulkBtn()"></td>
-          <td style="color:var(--text-light); font-weight:600;">{{ loop.index }}</td>
+          <td style="color:var(--cl-light); font-weight:650;">{{ loop.index }}</td>
 
           {% for col in grid_cols %}
           {% if col == 'code' %}
           <td><code>{{ c.code }}</code></td>
           {% elif col == 'created_at' %}
-          <td style="color:var(--text-muted);">{{ c.created_at.strftime('%d %b %Y') if c.created_at else '—' }}</td>
+          <td style="color:var(--cl-muted);">{{ c.created_at.strftime('%d %b %Y') if c.created_at else '—' }}</td>
           {% elif col == 'contact_name' %}
           <td>
-            {% if perm and perm.can_view %}<a href="{{ url_for('crm.client_view', id=c.id) }}" class="entity-link">{{ c.contact_name }}</a>{% else %}<span style="font-weight:600;">{{ c.contact_name }}</span>{% endif %}
+            {% if perm and perm.can_view %}<a href="{{ url_for('crm.client_view', id=c.id) }}" class="entity-link">{{ c.contact_name }}</a>{% else %}<span style="font-weight:650;">{{ c.contact_name }}</span>{% endif %}
           </td>
           {% elif col == 'company_name' %}
-          <td style="color:var(--text-muted); font-weight:500;">{{ c.company_name or '—' }}</td>
+          <td style="color:var(--cl-muted); font-weight:500;">{{ c.company_name or '—' }}</td>
           {% elif col == 'mobile' %}
           <td>{{ c.mobile or '—' }}</td>
           {% elif col == 'email' %}
-          <td style="color:var(--text-muted);">{{ c.email or '—' }}</td>
+          <td style="color:var(--cl-muted);">{{ c.email or '—' }}</td>
           {% elif col == 'city' %}
           <td>{{ c.city or '—' }}</td>
           {% elif col == 'state' %}
           <td>{{ c.state or '—' }}</td>
           {% elif col == 'gstin' %}
-          <td style="font-family:monospace; color:var(--text-muted);">{{ c.gstin or '—' }}</td>
+          <td style="font-family:monospace; color:var(--cl-muted);">{{ c.gstin or '—' }}</td>
           {% elif col == 'website' %}
-          <td>{% if c.website %}<a href="{{ c.website }}" target="_blank" style="color:var(--primary);text-decoration:none;">{{ c.website|truncate(24) }}</a>{% else %}—{% endif %}</td>
+          <td>{% if c.website %}<a href="{{ c.website }}" target="_blank" style="color:var(--cl-accent);text-decoration:none;">{{ c.website|truncate(24) }}</a>{% else %}—{% endif %}</td>
           {% elif col == 'brands' %}
           <td>
             <div style="display:flex;gap:4px;flex-wrap:wrap;">
-            {% for b in c.brands %}<span style="background:var(--primary-light);color:var(--primary);padding:2px 8px;border-radius:12px;font-size:0.75rem;font-weight:600;">{{ b.brand_name }}</span>{% else %}<span style="color:var(--text-muted);">—</span>{% endfor %}
+            {% for b in c.brands %}<span class="brand-tag">{{ b.brand_name }}</span>{% else %}<span style="color:var(--cl-muted);">—</span>{% endfor %}
             </div>
           </td>
           {% elif col == 'status' %}
@@ -560,54 +714,33 @@
           {% endfor %}
 
           <td style="text-align:right;">
-  <div style="position:relative; display:inline-block;">
-
-    <button class="cl-dots-btn" onclick="toggleClDd(this, event)" style="display:inline-flex; align-items:center; justify-content:center; padding: 6px;">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>
-      </svg>
-    </button>
-
-    <div class="cl-dd-menu" style="display:none; position:absolute; right:0; top:100%; min-width:160px; z-index:50;">
-
-      {% if perm and perm.can_view %}
-      <a href="{{ url_for('crm.client_view', id=c.id) }}" class="cl-dd-item" style="text-decoration:none;">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; color:var(--text-muted);">
-          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
-        </svg>
-        View Client
-      </a>
-      {% endif %}
-
-      {% if perm and perm.can_edit %}
-      <a href="{{ url_for('crm.client_edit', id=c.id) }}" class="cl-dd-item" style="text-decoration:none;">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; color:var(--text-muted);">
-          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-        </svg>
-        Edit Client
-      </a>
-      {% endif %}
-
-      <div style="height:1px; background:var(--border-soft); margin:4px 0;"></div>
-
-      {% if perm and perm.can_delete %}
-      <form method="POST" action="{{ url_for('crm.client_delete', id=c.id) }}" onsubmit="return confirm('Move {{ c.contact_name }} to trash?')">
-        <button type="submit" class="cl-dd-item danger" style="width:100%; text-align:left; border:none; background:none; cursor:pointer; display:flex; align-items:center; gap:8px;">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;">
-            <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/>
-          </svg>
-          Delete Client
-        </button>
-      </form>
-      {% endif %}
-
-    </div>
-  </div>
-</td>
+            <div class="act-wrap">
+              {% if show_trash %}
+              <form method="POST" action="{{ url_for('crm.client_restore', id=c.id) }}" onsubmit="return confirm('Restore {{ c.contact_name }}?')" style="display:inline;">
+                <button type="submit" class="btn-restore" title="Restore Client"><i data-lucide="rotate-ccw" class="lucide-ic"></i>Restore</button>
+              </form>
+              {% else %}
+              {% if perm and perm.can_view %}
+              <a href="{{ url_for('crm.client_view', id=c.id) }}" class="act-btn view" title="View Client"><i data-lucide="eye" class="lucide-ic"></i></a>
+              {% endif %}
+              {% if perm and perm.can_edit %}
+              <a href="{{ url_for('crm.client_edit', id=c.id) }}" class="act-btn edit" title="Edit Client"><i data-lucide="pencil" class="lucide-ic"></i></a>
+              {% endif %}
+              {% if perm and perm.can_delete %}
+              <form method="POST" action="{{ url_for('crm.client_delete', id=c.id) }}" onsubmit="return confirm('Move {{ c.contact_name }} to trash?')" style="display:inline;">
+                <button type="submit" class="act-btn del" title="Delete Client"><i data-lucide="trash-2" class="lucide-ic"></i></button>
+              </form>
+              {% endif %}
+              {% endif %}
+            </div>
+          </td>
         </tr>
         {% else %}
-        <tr><td colspan="{{ grid_cols|length + 3 }}" style="padding:40px; text-align:center;">
-          <div style="color:var(--text-light);"><svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:8px;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><p style="margin:0;font-weight:500;">No clients found.</p></div>
+        <tr><td colspan="{{ grid_cols|length + 3 }}">
+          <div class="cl-empty">
+            <i data-lucide="users" class="lucide-ic"></i>
+            <p>No clients found.</p>
+          </div>
         </td></tr>
         {% endfor %}
       </tbody>
@@ -615,11 +748,13 @@
   </div>
 
   <div class="grid-footer">
-    <div style="color:var(--text-muted); font-weight:500;">
-      Show <select id="rowCountSel" onchange="changeRowCount(this.value)" style="border:1px solid var(--border-soft); border-radius:4px; padding:2px 6px; outline:none;"><option value="10">10</option><option value="25" selected>25</option><option value="50">50</option></select> rows &nbsp;·&nbsp; <span id="rowInfo"></span>
+    <div style="font-weight:550;">
+      Show <select id="rowCountSel" onchange="changeRowCount(this.value)"><option value="10">10</option><option value="25" selected>25</option><option value="50">50</option></select> rows &nbsp;·&nbsp; <span id="rowInfo"></span>
     </div>
-    <div id="gridPgn" style="display:flex; gap:4px;"></div>
+    <div id="gridPgn" style="display:flex; gap:5px;"></div>
   </div>
+</div>
+
 </div>
 
 <script>
@@ -643,9 +778,9 @@ function renderPage(){
   function addBtn(label,pg,active,disabled){var b=document.createElement('button');b.className='pgn-btn'+(active?' active':'');b.disabled=disabled;b.textContent=label;if(!disabled&&!active)b.onclick=function(){_page=pg;renderPage();};pgn.appendChild(b);}
   addBtn('‹',_page-1,false,_page===1);
   var s2=Math.max(1,_page-2),e2=Math.min(pages,_page+2);
-  if(s2>1){addBtn('1',1,false,false);if(s2>2){var sp=document.createElement('span');sp.textContent='…';sp.style.cssText='padding:0 4px;color:var(--text3);font-size:12px;';pgn.appendChild(sp);}}
+  if(s2>1){addBtn('1',1,false,false);if(s2>2){var sp=document.createElement('span');sp.textContent='…';sp.style.cssText='padding:0 4px;color:var(--cl-light);font-size:12px;align-self:center;';pgn.appendChild(sp);}}
   for(var p=s2;p<=e2;p++)addBtn(p,p,p===_page,false);
-  if(e2<pages){if(e2<pages-1){var sp2=document.createElement('span');sp2.textContent='…';sp2.style.cssText='padding:0 4px;color:var(--text3);font-size:12px;';pgn.appendChild(sp2);}addBtn(pages,pages,false,false);}
+  if(e2<pages){if(e2<pages-1){var sp2=document.createElement('span');sp2.textContent='…';sp2.style.cssText='padding:0 4px;color:var(--cl-light);font-size:12px;align-self:center;';pgn.appendChild(sp2);}addBtn(pages,pages,false,false);}
   addBtn('›',_page+1,false,_page===pages);
 }
 function changeRowCount(v){ _pageSize=parseInt(v); _page=1; renderPage(); }
@@ -675,8 +810,24 @@ function toggleAll(cb){ document.querySelectorAll('.row-check-item').forEach(fun
 function updateBulkBtn(){ var n=document.querySelectorAll('.row-check-item:checked').length; var btn=document.getElementById('bulkDeleteBtn'); if(btn){ btn.style.display=n>0?'inline-flex':'none'; } }
 function bulkDelete(){
   var ids=Array.from(document.querySelectorAll('.row-check-item:checked')).map(function(c){return c.value;});
-  if(!ids.length)return; if(!confirm('Delete '+ids.length+' clients?'))return;
-  fetch('/crm/clients/bulk-delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ids:ids})}).then(function(){location.reload();});
+  if(!ids.length)return; if(!confirm('Delete '+ids.length+' client(s)?'))return;
+  var btn=document.getElementById('bulkDeleteBtn'); if(btn){btn.disabled=true;btn.style.opacity='.6';}
+  fetch('/crm/clients/bulk-delete',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest'},
+    body:JSON.stringify({ids:ids})
+  }).then(function(r){
+    return r.json().catch(function(){ return {success:r.ok}; });
+  }).then(function(d){
+    if(d && d.success){ location.reload(); }
+    else{
+      alert('Delete failed: '+((d&&d.error)||'server error'));
+      if(btn){btn.disabled=false;btn.style.opacity='1';}
+    }
+  }).catch(function(){
+    alert('Delete failed: network/server error');
+    if(btn){btn.disabled=false;btn.style.opacity='1';}
+  });
 }
 
 // ── Filter/Sort panel toggle ────────────────────────────────────
@@ -811,54 +962,16 @@ function saveClientCols(){
   }).then(function(r){return r.json();}).then(function(d){if(d.success)location.reload();});
 }
 
-
-// ── Client 3-dot dropdown ──
-
-function toggleClDd(btn, e) {
-    e.stopPropagation();
-    var menu = btn.nextElementSibling;
-    var isVisible = menu.style.display === 'block';
-
-
-    document.querySelectorAll('.cl-dd-menu').forEach(m => {
-        m.style.display = 'none';
-    });
-
-    if (!isVisible) {
-
-        var rect = btn.getBoundingClientRect();
-
-
-        menu.style.display = 'block';
-        menu.style.position = 'fixed';
-        menu.style.zIndex = '99999';
-
-        var menuHeight = menu.offsetHeight;
-
-        var menuWidth = menu.offsetWidth || 160;
-
-
-        if (rect.bottom + menuHeight > window.innerHeight) {
-            menu.style.top = (rect.top - menuHeight - 4) + 'px';
-        } else {
-
-            menu.style.top = (rect.bottom + 4) + 'px';
-        }
-
-
-        menu.style.left = (rect.right - menuWidth) + 'px';
-        menu.style.right = 'auto';
-    }
-}
-
-
-document.addEventListener('click', () => {
-    document.querySelectorAll('.cl-dd-menu').forEach(m => m.style.display = 'none');
-});
-
-
-window.addEventListener('scroll', () => {
-    document.querySelectorAll('.cl-dd-menu').forEach(m => m.style.display = 'none');
-}, true);
+// ── Lucide icons render ──
+(function(){
+  function drawIcons(){ if(window.lucide && window.lucide.createIcons) window.lucide.createIcons({attrs:{'stroke-width':1.9}}); }
+  if(window.lucide){ drawIcons(); }
+  else{
+    var s=document.createElement('script');
+    s.src='https://unpkg.com/lucide@latest';
+    s.onload=drawIcons;
+    document.head.appendChild(s);
+  }
+})();
 </script>
 {% endblock %}

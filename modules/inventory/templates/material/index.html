@@ -1,92 +1,175 @@
 {% extends "base.html" %}
-{% block title %}{% if auto_type %}{{ auto_type.type_name }} — Item Master{% else %}Item Master{% endif %} — HCP ERP{% endblock %}
+{% block title %}{% if auto_type %}{{ auto_type.type_name }} - Item Master{% else %}Item Master{% endif %} - HCP ERP{% endblock %}
 {% block page_title %}{% if auto_type %}{{ auto_type.type_name }}{% else %}Item Master{% endif %}{% endblock %}
 {% block bread %}Procurement / Purchase / {% if auto_type %}{{ auto_type.type_name }}{% else %}Item Master{% endif %}{% endblock %}
 
 {% block extra_css %}
 <style>
-/* ── Tabs ── */
-.im-tabs       { display:flex; gap:4px; margin-bottom:16px; background:#f1f5f9; padding:4px; border-radius:10px; width:fit-content; }
-.im-tab        { padding:7px 18px; border-radius:7px; border:none; background:none; font-size:13px; font-weight:600; cursor:pointer; color:var(--text2); transition:all .15s; font-family:inherit; }
-.im-tab.active { background:#fff; color:#2563eb; box-shadow:0 1px 4px rgba(0,0,0,.1); }
+/* ============================================================
+   ITEM MASTER - PREMIUM BLUE THEME
+   ============================================================ */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700&display=swap');
 
-/* ── Type badge ── */
+#tab-materials, #tab-types, #tab-groups, #tab-categories, .im-overlay,
+#tab-materials input, #tab-materials select, #tab-materials button,
+.im-overlay input, .im-overlay select, .im-overlay button, .tb-panel {
+  font-family:'Inter','Segoe UI',system-ui,-apple-system,sans-serif;
+}
+
+/* -- Card -- */
+.grid-card { background:#fff; border:1px solid #e2e8f0; border-radius:16px; box-shadow:0 1px 3px rgba(15,23,42,.05), 0 8px 24px rgba(15,23,42,.04); overflow:hidden; }
+
+/* -- Tabs -- */
+.im-tabs       { display:flex; gap:4px; margin-bottom:16px; background:#f1f5f9; padding:4px; border-radius:999px; width:fit-content; }
+.im-tab        { padding:7px 20px; border-radius:999px; border:none; background:none; font-size:13px; font-weight:600; cursor:pointer; color:#64748b; transition:all .15s; font-family:inherit; }
+.im-tab.active { background:linear-gradient(180deg,#3b82f6,#1d4ed8); color:#fff; box-shadow:0 2px 8px rgba(37,99,235,.3); }
+
+/* -- Type badge -- */
 .type-badge    { display:inline-block; padding:2px 9px; border-radius:12px; font-size:11px; font-weight:700; }
 
-/* ── Section label ── */
-.im-sec        { font-size:10px; font-weight:800; color:var(--blue,#2563eb); text-transform:uppercase; letter-spacing:1px; background:var(--bg); border-radius:6px; padding:6px 11px; margin:18px 0 12px; border:1px solid var(--border); }
+/* -- Section label -- */
+.im-sec        { font-size:10px; font-weight:800; color:#2563eb; text-transform:uppercase; letter-spacing:1px; background:#eff6ff; border-radius:8px; padding:7px 12px; margin:18px 0 12px; border:1px solid #bfdbfe; }
 
-/* ── Tag input ── */
-.tag-input-wrap { display:flex; flex-wrap:wrap; gap:5px; padding:6px 8px; border:1.5px solid var(--border); border-radius:7px; background:var(--white); min-height:38px; cursor:text; transition:border-color .15s; }
-.tag-input-wrap:focus-within { border-color:var(--blue,#2563eb); box-shadow:0 0 0 3px rgba(37,99,235,.1); }
-.tag-pill      { display:inline-flex; align-items:center; gap:5px; background:var(--blue-lt,#eff6ff); border:1px solid var(--blue-border,#bfdbfe); color:var(--blue,#2563eb); padding:2px 8px; border-radius:20px; font-size:12px; font-weight:600; }
+/* -- Tag input -- */
+.tag-input-wrap { display:flex; flex-wrap:wrap; gap:5px; padding:6px 8px; border:1.5px solid #e2e8f0; border-radius:9px; background:#fff; min-height:38px; cursor:text; transition:border-color .15s, box-shadow .15s; }
+.tag-input-wrap:focus-within { border-color:#2563eb; box-shadow:0 0 0 3px rgba(37,99,235,.12); }
+.tag-pill      { display:inline-flex; align-items:center; gap:5px; background:#eff6ff; border:1px solid #bfdbfe; color:#2563eb; padding:2px 9px; border-radius:999px; font-size:12px; font-weight:600; }
 .tag-pill span { cursor:pointer; font-size:14px; line-height:1; opacity:.7; }
 .tag-pill span:hover { opacity:1; }
-.tag-bare-input { border:none; outline:none; font-size:12.5px; font-family:inherit; background:transparent; color:var(--text); min-width:80px; flex:1; padding:2px 4px; }
+.tag-bare-input { border:none; outline:none; font-size:12.5px; font-family:inherit; background:transparent; color:#0f172a; min-width:80px; flex:1; padding:2px 4px; }
 
-/* ── Color swatch ── */
+/* -- Color swatch -- */
 .color-row     { display:flex; gap:6px; flex-wrap:wrap; margin-top:6px; }
 .color-sw      { width:28px; height:28px; border-radius:50%; cursor:pointer; border:3px solid transparent; transition:all .15s; }
-.color-sw.sel  { border-color:var(--text); transform:scale(1.15); }
+.color-sw.sel  { border-color:var(--text,#0f172a); transform:scale(1.15); }
 
-/* ── Grid ── */
+/* -- Grids -- */
 .im-grid-3     { display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; }
 .im-grid-2     { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
 .im-grid-full  { grid-column:1/-1; }
 
-/* ── Stat chips in toolbar ── */
-.im-chip       { display:inline-flex; align-items:center; gap:6px; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:700; background:var(--white); border:1px solid var(--border); color:var(--text2); }
-.im-chip .val  { font-size:14px; font-weight:800; color:var(--blue,#2563eb); }
+/* -- Stat chips -- */
+.im-chip       { display:inline-flex; align-items:center; gap:6px; padding:5px 14px; border-radius:999px; font-size:12px; font-weight:700; background:#fff; border:1.5px solid #e2e8f0; color:#64748b; }
+.im-chip .val  { font-size:14px; font-weight:800; color:#2563eb; }
 
-/* ── Small type master list ── */
-.type-list-item { display:flex; align-items:center; gap:10px; padding:10px 12px; border-bottom:1px solid var(--border); transition:background .12s; }
+/* -- Type list / group tree -- */
+.type-list-item { display:flex; align-items:center; gap:10px; padding:10px 12px; border-bottom:1px solid #f1f5f9; transition:background .12s; }
 .type-list-item:last-child { border-bottom:none; }
-.type-list-item:hover { background:var(--bg); }
+.type-list-item:hover { background:#f8fbff; }
 .type-dot      { width:12px; height:12px; border-radius:50%; flex-shrink:0; }
-
-/* ── Group tree ── */
-.grp-item      { display:flex; align-items:center; gap:8px; padding:8px 12px; border-bottom:1px solid var(--border); font-size:13px; }
+.grp-item      { display:flex; align-items:center; gap:8px; padding:8px 12px; border-bottom:1px solid #f1f5f9; font-size:13px; }
 .grp-item:last-child { border-bottom:none; }
-.grp-item:hover { background:var(--bg); }
-.grp-child     { padding-left:28px; background:var(--bg); }
+.grp-item:hover { background:#f8fbff; }
+.grp-child     { padding-left:28px; background:#fafcff; }
 
+/* -- TABLES : premium light headers (normal case, Inter) -- */
+.grid-card table { width:100%; border-collapse:collapse; }
+.grid-card table thead th {
+  background:#f8fafc; padding:12px 12px; text-align:left;
+  font-size:11.5px; font-weight:700; color:#475569;
+  text-transform:none; letter-spacing:0; white-space:nowrap;
+  border-bottom:1.5px solid #e2e8f0; position:sticky; top:0; z-index:2;
+}
+.grid-card table tbody td { padding:11px 12px; font-size:13px; color:#0f172a; border-bottom:1px solid #f1f5f9; vertical-align:middle; }
+.grid-card table tbody tr { transition:background .12s; }
+.grid-card table tbody tr:hover { background:#f8fbff; }
+.grid-card table tbody tr:last-child td { border-bottom:none; }
 
-/* ── Overlay / Modal (Type & Group modals) ── */
-.im-overlay    { display:none; position:fixed; inset:0; background:rgba(2,6,23,.72); backdrop-filter:blur(2px); z-index:500; justify-content:center; align-items:flex-start; padding:28px 16px; overflow-y:auto; }
+/* -- Toolbar buttons : ghost pills -- */
+.tb-btn { display:inline-flex; align-items:center; gap:6px; height:34px; padding:0 13px; border:1.5px solid #e2e8f0; border-radius:999px; background:#fff; color:#475569; font-size:12.5px; font-weight:600; cursor:pointer; transition:all .15s; font-family:inherit; white-space:nowrap; }
+.tb-btn:hover { border-color:#93c5fd; color:#2563eb; background:#eff6ff; }
+.tb-btn-wrap { position:relative; }
+.tb-panel { position:absolute; top:calc(100% + 8px); z-index:400; background:#fff; border:1px solid #e2e8f0; border-radius:12px; box-shadow:0 12px 32px rgba(15,23,42,.14); padding:10px; min-width:160px; }
+.tb-panel-title { font-size:10px; font-weight:800; color:#94a3b8; text-transform:uppercase; letter-spacing:.08em; padding:0 4px 8px; border-bottom:1px solid #f1f5f9; margin-bottom:6px; }
+.tb-opt { display:flex; align-items:center; gap:7px; padding:6px 7px; font-size:12.5px; color:#475569; cursor:pointer; border-radius:7px; transition:background .12s; }
+.tb-opt:hover { background:#f8fafc; }
+.tb-opt input { cursor:pointer; accent-color:#2563eb; }
+.tb-fld { margin-bottom:9px; }
+.tb-fld label { display:block; font-size:10.5px; font-weight:700; color:#94a3b8; text-transform:uppercase; margin-bottom:3px; }
+.tb-action-btn { display:block; width:100%; padding:8px 10px; text-align:left; border:none; background:none; font-size:12.5px; font-weight:600; color:#475569; cursor:pointer; border-radius:7px; transition:background .12s; font-family:inherit; }
+.tb-action-btn:hover { background:#eff6ff; color:#2563eb; }
+
+/* -- Primary / secondary buttons (local premium defs) -- */
+.btn-add-new {
+  display:inline-flex; align-items:center; gap:6px; height:36px; padding:0 16px;
+  background:linear-gradient(180deg,#3b82f6,#1d4ed8); color:#fff; border:none; border-radius:999px;
+  font-size:12.5px; font-weight:700; cursor:pointer; font-family:inherit; text-decoration:none;
+  box-shadow:0 2px 8px rgba(37,99,235,.28), inset 0 1px 0 rgba(255,255,255,.25); transition:all .18s; white-space:nowrap;
+}
+.btn-add-new:hover { transform:translateY(-1px); color:#fff; box-shadow:0 5px 14px rgba(37,99,235,.38); }
+.btn-grid-action {
+  display:inline-flex; align-items:center; gap:5px; height:32px; padding:0 13px;
+  border:1.5px solid #e2e8f0; border-radius:999px; background:#fff; color:#475569;
+  font-size:12px; font-weight:600; cursor:pointer; font-family:inherit; transition:all .15s; white-space:nowrap;
+}
+.btn-grid-action:hover { border-color:#93c5fd; color:#2563eb; background:#eff6ff; }
+
+/* -- Search pill -- */
+.grid-search-wrap { display:flex; align-items:center; gap:7px; height:36px; padding:0 13px; border:1.5px solid #e2e8f0; border-radius:999px; background:#fff; color:#94a3b8; transition:border-color .15s, box-shadow .15s; }
+.grid-search-wrap:focus-within { border-color:#2563eb; box-shadow:0 0 0 3px rgba(37,99,235,.12); color:#2563eb; }
+.grid-search-input { border:none; outline:none; background:transparent; font-size:12.5px; font-family:inherit; color:#0f172a; width:100%; }
+
+/* -- Row action icon buttons : tinted squares -- */
+.row-actions { display:flex; align-items:center; gap:5px; }
+.ra-btn {
+  width:28px; height:28px; border-radius:8px; border:none; cursor:pointer; padding:0;
+  display:inline-flex; align-items:center; justify-content:center;
+  background:#eff6ff; color:#2563eb; transition:all .15s; text-decoration:none;
+}
+.ra-btn svg { width:14px; height:14px; }
+.ra-btn:hover { background:#2563eb; color:#fff; transform:translateY(-1px); box-shadow:0 3px 8px rgba(37,99,235,.3); }
+.ra-btn.danger { background:#fee2e2; color:#dc2626; }
+.ra-btn.danger:hover { background:#dc2626; color:#fff; box-shadow:0 3px 8px rgba(220,38,38,.3); }
+
+/* -- Footer / pagination -- */
+.grid-footer { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; padding:11px 16px; border-top:1px solid #f1f5f9; background:#fbfcfe; }
+.rows-selector { display:flex; align-items:center; gap:6px; font-size:12px; color:#64748b; font-weight:600; }
+.rows-selector select { padding:4px 8px; border:1.5px solid #e2e8f0; border-radius:7px; font-size:12px; font-family:inherit; background:#fff; color:#0f172a; outline:none; cursor:pointer; }
+.grid-pgn { display:flex; align-items:center; gap:4px; flex-wrap:wrap; }
+.pgn-btn { min-width:30px; height:30px; padding:0 9px; border:1.5px solid #e2e8f0; border-radius:8px; background:#fff; color:#475569; font-size:12px; font-weight:700; cursor:pointer; font-family:inherit; transition:all .15s; }
+.pgn-btn:hover:not(:disabled):not(.active) { border-color:#93c5fd; color:#2563eb; background:#eff6ff; }
+.pgn-btn.active { background:linear-gradient(180deg,#3b82f6,#1d4ed8); color:#fff; border-color:transparent; box-shadow:0 2px 6px rgba(37,99,235,.3); }
+.pgn-btn:disabled { opacity:.4; cursor:not-allowed; }
+.pgn-sep { color:#94a3b8; font-weight:700; padding:0 2px; }
+
+/* -- Empty state -- */
+.grid-empty { display:flex; flex-direction:column; align-items:center; gap:10px; padding:48px 20px; color:#94a3b8; }
+.grid-empty svg { width:42px; height:42px; opacity:.5; }
+.grid-empty p { font-size:13px; font-weight:600; margin:0; }
+
+/* -- Overlay / Modals -- */
+.im-overlay    { display:none; position:fixed; inset:0; background:rgba(2,6,23,.72); backdrop-filter:blur(3px); z-index:500; justify-content:center; align-items:flex-start; padding:28px 16px; overflow-y:auto; }
 .im-overlay.open { display:flex; }
-.im-modal      { background:var(--white); border:1px solid var(--border); border-radius:14px; width:900px; max-width:96vw; max-height:calc(100vh - 56px); display:flex; flex-direction:column; box-shadow:0 32px 80px rgba(0,0,0,.3); animation:imIn .2s cubic-bezier(.16,1,.3,1); }
+.im-modal      { background:#fff; border:1px solid #e2e8f0; border-radius:16px; width:900px; max-width:96vw; max-height:calc(100vh - 56px); display:flex; flex-direction:column; box-shadow:0 32px 80px rgba(2,6,23,.35); animation:imIn .22s cubic-bezier(.16,1,.3,1); overflow:hidden; }
 .im-modal.sm   { width:500px; }
 @keyframes imIn { from{transform:translateY(-18px) scale(.98);opacity:0} to{transform:translateY(0);opacity:1} }
-.im-mhdr       { display:flex; align-items:center; justify-content:space-between; padding:16px 22px 12px; border-bottom:1px solid var(--border); border-radius:14px 14px 0 0; flex-shrink:0; }
-.im-mhdr h3    { font-size:15px; font-weight:700; color:var(--text); margin:0; }
-.im-mbody      { padding:20px 22px 10px; overflow-y:auto; flex:1; }
-.im-mfoot      { display:flex; justify-content:flex-end; gap:9px; padding:12px 22px; border-top:1px solid var(--border); background:var(--bg); border-radius:0 0 14px 14px; flex-shrink:0; }
-.im-mclose     { width:30px; height:30px; border-radius:7px; border:1px solid var(--border); background:var(--bg); cursor:pointer; font-size:14px; display:flex; align-items:center; justify-content:center; color:var(--text2); transition:all .15s; }
+.im-mhdr       { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:15px 22px; background:#f8fafc; border-bottom:1px solid #e2e8f0; flex-shrink:0; }
+.im-mhdr h3    { font-size:15px; font-weight:800; color:#0f172a; margin:0; letter-spacing:-.01em; }
+.im-mbody      { padding:20px 22px 12px; overflow-y:auto; flex:1; }
+.im-mfoot      { display:flex; justify-content:flex-end; gap:9px; padding:13px 22px; border-top:1px solid #e2e8f0; background:#f8fafc; flex-shrink:0; }
+.im-mclose     { width:30px; height:30px; border-radius:8px; border:1px solid #e2e8f0; background:#fff; cursor:pointer; font-size:15px; display:flex; align-items:center; justify-content:center; color:#64748b; transition:all .15s; flex-shrink:0; }
 .im-mclose:hover { background:#ef4444; color:#fff; border-color:#ef4444; }
 
-@media print { .grid-toolbar,.im-overlay { display:none !important; } }
+/* -- Form fields -- */
+.fl { display:block; font-size:10.5px; font-weight:800; color:#64748b; text-transform:uppercase; letter-spacing:.06em; margin-bottom:5px; }
+.fi { width:100%; padding:9px 12px; border:1.5px solid #e2e8f0; border-radius:9px; background:#fff; color:#0f172a; font-size:13px; font-family:inherit; font-weight:500; outline:none; transition:border-color .15s, box-shadow .15s; }
+.fi:focus { border-color:#2563eb; box-shadow:0 0 0 3px rgba(37,99,235,.12); }
+.fi-err { border-color:#ef4444 !important; animation:imShake .3s; }
+@keyframes imShake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-4px)} 75%{transform:translateX(4px)} }
 
-/* ── Toolbar Styles ── */
-.tb-btn { display:inline-flex;align-items:center;gap:5px;padding:6px 11px;border:1.5px solid #e2e8f0;border-radius:7px;background:#fff;color:#475569;font-size:12.5px;font-weight:600;cursor:pointer;transition:all .15s;font-family:inherit;white-space:nowrap; }
-.tb-btn:hover { border-color:#2563eb;color:#2563eb;background:#eff6ff; }
-.tb-btn-wrap { position:relative; }
-.tb-panel { position:absolute;top:calc(100% + 6px);z-index:400;background:#fff;border:1.5px solid #e2e8f0;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);padding:10px;min-width:160px; }
-.tb-panel-title { font-size:10px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;padding:0 4px 8px;border-bottom:1px solid #f1f5f9;margin-bottom:6px; }
-.tb-opt { display:flex;align-items:center;gap:7px;padding:5px 6px;font-size:12.5px;color:#475569;cursor:pointer;border-radius:5px;transition:background .12s; }
-.tb-opt:hover { background:#f8fafc; }
-.tb-opt input { cursor:pointer;accent-color:#2563eb; }
-.tb-fld { margin-bottom:9px; }
-.tb-fld label { display:block;font-size:10.5px;font-weight:700;color:#94a3b8;text-transform:uppercase;margin-bottom:3px; }
-.tb-action-btn { display:block;width:100%;padding:7px 10px;text-align:left;border:none;background:none;font-size:12.5px;font-weight:600;color:#475569;cursor:pointer;border-radius:6px;transition:background .12s;font-family:inherit; }
-.tb-action-btn:hover { background:#eff6ff;color:#2563eb; }
+/* -- Lucide sizing -- */
+.lucide-ic { width:1em; height:1em; vertical-align:-0.125em; }
+
+@media print { .grid-toolbar,.im-overlay,.grid-footer { display:none !important; } }
 </style>
 {% endblock %}
 
 {% block content %}
-<!-- No tabs needed — Items only (Types/Groups/Categories moved to Masters page) -->
+<!-- No tabs needed - Items only (Types/Groups/Categories moved to Masters page) -->
 
 
-<!-- ═══════════════ MATERIALS TAB ═══════════════ -->
+<!-- =============== MATERIALS TAB =============== -->
 <div id="tab-materials">
 <div class="grid-card">
 
@@ -99,7 +182,7 @@
   <input type="hidden" id="matGroupFilter" value="">
   <input type="hidden" id="matActiveFilter" value="1">
 
-  <!-- ── Main Toolbar ── -->
+  <!-- -- Main Toolbar -- -->
   <div class="grid-toolbar" style="flex-wrap:wrap;gap:8px;padding:12px 16px;border-bottom:1px solid #f1f5f9;">
     <!-- Left: Add + Search + Bulk Delete -->
     <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:200px;">
@@ -110,9 +193,9 @@
       {% endif %}
       <div class="grid-search-wrap" style="flex:1;min-width:140px;max-width:280px;">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input type="text" class="grid-search-input" id="matSearch" placeholder="Search…" oninput="imSearch(this.value)">
+        <input type="text" class="grid-search-input" id="matSearch" placeholder="Search..." oninput="imSearch(this.value)">
       </div>
-      <button class="btn-grid-action" id="matBulkDelBtn" onclick="matBulkDelete()" style="display:none;background:#fee2e2;color:#dc2626;border-color:#fca5a5;font-weight:700;flex-shrink:0;">🗑 Delete</button>
+      <button class="btn-grid-action" id="matBulkDelBtn" onclick="matBulkDelete()" style="display:none;background:#fee2e2;color:#dc2626;border-color:#fca5a5;font-weight:700;flex-shrink:0;">Delete</button>
     </div>
 
     <!-- Right: Action buttons -->
@@ -182,10 +265,10 @@
         </button>
         <div id="sortPanel" class="tb-panel" style="display:none;min-width:200px;right:0;">
           <div class="tb-panel-title">Sort By</div>
-          <label class="tb-opt"><input type="radio" name="sortOpt" value="material_name" checked onchange="setSortField('material_name')"> Name (A→Z)</label>
-          <label class="tb-opt"><input type="radio" name="sortOpt" value="material_name_desc" onchange="setSortField('material_name_desc')"> Name (Z→A)</label>
-          <label class="tb-opt"><input type="radio" name="sortOpt" value="last_purchase_rate" onchange="setSortField('last_purchase_rate')"> Rate (Low→High)</label>
-          <label class="tb-opt"><input type="radio" name="sortOpt" value="last_purchase_rate_desc" onchange="setSortField('last_purchase_rate_desc')"> Rate (High→Low)</label>
+          <label class="tb-opt"><input type="radio" name="sortOpt" value="material_name" checked onchange="setSortField('material_name')"> Name (A-Z)</label>
+          <label class="tb-opt"><input type="radio" name="sortOpt" value="material_name_desc" onchange="setSortField('material_name_desc')"> Name (Z-A)</label>
+          <label class="tb-opt"><input type="radio" name="sortOpt" value="last_purchase_rate" onchange="setSortField('last_purchase_rate')"> Rate (Low-High)</label>
+          <label class="tb-opt"><input type="radio" name="sortOpt" value="last_purchase_rate_desc" onchange="setSortField('last_purchase_rate_desc')"> Rate (High-Low)</label>
           <label class="tb-opt"><input type="radio" name="sortOpt" value="code" onchange="setSortField('code')"> Code</label>
         </div>
       </div>
@@ -221,8 +304,8 @@
         </button>
         <div id="exportPanel" class="tb-panel" style="display:none;min-width:160px;right:0;">
           <div class="tb-panel-title">Export As</div>
-          <button class="tb-action-btn" onclick="exportCSV()">📄 Export CSV</button>
-          <button class="tb-action-btn" onclick="exportExcel()">📊 Export Excel</button>
+          <button class="tb-action-btn" onclick="exportCSV()">Export CSV</button>
+          <button class="tb-action-btn" onclick="exportExcel()">Export Excel</button>
         </div>
       </div>
 
@@ -245,14 +328,14 @@
           <th class="colGroup">{% if auto_type_abbr in ['PM','FG'] %}Brand{% elif auto_type_abbr == 'RM' %}Group{% else %}Brand / Group{% endif %}</th>
           <th class="colUom">UOM</th>
           <th class="colMsl">MSL</th>
-          <th class="colRate">Last Rate (₹)</th>
+          <th class="colRate">Last Rate (&#8377;)</th>
           <th class="colHsn">HSN</th>
           <th class="colGst">GST %</th>
           <th style="width:80px;text-align:right;">Actions</th>
         </tr>
       </thead>
       <tbody id="matTbody">
-        <tr><td colspan="11" style="text-align:center;padding:40px;color:#94a3b8;">Loading…</td></tr>
+        <tr><td colspan="11" style="text-align:center;padding:40px;color:#94a3b8;">Loading...</td></tr>
       </tbody>
     </table>
   </div>
@@ -264,11 +347,11 @@
       <th>Item Name</th><th>Type</th><th>Deleted At</th>
       <th style="width:160px;text-align:right;">Actions</th>
     </tr></thead>
-    <tbody id="matDelTbody"><tr><td colspan="6" style="text-align:center;padding:30px;color:#94a3b8;">Loading…</td></tr></tbody>
+    <tbody id="matDelTbody"><tr><td colspan="6" style="text-align:center;padding:30px;color:#94a3b8;">Loading...</td></tr></tbody>
   </table>
   <div id="matDelActions" style="padding:10px 16px;gap:8px;display:none;align-items:center;">
-    <button class="btn-grid-action" id="matDelBulkRestore" onclick="matDelBulkRestore()" style="display:none;color:#16a34a;border-color:#86efac;font-weight:700;">↩️ Restore Selected</button>
-    <button class="btn-grid-action" id="matDelBulkPerm" onclick="matDelBulkPerm()" style="display:none;background:#fee2e2;color:#dc2626;border-color:#fca5a5;font-weight:700;">💥 Permanent Delete</button>
+    <button class="btn-grid-action" id="matDelBulkRestore" onclick="matDelBulkRestore()" style="display:none;color:#16a34a;border-color:#86efac;font-weight:700;">Restore Selected</button>
+    <button class="btn-grid-action" id="matDelBulkPerm" onclick="matDelBulkPerm()" style="display:none;background:#fee2e2;color:#dc2626;border-color:#fca5a5;font-weight:700;">Permanent Delete</button>
   </div>
 
   <div class="grid-footer">
@@ -285,7 +368,7 @@
 </div>
 </div>
 
-<!-- ═══════════════ TYPES TAB ═══════════════ -->
+<!-- =============== TYPES TAB =============== -->
 <div id="tab-types" style="display:none">
 <div class="grid-card">
   <div class="grid-toolbar">
@@ -296,12 +379,12 @@
     </button>
     {% endif %}
     {% if get_sub_perm('material','type_delete') %}
-    <button class="btn-grid-action" id="typeBulkDelBtn" onclick="typeBulkDelete()" style="display:none;background:#fee2e2;color:#dc2626;border-color:#fca5a5;font-weight:700;">🗑 Delete Selected</button>
+    <button class="btn-grid-action" id="typeBulkDelBtn" onclick="typeBulkDelete()" style="display:none;background:#fee2e2;color:#dc2626;border-color:#fca5a5;font-weight:700;">Delete Selected</button>
     {% endif %}
     <div class="grid-toolbar-right">
       <span class="im-chip">Total: <span class="val" id="typeTotal">0</span></span>
       {% if get_sub_perm('material','trash_types') %}
-      <button class="btn-grid-action" id="typeTrashBtn" onclick="typeToggleTrash()" style="color:#dc2626;border-color:#fca5a5;">🗑️ Trash (<span id="typeTrashCount">0</span>)</button>
+      <button class="btn-grid-action" id="typeTrashBtn" onclick="typeToggleTrash()" style="color:#dc2626;border-color:#fca5a5;">Trash (<span id="typeTrashCount">0</span>)</button>
       {% endif %}
     </div>
   </div>
@@ -323,7 +406,7 @@
         </tr>
       </thead>
       <tbody id="typeTbody">
-        <tr><td colspan="8" style="text-align:center;padding:40px;color:#94a3b8;">Loading…</td></tr>
+        <tr><td colspan="8" style="text-align:center;padding:40px;color:#94a3b8;">Loading...</td></tr>
       </tbody>
     </table>
     <!-- Deleted Types Table (hidden by default) -->
@@ -333,17 +416,17 @@
         <th>#</th><th>Type Name</th><th>Abbr.</th><th>Deleted At</th>
         <th style="width:160px;text-align:right;">Actions</th>
       </tr></thead>
-      <tbody id="typeDelTbody"><tr><td colspan="6" style="text-align:center;padding:30px;color:#94a3b8;">Loading…</td></tr></tbody>
+      <tbody id="typeDelTbody"><tr><td colspan="6" style="text-align:center;padding:30px;color:#94a3b8;">Loading...</td></tr></tbody>
     </table>
   </div>
   <div id="typeDelActions" style="display:none;padding:10px 16px;gap:8px;display:none;align-items:center;">
-    <button class="btn-grid-action" id="typeDelBulkRestore" onclick="typeDelBulkRestore()" style="display:none;color:#16a34a;border-color:#86efac;font-weight:700;">↩️ Restore Selected</button>
-    <button class="btn-grid-action" id="typeDelBulkPerm" onclick="typeDelBulkPerm()" style="display:none;background:#fee2e2;color:#dc2626;border-color:#fca5a5;font-weight:700;">💥 Permanent Delete</button>
+    <button class="btn-grid-action" id="typeDelBulkRestore" onclick="typeDelBulkRestore()" style="display:none;color:#16a34a;border-color:#86efac;font-weight:700;">Restore Selected</button>
+    <button class="btn-grid-action" id="typeDelBulkPerm" onclick="typeDelBulkPerm()" style="display:none;background:#fee2e2;color:#dc2626;border-color:#fca5a5;font-weight:700;">Permanent Delete</button>
   </div>
 </div>
 </div>
 
-<!-- ═══════════════ GROUPS TAB ═══════════════ -->
+<!-- =============== GROUPS TAB =============== -->
 <div id="tab-groups" style="display:none">
 <div class="grid-card">
   <div class="grid-toolbar">
@@ -354,12 +437,12 @@
     </button>
     {% endif %}
     {% if get_sub_perm('material','group_delete') %}
-    <button class="btn-grid-action" id="grpBulkDelBtn" onclick="grpBulkDelete()" style="display:none;background:#fee2e2;color:#dc2626;border-color:#fca5a5;font-weight:700;">🗑 Delete Selected</button>
+    <button class="btn-grid-action" id="grpBulkDelBtn" onclick="grpBulkDelete()" style="display:none;background:#fee2e2;color:#dc2626;border-color:#fca5a5;font-weight:700;">Delete Selected</button>
     {% endif %}
     <div class="grid-toolbar-right">
       <span class="im-chip">Total: <span class="val" id="grpTotal">0</span></span>
       {% if get_sub_perm('material','trash_groups') %}
-      <button class="btn-grid-action" id="grpTrashBtn" onclick="grpToggleTrash()" style="color:#dc2626;border-color:#fca5a5;">🗑️ Trash (<span id="grpTrashCount">0</span>)</button>
+      <button class="btn-grid-action" id="grpTrashBtn" onclick="grpToggleTrash()" style="color:#dc2626;border-color:#fca5a5;">Trash (<span id="grpTrashCount">0</span>)</button>
       {% endif %}
     </div>
   </div>
@@ -378,7 +461,7 @@
         </tr>
       </thead>
       <tbody id="grpTbody">
-        <tr><td colspan="5" style="text-align:center;padding:40px;color:#94a3b8;">Loading…</td></tr>
+        <tr><td colspan="5" style="text-align:center;padding:40px;color:#94a3b8;">Loading...</td></tr>
       </tbody>
     </table>
   </div>
@@ -386,12 +469,12 @@
 </div>
 
 
-<!-- ═══════════════ TYPE MODAL ═══════════════ -->
+<!-- =============== TYPE MODAL =============== -->
 <div class="im-overlay" id="imTypeOverlay" onclick="if(event.target===this)imCloseType()">
   <div class="im-modal sm">
     <div class="im-mhdr">
-      <h3 id="imTypeTitle">➕ New Item Type</h3>
-      <button class="im-mclose" onclick="imCloseType()">✕</button>
+      <h3 id="imTypeTitle">New Item Type</h3>
+      <button class="im-mclose" onclick="imCloseType()">×</button>
     </div>
     <div class="im-mbody">
       <div class="im-grid-2">
@@ -438,12 +521,12 @@
 </div>
 
 
-<!-- ═══════════════ GROUP MODAL ═══════════════ -->
+<!-- =============== GROUP MODAL =============== -->
 <div class="im-overlay" id="imGrpOverlay" onclick="if(event.target===this)imCloseGroup()">
   <div class="im-modal sm">
     <div class="im-mhdr">
-      <h3 id="imGrpTitle">➕ New Item Group</h3>
-      <button class="im-mclose" onclick="imCloseGroup()">✕</button>
+      <h3 id="imGrpTitle">New Item Group</h3>
+      <button class="im-mclose" onclick="imCloseGroup()">×</button>
     </div>
     <div class="im-mbody">
       <div class="fg">
@@ -468,7 +551,7 @@
   </div>
 </div>
 
-<!-- ═══════════════ CATEGORIES TAB ═══════════════ -->
+<!-- =============== CATEGORIES TAB =============== -->
 <div id="tab-categories" style="display:none">
 <div class="grid-card">
   <div class="grid-toolbar">
@@ -479,12 +562,12 @@
     </button>
     {% endif %}
     {% if get_sub_perm('material','cat_delete') %}
-    <button class="btn-grid-action" id="catBulkDelBtn" onclick="catBulkDelete()" style="display:none;background:#fee2e2;color:#dc2626;border-color:#fca5a5;font-weight:700;">🗑 Delete Selected</button>
+    <button class="btn-grid-action" id="catBulkDelBtn" onclick="catBulkDelete()" style="display:none;background:#fee2e2;color:#dc2626;border-color:#fca5a5;font-weight:700;">Delete Selected</button>
     {% endif %}
     <div class="grid-toolbar-right">
       <span class="im-chip">Total: <span class="val" id="catTotal">0</span></span>
       {% if get_sub_perm('material','trash_cats') %}
-      <button class="btn-grid-action" id="catTrashBtn" onclick="catToggleTrash()" style="color:#dc2626;border-color:#fca5a5;">🗑️ Trash (<span id="catTrashCount">0</span>)</button>
+      <button class="btn-grid-action" id="catTrashBtn" onclick="catToggleTrash()" style="color:#dc2626;border-color:#fca5a5;">Trash (<span id="catTrashCount">0</span>)</button>
       {% endif %}
     </div>
   </div>
@@ -503,19 +586,19 @@
         </tr>
       </thead>
       <tbody id="catTbody">
-        <tr><td colspan="5" style="text-align:center;padding:40px;color:#94a3b8;">Loading…</td></tr>
+        <tr><td colspan="5" style="text-align:center;padding:40px;color:#94a3b8;">Loading...</td></tr>
       </tbody>
     </table>
   </div>
 </div>
 </div>
 
-<!-- ═══════════════ CATEGORY MODAL ═══════════════ -->
+<!-- =============== CATEGORY MODAL =============== -->
 <div class="im-overlay" id="imCatOverlay" onclick="if(event.target===this)imCloseCategory()">
   <div class="im-modal sm">
     <div class="im-mhdr">
-      <h3 id="imCatTitle">➕ New Category</h3>
-      <button class="im-mclose" onclick="imCloseCategory()">✕</button>
+      <h3 id="imCatTitle">New Category</h3>
+      <button class="im-mclose" onclick="imCloseCategory()">×</button>
     </div>
     <div class="im-mbody">
       <div class="fg">
@@ -540,7 +623,7 @@
 
 
 
-<!-- ═══════════════ VIEW MODAL ═══════════════ -->
+<!-- =============== VIEW MODAL =============== -->
 <div class="im-overlay" id="viewOverlay" onclick="if(event.target===this)imCloseView()">
   <div class="im-modal" style="width:760px;">
     <div class="im-mhdr" id="viewMhdr">
@@ -549,46 +632,46 @@
         <h3 id="viewTitle" style="margin:0;font-size:16px;"></h3>
       </div>
       <div style="display:flex;gap:8px;align-items:center;">
-        <button id="viewEditBtn" class="btn-grid-action" style="font-size:12px;padding:5px 14px;font-weight:700;" onclick="imEditFromView()">✏️ Edit</button>
-        <button class="im-mclose" onclick="imCloseView()">✕</button>
+        <button id="viewEditBtn" class="btn-grid-action" style="font-size:12px;padding:5px 14px;font-weight:700;" onclick="imEditFromView()">Edit</button>
+        <button class="im-mclose" onclick="imCloseView()">×</button>
       </div>
     </div>
     <div class="im-mbody" style="padding:0;" id="viewBody">
-      <div style="padding:24px;">Loading…</div>
+      <div style="padding:24px;">Loading...</div>
     </div>
   </div>
 </div>
 
-<!-- ═══════════════ CONFIRM DELETE MODAL ═══════════════ -->
+<!-- =============== CONFIRM DELETE MODAL =============== -->
 <div class="im-overlay" id="confirmOverlay">
   <div class="im-modal" style="width:420px;max-width:96vw;">
     <div class="im-mhdr" style="background:#fff5f5;border-bottom:1px solid #fecaca;">
       <div style="display:flex;align-items:center;gap:10px;">
-        <span style="font-size:22px;">🗑️</span>
+        <span style="width:34px;height:34px;border-radius:9px;background:#fee2e2;color:#dc2626;display:flex;align-items:center;justify-content:center;"><i data-lucide="trash-2" style="width:17px;height:17px;"></i></span>
         <h3 id="confirmTitle" style="color:#dc2626;">Confirm Delete</h3>
       </div>
-      <button class="im-mclose" onclick="confirmCancel()">✕</button>
+      <button class="im-mclose" onclick="confirmCancel()">×</button>
     </div>
     <div class="im-mbody" style="padding:24px 22px;">
       <p id="confirmMsg" style="font-size:14px;color:var(--text);margin:0;line-height:1.6;"></p>
-      <p style="font-size:12px;color:#ef4444;margin:12px 0 0;font-weight:600;">⚠️ Ye action undo nahi ho sakta.</p>
+      <p style="font-size:12px;color:#ef4444;margin:12px 0 0;font-weight:600;">Ye action undo nahi ho sakta.</p>
     </div>
     <div class="im-mfoot">
       <button class="btn-cancel" onclick="confirmCancel()" style="padding:9px 20px;">Cancel</button>
       <button id="confirmOkBtn" style="background:#dc2626;color:#fff;border:none;border-radius:8px;padding:9px 22px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;">
-        🗑️ Delete
+        Delete
       </button>
     </div>
   </div>
 </div>
 
 
-<!-- ═══ IMPORT MODAL ═══ -->
+<!-- === IMPORT MODAL === -->
 <div class="im-overlay" id="importOverlay" onclick="if(event.target===this)closeImportModal()">
   <div class="im-modal" style="width:520px;">
     <div class="im-mhdr">
-      <h3>📥 Import Items</h3>
-      <button class="im-mclose" onclick="closeImportModal()">✕</button>
+      <h3>Import Items</h3>
+      <button class="im-mclose" onclick="closeImportModal()">×</button>
     </div>
     <div class="im-mbody">
       <p style="font-size:13px;color:#475569;margin-bottom:12px;">CSV file upload karein. Required columns: <code style="background:#f1f5f9;padding:1px 6px;border-radius:4px;font-size:12px;">
@@ -597,20 +680,20 @@
         {% elif auto_type_abbr == 'FG' %}item_name, code, brand, sku_size, uom, last_purchase_rate, hsn_code, gst_rate
         {% else %}item_name, code, uom, hsn_code, gst_rate, msl, last_purchase_rate{% endif %}
       </code></p>
-      <a href="/material/import-template{% if auto_type_abbr %}?item_type={{ auto_type_abbr }}{% endif %}" style="font-size:12px;color:#2563eb;font-weight:600;">⬇️ Download Template CSV</a>
+      <a href="/material/import-template{% if auto_type_abbr %}?item_type={{ auto_type_abbr }}{% endif %}" style="font-size:12px;color:#2563eb;font-weight:600;">Download Template CSV</a>
       <div id="importDropZone" style="border:2px dashed #e2e8f0;border-radius:10px;padding:28px;text-align:center;cursor:pointer;margin-top:12px;transition:all .2s;"
            onclick="document.getElementById('importFile').click()"
            ondragover="event.preventDefault();this.style.borderColor='#2563eb';this.style.background='#eff6ff'"
            ondragleave="this.style.borderColor='#e2e8f0';this.style.background=''"
            ondrop="handleImportDrop(event)">
-        <div style="font-size:26px;margin-bottom:6px;">📄</div>
+        <div style="margin-bottom:8px;color:#94a3b8;"><i data-lucide="file-text" style="width:30px;height:30px;"></i></div>
         <div style="font-size:13px;font-weight:600;color:#475569;">Click ya Drag &amp; Drop CSV file</div>
         <div style="font-size:11px;color:#94a3b8;margin-top:3px;">.csv format only</div>
         <input type="file" id="importFile" accept=".csv" style="display:none;" onchange="handleImportFile(this.files[0])">
       </div>
       <div id="importPreview" style="display:none;margin-top:14px;"></div>
       <div id="importProgress" style="display:none;margin-top:12px;">
-        <div style="font-size:12px;font-weight:600;color:#475569;margin-bottom:6px;">Importing… <span id="importProgressText"></span></div>
+        <div style="font-size:12px;font-weight:600;color:#475569;margin-bottom:6px;">Importing... <span id="importProgressText"></span></div>
         <div style="background:#f1f5f9;border-radius:10px;height:8px;overflow:hidden;">
           <div id="importProgressBar" style="height:100%;background:#2563eb;width:0%;transition:width .3s;border-radius:10px;"></div>
         </div>
@@ -618,14 +701,13 @@
     </div>
     <div class="im-mfoot">
       <button class="btn-grid-action" onclick="closeImportModal()">Cancel</button>
-      <button class="btn-add-new" id="btnDoImport" onclick="doImport()" style="display:none;">📥 Import All</button>
+      <button class="btn-add-new" id="btnDoImport" onclick="doImport()" style="display:none;">Import All</button>
     </div>
   </div>
 </div>
 
 
 {% endblock %}
-
 {% block extra_js %}
 <script>
 const IM = '/material/api';
@@ -649,7 +731,7 @@ let imFromMat=false; // opened type/group modal from material modal
 
 const PRESET_COLORS=['#6366f1','#2563eb','#0891b2','#059669','#16a34a','#ca8a04','#dc2626','#db2777','#7c3aed','#94a3b8'];
 
-/* ══ TABS ═══════════════════════════════════ */
+/* == TABS =================================== */
 function imTab(tab, btn){
   document.querySelectorAll('.im-tab').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
@@ -658,12 +740,12 @@ function imTab(tab, btn){
   });
 }
 
-/* ══ LOAD ALL ════════════════════════════════ */
+/* == LOAD ALL ================================ */
 async function imLoadAll(){
   await Promise.all([imLoadTypes(), imLoadGroups(), imLoad(), imLoadCategories()]);
 }
 
-/* ══ CATEGORIES ══════════════════════════════ */
+/* == CATEGORIES ============================== */
 let imCategories = [], imCatEditId = null;
 
 async function imLoadCategories(){
@@ -702,7 +784,7 @@ function renderCatTable(){
 
 function imOpenCategory(id=null){
   imCatEditId = id;
-  document.getElementById('imCatTitle').textContent = id ? '✏️ Edit Category' : '➕ New Category';
+  document.getElementById('imCatTitle').textContent = id ? 'Edit Category' : 'New Category';
   const cat = id ? imCategories.find(x=>x.id===id) : null;
   document.getElementById('catName').value  = cat?.category_name || '';
   document.getElementById('catDesc').value  = cat?.description   || '';
@@ -730,7 +812,7 @@ async function imSaveCategory(){
   if(data.status === 'ok'){
     imCloseCategory();
     await imLoadCategories();
-    showToast('Saved ✓','success');
+    showToast('Saved','success');
   } else showToast(data.message || 'Save failed','danger');
 }
 
@@ -738,11 +820,11 @@ async function imDelCategory(id){
   if(!confirm('Delete this category?')) return;
   const res  = await fetch('/material/api/categories/delete', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({id})});
   const data = await res.json();
-  if(data.status === 'ok'){ await imLoadCategories(); showToast('Deleted ✓','success'); }
+  if(data.status === 'ok'){ await imLoadCategories(); showToast('Deleted','success'); }
   else showToast(data.message,'danger');
 }
 
-/* ══ MATERIALS ═══════════════════════════════ */
+/* == MATERIALS =============================== */
 async function imLoad(){
   const tid   = document.getElementById('matTypeFilter').value;
   const gid   = document.getElementById('matGroupFilter').value;
@@ -778,7 +860,7 @@ function imRender(){
   const total = sorted.length;
   document.getElementById('matTotal').textContent = imRows.length;
   const s=(imPage-1)*imPgSz, e=Math.min(s+imPgSz,total);
-  document.getElementById('matPgInfo').textContent = total?`Showing ${s+1}–${e} of ${total}`:'No records';
+  document.getElementById('matPgInfo').textContent = total?`Showing ${s+1}-${e} of ${total}`:'No records';
   if(!total){ tbody.innerHTML=`<tr><td colspan="11"><div class="grid-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><p>No materials found</p></div></td></tr>`; imBuildPgn(0); return; }
   tbody.innerHTML = sorted.slice(s,e).map((r,i)=>{
   const autoAbbr = '{{ auto_type_abbr }}';
@@ -794,7 +876,7 @@ function imRender(){
           ${(r.material_type_abbr==='PM'||r.material_type_abbr==='FG')?`<div style="width:38px;height:38px;flex-shrink:0;border-radius:7px;border:1px solid #e2e8f0;background:#f8fafc;display:flex;align-items:center;justify-content:center;overflow:hidden;">${r.image_data?`<img src="${r.image_data}" style="width:100%;height:100%;object-fit:contain;">`:`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`}</div>`:''}
           <div>
             <div style="font-weight:700;">
-              ${r.pm_client_type?`<span style="color:#0891b2;font-weight:800;">${esc(r.pm_client_type)}</span> — `:''}
+              ${r.pm_client_type?`<span style="color:#0891b2;font-weight:800;">${esc(r.pm_client_type)}</span> - `:''}
               ${esc(r.material_name)}
             </div>
             ${r.aliases?`<div style="font-size:11px;color:var(--text3)">${esc(r.aliases)}</div>`:''}
@@ -833,18 +915,18 @@ function imBuildPgn(total){
   const pages=Math.max(1,Math.ceil(total/imPgSz)),wrap=document.getElementById('matPgn');
   if(pages<=1){wrap.innerHTML='';return;}
   const btn=(p,l,a,d)=>`<button class="pgn-btn${a?' active':''}"${d?' disabled':''} onclick="imPage=${p};imRender()">${l}</button>`;
-  const sep='<span class="pgn-sep">…</span>';
-  let h=btn(imPage-1,'‹',false,imPage===1);
+  const sep='<span class="pgn-sep">...</span>';
+  let h=btn(imPage-1,'<',false,imPage===1);
   const f=Math.max(1,imPage-2),t=Math.min(pages,imPage+2);
   if(f>1){h+=btn(1,'1',false,false);if(f>2)h+=sep;}
   for(let p=f;p<=t;p++) h+=btn(p,p,p===imPage,false);
   if(t<pages){if(t<pages-1)h+=sep;h+=btn(pages,pages,false,false);}
-  h+=btn(imPage+1,'›',false,imPage===pages);
+  h+=btn(imPage+1,'>',false,imPage===pages);
   wrap.innerHTML=h;
 }
 
 
-/* ══ TYPES ═══════════════════════════════════ */
+/* == TYPES =================================== */
 async function imLoadTypes(){
   const res=await fetch(`${IM}/types`);
   const data=await res.json();
@@ -865,7 +947,7 @@ function renderTypesTable(){
       <td><span class="type-badge" style="background:${t.color}18;color:${t.color}">${esc(t.type_name)}</span></td>
       <td style="font-family:monospace;font-weight:700">${esc(t.abbreviation)}</td>
       <td><span style="display:inline-block;width:20px;height:20px;border-radius:50%;background:${t.color};vertical-align:middle"></span></td>
-      <td>${t.has_sku?'<span style="color:#16a34a;font-weight:700">✓ Yes</span>':'—'}</td>
+      <td>${t.has_sku?'<span style="color:#16a34a;font-weight:700">Yes</span>':'-'}</td>
       <td style="color:var(--text3)">${t.sort_order}</td>
       <td>${t.is_active?'<span style="color:#16a34a;font-weight:700">Active</span>':'<span style="color:#94a3b8">Inactive</span>'}</td>
       <td onclick="event.stopPropagation()">
@@ -881,7 +963,7 @@ function renderTypesTable(){
 
 function imOpenType(fromMat=false, id=null){
   imFromMat=fromMat; imTypeEditId=id;
-  document.getElementById('imTypeTitle').textContent = id?'✏️ Edit Material Type':'➕ New Material Type';
+  document.getElementById('imTypeTitle').textContent = id?'Edit Material Type':'New Material Type';
   const t = id ? imTypes.find(x=>x.id===id) : null;
   document.getElementById('tName').value  = t?.type_name||'';
   document.getElementById('tAbbr').value  = t?.abbreviation||'';
@@ -918,7 +1000,7 @@ async function imSaveType(){
   if(data.status==='ok'){
     imCloseType(); await imLoadTypes();
     if(imFromMat){ imPopulateTypeSelect(); if(data.row) document.getElementById('mType').value=data.row.id; }
-    showToast('Saved ✓','success');
+    showToast('Saved','success');
   } else showToast(data.message||'Save failed','danger');
 }
 
@@ -926,11 +1008,11 @@ async function imDelType(id){
   if(!confirm('Delete this type?')) return;
   const res=await fetch(`${IM}/types/delete`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})});
   const data=await res.json();
-  if(data.status==='ok'){ await imLoadTypes(); showToast('Deleted ✓','success'); }
+  if(data.status==='ok'){ await imLoadTypes(); showToast('Deleted','success'); }
   else showToast(data.message,'danger');
 }
 
-/* ══ GROUPS ══════════════════════════════════ */
+/* == GROUPS ================================== */
 async function imLoadGroups(){
   const res=await fetch(`${IM}/groups`);
   const data=await res.json();
@@ -953,7 +1035,7 @@ function renderGroupsTable(){
         <input type="checkbox" class="grp-chk" value="${g.id}" onclick="grpUpdateDeleteBtn()" style="width:15px;height:15px;cursor:pointer;accent-color:#2563eb;">
       </td>
       <td style="color:#94a3b8;font-size:11px;font-weight:600">${i+1}</td>
-      <td style="font-weight:${g.parent_id?'600':'800'}">${g.parent_id?'└ ':''}${esc(g.group_name)}</td>
+      <td style="font-weight:${g.parent_id?'600':'800'}">${g.parent_id?'- ':''}${esc(g.group_name)}</td>
       <td style="font-size:12px;color:var(--text2)">${g.parent_id?esc(byId[g.parent_id]?.group_name||''):''}</td>
       <td style="font-size:12px;color:var(--text3)">${esc(g.description||'')}</td>
       <td onclick="event.stopPropagation()">
@@ -969,7 +1051,7 @@ function renderGroupsTable(){
 
 function imOpenGroup(fromMat=false, id=null){
   imFromMat=fromMat; imGrpEditId=id;
-  document.getElementById('imGrpTitle').textContent = id?'✏️ Edit Group':'➕ New Material Group';
+  document.getElementById('imGrpTitle').textContent = id?'Edit Group':'New Material Group';
   const g = id ? imGroups.find(x=>x.id===id) : null;
   document.getElementById('gName').value = g?.group_name||'';
   document.getElementById('gDesc').value = g?.description||'';
@@ -996,7 +1078,7 @@ async function imSaveGroup(){
   if(data.status==='ok'){
     imCloseGroup(); await imLoadGroups();
     if(imFromMat){ imPopulateGroupSelect(); if(data.row) document.getElementById('mGroup').value=data.row.id; }
-    showToast('Saved ✓','success');
+    showToast('Saved','success');
   } else showToast(data.message||'Save failed','danger');
 }
 
@@ -1004,12 +1086,12 @@ async function imDelGroup(id){
   if(!confirm('Delete this group?')) return;
   const res=await fetch(`${IM}/groups/delete`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})});
   const data=await res.json();
-  if(data.status==='ok'){ await imLoadGroups(); showToast('Deleted ✓','success'); }
+  if(data.status==='ok'){ await imLoadGroups(); showToast('Deleted','success'); }
   else showToast(data.message,'danger');
 }
 
 
-/* ══ TAG INPUT ═══════════════════════════════ */
+/* == TAG INPUT =============================== */
 function imSetTags(type, vals){
   const wrap=document.getElementById(type+'Wrap');
   const hidden=document.getElementById(type==='alias'?'mAliases':'mSkuSizes');
@@ -1046,16 +1128,16 @@ function imUpdateHidden(type){
   document.getElementById(type==='alias'?'mAliases':'mSkuSizes').value=vals.join(',');
 }
 
-/* ══ HELPERS ═════════════════════════════════ */
+/* == HELPERS ================================= */
 function esc(s){ if(!s)return''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-/* ══ INIT ════════════════════════════════════ */
+/* == INIT ==================================== */
 document.addEventListener('DOMContentLoaded', imLoadAll);
 document.addEventListener('keydown', e=>{
   if(e.key==='Escape'){ imCloseType(); imCloseGroup(); imCloseCategory(); confirmCancel(); }
 });
 
-/* ══ VIEW ITEM MODAL ══════════════════════════════════ */
+/* == VIEW ITEM MODAL ================================== */
 let _viewItemId = null;
 function imCloseView(){ document.getElementById('viewOverlay').classList.remove('open'); _viewItemId=null; }
 function imEditFromView(){
@@ -1072,7 +1154,7 @@ function imViewItem(id){
   const isPM  = abbr === 'PM';
   const isFG  = abbr === 'FG';
   const isPMFG = isPM || isFG;
-  document.getElementById('viewTitle').textContent = (r.pm_client_type ? r.pm_client_type + ' — ' : '') + r.material_name;
+  document.getElementById('viewTitle').textContent = (r.pm_client_type ? r.pm_client_type + ' - ' : '') + r.material_name;
   const badge = document.getElementById('viewTypeBadge');
   badge.textContent = abbr || r.material_type || '';
   badge.style.background = (r.material_type_color||'#6366f1')+'22';
@@ -1080,19 +1162,19 @@ function imViewItem(id){
   badge.style.display = r.material_type ? 'inline-block' : 'none';
   const row = (label, val, always=false) => {
     if(!val && !always) return '';
-    return `<div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid #f1f5f9;"><span style="width:155px;flex-shrink:0;font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;padding-top:2px;">${label}</span><span style="font-size:13.5px;color:#1e293b;font-weight:500;flex:1;">${val||'—'}</span></div>`;
+    return `<div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid #f1f5f9;"><span style="width:155px;flex-shrink:0;font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;padding-top:2px;">${label}</span><span style="font-size:13.5px;color:#1e293b;font-weight:500;flex:1;">${val||'-'}</span></div>`;
   };
   const sec = (icon, title) => `<div style="font-size:10.5px;font-weight:800;color:#2563eb;text-transform:uppercase;letter-spacing:.08em;padding:16px 0 6px;border-top:2px solid #eff6ff;display:flex;align-items:center;gap:6px;margin-top:4px;">${icon} ${title}</div>`;
   const pill = (txt, bg, col) => txt?`<span style="background:${bg||'#f1f5f9'};color:${col||'#475569'};padding:2px 9px;border-radius:12px;font-size:12px;font-weight:700;margin-right:3px;">${esc(txt)}</span>`:'';
   const mono = (txt) => txt?`<span style="font-family:monospace;font-weight:700;background:#f8fafc;padding:2px 8px;border-radius:5px;">${esc(txt)}</span>`:'';
   let html = `<div style="padding:6px 24px 20px;">`;
-  html += sec('📦', 'Basic Information');
+  html += sec('', 'Basic Information');
   html += row('Code', r.code ? mono(r.code) : pill('Not assigned','#fef9c3','#854d0e'), true);
-  html += row('Item Name', `<strong style="font-size:14px;">${r.pm_client_type?`<span style="color:#0891b2;">${esc(r.pm_client_type)}</span> — `:''}${esc(r.material_name)}</strong>`, true);
+  html += row('Item Name', `<strong style="font-size:14px;">${r.pm_client_type?`<span style="color:#0891b2;">${esc(r.pm_client_type)}</span> - `:''}${esc(r.material_name)}</strong>`, true);
   if(r.aliases) html += row('Aliases', r.aliases.split(',').filter(Boolean).map(a=>pill(a.trim())).join(''));
   if(r.description && r.description !== 'None') html += row('Description', `<em style="color:#475569;">${esc(r.description)}</em>`);
   if(isRM && r.inci_name) html += row('INCI Name', esc(r.inci_name));
-  if(isRM) html += row('Group', r.group_name ? pill(r.group_name,'#eff6ff','#2563eb') : '—', true);
+  if(isRM) html += row('Group', r.group_name ? pill(r.group_name,'#eff6ff','#2563eb') : '-', true);
   if(isPMFG && r.brand) html += row('Brand', pill(r.brand,'#fdf4ff','#7c3aed'));
   if(isPMFG && r.sku_sizes) html += row('SKU Sizes', r.sku_sizes.split(',').filter(Boolean).map(s=>pill(s.trim(),'#f0fdf4','#15803d')).join(''));
   if(isPM && r.pm_material_type){ html += row('PM Type',`<span style="background:#eff6ff;color:#2563eb;padding:2px 10px;border-radius:8px;font-weight:700;font-size:12px;">${esc(r.pm_material_type)}</span>`); }
@@ -1105,13 +1187,13 @@ function imViewItem(id){
   if(r.category) html += row('Category', pill(r.category,'#fff7ed','#c2410c'));
   html += row('Type', r.material_type ? `<span style="background:${r.material_type_color||'#6366f1'}22;color:${r.material_type_color||'#6366f1'};padding:3px 10px;border-radius:12px;font-size:12px;font-weight:800;">${esc(r.material_type)}</span>` : null);
   html += row('UOM', `<span style="background:#f1f5f9;border:1px solid #e2e8f0;padding:2px 10px;border-radius:5px;font-size:12px;font-weight:700;">${esc(r.uom)}</span>`, true);
-  html += sec('📊', 'Stock & Pricing');
+  html += sec('', 'Stock & Pricing');
   html += row('Last Purchase Rate', `<strong style="color:#2563eb;font-size:15px;">\u20b9${parseFloat(r.last_purchase_rate||0).toFixed(2)}</strong>`, true);
   html += row('Min Stock Level', `${r.msl||0} <span style="font-size:11px;color:#94a3b8;">${esc(r.uom)}</span>`, true);
   if(r.opening_balance) html += row('Opening Balance', `${r.opening_balance} ${esc(r.uom)}`);
   if(r.std_pack_size) html += row('Std Pack Size', `${r.std_pack_size} ${esc(r.uom)}`);
   if(r.lead_time_days) html += row('Lead Time', `${r.lead_time_days} days`);
-  html += sec('🏦', 'GST & Statutory');
+  html += sec('', 'GST & Statutory');
   if(r.hsn_code) html += row('HSN / SAC Code', mono(r.hsn_code));
   html += row('GST Rate', r.gst_rate ? `<strong>${r.gst_rate}%</strong>` : '0%', true);
   html += row('Taxability', esc(r.taxability||'Taxable'), true);
@@ -1120,7 +1202,7 @@ function imViewItem(id){
 
   // Product Image (PM/FG)
   if(r.image_data){
-    html += sec('🖼️', 'Product Image');
+    html += sec('', 'Product Image');
     html += `<div style="background:#f8fafc;border-radius:10px;padding:16px;text-align:center;margin-top:4px;">
       <img src="${esc(r.image_data)}" style="max-height:200px;max-width:100%;object-fit:contain;border-radius:8px;background:#fff;border:1px solid #e2e8f0;padding:8px;">
     </div>`;
@@ -1131,7 +1213,7 @@ function imViewItem(id){
   document.getElementById('viewOverlay').classList.add('open');
 }
 
-/* ══ CUSTOM CONFIRM MODAL ════════════════════════════ */
+/* == CUSTOM CONFIRM MODAL ============================ */
 let _confirmCallback = null;
 function showConfirm(msg, title, onOk){
   document.getElementById('confirmMsg').textContent   = msg;
@@ -1145,13 +1227,13 @@ function confirmCancel(){
   _confirmCallback = null;
 }
 
-/* ══ MULTI-DELETE ════════════════════════════════════ */
+/* == MULTI-DELETE ==================================== */
 // Items
 function matToggleAll(cb){ document.querySelectorAll('.mat-chk').forEach(c=>c.checked=cb.checked); matUpdateDeleteBtn(); }
 function matUpdateDeleteBtn(){
   const n=document.querySelectorAll('.mat-chk:checked').length;
   const btn=document.getElementById('matBulkDelBtn');
-  if(btn){btn.style.display=n>0?'':'none';btn.textContent='🗑 Delete ('+n+')';}
+  if(btn){btn.style.display=n>0?'':'none';btn.textContent='Delete ('+n+')';}
 }
 function imDelMaterial(id){
   const item = imRows.find(r => r.id === id);
@@ -1165,7 +1247,7 @@ function imDelMaterial(id){
       });
       const d = await res.json();
       if(d.status === 'ok'){
-        showToast('Item deleted ✓', 'success');
+        showToast('Item deleted', 'success');
         imLoad();
       } else {
         showToast(d.message || 'Delete failed', 'danger');
@@ -1191,7 +1273,7 @@ function typeToggleAll(cb){ document.querySelectorAll('.type-chk').forEach(c=>c.
 function typeUpdateDeleteBtn(){
   const n=document.querySelectorAll('.type-chk:checked').length;
   const btn=document.getElementById('typeBulkDelBtn');
-  if(btn){btn.style.display=n>0?'':'none';btn.textContent='🗑 Delete ('+n+')';}
+  if(btn){btn.style.display=n>0?'':'none';btn.textContent='Delete ('+n+')';}
 }
 function typeBulkDelete(){
   const ids=[...document.querySelectorAll('.type-chk:checked')].map(c=>+c.value);
@@ -1208,7 +1290,7 @@ function grpToggleAll(cb){ document.querySelectorAll('.grp-chk').forEach(c=>c.ch
 function grpUpdateDeleteBtn(){
   const n=document.querySelectorAll('.grp-chk:checked').length;
   const btn=document.getElementById('grpBulkDelBtn');
-  if(btn){btn.style.display=n>0?'':'none';btn.textContent='🗑 Delete ('+n+')';}
+  if(btn){btn.style.display=n>0?'':'none';btn.textContent='Delete ('+n+')';}
 }
 function grpBulkDelete(){
   const ids=[...document.querySelectorAll('.grp-chk:checked')].map(c=>+c.value);
@@ -1225,7 +1307,7 @@ function catToggleAll(cb){ document.querySelectorAll('.cat-chk').forEach(c=>c.ch
 function catUpdateDeleteBtn(){
   const n=document.querySelectorAll('.cat-chk:checked').length;
   const btn=document.getElementById('catBulkDelBtn');
-  if(btn){btn.style.display=n>0?'':'none';btn.textContent='🗑 Delete ('+n+')';}
+  if(btn){btn.style.display=n>0?'':'none';btn.textContent='Delete ('+n+')';}
 }
 function catBulkDelete(){
   const ids=[...document.querySelectorAll('.cat-chk:checked')].map(c=>+c.value);
@@ -1240,7 +1322,7 @@ function catBulkDelete(){
 
 
 
-/* ══ TRASH TOGGLE — ITEMS ════════════════════════════ */
+/* == TRASH TOGGLE - ITEMS ============================ */
 let matTrashMode = false;
 async function matToggleTrash(){
   matTrashMode = !matTrashMode;
@@ -1277,11 +1359,11 @@ async function matToggleTrash(){
           ${r.aliases?`<div style="font-size:11px;color:#cbd5e1">${esc(r.aliases)}</div>`:''}
         </td>
         <td class=\"colType\">${r.material_type?`<span class="type-badge" style="background:${r.material_type_color}18;color:${r.material_type_color};opacity:.7">${esc(r.material_type_abbr)}</span>`:''}</td>
-        <td style="font-size:12px;color:#94a3b8;">${r.deleted_at ? new Date(r.deleted_at).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) : '—'}</td>
+        <td style="font-size:12px;color:#94a3b8;">${r.deleted_at ? new Date(r.deleted_at).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) : '-'}</td>
         <td onclick="event.stopPropagation()">
           <div class="row-actions" style="justify-content:flex-end;gap:6px;">
-            <button class="btn-grid-action" onclick="matRestoreOne(${r.id})" style="color:#16a34a;border-color:#86efac;font-size:11px;padding:4px 10px;font-weight:700;">↩️ Restore</button>
-            <button class="btn-grid-action" onclick="matPermOne(${r.id})" style="color:#dc2626;border-color:#fca5a5;font-size:11px;padding:4px 10px;font-weight:700;">💥 Delete</button>
+            <button class="btn-grid-action" onclick="matRestoreOne(${r.id})" style="color:#16a34a;border-color:#86efac;font-size:11px;padding:4px 10px;font-weight:700;">Restore</button>
+            <button class="btn-grid-action" onclick="matPermOne(${r.id})" style="color:#dc2626;border-color:#fca5a5;font-size:11px;padding:4px 10px;font-weight:700;">Delete</button>
           </div>
         </td>
       </tr>`).join('');
@@ -1297,12 +1379,12 @@ function matDelUpdateBtns(){
   const n = document.querySelectorAll('.mat-del-chk:checked').length;
   const r = document.getElementById('matDelBulkRestore');
   const p = document.getElementById('matDelBulkPerm');
-  if(r){ r.style.display=n>0?'':'none'; r.textContent='↩️ Restore ('+n+')'; }
-  if(p){ p.style.display=n>0?'':'none'; p.textContent='💥 Permanent Delete ('+n+')'; }
+  if(r){ r.style.display=n>0?'':'none'; r.textContent='Restore ('+n+')'; }
+  if(p){ p.style.display=n>0?'':'none'; p.textContent='Permanent Delete ('+n+')'; }
 }
 async function matRestoreOne(id){
   await fetch(IM+'/restore',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})});
-  showToast('Item restored ✓','success');
+  showToast('Item restored','success');
   matTrashMode=false; matToggleTrash(); imLoad();
 }
 function matPermOne(id){
@@ -1317,7 +1399,7 @@ function matDelBulkRestore(){
   if(!ids.length)return;
   showConfirm(ids.length+' item(s) restore honge.','Restore Items', async()=>{
     for(const id of ids) await fetch(IM+'/restore',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})});
-    showToast(ids.length+' items restored ✓','success');
+    showToast(ids.length+' items restored','success');
     matTrashMode=false; matToggleTrash(); imLoad();
   });
 }
@@ -1331,7 +1413,7 @@ function matDelBulkPerm(){
   });
 }
 
-/* ══ TRASH TOGGLE — TYPES ═══════════════════════════ */
+/* == TRASH TOGGLE - TYPES =========================== */
 let typeTrashMode=false, typeDelRows=[];
 async function typeToggleTrash(){
   typeTrashMode=!typeTrashMode;
@@ -1351,21 +1433,21 @@ async function typeToggleTrash(){
       <td style="color:#94a3b8;font-size:11px">${i+1}</td>
       <td style="text-decoration:line-through;color:#94a3b8;font-weight:700">${esc(t.type_name)}</td>
       <td style="font-family:monospace;color:#94a3b8">${esc(t.abbreviation)}</td>
-      <td style="font-size:12px;color:#94a3b8">${t.deleted_at?new Date(t.deleted_at).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):'—'}</td>
+      <td style="font-size:12px;color:#94a3b8">${t.deleted_at?new Date(t.deleted_at).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):'-'}</td>
       <td><div class="row-actions" style="justify-content:flex-end;gap:6px">
-        <button class="btn-grid-action" onclick="typeRestoreOne(${t.id})" style="color:#16a34a;border-color:#86efac;font-size:11px;padding:4px 10px;font-weight:700">↩️ Restore</button>
-        <button class="btn-grid-action" onclick="typePermOne(${t.id})" style="color:#dc2626;border-color:#fca5a5;font-size:11px;padding:4px 10px;font-weight:700">💥 Delete</button>
+        <button class="btn-grid-action" onclick="typeRestoreOne(${t.id})" style="color:#16a34a;border-color:#86efac;font-size:11px;padding:4px 10px;font-weight:700">Restore</button>
+        <button class="btn-grid-action" onclick="typePermOne(${t.id})" style="color:#dc2626;border-color:#fca5a5;font-size:11px;padding:4px 10px;font-weight:700">Delete</button>
       </div></td></tr>`).join('');
   } else { btn.style.background=''; btn.style.fontWeight=''; }
 }
 function typeDelToggleAll(cb){document.querySelectorAll('.type-del-chk').forEach(c=>c.checked=cb.checked);typeDelUpdateBtns();}
-function typeDelUpdateBtns(){const n=document.querySelectorAll('.type-del-chk:checked').length;const r=document.getElementById('typeDelBulkRestore');const p=document.getElementById('typeDelBulkPerm');if(r){r.style.display=n>0?'':'none';r.textContent='↩️ Restore ('+n+')';}if(p){p.style.display=n>0?'':'none';p.textContent='💥 Permanent Delete ('+n+')';}}
+function typeDelUpdateBtns(){const n=document.querySelectorAll('.type-del-chk:checked').length;const r=document.getElementById('typeDelBulkRestore');const p=document.getElementById('typeDelBulkPerm');if(r){r.style.display=n>0?'':'none';r.textContent='Restore ('+n+')';}if(p){p.style.display=n>0?'':'none';p.textContent='Permanent Delete ('+n+')';}}
 async function typeRestoreOne(id){await fetch(IM+'/types/restore',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})});typeToggleTrash();typeToggleTrash();await imLoadTypes();}
 function typePermOne(id){showConfirm('Type permanently delete hoga.','Permanent Delete',async()=>{await fetch(IM+'/types/permanent-delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})});typeToggleTrash();typeToggleTrash();});}
 function typeDelBulkRestore(){const ids=[...document.querySelectorAll('.type-del-chk:checked')].map(c=>+c.value);if(!ids.length)return;showConfirm(ids.length+' types restore honge.','Restore',async()=>{for(const id of ids)await fetch(IM+'/types/restore',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})});typeToggleTrash();typeToggleTrash();await imLoadTypes();});}
 function typeDelBulkPerm(){const ids=[...document.querySelectorAll('.type-del-chk:checked')].map(c=>+c.value);if(!ids.length)return;showConfirm(ids.length+' types permanently delete honge!','Permanent Delete',async()=>{for(const id of ids)await fetch(IM+'/types/permanent-delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})});typeToggleTrash();typeToggleTrash();});}
 
-/* ══ TRASH TOGGLE — GROUPS ══════════════════════════ */
+/* == TRASH TOGGLE - GROUPS ========================== */
 let grpTrashMode=false;
 async function grpToggleTrash(){
   grpTrashMode=!grpTrashMode;
@@ -1384,21 +1466,21 @@ async function grpToggleTrash(){
       <td style="padding:0 8px"><input type="checkbox" class="grp-del-chk" value="${g.id}" onclick="grpDelUpdateBtns()" style="width:15px;height:15px;accent-color:#dc2626"></td>
       <td style="color:#94a3b8;font-size:11px">${i+1}</td>
       <td style="text-decoration:line-through;color:#94a3b8;font-weight:700">${esc(g.group_name)}</td>
-      <td style="font-size:12px;color:#94a3b8">${g.deleted_at?new Date(g.deleted_at).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):'—'}</td>
+      <td style="font-size:12px;color:#94a3b8">${g.deleted_at?new Date(g.deleted_at).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):'-'}</td>
       <td><div class="row-actions" style="justify-content:flex-end;gap:6px">
-        <button class="btn-grid-action" onclick="grpRestoreOne(${g.id})" style="color:#16a34a;border-color:#86efac;font-size:11px;padding:4px 10px;font-weight:700">↩️ Restore</button>
-        <button class="btn-grid-action" onclick="grpPermOne(${g.id})" style="color:#dc2626;border-color:#fca5a5;font-size:11px;padding:4px 10px;font-weight:700">💥 Delete</button>
+        <button class="btn-grid-action" onclick="grpRestoreOne(${g.id})" style="color:#16a34a;border-color:#86efac;font-size:11px;padding:4px 10px;font-weight:700">Restore</button>
+        <button class="btn-grid-action" onclick="grpPermOne(${g.id})" style="color:#dc2626;border-color:#fca5a5;font-size:11px;padding:4px 10px;font-weight:700">Delete</button>
       </div></td></tr>`).join('');
   } else { btn.style.background=''; btn.style.fontWeight=''; }
 }
 function grpDelToggleAll(cb){document.querySelectorAll('.grp-del-chk').forEach(c=>c.checked=cb.checked);grpDelUpdateBtns();}
-function grpDelUpdateBtns(){const n=document.querySelectorAll('.grp-del-chk:checked').length;const r=document.getElementById('grpDelBulkRestore');const p=document.getElementById('grpDelBulkPerm');if(r){r.style.display=n>0?'':'none';r.textContent='↩️ Restore ('+n+')';}if(p){p.style.display=n>0?'':'none';p.textContent='💥 Permanent Delete ('+n+')';}}
+function grpDelUpdateBtns(){const n=document.querySelectorAll('.grp-del-chk:checked').length;const r=document.getElementById('grpDelBulkRestore');const p=document.getElementById('grpDelBulkPerm');if(r){r.style.display=n>0?'':'none';r.textContent='Restore ('+n+')';}if(p){p.style.display=n>0?'':'none';p.textContent='Permanent Delete ('+n+')';}}
 async function grpRestoreOne(id){await fetch(IM+'/groups/restore',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})});grpToggleTrash();grpToggleTrash();await imLoadGroups();}
 function grpPermOne(id){showConfirm('Group permanently delete hoga.','Permanent Delete',async()=>{await fetch(IM+'/groups/permanent-delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})});grpToggleTrash();grpToggleTrash();});}
 function grpDelBulkRestore(){const ids=[...document.querySelectorAll('.grp-del-chk:checked')].map(c=>+c.value);if(!ids.length)return;showConfirm(ids.length+' groups restore honge.','Restore',async()=>{for(const id of ids)await fetch(IM+'/groups/restore',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})});grpToggleTrash();grpToggleTrash();await imLoadGroups();});}
 function grpDelBulkPerm(){const ids=[...document.querySelectorAll('.grp-del-chk:checked')].map(c=>+c.value);if(!ids.length)return;showConfirm(ids.length+' groups permanently delete honge!','Permanent Delete',async()=>{for(const id of ids)await fetch(IM+'/groups/permanent-delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})});grpToggleTrash();grpToggleTrash();});}
 
-/* ══ TRASH TOGGLE — CATEGORIES ══════════════════════ */
+/* == TRASH TOGGLE - CATEGORIES ====================== */
 let catTrashMode=false;
 async function catToggleTrash(){
   catTrashMode=!catTrashMode;
@@ -1417,23 +1499,23 @@ async function catToggleTrash(){
       <td style="padding:0 8px"><input type="checkbox" class="cat-del-chk" value="${cat.id}" onclick="catDelUpdateBtns()" style="width:15px;height:15px;accent-color:#dc2626"></td>
       <td style="color:#94a3b8;font-size:11px">${i+1}</td>
       <td style="text-decoration:line-through;color:#94a3b8;font-weight:700">${esc(cat.category_name)}</td>
-      <td style="font-size:12px;color:#94a3b8">${cat.deleted_at?new Date(cat.deleted_at).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):'—'}</td>
+      <td style="font-size:12px;color:#94a3b8">${cat.deleted_at?new Date(cat.deleted_at).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):'-'}</td>
       <td><div class="row-actions" style="justify-content:flex-end;gap:6px">
-        <button class="btn-grid-action" onclick="catRestoreOne(${cat.id})" style="color:#16a34a;border-color:#86efac;font-size:11px;padding:4px 10px;font-weight:700">↩️ Restore</button>
-        <button class="btn-grid-action" onclick="catPermOne(${cat.id})" style="color:#dc2626;border-color:#fca5a5;font-size:11px;padding:4px 10px;font-weight:700">💥 Delete</button>
+        <button class="btn-grid-action" onclick="catRestoreOne(${cat.id})" style="color:#16a34a;border-color:#86efac;font-size:11px;padding:4px 10px;font-weight:700">Restore</button>
+        <button class="btn-grid-action" onclick="catPermOne(${cat.id})" style="color:#dc2626;border-color:#fca5a5;font-size:11px;padding:4px 10px;font-weight:700">Delete</button>
       </div></td></tr>`).join('');
   } else { btn.style.background=''; btn.style.fontWeight=''; }
 }
 function catDelToggleAll(cb){document.querySelectorAll('.cat-del-chk').forEach(c=>c.checked=cb.checked);catDelUpdateBtns();}
-function catDelUpdateBtns(){const n=document.querySelectorAll('.cat-del-chk:checked').length;const r=document.getElementById('catDelBulkRestore');const p=document.getElementById('catDelBulkPerm');if(r){r.style.display=n>0?'':'none';r.textContent='↩️ Restore ('+n+')';}if(p){p.style.display=n>0?'':'none';p.textContent='💥 Permanent Delete ('+n+')';}}
+function catDelUpdateBtns(){const n=document.querySelectorAll('.cat-del-chk:checked').length;const r=document.getElementById('catDelBulkRestore');const p=document.getElementById('catDelBulkPerm');if(r){r.style.display=n>0?'':'none';r.textContent='Restore ('+n+')';}if(p){p.style.display=n>0?'':'none';p.textContent='Permanent Delete ('+n+')';}}
 async function catRestoreOne(id){await fetch(IM+'/categories/restore',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})});catToggleTrash();catToggleTrash();await imLoadCategories();}
 function catPermOne(id){showConfirm('Category permanently delete hogi.','Permanent Delete',async()=>{await fetch(IM+'/categories/permanent-delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})});catToggleTrash();catToggleTrash();});}
 function catDelBulkRestore(){const ids=[...document.querySelectorAll('.cat-del-chk:checked')].map(c=>+c.value);if(!ids.length)return;showConfirm(ids.length+' categories restore hongi.','Restore',async()=>{for(const id of ids)await fetch(IM+'/categories/restore',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})});catToggleTrash();catToggleTrash();await imLoadCategories();});}
 function catDelBulkPerm(){const ids=[...document.querySelectorAll('.cat-del-chk:checked')].map(c=>+c.value);if(!ids.length)return;showConfirm(ids.length+' categories permanently delete hongi!','Permanent Delete',async()=>{for(const id of ids)await fetch(IM+'/categories/permanent-delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})});catToggleTrash();catToggleTrash();});}
 
-/* ══ TOOLBAR FUNCTIONS ════════════════════════════════════════ */
+/* == TOOLBAR FUNCTIONS ======================================== */
 
-// Panel toggle — close others when opening one
+// Panel toggle - close others when opening one
 function tbToggle(id){
   document.querySelectorAll('.tb-panel').forEach(p=>{ if(p.id!==id) p.style.display='none'; });
   const el=document.getElementById(id);
@@ -1493,7 +1575,7 @@ function toggleCol(cls, show){
   });
 }
 
-// ── Build export rows based on material type ────────────────
+// -- Build export rows based on material type ----------------
 function _buildExportRows(rows, sep){
   const abbr  = '{{ auto_type_abbr }}';
   const isRM  = abbr === 'RM';
@@ -1501,14 +1583,14 @@ function _buildExportRows(rows, sep){
   const isFG  = abbr === 'FG';
   const q = v => sep===','? `"${String(v||'').replace(/"/g,'""')}"` : String(v||'');
 
-  // ── Headers ──
+  // -- Headers --
   let hdrs = ['#','Item Name','Code','Aliases'];
   if(isRM){ hdrs = hdrs.concat(['Category','Group','INCI Name']); }
   if(isPM){ hdrs = hdrs.concat(['PM Type','Material Type (HM/CM)','Brand','Category','SKU Size','Attributes','Corrugation Ply','Length(mm)','Width(mm)','Height(mm)']); }
   if(isFG){ hdrs = hdrs.concat(['Brand','Category','SKU Size','Per Box Qty','Per Box Weight','Weight UOM']); }
   hdrs = hdrs.concat(['UOM','MSL','Last Rate (Rs)','Opening Balance','HSN','GST%','Taxability','Description','Status']);
 
-  // ── Data rows ──
+  // -- Data rows --
   const dataRows = rows.map((r,i)=>{
     let cols = [i+1, q(r.material_name), r.code||'', q(r.aliases||'')];
     if(isRM){
@@ -1547,7 +1629,7 @@ function exportCSV(){
   a.download = (abbr||'items') + '_' + new Date().toISOString().slice(0,10) + '.csv';
   a.click();
   document.getElementById('exportPanel').style.display='none';
-  showToast('CSV exported ✓','success');
+  showToast('CSV exported','success');
 }
 
 // Export Excel (tab-separated, opens in Excel)
@@ -1560,7 +1642,7 @@ function exportExcel(){
   a.download = (abbr||'items') + '_' + new Date().toISOString().slice(0,10) + '.xls';
   a.click();
   document.getElementById('exportPanel').style.display='none';
-  showToast('Excel exported ✓','success');
+  showToast('Excel exported','success');
 }
 
 // Import
@@ -1591,7 +1673,7 @@ function handleImportFile(file){
     const lines=e.target.result.split('\n').map(l=>l.trim()).filter(Boolean);
     if(lines.length<2){ showToast('File empty ya invalid','danger'); return; }
     // Strip BOM and normalize headers
-    const rawHdr = lines[0].replace(/^﻿/,'');
+    const rawHdr = lines[0].replace(/^\ufeff/,'');
     const headers = rawHdr.split(',').map(h=>h.trim().replace(/^"|"$/g,'').toLowerCase().replace(/[\s\-\/\(\)]/g,'_').replace(/[^a-z_0-9]/g,'').replace(/_+/g,'_').replace(/^_|_$/g,''));
     _importData = lines.slice(1).map(line=>{
       const vals=[]; let cur='', inQ=false;
@@ -1610,11 +1692,11 @@ function handleImportFile(file){
       if(!r.item_name) r.item_name = r.material_name||r.name||r.item||'';
       return r;
     });
-    if(_importData.length===0){ showToast('0 items mila — check: item_name column hai?','danger'); }
+    if(_importData.length===0){ showToast('0 items mila - check: item_name column hai?','danger'); }
 
     const preview=document.getElementById('importPreview');
     preview.style.display='block';
-    preview.innerHTML=`<div style="font-size:12.5px;font-weight:700;color:#16a34a;margin-bottom:8px;">✅ ${_importData.length} items ready to import</div>
+    preview.innerHTML=`<div style="font-size:12.5px;font-weight:700;color:#16a34a;margin-bottom:8px;">${_importData.length} items ready to import</div>
     <div style="max-height:180px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:8px;font-size:11.5px;">
       <table style="width:100%;border-collapse:collapse;">
         <thead><tr style="background:#f8fafc;position:sticky;top:0;">
@@ -1631,12 +1713,12 @@ function handleImportFile(file){
           ${_importData.slice(0,8).map((r,i)=>{ const ab='{{ auto_type_abbr }}'; const isRM=ab==='RM'; const isPM=ab==='PM'; const isFG=ab==='FG';
             let cells=`<td style="padding:5px 10px;color:#94a3b8;">${i+1}</td>
             <td style="padding:5px 10px;font-weight:600;">${esc(r.item_name||r.material_name||'')}</td>
-            <td style="padding:5px 10px;font-family:monospace;">${esc(r.code||'—')}</td>
+            <td style="padding:5px 10px;font-family:monospace;">${esc(r.code||'-')}</td>
             <td style="padding:5px 10px;">${esc(r.aliases||'')}</td>`;
             if(isRM) cells+=`<td style="padding:5px 10px;">${esc(r.category||'')}</td><td style="padding:5px 10px;">${esc(r.group||'')}</td><td style="padding:5px 10px;">${esc(r.inci_name||'')}</td>`;
             if(isPM) cells+=`<td style="padding:5px 10px;">${esc(r.pm_type||r.pm_material_type||'')}</td><td style="padding:5px 10px;">${esc(r.material_type_hm_cm||r.pm_client_type||'')}</td><td style="padding:5px 10px;">${esc(r.brand||'')}</td><td style="padding:5px 10px;">${esc(r.category||'')}</td><td style="padding:5px 10px;">${esc(r.sku_size||r.sku_sizes||'')}</td>`;
             if(isFG) cells+=`<td style="padding:5px 10px;">${esc(r.brand||'')}</td><td style="padding:5px 10px;">${esc(r.category||'')}</td><td style="padding:5px 10px;">${esc(r.sku_size||r.sku_sizes||'')}</td>`;
-            cells+=`<td style="padding:5px 10px;">${esc(r.uom||'KG')}</td><td style="padding:5px 10px;">₹${r.last_purchase_rate||r.rate||0}</td><td style="padding:5px 10px;">${r.msl||0}</td><td style="padding:5px 10px;">${r.opening_balance||0}</td><td style="padding:5px 10px;">${esc(r.hsn_code||r.hsn||'')}</td><td style="padding:5px 10px;">${r.gst||r.gst_rate||18}%</td><td style="padding:5px 10px;">${esc(r.taxability||'Taxable')}</td><td style="padding:5px 10px;">${esc(r.description||'')}</td>`;
+            cells+=`<td style="padding:5px 10px;">${esc(r.uom||'KG')}</td><td style="padding:5px 10px;">\u20b9${r.last_purchase_rate||r.rate||0}</td><td style="padding:5px 10px;">${r.msl||0}</td><td style="padding:5px 10px;">${r.opening_balance||0}</td><td style="padding:5px 10px;">${esc(r.hsn_code||r.hsn||'')}</td><td style="padding:5px 10px;">${r.gst||r.gst_rate||18}%</td><td style="padding:5px 10px;">${esc(r.taxability||'Taxable')}</td><td style="padding:5px 10px;">${esc(r.description||'')}</td>`;
             return `<tr style="border-top:1px solid #f1f5f9;">${cells}</tr>`;
           }).join('')}
           ${_importData.length>8?`<tr><td colspan="20" style="padding:6px 10px;color:#94a3b8;font-style:italic;">... aur ${_importData.length-8} items</td></tr>`:''}
@@ -1650,12 +1732,12 @@ function handleImportFile(file){
 async function doImport(){
   if(!_importData.length) return;
   const btn=document.getElementById('btnDoImport');
-  btn.disabled=true; btn.textContent='⏳ Importing…';
+  btn.disabled=true; btn.textContent='Importing...';
   document.getElementById('importProgress').style.display='block';
   const autoTypeId='{{ auto_type.id if auto_type else "" }}';
   let ok=0, updated=0, fail=0;
 
-  // Build code → id map AND name → id map from already-loaded rows
+  // Build code-to-id and name-to-id maps from already-loaded rows
   const codeMap={};
   const nameMap={};
   imRows.forEach(row=>{
@@ -1672,13 +1754,13 @@ async function doImport(){
 
     const code=(r.code||'').trim();
     const importName=(r.item_name||r.material_name||'').trim();
-    // Check: same code already exists → update (pass id), else create new
+    // Check: same code already exists: update (pass id), else create new
     const existingById  = code ? (codeMap[code.toUpperCase()] || null) : null;
     const existingByName = !existingById ? (nameMap[importName.toLowerCase()] || null) : null;
-    // If name exists but code doesn't match → SKIP (duplicate name, different item)
+    // If name exists but code doesn't match: SKIP (duplicate name, different item)
     if(existingByName && !existingById){
       fail++;
-      document.getElementById('importProgressText').textContent=`${i+1}/${_importData.length} (⚠️ "${importName}" duplicate)`;
+      document.getElementById('importProgressText').textContent=`${i+1}/${_importData.length} ("${importName}" duplicate)`;
       continue;
     }
     const existingId = existingById;
@@ -1744,11 +1826,22 @@ async function doImport(){
     closeImportModal();
     imLoad();
     const parts=[];
-    if(ok) parts.push(`✅ ${ok} new`);
-    if(updated) parts.push(`🔄 ${updated} updated`);
-    if(fail) parts.push(`❌ ${fail} failed`);
+    if(ok) parts.push(`${ok} new`);
+    if(updated) parts.push(`${updated} updated`);
+    if(fail) parts.push(`${fail} failed`);
     showToast(parts.join(', ') || 'No items processed', ok||updated?'success':'danger');
   }, 600);
 }
+/* == LUCIDE ICONS == */
+function imDrawLucide(){ if(window.lucide){ try{ lucide.createIcons({attrs:{'stroke-width':1.9}}); }catch(e){} } }
+(function(){
+  if(window.lucide){ document.addEventListener('DOMContentLoaded', imDrawLucide); }
+  else {
+    var s=document.createElement('script');
+    s.src='https://unpkg.com/lucide@latest';
+    s.onload=imDrawLucide;
+    document.head.appendChild(s);
+  }
+})();
 </script>
 {% endblock %}

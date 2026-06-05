@@ -5,120 +5,183 @@
 
 {% block extra_css %}
 <style>
-* { box-sizing:border-box; }
+:root {
+    --premium-bg: #f8fafc;
+    --card-bg: #ffffff;
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+    --text-light: #94a3b8;
+    --border-soft: #e2e8f0;
+    --border-lighter: #f1f5f9;
+    --primary: #2563eb;
+    --primary-hover: #1d4ed8;
+    --primary-light: #eff6ff;
+    --danger: #ef4444;
+    --danger-bg: #fef2f2;
+    --success: #10b981;
+    --success-bg: #ecfdf5;
+    --warning: #f59e0b;
+    --warning-bg: #fffbeb;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-pill: 9999px;
+    --shadow-soft: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.03);
+    --shadow-hover: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.04);
+}
 
-/* ── Search bar ── */
-.so-search-bar { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
-.so-search-bar input, .so-search-bar select { padding:8px 12px; border:1.5px solid #e2e8f0; border-radius:8px; font-size:0.83rem; color:#374151; outline:none; background:#fff; }
-.so-search-bar input:focus, .so-search-bar select:focus { border-color:#1e3a5f; }
-.so-search-bar .search-wrap { position:relative; flex:1; min-width:0; }
-.so-search-bar .search-wrap input { width:100%; padding-left:32px; }
-.so-search-bar .search-icon { position:absolute; left:10px; top:50%; transform:translateY(-50%); color:#94a3b8; pointer-events:none; }
-.so-search-bar .clear-btn { position:absolute; right:8px; top:50%; transform:translateY(-50%); background:none; border:none; color:#94a3b8; font-size:1rem; cursor:pointer; display:none; line-height:1; }
+* { box-sizing: border-box; }
 
-/* ── Tabs ── */
-.so-tabs { display:flex; gap:0; border-bottom:2px solid #e2e8f0; padding:0 14px; overflow-x:auto; }
-.so-tab { padding:10px 18px; font-size:0.83rem; font-weight:700; color:#64748b; cursor:pointer; border-bottom:3px solid transparent; margin-bottom:-2px; white-space:nowrap; text-decoration:none; display:flex; align-items:center; gap:6px; }
-.so-tab:hover { color:#1e3a5f; }
-.so-tab.active { color:#1e3a5f; border-bottom-color:#1e3a5f; }
-.so-tab .tab-cnt { background:#e2e8f0; color:#64748b; font-size:0.7rem; font-weight:700; padding:2px 7px; border-radius:100px; }
-.so-tab.active .tab-cnt { background:#1e3a5f; color:#fff; }
-.so-tab.tab-del.active { color:#dc2626; border-bottom-color:#dc2626; }
-.so-tab.tab-del.active .tab-cnt { background:#dc2626; color:#fff; }
+.card {
+    background: var(--card-bg);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-soft);
+    border: 1px solid var(--border-soft);
+    overflow: hidden;
+}
 
-/* ── Bulk bar ── */
-#soBulkBar { display:none; position:sticky; top:0; z-index:50; background:#1e3a5f; color:#fff; padding:10px 14px; border-radius:10px; margin:10px 12px 4px; align-items:center; gap:8px; flex-wrap:wrap; }
-#soBulkBar.show { display:flex; }
-.so-bulk-btn { border:none; padding:7px 12px; border-radius:7px; font-size:0.78rem; font-weight:700; cursor:pointer; white-space:nowrap; }
-.so-bulk-del     { background:#f87171; color:#7f1d1d; }
-.so-bulk-restore { background:#a78bfa; color:#3b0764; }
-.so-bulk-perm    { background:#f87171; color:#7f1d1d; }
-.so-bulk-desel   { background:rgba(255,255,255,0.15); border:none; color:#fff; padding:7px 12px; border-radius:7px; font-size:0.78rem; cursor:pointer; margin-left:auto; }
+/* ── Header & Search ── */
+.card-hdr {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 16px 20px; border-bottom: 1px solid var(--border-soft); flex-wrap: wrap; gap: 16px;
+}
+.card-title { font-size: 1.25rem; font-weight: 800; color: var(--text-main); display: flex; align-items: center; gap: 8px; }
 
-/* ── Table ── */
-.so-table { width:100%; border-collapse:collapse; }
-.so-table thead tr { background:linear-gradient(135deg,#1e3a5f,#2d5a8e); }
-.so-table th { padding:10px 12px; text-align:left; font-size:0.71rem; font-weight:700; color:#fff; text-transform:uppercase; letter-spacing:.05em; border-right:1px solid rgba(255,255,255,.15); white-space:nowrap; }
-.so-table th:last-child { border-right:none; }
-.so-table td { padding:10px 12px; font-size:0.83rem; color:var(--text); border-bottom:1px solid #f1f5f9; vertical-align:middle; }
-.so-table tr:hover td { background:#f8fafc; }
-.so-table tr.row-sel td { background:#eef2ff !important; }
-input[type=checkbox].so-chk { width:17px; height:17px; accent-color:#1e3a5f; cursor:pointer; }
+.so-search-bar { display: flex; align-items: center; flex: 1; max-width: 360px; justify-content: flex-end; }
+.search-wrap { position: relative; width: 100%; display: flex; align-items: center; }
+.search-wrap input {
+    width: 100%; padding: 10px 16px 10px 40px; border: 1px solid var(--border-soft);
+    border-radius: var(--radius-pill); font-size: 0.85rem; color: var(--text-main); outline: none; background: var(--premium-bg); transition: all 0.2s;
+}
+.search-wrap input:focus { background: #fff; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
+.search-icon { position: absolute; left: 14px; color: var(--text-light); pointer-events: none; display: flex; align-items: center; }
+.clear-btn { position: absolute; right: 12px; background: none; border: none; color: var(--text-light); cursor: pointer; display: none; padding: 4px; border-radius: 50%; }
+.clear-btn:hover { background: var(--border-soft); color: var(--text-main); }
 
-/* ── Invoice buttons ── */
-.inv-upload-btn  { background:#fdf4ff; color:#7c3aed; border:1px dashed #c4b5fd; padding:5px 9px; border-radius:6px; font-size:0.75rem; font-weight:600; cursor:pointer; display:inline-block; }
-.inv-dl-btn      { background:#eff6ff; color:#1d4ed8; border:none; padding:5px 9px; border-radius:6px; font-size:0.75rem; font-weight:600; cursor:pointer; text-decoration:none; display:inline-block; }
-.inv-change-btn  { background:#fff7ed; color:#c2410c; border:none; padding:5px 9px; border-radius:6px; font-size:0.75rem; font-weight:600; cursor:pointer; display:inline-block; }
-.inv-del-btn     { background:#fef2f2; color:#dc2626; border:none; padding:4px 7px; border-radius:6px; font-size:0.75rem; font-weight:700; cursor:pointer; }
-.inv-filename    { font-size:0.7rem; color:var(--text3); display:block; margin-top:3px; max-width:130px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+/* ── Tabs (Pill Style) ── */
+.so-tabs { display: flex; gap: 12px; padding: 12px 20px; border-bottom: 1px solid var(--border-soft); background: #fafbfc; overflow-x: auto; }
+.so-tab {
+    padding: 8px 18px; font-size: 0.85rem; font-weight: 600; text-decoration: none;
+    border-radius: var(--radius-pill); border: 1px solid var(--border-soft); background: #fff;
+    color: var(--text-muted); transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; white-space: nowrap;
+}
+.so-tab:hover { background: var(--border-lighter); color: var(--text-main); }
+.so-tab.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+.so-tab.tab-del.active { background: var(--danger); border-color: var(--danger); color: #fff; }
+
+.tab-cnt { background: var(--border-soft); color: var(--text-main); font-size: 0.7rem; padding: 2px 6px; border-radius: var(--radius-pill); font-weight: 700; }
+.so-tab.active .tab-cnt, .so-tab.tab-del.active .tab-cnt { background: rgba(255,255,255,0.25); color: #fff; }
+
+/* ── Bulk Action Bar ── */
+#soBulkBar {
+    display: none; position: sticky; top: 10px; z-index: 50; background: var(--text-main); color: #fff;
+    padding: 10px 16px; border-radius: var(--radius-md); margin: 12px 20px; align-items: center; gap: 12px; flex-wrap: wrap; box-shadow: var(--shadow-hover);
+}
+#soBulkBar.show { display: flex; animation: soSlideUp 0.3s ease; }
+.so-bulk-btn { border: none; padding: 8px 14px; border-radius: var(--radius-sm); font-size: 0.8rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s; }
+.so-bulk-del { background: var(--danger); color: #fff; }
+.so-bulk-del:hover { background: #b91c1c; }
+.so-bulk-restore { background: var(--success); color: #fff; }
+.so-bulk-restore:hover { background: #059669; }
+.so-bulk-perm { background: transparent; border: 1px solid var(--danger); color: #fca5a5; }
+.so-bulk-perm:hover { background: var(--danger); color: #fff; }
+.so-bulk-desel { background: rgba(255,255,255,0.1); border: none; color: #fff; padding: 8px 14px; border-radius: var(--radius-sm); font-size: 0.8rem; cursor: pointer; margin-left: auto; transition: background 0.2s; }
+.so-bulk-desel:hover { background: rgba(255,255,255,0.2); }
+
+/* ── Table Styling ── */
+.so-tbl-wrap { overflow-x: auto; width: 100%; }
+.so-table { width: 100%; border-collapse: collapse; text-align: left; }
+.so-table th { background: var(--premium-bg); color: var(--text-muted); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 14px 16px; border-bottom: 1px solid var(--border-soft); white-space: nowrap; }
+.so-table td { padding: 14px 16px; font-size: 0.85rem; color: var(--text-main); border-bottom: 1px solid var(--border-lighter); vertical-align: middle; }
+.so-table tr:hover td { background: #fdfdfe; }
+.so-table tr.row-sel td { background: var(--primary-light); }
+.so-chk { width: 16px; height: 16px; accent-color: var(--primary); cursor: pointer; border-radius: 4px; }
+
+/* ── Action Buttons ── */
+.btn-action { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: none; padding: 6px 10px; border-radius: var(--radius-sm); font-size: 0.75rem; font-weight: 600; cursor: pointer; text-decoration: none; transition: all 0.2s; }
+.btn-blue { background: var(--primary-light); color: var(--primary); }
+.btn-blue:hover { background: #dbeafe; }
+.btn-green { background: var(--success-bg); color: var(--success); }
+.btn-green:hover { background: #d1fae5; }
+.btn-purple { background: #f3e8ff; color: #7e22ce; }
+.btn-purple:hover { background: #e9d5ff; }
+.btn-red { background: var(--danger-bg); color: var(--danger); }
+.btn-red:hover { background: #fee2e2; }
+
+/* ── Invoice UI ── */
+.inv-wrap { display: flex; flex-direction: column; gap: 6px; }
+.inv-actions { display: flex; align-items: center; gap: 4px; }
+.inv-upload-btn { display: flex; align-items: center; justify-content: center; gap: 6px; background: var(--premium-bg); color: var(--text-main); border: 1px dashed var(--text-light); padding: 8px 12px; border-radius: var(--radius-sm); font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.inv-upload-btn:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
+.inv-filename { font-size: 0.75rem; color: var(--primary); font-weight: 600; display: flex; align-items: center; gap: 4px; background: var(--primary-light); padding: 4px 8px; border-radius: var(--radius-sm); max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.inv-icon-btn { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; text-decoration: none; color: var(--text-muted); background: var(--premium-bg); }
+.inv-icon-btn:hover { background: var(--border-soft); color: var(--text-main); }
+.inv-icon-btn.red:hover { background: var(--danger-bg); color: var(--danger); }
 
 /* ── Mobile Cards ── */
-.so-cards { display:none; padding:8px 12px 16px; gap:10px; flex-direction:column; }
-.so-card { background:#fff; border:1.5px solid #e8edf5; border-radius:16px; overflow:hidden; box-shadow:0 3px 12px rgba(30,58,95,0.08); transition:box-shadow .15s, transform .15s; }
-.so-card:active { transform:scale(0.99); }
-.so-card.selected { border-color:#1e3a5f; box-shadow:0 0 0 3px rgba(30,58,95,0.15); }
-/* Card Header — dark gradient */
-.so-card-hdr { background:linear-gradient(135deg,#1e3a5f,#2d5a8e); color:#fff; padding:14px 14px 12px; display:flex; align-items:flex-start; gap:10px; }
-.so-card-hdr-left { flex:1; min-width:0; }
-.so-card-num { font-size:1rem; font-weight:800; letter-spacing:.3px; }
-.so-card-sub { font-size:0.78rem; opacity:0.8; margin-top:3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.so-card-hdr-right { text-align:right; flex-shrink:0; }
-.so-card-total-label { font-size:0.62rem; opacity:0.7; text-transform:uppercase; letter-spacing:.5px; }
-.so-card-total-amt { font-size:1.15rem; font-weight:800; }
-/* Card Body */
-.so-card-body { padding:12px 14px 0; }
-.so-card-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px 14px; margin-bottom:10px; }
-.so-card-field label { font-size:0.65rem; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.5px; display:block; margin-bottom:2px; }
-.so-card-field span { font-size:0.82rem; color:#374151; font-weight:600; }
-/* Cost strip */
-.so-card-costs { display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; background:#f8fafc; border-radius:10px; padding:10px; border:1px solid #e2e8f0; margin-bottom:10px; }
-.so-cost-item { text-align:center; }
-.so-cost-item label { font-size:0.62rem; font-weight:700; color:#94a3b8; text-transform:uppercase; display:block; margin-bottom:3px; }
-.so-cost-item span { font-size:0.82rem; font-weight:700; color:#1e3a5f; }
-/* Footer actions */
-.so-card-footer { display:flex; gap:6px; flex-wrap:wrap; padding:10px 14px 12px; border-top:1px solid #f1f5f9; background:#fafbff; }
-.so-card-footer button, .so-card-footer a { flex:1; min-width:60px; padding:9px 4px; border-radius:9px; font-size:0.75rem; font-weight:700; border:none; cursor:pointer; text-align:center; text-decoration:none; display:flex; align-items:center; justify-content:center; gap:3px; }
+.so-cards { display: none; padding: 12px; flex-direction: column; gap: 12px; background: var(--premium-bg); }
+.so-card { background: #fff; border-radius: var(--radius-md); border: 1px solid var(--border-soft); box-shadow: 0 2px 4px rgba(0,0,0,0.02); overflow: hidden; transition: all 0.2s; }
+.so-card.selected { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-light); }
 
-/* ── Pagination ── */
-.so-pagination { display:flex; justify-content:center; align-items:center; gap:8px; padding:14px; flex-wrap:wrap; }
+.so-card-hdr { background: var(--text-main); color: #fff; padding: 16px; display: flex; align-items: flex-start; gap: 12px; }
+.so-card-num { font-size: 1rem; font-weight: 700; color: #fff; }
+.so-card-sub { font-size: 0.8rem; color: var(--text-light); margin-top: 4px; }
+.so-card-sub a { color: var(--primary-light); text-decoration: none; font-weight: 600; }
+.so-card-hdr-right { margin-left: auto; text-align: right; }
+.so-card-total-label { font-size: 0.65rem; color: var(--text-light); text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em; }
+.so-card-total-amt { font-size: 1.1rem; font-weight: 700; color: #fff; margin-top: 2px; }
 
-/* ── Empty ── */
-.so-empty { text-align:center; padding:3rem 1rem; color:var(--text3); }
+.so-card-body { padding: 16px; }
+.so-card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+.so-card-field label { font-size: 0.7rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 4px; }
+.so-card-field span { font-size: 0.85rem; font-weight: 600; color: var(--text-main); }
 
-/* ── Toast ── */
-#soToast { display:none; position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#1e3a5f; color:#fff; padding:12px 20px; border-radius:12px; font-size:0.85rem; font-weight:600; z-index:9999; box-shadow:0 8px 30px rgba(0,0,0,0.25); max-width:90vw; text-align:center; }
-#soToast.show { display:block; animation:soToastIn .25s ease; }
+.so-card-costs { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; background: var(--premium-bg); border-radius: var(--radius-sm); padding: 12px; border: 1px solid var(--border-soft); }
+.so-cost-item { text-align: center; }
+.so-cost-item label { font-size: 0.65rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px; }
+.so-cost-item span { font-size: 0.85rem; font-weight: 700; color: var(--text-main); }
 
-/* ── Confirm Modal ── */
-.so-modal-wrap { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:1000; align-items:flex-end; justify-content:center; }
-.so-modal-wrap.show { display:flex; animation:soFadeIn .2s; }
-.so-modal-box { background:#fff; border-radius:22px 22px 0 0; width:100%; max-height:92vh; overflow-y:auto; box-shadow:0 -8px 40px rgba(0,0,0,0.2); animation:soSlideUp .25s ease; }
-.so-modal-hdr { background:#1e3a5f; color:#fff; padding:14px 18px; display:flex; align-items:center; justify-content:space-between; border-radius:22px 22px 0 0; position:sticky; top:0; }
-.so-modal-title { font-size:1rem; font-weight:700; }
-.so-modal-close { background:rgba(255,255,255,0.18); border:none; color:#fff; width:30px; height:30px; border-radius:50%; font-size:1rem; cursor:pointer; display:flex; align-items:center; justify-content:center; }
-.so-modal-body { padding:16px; }
-.so-modal-foot { padding:12px 16px; border-top:1px solid #e5e7eb; display:flex; gap:8px; background:#f9fafb; position:sticky; bottom:0; }
-.so-modal-foot button { flex:1; padding:13px; border-radius:10px; font-size:0.88rem; font-weight:700; border:none; cursor:pointer; }
-.smbtn-cancel  { background:#f1f5f9; color:#374151; }
-.smbtn-primary { background:#1e3a5f; color:#fff; }
-.smbtn-danger  { background:#ef4444; color:#fff; }
+.so-card-footer { padding: 12px 16px; background: #fff; border-top: 1px solid var(--border-lighter); display: flex; gap: 8px; flex-wrap: wrap; }
+.so-card-footer .btn-action { flex: 1; min-width: 80px; justify-content: center; padding: 10px; font-size: 0.8rem; }
 
-@keyframes soToastIn  { from{opacity:0;transform:translateX(-50%) translateY(10px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
-@keyframes soSlideUp  { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
-@keyframes soFadeIn   { from{opacity:0} to{opacity:1} }
+/* ── Pagination & Empty ── */
+.so-pagination { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-top: 1px solid var(--border-soft); background: #fff; }
+.pgn-btn { background: #fff; border: 1px solid var(--border-soft); padding: 8px 14px; border-radius: var(--radius-sm); font-size: 0.8rem; font-weight: 600; color: var(--text-main); cursor: pointer; text-decoration: none; transition: all 0.2s; }
+.pgn-btn:hover { background: var(--premium-bg); }
 
-@media (max-width:767px) {
-    .so-cards     { display:flex; }
-    .so-tbl-wrap  { display:none !important; }
-    .card-hdr     { flex-direction:column; align-items:stretch; gap:10px; padding:12px; }
-    .so-search-bar input { font-size:0.9rem; padding:10px 12px; }
-}
-@media (min-width:768px) {
-    .so-cards     { display:none !important; }
-    .so-tbl-wrap  { display:block; }
-    .so-modal-wrap { align-items:center; padding:1rem; }
-    .so-modal-box  { border-radius:16px; max-width:480px; }
-    .so-modal-hdr  { border-radius:16px 16px 0 0; }
+.so-empty { text-align: center; padding: 4rem 1rem; color: var(--text-muted); }
+
+/* ── Toast & Modals ── */
+#soToast { display: none; position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--text-main); color: #fff; padding: 12px 24px; border-radius: var(--radius-pill); font-size: 0.85rem; font-weight: 600; z-index: 9999; box-shadow: 0 8px 30px rgba(0,0,0,0.2); text-align: center; display: none; }
+#soToast.show { display: flex; align-items: center; gap: 8px; animation: soToastIn 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+
+.so-modal-wrap { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center; padding: 1rem; opacity: 0; transition: opacity 0.2s; }
+.so-modal-wrap.show { display: flex; opacity: 1; }
+.so-modal-box { background: #fff; border-radius: var(--radius-lg); width: 100%; max-width: 440px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); transform: scale(0.95); transition: transform 0.2s; overflow: hidden; }
+.so-modal-wrap.show .so-modal-box { transform: scale(1); }
+.so-modal-hdr { padding: 20px 24px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border-soft); }
+.so-modal-title { font-size: 1.1rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 8px; }
+.so-modal-close { background: var(--premium-bg); border: none; color: var(--text-muted); width: 32px; height: 32px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+.so-modal-close:hover { background: var(--border-soft); color: var(--text-main); }
+.so-modal-body { padding: 24px; }
+.so-modal-foot { padding: 16px 24px; background: var(--premium-bg); display: flex; gap: 12px; justify-content: flex-end; border-top: 1px solid var(--border-soft); }
+.so-modal-foot button { padding: 10px 18px; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 600; cursor: pointer; border: none; }
+.smbtn-cancel { background: #fff; border: 1px solid var(--border-soft); color: var(--text-main); }
+.smbtn-cancel:hover { background: var(--border-lighter); }
+.smbtn-primary { background: var(--primary); color: #fff; }
+.smbtn-primary:hover { background: var(--primary-hover); }
+.smbtn-danger { background: var(--danger); color: #fff; }
+
+@keyframes soToastIn { from { opacity: 0; transform: translate(-50%, 20px); } to { opacity: 1; transform: translate(-50%, 0); } }
+@keyframes soSlideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+@media (max-width: 767px) {
+    .so-cards { display: flex; }
+    .so-tbl-wrap { display: none !important; }
+    .card-hdr { flex-direction: column; align-items: stretch; }
+    .so-search-bar { max-width: 100%; justify-content: flex-start; }
+    .so-modal-box { align-self: flex-end; border-radius: 24px 24px 0 0; margin-bottom: -1rem; transform: translateY(100%); }
+    .so-modal-wrap.show .so-modal-box { transform: translateY(0); }
 }
 </style>
 {% endblock %}
@@ -126,112 +189,195 @@ input[type=checkbox].so-chk { width:17px; height:17px; accent-color:#1e3a5f; cur
 {% block content %}
 <div class="card">
     <div class="card-hdr">
-        <div class="card-title">📋 Sample Orders</div>
+        <div class="card-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--primary);"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+            Sample Orders
+        </div>
         <div class="so-search-bar">
             <div class="search-wrap">
-                <span class="search-icon">🔍</span>
+                <span class="search-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></span>
                 <input type="text" id="soSearch" value="{{ search }}" placeholder="Search order no, company..." autocomplete="off">
-                <button id="soClearBtn" class="clear-btn" onclick="soClearFilters()">✕</button>
+                <button id="soClearBtn" class="clear-btn" onclick="soClearFilters()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
             </div>
         </div>
     </div>
 
-    <!-- Tabs -->
     <div class="so-tabs">
         <a href="#" onclick="switchTab('active');return false;"
            class="so-tab {% if tab != 'deleted' %}active{% endif %}" id="tabActive">
-            📋 Active <span class="tab-cnt" id="soTabCntActive">{{ active_count }}</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+            Active
+            <span class="tab-cnt" id="soTabCntActive">{{ active_count }}</span>
         </a>
         {% if so_sub and so_sub.view_deleted %}
         <a href="#" onclick="switchTab('deleted');return false;"
            class="so-tab tab-del {% if tab == 'deleted' %}active{% endif %}" id="tabDeleted">
-            🗑️ Deleted <span class="tab-cnt" id="soTabCntDeleted">{{ deleted_count }}</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+            Deleted
+            <span class="tab-cnt" id="soTabCntDeleted">{{ deleted_count }}</span>
         </a>
         {% endif %}
     </div>
 
-    <!-- Bulk Bar -->
     <div id="soBulkBar">
-        <span id="soBulkCount" style="font-size:0.82rem;font-weight:700;"></span>
-        <span id="soBulkActive">
-            {% if perm and perm.can_delete %}<button class="so-bulk-btn so-bulk-del" onclick="soBulkDelete()">🗑️ Delete</button>{% endif %}
+        <span id="soBulkCount" style="font-size:0.85rem;font-weight:600;"></span>
+        <span id="soBulkActive" style="display:flex;gap:8px;">
+            {% if perm and perm.can_delete %}
+            <button class="so-bulk-btn so-bulk-del" onclick="soBulkDelete()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                Delete
+            </button>
+            {% endif %}
         </span>
-        <span id="soBulkDeleted" style="display:none;">
-            {% if so_sub and so_sub.restore %}<button class="so-bulk-btn so-bulk-restore" onclick="soBulkRestore()">♻️ Restore</button>{% endif %}
-            {% if so_sub and so_sub.permanent_delete %}<button class="so-bulk-btn so-bulk-perm" onclick="soBulkPermDelete()">🗑️ Delete Forever</button>{% endif %}
+        <span id="soBulkDeleted" style="display:none;gap:8px;">
+            {% if so_sub and so_sub.restore %}
+            <button class="so-bulk-btn so-bulk-restore" onclick="soBulkRestore()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+                Restore
+            </button>
+            {% endif %}
+            {% if so_sub and so_sub.permanent_delete %}
+            <button class="so-bulk-btn so-bulk-perm" onclick="soBulkPermDelete()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"></polygon><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                Delete Forever
+            </button>
+            {% endif %}
         </span>
         <button class="so-bulk-desel" onclick="soClearSelection()">✕ Deselect</button>
     </div>
 
-    <!-- Desktop Table -->
     <div class="so-tbl-wrap" id="soTblWrap">
         <table class="so-table">
             <thead><tr>
-                <th style="width:36px;text-align:center;"><input type="checkbox" class="so-chk" id="soChkAll" onchange="soToggleAll(this)"></th>
-                <th>#</th><th>Order No</th><th>Date</th><th>Lead / Company</th>
-                <th>Billing Company</th><th style="text-align:right;">Sub Total</th>
-                <th style="text-align:right;">GST</th><th style="text-align:right;">Total</th>
-                <th>Created By</th><th>Actions</th><th>Invoice</th>
+                <th style="width:40px;text-align:center;"><input type="checkbox" class="so-chk" id="soChkAll" onchange="soToggleAll(this)"></th>
+                <th style="width:40px;">#</th>
+                <th>Order No</th>
+                <th>Date</th>
+                <th>Lead / Company</th>
+                <th>Billing Company</th>
+                <th style="text-align:right;">Sub Total</th>
+                <th style="text-align:right;">GST</th>
+                <th style="text-align:right;">Total</th>
+                <th>Created By</th>
+                <th>Actions</th>
+                <th style="width: 180px;">Invoice</th>
             </tr></thead>
             <tbody id="soTbody">
             {% for so in orders %}
             <tr id="sorow-{{ so.id }}">
                 <td style="text-align:center;"><input type="checkbox" class="so-chk so-row-chk" value="{{ so.id }}" onchange="soOnRowCheck()"></td>
-                <td style="color:var(--text3);font-size:0.78rem;">{{ loop.index + (pagination.page-1)*pagination.per_page }}</td>
-                <td>{% if perm and perm.can_view %}<a href="{{ url_for('crm.sample_order_view', id=so.id) }}" style="font-weight:700;color:#1e3a5f;text-decoration:none;">{{ so.order_number }}</a>{% else %}<span style="font-weight:700;color:#1e3a5f;">{{ so.order_number }}</span>{% endif %}</td>
-                <td style="white-space:nowrap;">{{ so.order_date.strftime('%d-%m-%Y') }}</td>
+                <td style="color:var(--text-light);font-weight:600;">{{ loop.index + (pagination.page-1)*pagination.per_page }}</td>
                 <td>
-                    {% if so_sub and so_sub.lead_view %}<a href="{{ url_for('crm.lead_view', id=so.lead_id) }}" style="color:var(--blue);font-weight:600;text-decoration:none;">{{ so.lead.contact_name or 'N/A' }}</a>{% else %}<span style="font-weight:600;">{{ so.lead.contact_name or 'N/A' }}</span>{% endif %}
-                    {% if so.lead.company_name %}<div style="font-size:0.73rem;color:var(--text3);">{{ so.lead.company_name }}</div>{% endif %}
+                    {% if perm and perm.can_view %}
+                    <a href="{{ url_for('crm.sample_order_view', id=so.id) }}" style="font-weight:700;color:var(--primary);text-decoration:none;">{{ so.order_number }}</a>
+                    {% else %}
+                    <span style="font-weight:700;color:var(--primary);">{{ so.order_number }}</span>
+                    {% endif %}
                 </td>
-                <td>{{ so.bill_company or '—' }}</td>
-                <td style="text-align:right;">₹ {{ '{:,.2f}'.format(so.sub_total|float) }}</td>
-                <td style="text-align:right;color:var(--text2);">{{ so.gst_pct|int }}%<div style="font-size:0.72rem;">₹ {{ '{:,.2f}'.format(so.gst_amount|float) }}</div></td>
-                <td style="text-align:right;font-weight:700;color:#1e3a5f;">₹ {{ '{:,.2f}'.format(so.total_amount|float) }}</td>
-                <td style="font-size:0.78rem;color:var(--text2);">{{ so.creator.full_name if so.creator else '—' }}<div style="font-size:0.7rem;color:var(--text3);">{{ so.created_at.strftime('%d-%m-%Y %H:%M') }}</div></td>
+                <td style="white-space:nowrap;color:var(--text-muted);font-weight:500;">{{ so.order_date.strftime('%d %b %Y') }}</td>
+                <td>
+                    {% if so_sub and so_sub.lead_view %}
+                    <a href="{{ url_for('crm.lead_view', id=so.lead_id) }}" style="color:var(--text-main);font-weight:700;text-decoration:none;">{{ so.lead.contact_name or 'N/A' }}</a>
+                    {% else %}
+                    <span style="font-weight:700;">{{ so.lead.contact_name or 'N/A' }}</span>
+                    {% endif %}
+                    {% if so.lead.company_name %}<div style="font-size:0.75rem;color:var(--text-muted);margin-top:2px;">{{ so.lead.company_name }}</div>{% endif %}
+                </td>
+                <td style="color:var(--text-muted);">{{ so.bill_company or '—' }}</td>
+                <td style="text-align:right;font-weight:500;">₹{{ '{:,.2f}'.format(so.sub_total|float) }}</td>
+                <td style="text-align:right;color:var(--text-muted);">
+                    {{ so.gst_pct|int }}%
+                    <div style="font-size:0.75rem;margin-top:2px;">₹{{ '{:,.2f}'.format(so.gst_amount|float) }}</div>
+                </td>
+                <td style="text-align:right;font-weight:800;color:var(--text-main);">₹{{ '{:,.2f}'.format(so.total_amount|float) }}</td>
+                <td>
+                    <div style="font-weight:600;color:var(--text-main);">{{ so.creator.full_name if so.creator else '—' }}</div>
+                    <div style="font-size:0.75rem;color:var(--text-light);margin-top:2px;">{{ so.created_at.strftime('%d %b %Y, %H:%M') }}</div>
+                </td>
                 <td>
                     {% if tab == 'deleted' %}
-                    <div style="display:flex;gap:5px;">
-                        {% if so_sub and so_sub.restore %}<button onclick="soRestoreSingle({{ so.id }})" style="background:#ede9fe;color:#5b21b6;border:none;padding:5px 9px;border-radius:6px;font-size:0.75rem;font-weight:600;cursor:pointer;">♻️ Restore</button>{% endif %}
-                        {% if so_sub and so_sub.permanent_delete %}<button onclick="soPermDelSingle({{ so.id }})" style="background:#fef2f2;color:#dc2626;border:none;padding:5px 9px;border-radius:6px;font-size:0.75rem;font-weight:600;cursor:pointer;">🗑️ Forever</button>{% endif %}
+                    <div style="display:flex;gap:6px;">
+                        {% if so_sub and so_sub.restore %}
+                        <button onclick="soRestoreSingle({{ so.id }})" class="btn-action btn-purple" title="Restore">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+                        </button>
+                        {% endif %}
+                        {% if so_sub and so_sub.permanent_delete %}
+                        <button onclick="soPermDelSingle({{ so.id }})" class="btn-action btn-red" title="Delete Forever">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"></polygon><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                        </button>
+                        {% endif %}
                     </div>
                     {% else %}
-                    <div style="display:flex;gap:5px;flex-wrap:wrap;">
+                    <div style="display:flex;gap:6px;flex-wrap:wrap;">
                         {% if so_sub and so_sub.pdf_download %}
                         <form method="POST" action="{{ url_for('crm.sample_order_reprint', id=so.id) }}" target="_blank" style="display:inline;">
-                            <button type="submit" style="background:#eff6ff;color:#1d4ed8;border:none;padding:5px 9px;border-radius:6px;font-size:0.75rem;font-weight:600;cursor:pointer;">📥 PDF</button>
+                            <button type="submit" class="btn-action btn-blue" title="Download PDF">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                            </button>
                         </form>
                         {% endif %}
-                        {% if so_sub and so_sub.lead_view %}<a href="{{ url_for('crm.lead_view', id=so.lead_id) }}" style="background:#f0fdf4;color:#166534;border:none;padding:5px 9px;border-radius:6px;font-size:0.75rem;font-weight:600;text-decoration:none;display:inline-block;">👁 Lead</a>{% endif %}
-                        {% if so_sub and so_sub.mail_send %}<button onclick="openSoMailModal({{ so.id }},'{{ so.order_number }}','{{ so.lead.email if so.lead and so.lead.email else so.bill_email or '' }}')" style="background:#fdf4ff;color:#7c3aed;border:none;padding:5px 9px;border-radius:6px;font-size:0.75rem;font-weight:600;cursor:pointer;">✉ Mail</button>{% endif %}
-                        {% if perm and perm.can_delete %}<button onclick="soDelSingle({{ so.id }})" style="background:#fef2f2;color:#dc2626;border:none;padding:5px 9px;border-radius:6px;font-size:0.75rem;font-weight:600;cursor:pointer;">🗑️</button>{% endif %}
+                        {% if so_sub and so_sub.lead_view %}
+                        <a href="{{ url_for('crm.lead_view', id=so.lead_id) }}" class="btn-action btn-green" title="View Lead">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        </a>
+                        {% endif %}
+                        {% if so_sub and so_sub.mail_send %}
+                        <button onclick="openSoMailModal({{ so.id }},'{{ so.order_number }}','{{ so.lead.email if so.lead and so.lead.email else so.bill_email or '' }}')" class="btn-action btn-purple" title="Send Email">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                        </button>
+                        {% endif %}
+                        {% if perm and perm.can_delete %}
+                        <button onclick="soDelSingle({{ so.id }})" class="btn-action btn-red" title="Delete">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        </button>
+                        {% endif %}
                     </div>
                     {% endif %}
                 </td>
-                <td style="min-width:140px;">
+                <td>
                     {% if tab != 'deleted' %}
-                    {% if so.invoice_file %}
-                    <div style="display:flex;flex-wrap:wrap;gap:4px;">
-                        {% if so_sub and so_sub.invoice_download %}<a href="{{ url_for('crm.sample_order_invoice_download', id=so.id) }}" class="inv-dl-btn">⬇ Download</a>{% endif %}
-                        <label class="inv-change-btn" for="inv-change-{{ so.id }}">🔄 Change</label>
-                        <form method="POST" action="{{ url_for('crm.sample_order_invoice_delete', id=so.id) }}" style="display:inline;" onsubmit="return confirm('Invoice delete karein?');">
-                            <button type="submit" class="inv-del-btn">✕</button>
+                    <div class="inv-wrap">
+                        {% if so.invoice_file %}
+                        <span class="inv-filename" title="{{ so.invoice_file }}">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+                            {{ so.invoice_file }}
+                        </span>
+                        <div class="inv-actions">
+                            {% if so_sub and so_sub.invoice_download %}
+                            <a href="{{ url_for('crm.sample_order_invoice_download', id=so.id) }}" class="inv-icon-btn" title="Download Invoice">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                            </a>
+                            {% endif %}
+                            <label class="inv-icon-btn" for="inv-change-{{ so.id }}" title="Replace Invoice">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+                            </label>
+                            <form method="POST" action="{{ url_for('crm.sample_order_invoice_delete', id=so.id) }}" style="display:inline;" onsubmit="return confirm('Remove this invoice?');">
+                                <button type="submit" class="inv-icon-btn red" title="Delete Invoice">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                                </button>
+                            </form>
+                        </div>
+                        <form method="POST" action="{{ url_for('crm.sample_order_invoice_upload', id=so.id) }}" enctype="multipart/form-data" style="display:none;">
+                            <input type="file" id="inv-change-{{ so.id }}" name="invoice_file" accept=".pdf,.jpg,.jpeg,.png" onchange="this.form.submit()">
                         </form>
+                        {% else %}
+                        {% if so_sub and so_sub.invoice_upload %}
+                        <label class="inv-upload-btn" for="inv-upload-{{ so.id }}">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                            Upload
+                        </label>
+                        <form method="POST" action="{{ url_for('crm.sample_order_invoice_upload', id=so.id) }}" enctype="multipart/form-data" style="display:none;">
+                            <input type="file" id="inv-upload-{{ so.id }}" name="invoice_file" accept=".pdf,.jpg,.jpeg,.png" onchange="this.form.submit()">
+                        </form>
+                        {% endif %}
+                        {% endif %}
                     </div>
-                    <form method="POST" action="{{ url_for('crm.sample_order_invoice_upload', id=so.id) }}" enctype="multipart/form-data" style="display:none;">
-                        <input type="file" id="inv-change-{{ so.id }}" name="invoice_file" accept=".pdf,.jpg,.jpeg,.png" onchange="this.form.submit()">
-                    </form>
-                    <span class="inv-filename" title="{{ so.invoice_file }}">📎 {{ so.invoice_file }}</span>
                     {% else %}
-                    {% if so_sub and so_sub.invoice_upload %}
-                    <label class="inv-upload-btn" for="inv-upload-{{ so.id }}">⬆ Invoice Upload</label>
-                    <form method="POST" action="{{ url_for('crm.sample_order_invoice_upload', id=so.id) }}" enctype="multipart/form-data" style="display:none;">
-                        <input type="file" id="inv-upload-{{ so.id }}" name="invoice_file" accept=".pdf,.jpg,.jpeg,.png" onchange="this.form.submit()">
-                    </form>
-                    {% endif %}
-                    {% endif %}
-                    {% else %}
-                    <span style="font-size:0.75rem;color:#dc2626;">🗑️ {{ so.deleted_at.strftime('%d-%m-%Y') if so.deleted_at else '' }}</span>
+                    <span style="font-size:0.75rem;color:var(--danger);display:flex;align-items:center;gap:4px;font-weight:600;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        {{ so.deleted_at.strftime('%d %b %Y') if so.deleted_at else '' }}
+                    </span>
                     {% endif %}
                 </td>
             </tr>
@@ -240,35 +386,32 @@ input[type=checkbox].so-chk { width:17px; height:17px; accent-color:#1e3a5f; cur
         </table>
     </div>
 
-    <!-- Mobile Cards -->
     <div class="so-cards" id="soCards">
-        <div style="display:flex;align-items:center;gap:10px;padding:4px 2px 6px;">
+        <div style="display:flex;align-items:center;gap:10px;padding:4px 6px;">
             <input type="checkbox" class="so-chk" id="soChkAllMobile" onchange="soToggleAll(this)">
-            <label for="soChkAllMobile" style="font-size:0.82rem;color:#64748b;font-weight:600;cursor:pointer;">Select All</label>
-            <span style="font-size:0.78rem;color:#94a3b8;margin-left:auto;">{{ orders|length }} order{{ 's' if orders|length != 1 }}</span>
+            <label for="soChkAllMobile" style="font-size:0.85rem;color:var(--text-muted);font-weight:600;cursor:pointer;">Select All</label>
+            <span style="font-size:0.8rem;color:var(--text-light);margin-left:auto;font-weight:500;">{{ orders|length }} order{{ 's' if orders|length != 1 }}</span>
         </div>
         {% for so in orders %}
         <div class="so-card" id="socard-{{ so.id }}">
-            <!-- Gradient Header -->
             <div class="so-card-hdr">
-                <input type="checkbox" class="so-chk so-row-chk" value="{{ so.id }}" onchange="soOnRowCheck()"
-                    style="margin-top:3px;flex-shrink:0;accent-color:#fff;width:17px;height:17px;">
-                <div class="so-card-hdr-left">
+                <input type="checkbox" class="so-chk so-row-chk" value="{{ so.id }}" onchange="soOnRowCheck()" style="margin-top:3px;flex-shrink:0;accent-color:#fff;">
+                <div>
                     <div class="so-card-num">{% if perm and perm.can_view %}<a href="{{ url_for('crm.sample_order_view', id=so.id) }}" style="color:inherit;text-decoration:none;">{{ so.order_number }}</a>{% else %}{{ so.order_number }}{% endif %}</div>
                     <div class="so-card-sub">
-                        {% if so_sub and so_sub.lead_view %}<a href="{{ url_for('crm.lead_view', id=so.lead_id) }}" style="color:#93c5fd;text-decoration:none;font-weight:700;">{{ so.lead.contact_name or 'N/A' }}</a>{% else %}<span style="font-weight:700;color:#93c5fd;">{{ so.lead.contact_name or 'N/A' }}</span>{% endif %}
+                        {% if so_sub and so_sub.lead_view %}<a href="{{ url_for('crm.lead_view', id=so.lead_id) }}">{{ so.lead.contact_name or 'N/A' }}</a>{% else %}<span>{{ so.lead.contact_name or 'N/A' }}</span>{% endif %}
                         {% if so.bill_company %} · {{ so.bill_company }}{% endif %}
                     </div>
                 </div>
                 <div class="so-card-hdr-right">
                     <div class="so-card-total-label">Total</div>
-                    <div class="so-card-total-amt">₹ {{ '{:,.0f}'.format(so.total_amount|float) }}</div>
+                    <div class="so-card-total-amt">₹{{ '{:,.0f}'.format(so.total_amount|float) }}</div>
                 </div>
             </div>
-            <!-- Body -->
+
             <div class="so-card-body">
                 <div class="so-card-grid">
-                    <div class="so-card-field"><label>Date</label><span>{{ so.order_date.strftime('%d-%m-%Y') }}</span></div>
+                    <div class="so-card-field"><label>Date</label><span>{{ so.order_date.strftime('%d %b %Y') }}</span></div>
                     <div class="so-card-field"><label>Created By</label><span>{{ so.creator.full_name if so.creator else '—' }}</span></div>
                 </div>
                 <div class="so-card-costs">
@@ -277,86 +420,92 @@ input[type=checkbox].so-chk { width:17px; height:17px; accent-color:#1e3a5f; cur
                     <div class="so-cost-item"><label>Total</label><span>₹{{ '{:,.0f}'.format(so.total_amount|float) }}</span></div>
                 </div>
             </div>
-            <!-- Footer Actions -->
+
             {% if tab == 'deleted' %}
-            <div style="margin:0 14px 10px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:8px 12px;font-size:0.78rem;color:#dc2626;">
-                🗑️ Deleted on {{ so.deleted_at.strftime('%d-%m-%Y %H:%M') if so.deleted_at else '' }}
+            <div style="margin:0 16px 12px;background:var(--danger-bg);border:1px solid #fecaca;border-radius:var(--radius-sm);padding:10px 14px;font-size:0.8rem;color:var(--danger);display:flex;align-items:center;gap:6px;font-weight:600;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                Deleted on {{ so.deleted_at.strftime('%d %b %Y') if so.deleted_at else '' }}
             </div>
             <div class="so-card-footer">
-                {% if so_sub and so_sub.restore %}<button onclick="soRestoreSingle({{ so.id }})" style="background:#ede9fe;color:#5b21b6;">♻️ Restore</button>{% endif %}
-                {% if so_sub and so_sub.permanent_delete %}<button onclick="soPermDelSingle({{ so.id }})" style="background:#fef2f2;color:#dc2626;">🗑️ Forever</button>{% endif %}
+                {% if so_sub and so_sub.restore %}<button onclick="soRestoreSingle({{ so.id }})" class="btn-action btn-purple"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg> Restore</button>{% endif %}
+                {% if so_sub and so_sub.permanent_delete %}<button onclick="soPermDelSingle({{ so.id }})" class="btn-action btn-red"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"></polygon><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg> Forever</button>{% endif %}
             </div>
             {% else %}
-            <!-- Invoice section on mobile -->
-            <div style="padding:10px 14px 0;">
+            <div style="padding:0 16px 12px;">
                 {% if so.invoice_file %}
-                <div style="background:#f5f3ff;border:1px solid #ddd6fe;border-radius:10px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:0;">
-                    <span style="font-size:0.75rem;color:#5b21b6;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;">📎 {{ so.invoice_file }}</span>
-                    <div style="display:flex;gap:6px;flex-shrink:0;">
-                        {% if so_sub and so_sub.invoice_download %}<a href="{{ url_for('crm.sample_order_invoice_download', id=so.id) }}" style="background:#eff6ff;color:#1d4ed8;padding:5px 9px;border-radius:6px;font-size:0.72rem;font-weight:700;text-decoration:none;">⬇</a>{% endif %}
-                        <label style="background:#fff7ed;color:#c2410c;padding:5px 9px;border-radius:6px;font-size:0.72rem;font-weight:700;cursor:pointer;" for="mob-inv-change-{{ so.id }}">🔄</label>
-                        <form method="POST" action="{{ url_for('crm.sample_order_invoice_delete', id=so.id) }}" style="display:inline;" onsubmit="return confirm('Delete karein?');">
-                            <button type="submit" style="background:#fef2f2;color:#dc2626;border:none;padding:5px 9px;border-radius:6px;font-size:0.72rem;font-weight:700;cursor:pointer;">✕</button>
+                <div style="background:var(--primary-light);border:1px solid #bfdbfe;border-radius:var(--radius-sm);padding:10px 12px;display:flex;align-items:center;justify-content:space-between;gap:8px;">
+                    <span style="font-size:0.8rem;color:var(--primary);font-weight:600;display:flex;align-items:center;gap:6px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;flex:1;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+                        {{ so.invoice_file }}
+                    </span>
+                    <div style="display:flex;gap:4px;flex-shrink:0;">
+                        {% if so_sub and so_sub.invoice_download %}<a href="{{ url_for('crm.sample_order_invoice_download', id=so.id) }}" class="inv-icon-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg></a>{% endif %}
+                        <label for="mob-inv-change-{{ so.id }}" class="inv-icon-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg></label>
+                        <form method="POST" action="{{ url_for('crm.sample_order_invoice_delete', id=so.id) }}" style="display:inline;" onsubmit="return confirm('Remove this invoice?');">
+                            <button type="submit" class="inv-icon-btn red"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
                         </form>
                     </div>
-                    <form method="POST" action="{{ url_for('crm.sample_order_invoice_upload', id=so.id) }}" enctype="multipart/form-data" style="display:none;">
-                        <input type="file" id="mob-inv-change-{{ so.id }}" name="invoice_file" accept=".pdf,.jpg,.jpeg,.png" onchange="this.form.submit()">
-                    </form>
+                    <form method="POST" action="{{ url_for('crm.sample_order_invoice_upload', id=so.id) }}" enctype="multipart/form-data" style="display:none;"><input type="file" id="mob-inv-change-{{ so.id }}" name="invoice_file" accept=".pdf,.jpg,.jpeg,.png" onchange="this.form.submit()"></form>
                 </div>
                 {% else %}
                 {% if so_sub and so_sub.invoice_upload %}
-                <label for="mob-inv-upload-{{ so.id }}" style="display:flex;align-items:center;justify-content:center;gap:6px;width:100%;background:#fdf4ff;color:#7c3aed;border:1.5px dashed #c4b5fd;padding:10px;border-radius:10px;font-size:0.82rem;font-weight:700;cursor:pointer;box-sizing:border-box;">
-                    ⬆ Invoice Upload
+                <label for="mob-inv-upload-{{ so.id }}" class="inv-upload-btn" style="width:100%;padding:12px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                    Upload Invoice
                 </label>
+                <form method="POST" action="{{ url_for('crm.sample_order_invoice_upload', id=so.id) }}" enctype="multipart/form-data" style="display:none;"><input type="file" id="mob-inv-upload-{{ so.id }}" name="invoice_file" accept=".pdf,.jpg,.jpeg,.png" onchange="this.form.submit()"></form>
                 {% endif %}
-                <form method="POST" action="{{ url_for('crm.sample_order_invoice_upload', id=so.id) }}" enctype="multipart/form-data" style="display:none;">
-                    <input type="file" id="mob-inv-upload-{{ so.id }}" name="invoice_file" accept=".pdf,.jpg,.jpeg,.png" onchange="this.form.submit()">
-                </form>
                 {% endif %}
             </div>
+
             <div class="so-card-footer">
                 {% if so_sub and so_sub.pdf_download %}
                 <form method="POST" action="{{ url_for('crm.sample_order_reprint', id=so.id) }}" target="_blank" style="flex:1;display:flex;">
-                    <button type="submit" style="flex:1;background:#eff6ff;color:#1d4ed8;border:none;border-radius:9px;cursor:pointer;font-size:0.75rem;font-weight:700;padding:9px;">📥 PDF</button>
+                    <button type="submit" class="btn-action btn-blue" style="flex:1;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg> PDF</button>
                 </form>
                 {% endif %}
-                {% if so_sub and so_sub.lead_view %}<a href="{{ url_for('crm.lead_view', id=so.lead_id) }}" style="background:#f0fdf4;color:#166534;flex:1;border-radius:9px;padding:9px;font-size:0.75rem;font-weight:700;text-align:center;text-decoration:none;display:flex;align-items:center;justify-content:center;">👁 Lead</a>{% endif %}
-                {% if so_sub and so_sub.mail_send %}<button onclick="openSoMailModal({{ so.id }},'{{ so.order_number }}','{{ so.lead.email if so.lead and so.lead.email else so.bill_email or '' }}')" style="flex:1;background:#fdf4ff;color:#7c3aed;border:none;border-radius:9px;padding:9px;font-size:0.75rem;font-weight:700;cursor:pointer;">✉ Mail</button>{% endif %}
-                {% if perm and perm.can_delete %}<button onclick="soDelSingle({{ so.id }})" style="flex:1;background:#fef2f2;color:#dc2626;border:none;border-radius:9px;padding:9px;font-size:0.75rem;font-weight:700;cursor:pointer;">🗑️</button>{% endif %}
+                {% if so_sub and so_sub.lead_view %}<a href="{{ url_for('crm.lead_view', id=so.lead_id) }}" class="btn-action btn-green"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg> Lead</a>{% endif %}
+                {% if so_sub and so_sub.mail_send %}<button onclick="openSoMailModal({{ so.id }},'{{ so.order_number }}','{{ so.lead.email if so.lead and so.lead.email else so.bill_email or '' }}')" class="btn-action btn-purple"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg> Mail</button>{% endif %}
+                {% if perm and perm.can_delete %}<button onclick="soDelSingle({{ so.id }})" class="btn-action btn-red"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>{% endif %}
             </div>
             {% endif %}
         </div>
         {% endfor %}
     </div>
 
-    <!-- Empty -->
     <div class="so-empty" id="soEmpty" style="{% if orders %}display:none;{% endif %}">
-        <div style="font-size:2rem;margin-bottom:0.5rem;">📋</div>
-        <div style="font-weight:600;margin-bottom:0.25rem;">No Sample Orders found</div>
-        <div style="font-size:0.85rem;">Leads page pe jaake "Sample Order" se generate karein</div>
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-light);margin-bottom:12px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+        <div style="font-size:1.1rem;font-weight:700;color:var(--text-main);margin-bottom:4px;">No Sample Orders found</div>
+        <div style="font-size:0.9rem;">Generate a Sample Order from the Leads page to get started.</div>
     </div>
 
     <div class="so-pagination" id="soPagination">
         {% if pagination.pages > 1 %}
-        {% if pagination.has_prev %}<a href="#" onclick="soGotoPage({{ pagination.prev_num }});return false;" class="btn-outline" style="padding:7px 14px;">← Prev</a>{% endif %}
-        <span style="color:var(--text2);">Page {{ pagination.page }} of {{ pagination.pages }}</span>
-        {% if pagination.has_next %}<a href="#" onclick="soGotoPage({{ pagination.next_num }});return false;" class="btn-outline" style="padding:7px 14px;">Next →</a>{% endif %}
+        <div style="flex:1;">
+            {% if pagination.has_prev %}<a href="#" onclick="soGotoPage({{ pagination.prev_num }});return false;" class="pgn-btn">← Previous</a>{% endif %}
+        </div>
+        <span style="color:var(--text-muted);font-size:0.85rem;font-weight:600;">Page {{ pagination.page }} of {{ pagination.pages }}</span>
+        <div style="flex:1;text-align:right;">
+            {% if pagination.has_next %}<a href="#" onclick="soGotoPage({{ pagination.next_num }});return false;" class="pgn-btn">Next →</a>{% endif %}
+        </div>
         {% endif %}
     </div>
 </div>
 
-<div id="soToast"></div>
+<div id="soToast">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+    <span id="soToastMsg"></span>
+</div>
 
-<!-- Confirm Modal -->
 <div class="so-modal-wrap" id="soConfirmModal">
-    <div class="so-modal-box" style="max-width:420px;">
+    <div class="so-modal-box">
         <div class="so-modal-hdr">
             <span id="soConfirmTitle" class="so-modal-title"></span>
-            <button class="so-modal-close" onclick="closeModal('soConfirmModal')">✕</button>
+            <button class="so-modal-close" onclick="closeModal('soConfirmModal')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
         </div>
         <div class="so-modal-body">
-            <p style="margin:0 0 8px;font-size:0.9rem;font-weight:700;color:#374151;">Selected: <span id="soConfirmCount" style="color:#1e3a5f;"></span></p>
-            <p id="soConfirmMsg" style="margin:0;font-size:0.85rem;color:#6b7280;line-height:1.6;"></p>
+            <p style="margin:0 0 12px;font-size:0.95rem;font-weight:700;color:var(--text-main);">Selected: <span id="soConfirmCount" style="color:var(--primary);"></span></p>
+            <p id="soConfirmMsg" style="margin:0;font-size:0.9rem;color:var(--text-muted);line-height:1.5;"></p>
         </div>
         <div class="so-modal-foot">
             <button class="smbtn-cancel" onclick="closeModal('soConfirmModal')">Cancel</button>
@@ -365,29 +514,35 @@ input[type=checkbox].so-chk { width:17px; height:17px; accent-color:#1e3a5f; cur
     </div>
 </div>
 
-<!-- Mail Modal -->
 <div class="so-modal-wrap" id="soMailModal">
-    <div class="so-modal-box" style="max-width:520px;">
+    <div class="so-modal-box">
         <div class="so-modal-hdr">
-            <span class="so-modal-title">✉ Send Sample Order Email</span>
-            <button class="so-modal-close" onclick="closeModal('soMailModal')">✕</button>
+            <span class="so-modal-title">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--primary);"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                Send Sample Order
+            </span>
+            <button class="so-modal-close" onclick="closeModal('soMailModal')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
         </div>
-        <div class="so-modal-body" style="display:flex;flex-direction:column;gap:12px;">
+        <div class="so-modal-body" style="display:flex;flex-direction:column;gap:16px;">
             <div>
-                <label style="font-size:0.78rem;font-weight:700;color:#374151;display:block;margin-bottom:4px;">Order No.</label>
-                <input id="soMailOrderNo" type="text" readonly style="width:100%;border:1.5px solid #e5e7eb;border-radius:8px;padding:8px 12px;font-size:0.85rem;background:#f9fafb;">
+                <label style="font-size:0.8rem;font-weight:700;color:var(--text-main);display:block;margin-bottom:6px;">Order Number</label>
+                <input id="soMailOrderNo" type="text" readonly style="width:100%;border:1px solid var(--border-soft);border-radius:var(--radius-sm);padding:10px 14px;font-size:0.9rem;background:var(--premium-bg);color:var(--text-muted);outline:none;">
             </div>
             <div>
-                <label style="font-size:0.78rem;font-weight:700;color:#374151;display:block;margin-bottom:4px;">To Email *</label>
-                <input id="soMailTo" type="email" placeholder="client@example.com" style="width:100%;border:1.5px solid #e5e7eb;border-radius:8px;padding:8px 12px;font-size:0.85rem;outline:none;">
+                <label style="font-size:0.8rem;font-weight:700;color:var(--text-main);display:block;margin-bottom:6px;">Recipient Email *</label>
+                <input id="soMailTo" type="email" placeholder="client@example.com" style="width:100%;border:1px solid var(--border-soft);border-radius:var(--radius-sm);padding:10px 14px;font-size:0.9rem;outline:none;transition:border-color 0.2s;">
             </div>
-            <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:10px 14px;font-size:0.82rem;color:#0369a1;">
-                📎 Sample Order PDF automatically attached hoga
+            <div style="background:var(--primary-light);border:1px solid #bfdbfe;border-radius:var(--radius-sm);padding:12px 16px;font-size:0.85rem;color:var(--primary);display:flex;align-items:center;gap:8px;font-weight:500;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+                PDF of this Sample Order will be attached automatically.
             </div>
         </div>
         <div class="so-modal-foot">
             <button class="smbtn-cancel" onclick="closeModal('soMailModal')">Cancel</button>
-            <button class="smbtn-primary" onclick="sendSoMail()">📤 Send Mail</button>
+            <button class="smbtn-primary" onclick="sendSoMail()" style="display:flex;align-items:center;gap:6px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                Send Mail
+            </button>
         </div>
     </div>
 </div>
@@ -398,6 +553,18 @@ let soTab     = '{{ tab }}';
 let soPage    = 1;
 let soTimer   = null;
 let _soMailId = null;
+
+// Icons logic for JS Template string replacement
+const iconTrash = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`;
+const iconRestore = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>`;
+const iconPermDel = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"></polygon><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>`;
+const iconPdf = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>`;
+const iconEye = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
+const iconMail = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>`;
+const iconClip = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>`;
+const iconUpload = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>`;
+const iconRefresh = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>`;
+const iconX = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
 
 // ── Modal ─────────────────────────────────────────────────────
 function openModal(id)  { document.getElementById(id).classList.add('show'); }
@@ -410,7 +577,8 @@ document.addEventListener('keydown', e => { if(e.key==='Escape') document.queryS
 // ── Toast ─────────────────────────────────────────────────────
 function soToast(msg, color) {
     const t = document.getElementById('soToast');
-    t.textContent = msg; t.style.background = color||'#1e3a5f';
+    document.getElementById('soToastMsg').textContent = msg;
+    t.style.background = color || 'var(--text-main)';
     t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), 3500);
 }
 
@@ -422,12 +590,12 @@ function soClearFilters() {
     soPage = 1; soDoSearch();
 }
 function switchTab(tab) {
-    soTab = tab; soPage = 1;
-    document.getElementById('tabActive').classList.toggle('active', tab==='active');
-    document.getElementById('tabDeleted').classList.toggle('active', tab==='deleted');
-    document.getElementById('soBulkActive').style.display  = tab==='active'  ? '' : 'none';
-    document.getElementById('soBulkDeleted').style.display = tab==='deleted' ? '' : 'none';
-    soDoSearch();
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', tab);
+    url.searchParams.set('page', 1); // Tab change karne par page 1 par reset karein
+
+    // Ye line page ko naye URL ke sath refresh kar degi
+    window.location.href = url.toString();
 }
 function soDoSearch() {
     const q = document.getElementById('soSearch').value.trim();
@@ -444,11 +612,10 @@ function soUpdateCounts(a, d) {
     document.getElementById('soTabCntDeleted').textContent = d;
 }
 document.getElementById('soSearch').addEventListener('input', soTriggerSearch);
-if (document.getElementById('soSearch').value)
-    document.getElementById('soClearBtn').style.display = 'block';
+if (document.getElementById('soSearch').value) document.getElementById('soClearBtn').style.display = 'block';
 
 // ── Render rows ───────────────────────────────────────────────
-function soFmt(n) { return '₹ '+parseFloat(n).toLocaleString('en-IN',{minimumFractionDigits:2}); }
+function soFmt(n) { return '₹'+parseFloat(n).toLocaleString('en-IN',{minimumFractionDigits:2}); }
 function soEsc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 function soRenderRows(data) {
@@ -476,92 +643,96 @@ function soRenderRows(data) {
     // Desktop
     if (tbody) tbody.innerHTML = data.rows.map((so, i) => {
         const actions = isDel
-            ? `<div style="display:flex;gap:5px;">
-                 ${canRestore?`<button onclick="soRestoreSingle(${so.id})" style="background:#ede9fe;color:#5b21b6;border:none;padding:5px 9px;border-radius:6px;font-size:0.75rem;font-weight:600;cursor:pointer;">♻️ Restore</button>`:''}
-                 ${canPermDel?`<button onclick="soPermDelSingle(${so.id})" style="background:#fef2f2;color:#dc2626;border:none;padding:5px 9px;border-radius:6px;font-size:0.75rem;font-weight:600;cursor:pointer;">🗑️ Forever</button>`:''}
+            ? `<div style="display:flex;gap:6px;">
+                 ${canRestore?`<button onclick="soRestoreSingle(${so.id})" class="btn-action btn-purple" title="Restore">${iconRestore}</button>`:''}
+                 ${canPermDel?`<button onclick="soPermDelSingle(${so.id})" class="btn-action btn-red" title="Delete Forever">${iconPermDel}</button>`:''}
                </div>`
-            : `<div style="display:flex;gap:5px;flex-wrap:wrap;">
-                 ${canPDF?`<form method="POST" action="/crm/sample-orders/${so.id}/reprint" target="_blank" style="display:inline;"><button type="submit" style="background:#eff6ff;color:#1d4ed8;border:none;padding:5px 9px;border-radius:6px;font-size:0.75rem;font-weight:600;cursor:pointer;">📥 PDF</button></form>`:''}
-                 ${canLeadView?`<a href="/crm/leads/${so.lead_id}" style="background:#f0fdf4;color:#166534;padding:5px 9px;border-radius:6px;font-size:0.75rem;font-weight:600;text-decoration:none;display:inline-block;">👁 Lead</a>`:''}
-                 <button onclick="openSoMailModal(${so.id},'${soEsc(so.order_number)}','${soEsc(so.lead_email||so.bill_email)}')" style="background:#fdf4ff;color:#7c3aed;border:none;padding:5px 9px;border-radius:6px;font-size:0.75rem;font-weight:600;cursor:pointer;">✉ Mail</button>
+            : `<div style="display:flex;gap:6px;flex-wrap:wrap;">
+                 ${canPDF?`<form method="POST" action="/crm/sample-orders/${so.id}/reprint" target="_blank" style="display:inline;"><button type="submit" class="btn-action btn-blue" title="Download PDF">${iconPdf}</button></form>`:''}
+                 ${canLeadView?`<a href="/crm/leads/${so.lead_id}" class="btn-action btn-green" title="View Lead">${iconEye}</a>`:''}
+                 ${canMail?`<button onclick="openSoMailModal(${so.id},'${soEsc(so.order_number)}','${soEsc(so.lead_email||so.bill_email)}')" class="btn-action btn-purple" title="Send Email">${iconMail}</button>`:''}
+                 ${canDelete?`<button onclick="soDelSingle(${so.id})" class="btn-action btn-red" title="Delete">${iconTrash}</button>`:''}
                </div>`;
 
         const invoice = isDel
-            ? `<span style="font-size:0.75rem;color:#dc2626;">🗑️ ${so.deleted_at}</span>`
+            ? `<span style="font-size:0.75rem;color:var(--danger);display:flex;align-items:center;gap:4px;font-weight:600;">${iconTrash} ${so.deleted_at}</span>`
             : so.invoice_file
-                ? `<div style="display:flex;flex-wrap:wrap;gap:4px;">
-                     <a href="/crm/sample-orders/${so.id}/invoice-download" class="inv-dl-btn">⬇ Download</a>
-                     <label class="inv-change-btn" for="inv-ajax-change-${so.id}">🔄 Change</label>
-                     <form method="POST" action="/crm/sample-orders/${so.id}/invoice-delete" style="display:inline;" onsubmit="return confirm('Delete?');">
-                       <button type="submit" class="inv-del-btn">✕</button>
+                ? `<div class="inv-wrap">
+                     <span class="inv-filename" title="${soEsc(so.invoice_file)}">${iconClip} ${soEsc(so.invoice_file)}</span>
+                     <div class="inv-actions">
+                       ${so_sub.invoice_download?`<a href="/crm/sample-orders/${so.id}/invoice-download" class="inv-icon-btn" title="Download Invoice">${iconPdf}</a>`:''}
+                       <label class="inv-icon-btn" for="inv-ajax-change-${so.id}" title="Replace Invoice">${iconRefresh}</label>
+                       <form method="POST" action="/crm/sample-orders/${so.id}/invoice-delete" style="display:inline;" onsubmit="return confirm('Remove this invoice?');">
+                         <button type="submit" class="inv-icon-btn red" title="Delete Invoice">${iconX}</button>
+                       </form>
+                     </div>
+                     <form method="POST" action="/crm/sample-orders/${so.id}/invoice-upload" enctype="multipart/form-data" style="display:none;">
+                       <input type="file" id="inv-ajax-change-${so.id}" name="invoice_file" accept=".pdf,.jpg,.jpeg,.png" onchange="this.form.submit()">
                      </form>
-                   </div>
-                   <form method="POST" action="/crm/sample-orders/${so.id}/invoice-upload" enctype="multipart/form-data" style="display:none;">
-                     <input type="file" id="inv-ajax-change-${so.id}" name="invoice_file" accept=".pdf,.jpg,.jpeg,.png" onchange="this.form.submit()">
-                   </form>
-                   <span class="inv-filename">📎 ${soEsc(so.invoice_file)}</span>`
-                : `<label class="inv-upload-btn" for="inv-ajax-upload-${so.id}">⬆ Invoice Upload</label>
+                   </div>`
+                : `${so_sub.invoice_upload ? `
+                   <label class="inv-upload-btn" for="inv-ajax-upload-${so.id}">${iconUpload} Upload</label>
                    <form method="POST" action="/crm/sample-orders/${so.id}/invoice-upload" enctype="multipart/form-data" style="display:none;">
                      <input type="file" id="inv-ajax-upload-${so.id}" name="invoice_file" accept=".pdf,.jpg,.jpeg,.png" onchange="this.form.submit()">
-                   </form>`;
+                   </form>` : ''}`;
 
         return `<tr id="sorow-${so.id}">
           <td style="text-align:center;"><input type="checkbox" class="so-chk so-row-chk" value="${so.id}" onchange="soOnRowCheck()"></td>
-          <td style="color:var(--text3);font-size:0.78rem;">${offset+i+1}</td>
-          <td>${canView?`<a href="/crm/sample-orders/${so.id}" style="font-weight:700;color:#1e3a5f;text-decoration:none;">${soEsc(so.order_number)}</a>`:`<span style="font-weight:700;color:#1e3a5f;">${soEsc(so.order_number)}</span>`}</td>
-          <td style="white-space:nowrap;">${so.order_date}</td>
-          <td>${canLeadView?`<a href="/crm/leads/${so.lead_id}" style="color:var(--blue);font-weight:600;text-decoration:none;">${soEsc(so.contact_name)}</a>`:`<span style="font-weight:600;">${soEsc(so.contact_name)}</span>`}${so.company_name?`<div style="font-size:0.72rem;color:var(--text3);">${soEsc(so.company_name)}</div>`:''}</td>
-          <td>${soEsc(so.bill_company)}</td>
-          <td style="text-align:right;">${soFmt(so.sub_total)}</td>
-          <td style="text-align:right;color:var(--text2);">${so.gst_pct}%<div style="font-size:0.72rem;">${soFmt(so.gst_amount)}</div></td>
-          <td style="text-align:right;font-weight:700;color:#1e3a5f;">${soFmt(so.total_amount)}</td>
-          <td style="font-size:0.78rem;color:var(--text2);">${soEsc(so.creator)}<div style="font-size:0.7rem;color:var(--text3);">${so.created_at}</div></td>
+          <td style="color:var(--text-light);font-weight:600;">${offset+i+1}</td>
+          <td>${canView?`<a href="/crm/sample-orders/${so.id}" style="font-weight:700;color:var(--primary);text-decoration:none;">${soEsc(so.order_number)}</a>`:`<span style="font-weight:700;color:var(--primary);">${soEsc(so.order_number)}</span>`}</td>
+          <td style="white-space:nowrap;color:var(--text-muted);font-weight:500;">${so.order_date}</td>
+          <td>${canLeadView?`<a href="/crm/leads/${so.lead_id}" style="color:var(--text-main);font-weight:700;text-decoration:none;">${soEsc(so.contact_name)}</a>`:`<span style="font-weight:700;">${soEsc(so.contact_name)}</span>`}${so.company_name?`<div style="font-size:0.75rem;color:var(--text-muted);margin-top:2px;">${soEsc(so.company_name)}</div>`:''}</td>
+          <td style="color:var(--text-muted);">${soEsc(so.bill_company)}</td>
+          <td style="text-align:right;font-weight:500;">${soFmt(so.sub_total)}</td>
+          <td style="text-align:right;color:var(--text-muted);">${so.gst_pct}%<div style="font-size:0.75rem;margin-top:2px;">${soFmt(so.gst_amount)}</div></td>
+          <td style="text-align:right;font-weight:800;color:var(--text-main);">${soFmt(so.total_amount)}</td>
+          <td><div style="font-weight:600;color:var(--text-main);">${soEsc(so.creator)}</div><div style="font-size:0.75rem;color:var(--text-light);margin-top:2px;">${so.created_at}</div></td>
           <td>${actions}</td>
-          <td style="min-width:140px;">${invoice}</td>
+          <td style="width:180px;">${invoice}</td>
         </tr>`;
     }).join('');
 
-    // Mobile cards — gradient header style
+    // Mobile cards
     cards.querySelectorAll('.so-card').forEach(c=>c.remove());
     data.rows.forEach(so => {
         const div = document.createElement('div');
         div.className = 'so-card'; div.id = `socard-${so.id}`;
 
         const footerActions = isDel
-            ? `${canRestore?`<button onclick="soRestoreSingle(${so.id})" style="flex:1;background:#ede9fe;color:#5b21b6;border:none;border-radius:9px;padding:9px;font-size:0.75rem;font-weight:700;cursor:pointer;">♻️ Restore</button>`:''}
-               ${canPermDel?`<button onclick="soPermDelSingle(${so.id})" style="flex:1;background:#fef2f2;color:#dc2626;border:none;border-radius:9px;padding:9px;font-size:0.75rem;font-weight:700;cursor:pointer;">🗑️ Forever</button>`:''}`
-            : `${canPDF?`<form method="POST" action="/crm/sample-orders/${so.id}/reprint" target="_blank" style="flex:1;display:flex;"><button type="submit" style="flex:1;background:#eff6ff;color:#1d4ed8;border:none;border-radius:9px;cursor:pointer;font-size:0.75rem;font-weight:700;padding:9px;">📥 PDF</button></form>`:''}
-               ${canLeadView?`<a href="/crm/leads/${so.lead_id}" style="flex:1;background:#f0fdf4;color:#166534;border-radius:9px;padding:9px;font-size:0.75rem;font-weight:700;text-decoration:none;text-align:center;display:flex;align-items:center;justify-content:center;">👁 Lead</a>`:''}
-               ${canMail?`<button onclick="openSoMailModal(${so.id},'${soEsc(so.order_number)}','${soEsc(so.lead_email||so.bill_email)}')" style="flex:1;background:#fdf4ff;color:#7c3aed;border:none;border-radius:9px;padding:9px;font-size:0.75rem;font-weight:700;cursor:pointer;">✉ Mail</button>`:''}
-               ${canDelete?`<button onclick="soDelSingle(${so.id})" style="flex:1;background:#fef2f2;color:#dc2626;border:none;border-radius:9px;padding:9px;font-size:0.75rem;font-weight:700;cursor:pointer;">🗑️</button>`:''}`;
+            ? `${canRestore?`<button onclick="soRestoreSingle(${so.id})" class="btn-action btn-purple">${iconRestore} Restore</button>`:''}
+               ${canPermDel?`<button onclick="soPermDelSingle(${so.id})" class="btn-action btn-red">${iconPermDel} Forever</button>`:''}`
+            : `${canPDF?`<form method="POST" action="/crm/sample-orders/${so.id}/reprint" target="_blank" style="flex:1;display:flex;"><button type="submit" class="btn-action btn-blue" style="flex:1;">${iconPdf} PDF</button></form>`:''}
+               ${canLeadView?`<a href="/crm/leads/${so.lead_id}" class="btn-action btn-green">${iconEye} Lead</a>`:''}
+               ${canMail?`<button onclick="openSoMailModal(${so.id},'${soEsc(so.order_number)}','${soEsc(so.lead_email||so.bill_email)}')" class="btn-action btn-purple">${iconMail} Mail</button>`:''}
+               ${canDelete?`<button onclick="soDelSingle(${so.id})" class="btn-action btn-red">${iconTrash}</button>`:''}`;
 
         const delBanner = isDel && so.deleted_at
-            ? `<div style="margin:0 14px 10px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:8px 12px;font-size:0.78rem;color:#dc2626;">🗑️ Deleted on ${so.deleted_at}</div>` : '';
+            ? `<div style="margin:0 16px 12px;background:var(--danger-bg);border:1px solid #fecaca;border-radius:var(--radius-sm);padding:10px 14px;font-size:0.8rem;color:var(--danger);display:flex;align-items:center;gap:6px;font-weight:600;">${iconTrash} Deleted on ${so.deleted_at}</div>` : '';
 
-        // Invoice section (only on active tab)
         const invoiceSection = isDel ? '' : so.invoice_file
-            ? `<div style="padding:10px 14px 0;">
-                 <div style="background:#f5f3ff;border:1px solid #ddd6fe;border-radius:10px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;gap:8px;">
-                   <span style="font-size:0.75rem;color:#5b21b6;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">📎 ${soEsc(so.invoice_file)}</span>
-                   <div style="display:flex;gap:6px;flex-shrink:0;">
-                     <a href="/crm/sample-orders/${so.id}/invoice-download" style="background:#eff6ff;color:#1d4ed8;padding:5px 9px;border-radius:6px;font-size:0.72rem;font-weight:700;text-decoration:none;">⬇</a>
-                     <label style="background:#fff7ed;color:#c2410c;padding:5px 9px;border-radius:6px;font-size:0.72rem;font-weight:700;cursor:pointer;" for="ajax-inv-ch-${so.id}">🔄</label>
-                     <form method="POST" action="/crm/sample-orders/${so.id}/invoice-delete" style="display:inline;" onsubmit="return confirm('Delete?');"><button type="submit" style="background:#fef2f2;color:#dc2626;border:none;padding:5px 9px;border-radius:6px;font-size:0.72rem;font-weight:700;cursor:pointer;">✕</button></form>
+            ? `<div style="padding:0 16px 12px;">
+                 <div style="background:var(--primary-light);border:1px solid #bfdbfe;border-radius:var(--radius-sm);padding:10px 12px;display:flex;align-items:center;justify-content:space-between;gap:8px;">
+                   <span style="font-size:0.8rem;color:var(--primary);font-weight:600;display:flex;align-items:center;gap:6px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;flex:1;">${iconClip} ${soEsc(so.invoice_file)}</span>
+                   <div style="display:flex;gap:4px;flex-shrink:0;">
+                     ${so_sub.invoice_download?`<a href="/crm/sample-orders/${so.id}/invoice-download" class="inv-icon-btn">${iconPdf}</a>`:''}
+                     <label class="inv-icon-btn" for="ajax-inv-ch-${so.id}">${iconRefresh}</label>
+                     <form method="POST" action="/crm/sample-orders/${so.id}/invoice-delete" style="display:inline;" onsubmit="return confirm('Remove this invoice?');"><button type="submit" class="inv-icon-btn red">${iconX}</button></form>
                    </div>
                    <form method="POST" action="/crm/sample-orders/${so.id}/invoice-upload" enctype="multipart/form-data" style="display:none;"><input type="file" id="ajax-inv-ch-${so.id}" name="invoice_file" accept=".pdf,.jpg,.jpeg,.png" onchange="this.form.submit()"></form>
                  </div>
                </div>`
-            : `<div style="padding:10px 14px 0;">
-                 <label for="ajax-inv-up-${so.id}" style="display:flex;align-items:center;justify-content:center;gap:6px;width:100%;background:#fdf4ff;color:#7c3aed;border:1.5px dashed #c4b5fd;padding:10px;border-radius:10px;font-size:0.82rem;font-weight:700;cursor:pointer;box-sizing:border-box;">⬆ Invoice Upload</label>
+            : `${so_sub.invoice_upload ? `
+               <div style="padding:0 16px 12px;">
+                 <label for="ajax-inv-up-${so.id}" class="inv-upload-btn" style="width:100%;padding:12px;">${iconUpload} Upload Invoice</label>
                  <form method="POST" action="/crm/sample-orders/${so.id}/invoice-upload" enctype="multipart/form-data" style="display:none;"><input type="file" id="ajax-inv-up-${so.id}" name="invoice_file" accept=".pdf,.jpg,.jpeg,.png" onchange="this.form.submit()"></form>
-               </div>`;
+               </div>` : ''}`;
 
         div.innerHTML = `
           <div class="so-card-hdr">
-            <input type="checkbox" class="so-chk so-row-chk" value="${so.id}" onchange="soOnRowCheck()" style="margin-top:3px;flex-shrink:0;accent-color:#fff;width:17px;height:17px;">
-            <div class="so-card-hdr-left">
+            <input type="checkbox" class="so-chk so-row-chk" value="${so.id}" onchange="soOnRowCheck()" style="margin-top:3px;flex-shrink:0;accent-color:#fff;">
+            <div>
               <div class="so-card-num">${soEsc(so.order_number)}</div>
-              <div class="so-card-sub"><a href="/crm/leads/${so.lead_id}" style="color:#93c5fd;text-decoration:none;font-weight:700;">${soEsc(so.contact_name)}</a>${so.bill_company?' · '+soEsc(so.bill_company):''}</div>
+              <div class="so-card-sub"><a href="/crm/leads/${so.lead_id}">${soEsc(so.contact_name)}</a>${so.bill_company?' · '+soEsc(so.bill_company):''}</div>
             </div>
             <div class="so-card-hdr-right">
               <div class="so-card-total-label">Total</div>
@@ -590,9 +761,11 @@ function soRenderPagination(data) {
     const el = document.getElementById('soPagination'); if(!el) return;
     if(data.pages<=1){el.innerHTML='';return;}
     let h='';
-    if(data.page>1) h+=`<a href="#" onclick="soGotoPage(${data.page-1});return false;" class="btn-outline" style="padding:7px 14px;">← Prev</a>`;
-    h+=`<span style="color:var(--text2);">Page ${data.page} of ${data.pages}</span>`;
-    if(data.page<data.pages) h+=`<a href="#" onclick="soGotoPage(${data.page+1});return false;" class="btn-outline" style="padding:7px 14px;">Next →</a>`;
+    h+=`<div style="flex:1;">`;
+    if(data.page>1) h+=`<a href="#" onclick="soGotoPage(${data.page-1});return false;" class="pgn-btn">← Previous</a>`;
+    h+=`</div><span style="color:var(--text-muted);font-size:0.85rem;font-weight:600;">Page ${data.page} of ${data.pages}</span><div style="flex:1;text-align:right;">`;
+    if(data.page<data.pages) h+=`<a href="#" onclick="soGotoPage(${data.page+1});return false;" class="pgn-btn">Next →</a>`;
+    h+=`</div>`;
     el.innerHTML=h;
 }
 
@@ -622,8 +795,8 @@ function soClearSelection() {
 
 // ── Bulk actions ──────────────────────────────────────────────
 function soConfirm(title, count, msg, btnTxt, btnCls, callback) {
-    document.getElementById('soConfirmTitle').textContent = title;
-    document.getElementById('soConfirmCount').textContent = count+' order(s)';
+    document.getElementById('soConfirmTitle').innerHTML = title;
+    document.getElementById('soConfirmCount').textContent = count+' item(s)';
     document.getElementById('soConfirmMsg').textContent   = msg;
     const btn = document.getElementById('soConfirmBtn');
     btn.textContent=btnTxt; btn.className=btnCls;
@@ -632,26 +805,26 @@ function soConfirm(title, count, msg, btnTxt, btnCls, callback) {
 }
 function soPost(url, ids, cb) {
     const fd=new FormData(); ids.forEach(id=>fd.append('ids[]',id));
-    fetch(url,{method:'POST',body:fd}).then(r=>r.json()).then(d=>{soToast(d.message,d.success?'#166534':'#dc2626');if(d.success){soClearSelection();soDoSearch();if(cb)cb();}});
+    fetch(url,{method:'POST',body:fd}).then(r=>r.json()).then(d=>{soToast(d.message,d.success?'var(--success)':'var(--danger)');if(d.success){soClearSelection();soDoSearch();if(cb)cb();}});
 }
 function soBulkDelete() {
     const ids=soGetIds(); if(!ids.length)return;
-    soConfirm('🗑️ Move to Deleted',ids.length,'Selected orders will be moved to Deleted tab.','Yes, Delete','smbtn-danger',()=>soPost('/crm/sample-orders/bulk-delete',ids));
+    soConfirm(iconTrash+' Move to Deleted',ids.length,'Selected orders will be moved to Deleted tab.','Yes, Delete','smbtn-danger',()=>soPost('/crm/sample-orders/bulk-delete',ids));
 }
 function soBulkRestore() {
     const ids=soGetIds(); if(!ids.length)return;
-    soConfirm('♻️ Restore Orders',ids.length,'Selected orders will be moved back to Active tab.','Yes, Restore','smbtn-primary',()=>soPost('/crm/sample-orders/bulk-restore',ids));
+    soConfirm(iconRestore+' Restore Orders',ids.length,'Selected orders will be moved back to Active tab.','Yes, Restore','smbtn-primary',()=>soPost('/crm/sample-orders/bulk-restore',ids));
 }
 function soBulkPermDelete() {
     const ids=soGetIds(); if(!ids.length)return;
-    soConfirm('⚠️ Permanent Delete',ids.length,'This CANNOT be undone. Records will be permanently removed.','Delete Forever','smbtn-danger',()=>soPost('/crm/sample-orders/bulk-permanent-delete',ids));
+    soConfirm(iconPermDel+' Permanent Delete',ids.length,'This CANNOT be undone. Records will be permanently removed.','Delete Forever','smbtn-danger',()=>soPost('/crm/sample-orders/bulk-permanent-delete',ids));
 }
 function soDelSingle(id) {
-    soConfirm('🗑️ Move to Deleted',1,'This order will be moved to Deleted tab.','Yes, Delete','smbtn-danger',()=>soPost('/crm/sample-orders/bulk-delete',[id]));
+    soConfirm(iconTrash+' Move to Deleted',1,'This order will be moved to Deleted tab.','Yes, Delete','smbtn-danger',()=>soPost('/crm/sample-orders/bulk-delete',[id]));
 }
 function soRestoreSingle(id) { soPost('/crm/sample-orders/bulk-restore',[id]); }
 function soPermDelSingle(id) {
-    soConfirm('⚠️ Permanent Delete',1,'This CANNOT be undone.','Delete Forever','smbtn-danger',()=>soPost('/crm/sample-orders/bulk-permanent-delete',[id]));
+    soConfirm(iconPermDel+' Permanent Delete',1,'This CANNOT be undone.','Delete Forever','smbtn-danger',()=>soPost('/crm/sample-orders/bulk-permanent-delete',[id]));
 }
 
 // ── Mail Modal ────────────────────────────────────────────────
@@ -664,7 +837,7 @@ function openSoMailModal(soId, orderNo, email) {
 }
 function sendSoMail() {
     const toEmail=document.getElementById('soMailTo').value.trim();
-    if(!toEmail){soToast('Email address required!','#dc2626');return;}
+    if(!toEmail){soToast('Email address required!','var(--danger)');return;}
     if(!_soMailId)return;
     const form=document.createElement('form');
     form.method='POST'; form.action='/mail/sample-orders/'+_soMailId+'/send';
@@ -674,7 +847,7 @@ function sendSoMail() {
 }
 
 // Init bulk bar visibility
-document.getElementById('soBulkActive').style.display  = soTab==='active'  ? '' : 'none';
-document.getElementById('soBulkDeleted').style.display = soTab==='deleted' ? '' : 'none';
+document.getElementById('soBulkActive').style.display  = soTab==='active'  ? 'flex' : 'none';
+document.getElementById('soBulkDeleted').style.display = soTab==='deleted' ? 'flex' : 'none';
 </script>
 {% endblock %}

@@ -1,103 +1,112 @@
 {% extends "base.html" %}
-{% block title %}{% if item %}Edit Item — {{ item.material_name }}{% else %}Add New Item{% endif %} — HCP ERP{% endblock %}
+{% block title %}{% if item %}Edit Item - {{ item.material_name }}{% else %}Add New Item{% endif %} - HCP ERP{% endblock %}
 {% block page_title %}{% if item %}Edit Item{% else %}Add New Item{% endif %}{% endblock %}
 {% block bread %}Procurement / Item Master / {% if item %}Edit{% else %}Add New{% endif %}{% endblock %}
 
 {% block extra_css %}
 <style>
-/* ═══════════════════════════════════════════════
-   ADD ITEM PAGE — STYLES
-═══════════════════════════════════════════════ */
+/* ============================================================
+   ADD / EDIT ITEM - PREMIUM BLUE THEME
+   ============================================================ */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700&display=swap');
 
-/* ── Page Layout ── */
+.ai-page, .ai-page input, .ai-page select, .ai-page textarea, .ai-page button, .ai-page label,
+.select2-container, .select2-dropdown {
+  font-family:'Inter','Segoe UI',system-ui,-apple-system,sans-serif;
+}
+.ai-page #fCode, .ai-page #fHsn { font-family:'JetBrains Mono', ui-monospace, monospace; font-weight:600; letter-spacing:.02em; }
+
+/* -- Page Layout -- */
 .ai-page        { max-width: 1200px; margin: 0 auto; padding-bottom: 60px; }
 
-/* ── Type Selector Cards ── */
+/* -- Type Selector Cards -- */
 .ai-type-grid   { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; margin-bottom: 24px; }
 .ai-type-card   {
-  border: 2px solid var(--border);
-  border-radius: 12px;
-  padding: 14px 10px 12px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 15px 10px 13px;
   text-align: center;
   cursor: pointer;
   transition: all .18s cubic-bezier(.16,1,.3,1);
-  background: var(--white);
+  background: #fff;
   user-select: none;
+  box-shadow: 0 1px 2px rgba(15,23,42,.04);
 }
-.ai-type-card:hover { border-color: var(--blue,#2563eb); background: #eff6ff; transform: translateY(-1px); }
+.ai-type-card:hover { border-color: #93c5fd; background: #f8fbff; transform: translateY(-2px); box-shadow: 0 6px 16px rgba(37,99,235,.12); }
 .ai-type-card.selected {
-  border-color: var(--blue,#2563eb);
-  background: var(--blue,#2563eb);
+  border-color: transparent;
+  background: linear-gradient(160deg,#3b82f6,#1d4ed8);
   color: #fff;
-  box-shadow: 0 4px 16px rgba(37,99,235,.3);
+  box-shadow: 0 6px 20px rgba(37,99,235,.35);
   transform: translateY(-2px);
 }
 .ai-type-dot    { width: 28px; height: 28px; border-radius: 50%; margin: 0 auto 8px; }
-.ai-type-card.selected .ai-type-dot { box-shadow: 0 0 0 3px rgba(255,255,255,.4); }
+.ai-type-card.selected .ai-type-dot { box-shadow: 0 0 0 3px rgba(255,255,255,.45); }
 .ai-type-abbr   { font-size: 13px; font-weight: 800; display: block; letter-spacing: .5px; }
 .ai-type-name   { font-size: 10.5px; font-weight: 500; margin-top: 2px; opacity: .75; display: block; line-height: 1.3; }
-.ai-type-card.selected .ai-type-name { opacity: .85; }
+.ai-type-card.selected .ai-type-name { opacity: .9; }
 
-/* ── Form Card ── */
+/* -- Form Card -- */
 .ai-card        {
-  background: var(--white);
-  border: 1px solid var(--border);
-  border-radius: 14px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 2px 12px rgba(0,0,0,.05);
+  box-shadow: 0 1px 3px rgba(15,23,42,.05), 0 8px 24px rgba(15,23,42,.04);
 }
 .ai-card-hdr    {
-  padding: 16px 22px;
-  border-bottom: 1px solid var(--border);
+  padding: 14px 22px;
+  border-bottom: 1px solid #e2e8f0;
   display: flex;
   align-items: center;
   gap: 10px;
-  background: var(--bg);
+  background: #f8fafc;
 }
 .ai-card-hdr-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-.ai-card-hdr h2  { font-size: 13.5px; font-weight: 700; color: var(--text); margin: 0; }
+.ai-card-hdr h2  { font-size: 13.5px; font-weight: 800; color: #0f172a; margin: 0; letter-spacing: -.01em; }
 .ai-card-body   { padding: 22px; }
 
-/* ── Section Divider ── */
+/* -- Section Divider -- */
 .ai-section     {
   font-size: 10px;
   font-weight: 800;
-  color: var(--blue,#2563eb);
+  color: #2563eb;
   text-transform: uppercase;
   letter-spacing: 1.2px;
-  background: var(--bg);
-  border-radius: 6px;
-  padding: 6px 12px;
+  background: #eff6ff;
+  border-radius: 8px;
+  padding: 7px 12px;
   margin: 22px 0 16px;
-  border: 1px solid var(--border);
+  border: 1px solid #bfdbfe;
   display: flex;
   align-items: center;
   gap: 6px;
 }
 .ai-section:first-child { margin-top: 0; }
 
-/* ── Grid Layouts ── */
+/* -- Grid Layouts -- */
 .ai-grid-3      { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
 .ai-grid-2      { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .ai-grid-1      { display: grid; grid-template-columns: 1fr; gap: 16px; }
 .ai-span-2      { grid-column: span 2; }
 .ai-span-3      { grid-column: span 3; }
 
-/* ── Form Field ── */
+/* -- Form Field -- */
 .ai-fld         { display: flex; flex-direction: column; gap: 5px; }
-.ai-label       { font-size: 11.5px; font-weight: 700; color: var(--text2); letter-spacing: .2px; display: flex; align-items: center; gap: 4px; }
+.ai-label       { font-size: 11px; font-weight: 700; color: #64748b; letter-spacing: .03em; display: flex; align-items: center; gap: 4px; }
 .ai-label .req  { color: #ef4444; font-size: 13px; line-height: 1; }
 .ai-input,
 .ai-select,
 .ai-textarea    {
   width: 100%;
   padding: 9px 12px;
-  border: 1.5px solid var(--border);
-  border-radius: 8px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 9px;
   font-size: 13px;
   font-family: inherit;
-  color: var(--text);
-  background: var(--white);
+  color: #0f172a;
+  background: #fff;
   transition: border-color .15s, box-shadow .15s;
   box-sizing: border-box;
   outline: none;
@@ -105,33 +114,33 @@
 .ai-input:focus,
 .ai-select:focus,
 .ai-textarea:focus {
-  border-color: var(--blue,#2563eb);
-  box-shadow: 0 0 0 3px rgba(37,99,235,.1);
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37,99,235,.12);
 }
 .ai-input.invalid,
 .ai-select.invalid { border-color: #ef4444; box-shadow: 0 0 0 3px rgba(239,68,68,.1); }
 .ai-select      { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 34px; }
 .ai-textarea    { resize: vertical; min-height: 72px; }
-.ai-hint        { font-size: 10.5px; color: var(--text3,#94a3b8); margin-top: 1px; }
+.ai-hint        { font-size: 10.5px; color: #94a3b8; margin-top: 1px; }
 .ai-err         { font-size: 11px; color: #ef4444; font-weight: 600; display: none; }
 .ai-fld.has-err .ai-err { display: block; }
 
-/* ── Tag Input ── */
-.tag-wrap   { display:flex; flex-wrap:wrap; gap:5px; padding:6px 9px; border:1.5px solid var(--border); border-radius:8px; background:var(--white); min-height:40px; cursor:text; transition:border-color .15s, box-shadow .15s; }
-.tag-wrap:focus-within { border-color:var(--blue,#2563eb); box-shadow:0 0 0 3px rgba(37,99,235,.1); }
-.tag-pill   { display:inline-flex; align-items:center; gap:5px; background:#eff6ff; border:1px solid #bfdbfe; color:#1d4ed8; padding:2px 8px; border-radius:20px; font-size:11.5px; font-weight:600; white-space:nowrap; }
+/* -- Tag Input -- */
+.tag-wrap   { display:flex; flex-wrap:wrap; gap:5px; padding:6px 9px; border:1.5px solid #e2e8f0; border-radius:9px; background:#fff; min-height:40px; cursor:text; transition:border-color .15s, box-shadow .15s; }
+.tag-wrap:focus-within { border-color:#2563eb; box-shadow:0 0 0 3px rgba(37,99,235,.12); }
+.tag-pill   { display:inline-flex; align-items:center; gap:5px; background:#eff6ff; border:1px solid #bfdbfe; color:#1d4ed8; padding:2px 9px; border-radius:999px; font-size:11.5px; font-weight:600; white-space:nowrap; }
 .tag-pill button { border:none; background:none; cursor:pointer; color:#93c5fd; font-size:14px; line-height:1; padding:0; display:flex; align-items:center; }
 .tag-pill button:hover { color:#1d4ed8; }
-.tag-bare   { border:none; outline:none; font-size:12.5px; font-family:inherit; background:transparent; color:var(--text); min-width:90px; flex:1; padding:2px 3px; }
+.tag-bare   { border:none; outline:none; font-size:12.5px; font-family:inherit; background:transparent; color:#0f172a; min-width:90px; flex:1; padding:2px 3px; }
 
-/* ── Number Input ── */
+/* -- Number Input -- */
 .ai-num-wrap { position: relative; }
 .ai-num-wrap .ai-prefix,
 .ai-num-wrap .ai-suffix {
   position: absolute;
   top: 50%; transform: translateY(-50%);
   font-size: 12px; font-weight: 700;
-  color: var(--text3,#94a3b8);
+  color: #94a3b8;
   pointer-events: none;
 }
 .ai-num-wrap .ai-prefix { left: 10px; }
@@ -139,59 +148,86 @@
 .ai-num-wrap.has-prefix .ai-input { padding-left: 24px; }
 .ai-num-wrap.has-suffix .ai-input { padding-right: 32px; }
 
-/* ── Footer Actions ── */
+/* -- Footer Actions -- */
 .ai-footer  {
   position: sticky;
   bottom: 0;
-  background: var(--white);
-  border-top: 1px solid var(--border);
-  padding: 14px 22px;
+  background: rgba(255,255,255,.92);
+  backdrop-filter: blur(8px);
+  border: 1px solid #e2e8f0;
+  padding: 13px 22px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
   z-index: 10;
-  border-radius: 0 0 14px 14px;
-  box-shadow: 0 -4px 20px rgba(0,0,0,.06);
+  border-radius: 14px;
+  margin-top: 16px;
+  box-shadow: 0 -6px 24px rgba(15,23,42,.08);
 }
 .ai-footer-left  { display: flex; align-items: center; gap: 8px; }
 .ai-footer-right { display: flex; align-items: center; gap: 10px; }
 
-/* ── Buttons ── */
-.btn-save   { background: var(--blue,#2563eb); color: #fff; border: none; border-radius: 8px; padding: 9px 22px; font-size: 13px; font-weight: 700; font-family: inherit; cursor: pointer; display: flex; align-items: center; gap: 7px; transition: all .15s; }
-.btn-save:hover   { background: #1d4ed8; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(37,99,235,.3); }
+/* -- Buttons -- */
+.btn-save   {
+  background: linear-gradient(180deg,#3b82f6,#1d4ed8); color: #fff; border: none; border-radius: 999px;
+  padding: 0 22px; height: 38px; font-size: 13px; font-weight: 700; font-family: inherit; cursor: pointer;
+  display: flex; align-items: center; gap: 7px; transition: all .18s;
+  box-shadow: 0 2px 8px rgba(37,99,235,.28), inset 0 1px 0 rgba(255,255,255,.25);
+}
+.btn-save:hover   { transform: translateY(-1px); box-shadow: 0 5px 14px rgba(37,99,235,.4); }
 .btn-save:disabled { opacity: .6; cursor: not-allowed; transform: none; box-shadow: none; }
-.btn-cancel { background: var(--bg); color: var(--text2); border: 1.5px solid var(--border); border-radius: 8px; padding: 9px 18px; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; transition: all .15s; }
+.btn-cancel {
+  background: #fff; color: #64748b; border: 1.5px solid #e2e8f0; border-radius: 999px;
+  padding: 0 18px; height: 38px; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer;
+  text-decoration: none; display: inline-flex; align-items: center; gap: 5px; transition: all .15s;
+}
 .btn-cancel:hover { background: #fee2e2; border-color: #fca5a5; color: #dc2626; }
+.btn-add-new {
+  display:inline-flex; align-items:center; justify-content:center; gap:6px; height:36px; padding:0 16px;
+  background:linear-gradient(180deg,#3b82f6,#1d4ed8); color:#fff; border:none; border-radius:999px;
+  font-size:12.5px; font-weight:700; cursor:pointer; font-family:inherit; text-decoration:none;
+  box-shadow:0 2px 8px rgba(37,99,235,.28); transition:all .18s; white-space:nowrap;
+}
+.btn-add-new:hover { transform:translateY(-1px); color:#fff; box-shadow:0 5px 14px rgba(37,99,235,.38); }
+.btn-grid-action {
+  display:inline-flex; align-items:center; justify-content:center; gap:5px; height:34px; padding:0 14px;
+  border:1.5px solid #e2e8f0; border-radius:999px; background:#fff; color:#475569;
+  font-size:12.5px; font-weight:600; cursor:pointer; font-family:inherit; transition:all .15s; white-space:nowrap;
+}
+.btn-grid-action:hover { border-color:#93c5fd; color:#2563eb; background:#eff6ff; }
 
-/* ── Active Toggle ── */
+/* -- Active Toggle -- */
 .ai-toggle-wrap { display: flex; align-items: center; gap: 8px; }
-.ai-toggle      { width: 38px; height: 22px; background: #e2e8f0; border-radius: 11px; position: relative; cursor: pointer; transition: background .2s; border: none; outline: none; flex-shrink: 0; }
+.ai-toggle      { width: 40px; height: 23px; background: #e2e8f0; border-radius: 12px; position: relative; cursor: pointer; transition: background .2s; border: none; outline: none; flex-shrink: 0; }
 .ai-toggle.on   { background: #22c55e; }
-.ai-toggle::after { content:''; position:absolute; width:18px; height:18px; background:#fff; border-radius:50%; top:2px; left:2px; transition:transform .2s; box-shadow:0 1px 3px rgba(0,0,0,.2); }
-.ai-toggle.on::after { transform: translateX(16px); }
-.ai-toggle-label { font-size:12px; font-weight:600; color:var(--text2); }
+.ai-toggle::after { content:''; position:absolute; width:19px; height:19px; background:#fff; border-radius:50%; top:2px; left:2px; transition:transform .2s; box-shadow:0 1px 3px rgba(0,0,0,.25); }
+.ai-toggle.on::after { transform: translateX(17px); }
+.ai-toggle-label { font-size:12px; font-weight:700; color:#475569; }
 
-/* ── Step Progress (top) ── */
-.ai-steps   { display: flex; align-items: center; gap: 0; margin-bottom: 20px; }
+/* -- Step Progress (top) -- */
+.ai-steps   { display: flex; align-items: center; gap: 0; margin-bottom: 20px; background:#fff; border:1px solid #e2e8f0; border-radius:999px; padding:10px 18px; box-shadow:0 1px 3px rgba(15,23,42,.05); }
 .ai-step    { display: flex; align-items: center; gap: 8px; flex: 1; }
-.ai-step-num { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; color: var(--text3); background: var(--white); flex-shrink: 0; transition: all .2s; }
+.ai-step-num { width: 26px; height: 26px; border-radius: 50%; border: 2px solid #e2e8f0; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; color: #94a3b8; background: #fff; flex-shrink: 0; transition: all .2s; }
 .ai-step.done .ai-step-num { background: #22c55e; border-color: #22c55e; color: #fff; }
-.ai-step.active .ai-step-num { background: var(--blue,#2563eb); border-color: var(--blue,#2563eb); color: #fff; }
-.ai-step-label { font-size: 11px; font-weight: 600; color: var(--text3); transition: color .2s; }
-.ai-step.active .ai-step-label { color: var(--blue,#2563eb); font-weight: 700; }
+.ai-step.active .ai-step-num { background: linear-gradient(180deg,#3b82f6,#1d4ed8); border-color: #2563eb; color: #fff; box-shadow: 0 2px 8px rgba(37,99,235,.3); }
+.ai-step-label { font-size: 11px; font-weight: 600; color: #94a3b8; transition: color .2s; }
+.ai-step.active .ai-step-label { color: #2563eb; font-weight: 700; }
 .ai-step.done .ai-step-label { color: #16a34a; }
-.ai-step-line { height: 2px; flex: 1; background: var(--border); margin: 0 6px; border-radius: 2px; }
+.ai-step-line { height: 2px; flex: 1; background: #e2e8f0; margin: 0 6px; border-radius: 2px; }
 .ai-step-line.done { background: #22c55e; }
 
-/* ── Field visibility ── */
+/* -- Field visibility -- */
 .ai-field-rm  { } /* RM only */
 .ai-field-pm  { } /* PM only */
 .ai-field-fg  { } /* FG only */
 .ai-field-pm-fg { } /* PM + FG */
 [data-hide]   { display: none !important; }
 
-/* ── Responsive ── */
+/* -- Lucide sizing -- */
+.lucide-ic { width:1em; height:1em; vertical-align:-0.125em; }
+
+/* -- Responsive -- */
 @media (max-width: 680px) {
   .ai-grid-3  { grid-template-columns: 1fr 1fr; }
   .ai-span-3  { grid-column: span 2; }
@@ -206,20 +242,20 @@
   .ai-type-grid { grid-template-columns: repeat(2, 1fr); }
   .ai-steps   { display: none; }
   .ai-footer-right { gap: 6px; }
-  .btn-save   { padding: 9px 16px; font-size: 12.5px; }
-  .btn-cancel { padding: 9px 12px; font-size: 12.5px; }
+  .btn-save   { padding: 0 16px; font-size: 12.5px; }
+  .btn-cancel { padding: 0 12px; font-size: 12.5px; }
 }
 @media print { .ai-footer, .ai-steps { display: none !important; } }
 </style>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-rc.0/css/select2.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
 <style>
-/* ── Select2 Custom Theme — match our design system ── */
+/* -- Select2 Custom Theme - match our design system -- */
 .select2-container { width: 100% !important; }
 .select2-container--default .select2-selection--single {
   height: 38px !important;
   border: 1.5px solid var(--border) !important;
-  border-radius: 8px !important;
+  border-radius: 9px !important;
   background: var(--white) !important;
   display: flex !important;
   align-items: center !important;
@@ -329,10 +365,10 @@
     </div>
   </div>
 
-  <!-- ① Item Type Selector -->
+  <!-- (1) Item Type Selector -->
   <div class="ai-card" style="margin-bottom:16px;{% if auto_type or item %}display:none;{% endif %}">
     <div class="ai-card-hdr">
-      <span style="font-size:16px;">🏷️</span>
+      <i data-lucide="tag" style="width:17px;height:17px;color:#2563eb;flex-shrink:0;"></i>
       <h2>Select Item Type <span style="color:#ef4444;">*</span></h2>
     </div>
     <div class="ai-card-body" style="padding-bottom:18px;">
@@ -352,32 +388,32 @@
           {% endfor %}
         {% else %}
           <div style="grid-column:1/-1;padding:20px;text-align:center;color:#94a3b8;font-size:13px;">
-            ⚠️ Aapko koi Item Type allow nahi kiya gaya. Admin se contact karo.
+            Aapko koi Item Type allow nahi kiya gaya. Admin se contact karo.
           </div>
         {% endif %}
       </div>
       <p id="typeHint" style="font-size:11.5px;color:#94a3b8;margin:8px 0 0;display:{% if item %}none{% else %}block{% endif %};">
-        👆 Item type select karo to fields dikhenge
+        Item type select karo to fields dikhenge
       </p>
     </div>
   </div>
 
-  <!-- ② Main Form (hidden until type selected) -->
+  <!-- (2) Main Form (hidden until type selected) -->
   <form id="itemForm" onsubmit="submitForm(event)" novalidate
         style="display:{% if item or auto_type %}block{% else %}none{% endif %};">
     {% if item and item.material_type %}
     <div style="margin-bottom:12px;display:flex;align-items:center;gap:8px;">
       <span style="background:{{ item.material_type.color or '#6366f1' }}18;color:{{ item.material_type.color or '#6366f1' }};padding:4px 14px;border-radius:20px;font-size:12px;font-weight:800;border:1.5px solid {{ item.material_type.color or '#6366f1' }}33;">
-        {{ item.material_type.abbreviation }} — {{ item.material_type.type_name }}
+        {{ item.material_type.abbreviation }} - {{ item.material_type.type_name }}
       </span>
-      <span style="font-size:11.5px;color:#94a3b8;">🔒 Type change not allowed in edit mode</span>
+      <span style="font-size:11.5px;color:#94a3b8;">Type change not allowed in edit mode</span>
     </div>
     {% endif %}
     <input type="hidden" id="fItemId"     value="{{ item.id if item else '' }}">
     <input type="hidden" id="fTypeId"     name="material_type_id" value="{{ item.material_type_id if item else (auto_type.id if auto_type else '') }}">
     <input type="hidden" id="fTypeAbbr"   value="{{ item.material_type.abbreviation if item and item.material_type else (auto_type.abbreviation if auto_type else '') }}">
 
-    <!-- ─── BASIC INFORMATION ─── -->
+    <!-- --- BASIC INFORMATION --- -->
     <div class="ai-card" style="margin-bottom:16px;">
       <div class="ai-card-hdr">
         <div class="ai-card-hdr-dot" id="hdrDot" style="background:#6366f1;"></div>
@@ -400,14 +436,14 @@
               </div>
             </div>
             <span class="ai-err" id="nameErr" style="display:none;">Item name required</span>
-            <span id="nameDupErr" style="display:none;font-size:11.5px;color:#ef4444;margin-top:3px;">⚠️ Ye naam pehle se exist karta hai</span>
+            <span id="nameDupErr" style="display:none;font-size:11.5px;color:#ef4444;margin-top:3px;">Ye naam pehle se exist karta hai</span>
           </div>
           <div class="ai-fld">
             <label class="ai-label">Code <span class="req">*</span>
               {% if auto_type_abbr and not item %}
               <span style="font-size:10px;font-weight:600;color:#94a3b8;margin-left:6px;">Auto-generated</span>
               {% elif item %}
-              <span style="font-size:10px;font-weight:600;color:#94a3b8;margin-left:6px;">🔒 Fixed</span>
+              <span style="font-size:10px;font-weight:600;color:#94a3b8;margin-left:6px;">Fixed</span>
               {% endif %}
             </label>
             <div style="display:flex;gap:6px;align-items:center;">
@@ -423,24 +459,24 @@
                       style="flex-shrink:0;padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:8px;background:#f8fafc;color:#475569;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;white-space:nowrap;"
                       onmouseover="this.style.borderColor='#2563eb';this.style.color='#2563eb'"
                       onmouseout="this.style.borderColor='#e2e8f0';this.style.color='#475569'">
-                🔄 Auto
+                Auto
               </button>
               {% endif %}
             </div>
             <span class="ai-err">Code required</span>
           </div>
-          <!-- Material Type (HM/CM) — PM only -->
+          <!-- Material Type (HM/CM) - PM only -->
           {% set _pmclienttype = item.pm_client_type if item else '' %}
           <div class="ai-fld ai-field-pm" id="rowMaterialType" {% if not ((auto_type and auto_type.abbreviation|upper == 'PM') or (item and item.material_type and item.material_type.abbreviation|upper == 'PM')) %}data-hide{% endif %}>
             <label class="ai-label">Material Type <span class="req">*</span></label>
             <select class="ai-select" id="fPmClientType" name="pm_client_type" style="width:100%;">
               <option value="">-- Select Type --</option>
-              <option value="HM" {% if item and item.pm_client_type == 'HM' %}selected{% endif %}>HM — HCP Material</option>
-              <option value="CM" {% if item and item.pm_client_type == 'CM' %}selected{% endif %}>CM — Client Material</option>
+              <option value="HM" {% if item and item.pm_client_type == 'HM' %}selected{% endif %}>HM - HCP Material</option>
+              <option value="CM" {% if item and item.pm_client_type == 'CM' %}selected{% endif %}>CM - Client Material</option>
             </select>
             <span class="ai-err" id="pmClientTypeErr" style="display:none;">Material Type required</span>
           </div>
-          <!-- Per Box Qty — FG only, hidden by default -->
+          <!-- Per Box Qty - FG only, hidden by default -->
           <div class="ai-fld ai-field-fg" id="rowPerBox" data-hide>
             <label class="ai-label">Per Box Qty <span class="req">*</span></label>
             <div class="ai-num-wrap has-suffix">
@@ -459,7 +495,7 @@
           <div class="ai-fld">
             <label class="ai-label">Alias <span class="req">*</span></label>
             <div class="tag-wrap" id="tagWrap" onclick="document.getElementById('tagInput').focus()">
-              <input class="tag-bare" id="tagInput" placeholder="Type and press Enter or comma…" autocomplete="off">
+              <input class="tag-bare" id="tagInput" placeholder="Type and press Enter or comma..." autocomplete="off">
             </div>
             <input type="hidden" id="fAliases" name="aliases" value="{{ item.aliases if item else '' }}">
             <span class="ai-err" id="aliasErr">At least one alias required</span>
@@ -467,7 +503,7 @@
           </div>
         </div>
 
-        <!-- Brand + Category / Group — same row -->
+        <!-- Brand + Category / Group - same row -->
         <div style="margin-top:16px;">
 
           <!-- Row 1: PM Type | Brand | Category (3-col) -->
@@ -478,14 +514,14 @@
               <label class="ai-label">PM Type <span class="req">*</span></label>
               <select class="ai-select" id="fPmType" name="pm_material_type" style="width:100%;">
                 <option value="">-- Select Type --</option>
-                <option value="PM"          {% if item and item.pm_material_type == 'PM' %}selected{% endif %}>PM — Packing Material</option>
+                <option value="PM"          {% if item and item.pm_material_type == 'PM' %}selected{% endif %}>PM - Packing Material</option>
                 <option value="Corrugation" {% if item and item.pm_material_type == 'Corrugation' %}selected{% endif %}>Corrugation</option>
                 <option value="Sleeves"     {% if item and item.pm_material_type == 'Sleeves' %}selected{% endif %}>Sleeves</option>
               </select>
               <span class="ai-err" id="pmTypeErr">PM Type required</span>
             </div>
 
-            <!-- Per Box Weight (FG only) — sits in slot 1 when FG is selected -->
+            <!-- Per Box Weight (FG only) - sits in slot 1 when FG is selected -->
             {% if (auto_type and auto_type.abbreviation|upper == 'FG') or (item and item.material_type and item.material_type.abbreviation|upper == 'FG') %}<div class="ai-fld ai-field-fg" id="rowPerBoxWeight">{% else %}<div class="ai-fld ai-field-fg" id="rowPerBoxWeight" data-hide>{% endif %}
               <label class="ai-label">Per Box Weight <span class="req">*</span></label>
               <div style="display:flex;align-items:stretch;gap:6px;">
@@ -523,12 +559,12 @@
                 {% for b in brands %}
                 <option value="{{ b.brand_name }}"
                   {% if item and item.brand == b.brand_name %}selected{% endif %}>
-                  {{ b.brand_name }}{% if b.client %} — {{ b.client.company_name or b.client.contact_name }}{% endif %}
+                  {{ b.brand_name }}{% if b.client %} - {{ b.client.company_name or b.client.contact_name }}{% endif %}
                 </option>
                 {% endfor %}
               </select>
               <span class="ai-err">Brand required</span>
-              <span class="ai-hint">CRM → Client Master</span>
+              <span class="ai-hint">CRM - Client Master</span>
             </div>
 
             <!-- Category (PM/FG only) -->
@@ -550,10 +586,10 @@
 
           <!-- Row 2: Attribute (PM only, full width) -->
           {% if (auto_type and auto_type.abbreviation|upper == 'PM') or (item and item.material_type and item.material_type.abbreviation|upper == 'PM') %}<div class="ai-fld ai-field-pm" id="rowPmAttr" style="margin-top:14px;">{% else %}<div class="ai-fld ai-field-pm" id="rowPmAttr" data-hide style="margin-top:14px;">{% endif %}
-            <label class="ai-label">Attribute <span class="ai-hint" style="text-transform:none;font-weight:400;">(Bottle, Tube, Box…)</span></label>
+            <label class="ai-label">Attribute <span class="ai-hint" style="text-transform:none;font-weight:400;">(Bottle, Tube, Box...)</span></label>
             <div class="tag-wrap" id="pmAttrWrap" onclick="document.getElementById('pmAttrInput').focus()"
                  style="min-height:40px;display:flex;flex-wrap:wrap;align-items:center;gap:4px;padding:5px 10px;border:1.5px solid #e2e8f0;border-radius:8px;cursor:text;background:#fff;">
-              <input type="text" id="pmAttrInput" placeholder="Type attribute, press Enter…"
+              <input type="text" id="pmAttrInput" placeholder="Type attribute, press Enter..."
                      style="border:none;outline:none;font-size:13px;font-family:inherit;flex:1;min-width:120px;background:transparent;">
             </div>
             <input type="hidden" id="fPmAttr" name="pm_attribute" value="{{ item.pm_attribute if item else '' }}">
@@ -561,7 +597,7 @@
 
           <!-- Row 3: Corrugation Details (shown when PM Type = Corrugation) -->
           {% if item and item.pm_material_type == 'Corrugation' %}<div id="rowCorrugation" style="display:block;{% else %}<div id="rowCorrugation" style="display:none;{% endif %}margin-top:14px;background:#eff6ff22;border:1.5px solid #bfdbfe;border-radius:10px;padding:14px;">
-            <div style="font-size:10.5px;font-weight:800;color:#2563eb;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">📦 Corrugation Details</div>
+            <div style="font-size:10.5px;font-weight:800;color:#2563eb;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">Corrugation Details</div>
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px;">
               <div class="ai-fld">
                 <label class="ai-label">Ply <span class="req">*</span></label>
@@ -589,7 +625,7 @@
 
           <!-- Row 4: Sleeves Dimension (shown when PM Type = Sleeves) -->
           {% if item and item.pm_material_type == 'Sleeves' %}<div id="rowSleeves" style="display:block;{% else %}<div id="rowSleeves" style="display:none;{% endif %}margin-top:14px;background:#faf5ff22;border:1.5px solid #ddd6fe;border-radius:10px;padding:14px;">
-            <div style="font-size:10.5px;font-weight:800;color:#7c3aed;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">🎭 Sleeves Dimension</div>
+            <div style="font-size:10.5px;font-weight:800;color:#7c3aed;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">Sleeves Dimension</div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
               <div class="ai-fld">
                 <label class="ai-label">Length (mm)</label>
@@ -602,7 +638,7 @@
             </div>
           </div>
 
-          <!-- Category + Group — RM one line (2 col) -->
+          <!-- Category + Group - RM one line (2 col) -->
           {% if (auto_type and auto_type.abbreviation|upper == 'RM') or (item and item.material_type and item.material_type.abbreviation|upper == 'RM') %}<div class="ai-field-rm" id="rowRmCatGroup" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:0;">{% else %}<div class="ai-field-rm" id="rowRmCatGroup" data-hide style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:0;">{% endif %}
             <div class="ai-fld">
               <label class="ai-label">Category <span class="req">*</span></label>
@@ -634,7 +670,7 @@
 
         </div>
 
-        <!-- INCI (RM) / SKU (PM+FG) + UOM — same row -->
+        <!-- INCI (RM) / SKU (PM+FG) + UOM - same row -->
         <div class="ai-grid-2" style="margin-top:16px;">
 
           <!-- Slot 1: INCI for RM  -->
@@ -668,7 +704,7 @@
 
           </div>
 
-          <!-- Slot 2: UOM — always visible -->
+          <!-- Slot 2: UOM - always visible -->
           <div class="ai-fld">
             <label class="ai-label">UOM <span class="req">*</span></label>
             <select class="ai-select" id="fUom" name="uom">
@@ -677,7 +713,7 @@
                 <option value="{{ u.code }}"
                   {% if item and item.uom == u.code %}selected
                   {% elif not item and u.code == 'KG' %}selected{% endif %}>
-                  {{ u.code }}{% if u.name and u.name != u.code %} — {{ u.name }}{% endif %}
+                  {{ u.code }}{% if u.name and u.name != u.code %} - {{ u.name }}{% endif %}
                 </option>
                 {% endfor %}
               {% else %}
@@ -697,19 +733,19 @@
           <div class="ai-fld">
             <label class="ai-label">Description</label>
             <textarea class="ai-textarea" id="fDesc" name="description"
-                      placeholder="Optional notes about this item…">{{ item.description if item else '' }}</textarea>
+                      placeholder="Optional notes about this item...">{{ item.description if item else '' }}</textarea>
           </div>
         </div>
 
       </div><!-- /card-body -->
     </div><!-- /card -->
 
-    <!-- ─── PRODUCT IMAGE (PM / FG only) ─── -->
+    <!-- --- PRODUCT IMAGE (PM / FG only) --- -->
     {% if (auto_type and auto_type.abbreviation|upper in ['PM','FG']) or (item and item.material_type and item.material_type.abbreviation|upper in ['PM','FG']) %}<div class="ai-card ai-field-pm-fg" id="rowProductImage" style="margin-bottom:16px;">{% else %}<div class="ai-card ai-field-pm-fg" id="rowProductImage" data-hide style="margin-bottom:16px;">{% endif %}
       <div class="ai-card-hdr">
-        <span style="font-size:16px;">🖼️</span>
+        <i data-lucide="image" style="width:17px;height:17px;color:#2563eb;flex-shrink:0;"></i>
         <h2>Product Image</h2>
-        <span style="font-size:11px;color:#94a3b8;margin-left:8px;">Upload → Crop to product → White background</span>
+        <span style="font-size:11px;color:#94a3b8;margin-left:8px;">Upload - Crop to product - White background</span>
       </div>
       <div class="ai-card-body">
         <input type="hidden" id="fImagePath" value="{{ item.image_data if item and item.image_data else '' }}">
@@ -721,8 +757,8 @@
           <div id="imgExistingArea" style="margin-bottom:14px;display:flex;align-items:center;gap:12px;background:#f8fafc;border-radius:10px;padding:10px;">
             <img src="{{ img_path }}" style="height:80px;width:80px;object-fit:contain;border-radius:8px;background:#fff;border:1px solid #e2e8f0;">
             <div>
-              <div style="font-size:12px;font-weight:700;color:#16a34a;">✅ Image saved</div>
-              <button type="button" onclick="imgClearExisting()" style="margin-top:4px;font-size:12px;color:#dc2626;background:none;border:none;cursor:pointer;font-weight:600;padding:0;">🗑️ Remove & Replace</button>
+              <div style="font-size:12px;font-weight:700;color:#16a34a;">Image saved</div>
+              <button type="button" onclick="imgClearExisting()" style="margin-top:4px;font-size:12px;color:#dc2626;background:none;border:none;cursor:pointer;font-weight:600;padding:0;">Remove &amp; Replace</button>
             </div>
           </div>
           {% endif %}
@@ -735,7 +771,7 @@
              ondragleave="this.style.borderColor='#e2e8f0';this.style.background=''"
              ondrop="handleImgDrop(event)"
              onclick="document.getElementById('imgFileInput').click()">
-          <div style="font-size:28px;margin-bottom:6px;">📷</div>
+          <div style="margin-bottom:8px;color:#94a3b8;"><i data-lucide="camera" style="width:32px;height:32px;"></i></div>
           <div style="font-size:13px;font-weight:600;color:#475569;">Click ya Drag &amp; Drop</div>
           <div style="font-size:11.5px;color:#94a3b8;margin-top:3px;">JPG, PNG, WEBP</div>
           <input type="file" id="imgFileInput" accept="image/*" style="display:none;" onchange="handleImgFile(this.files[0])">
@@ -745,14 +781,14 @@
         <div id="imgCropModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:600;display:none;align-items:center;justify-content:center;">
           <div style="background:#fff;border-radius:16px;padding:20px;max-width:90vw;max-height:90vh;display:flex;flex-direction:column;gap:12px;min-width:320px;">
             <div style="display:flex;justify-content:space-between;align-items:center;">
-              <div style="font-size:15px;font-weight:700;">✂️ Sirf product select karo</div>
+              <div style="font-size:15px;font-weight:700;">Crop - sirf product select karo</div>
               <div style="font-size:11.5px;color:#94a3b8;">Tube/product ke around crop karo</div>
             </div>
             <div style="overflow:hidden;border-radius:8px;max-height:60vh;">
               <img id="imgCropperSrc" src="" style="max-width:100%;display:block;">
             </div>
             <div style="display:flex;gap:8px;">
-              <button type="button" class="btn-add-new" onclick="imgApplyCrop()" style="flex:1;">✅ Apply Crop</button>
+              <button type="button" class="btn-add-new" onclick="imgApplyCrop()" style="flex:1;">Apply Crop</button>
               <button type="button" class="btn-grid-action" onclick="imgSkipCrop()" style="flex:1;">Skip (Use Full)</button>
             </div>
           </div>
@@ -765,26 +801,26 @@
             <img id="imgResultPreview" src="" style="max-height:180px;max-width:100%;object-fit:contain;">
           </div>
           <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center;">
-            <span id="imgSavedBadge" style="display:none;font-size:12px;font-weight:700;color:#16a34a;">✅ Image ready</span>
-            <button type="button" class="btn-grid-action" onclick="imgReCrop()" style="font-size:12px;">✂️ Re-crop</button>
-            <button type="button" class="btn-grid-action" onclick="imgReset()" style="font-size:12px;color:#dc2626;border-color:#fca5a5;">🗑️ Remove</button>
+            <span id="imgSavedBadge" style="display:none;font-size:12px;font-weight:700;color:#16a34a;">Image ready</span>
+            <button type="button" class="btn-grid-action" onclick="imgReCrop()" style="font-size:12px;">Re-crop</button>
+            <button type="button" class="btn-grid-action" onclick="imgReset()" style="font-size:12px;color:#dc2626;border-color:#fca5a5;">Remove</button>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- ─── STOCK & PRICING ─── -->
+    <!-- --- STOCK & PRICING --- -->
     <div class="ai-card" style="margin-bottom:16px;">
       <div class="ai-card-hdr">
-        <span style="font-size:16px;">📦</span>
+        <i data-lucide="package" style="width:17px;height:17px;color:#2563eb;flex-shrink:0;"></i>
         <h2>Stock &amp; Pricing</h2>
       </div>
       <div class="ai-card-body">
         <div class="ai-grid-3">
           <div class="ai-fld">
-            <label class="ai-label">Rate (₹) <span class="req">*</span></label>
+            <label class="ai-label">Rate (&#8377;) <span class="req">*</span></label>
             <div class="ai-num-wrap has-prefix">
-              <span class="ai-prefix">₹</span>
+              <span class="ai-prefix">&#8377;</span>
               <input class="ai-input" id="fRate" name="last_purchase_rate" type="number"
                      min="0" step="0.01" value="{{ item.last_purchase_rate if item else '0' }}">
             </div>
@@ -817,10 +853,10 @@
       </div>
     </div>
 
-    <!-- ─── GST & STATUTORY ─── -->
+    <!-- --- GST & STATUTORY --- -->
     <div class="ai-card">
       <div class="ai-card-hdr">
-        <span style="font-size:16px;">🧾</span>
+        <i data-lucide="receipt" style="width:17px;height:17px;color:#2563eb;flex-shrink:0;"></i>
         <h2>GST &amp; Statutory Details</h2>
       </div>
       <div class="ai-card-body">
@@ -874,13 +910,13 @@
       </div>
     </div>
 
-    <!-- ─── FOOTER ACTIONS ─── -->
+    <!-- --- FOOTER ACTIONS --- -->
     <div class="ai-footer">
       <div class="ai-footer-left">
         <span id="footerTypeBadge" style="font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px;background:#eff6ff;color:#1d4ed8;"></span>
       </div>
       <div class="ai-footer-right">
-        <a href="/material{% if auto_type_abbr %}?item_type={{ auto_type_abbr }}{% endif %}" class="btn-cancel">✕ Cancel</a>
+        <a href="/material{% if auto_type_abbr %}?item_type={{ auto_type_abbr }}{% endif %}" class="btn-cancel">× Cancel</a>
         <button type="submit" class="btn-save" id="btnSave">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 20 4 14"/></svg>
           <span id="btnSaveLabel">{% if item %}Update Item{% else %}Save Item{% endif %}</span>
@@ -892,18 +928,17 @@
 </div><!-- /ai-page -->
 {% endblock %}
 
-
 {% block extra_js %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-rc.0/js/select2.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
 <script>
-/* ═══════════════════════════════════════════════
-   ADD ITEM PAGE — JAVASCRIPT
-═══════════════════════════════════════════════ */
+/* ===============================================
+   ADD ITEM PAGE - JAVASCRIPT
+=============================================== */
 
-// ── State ──────────────────────────────────────
-// Global type flags — updated by applyTypeFields, used by validateForm
+// -- State --------------------------------------
+// Global type flags - updated by applyTypeFields, used by validateForm
 let _isPM = false, _isRM = false, _isFG = false, _isPMFG = false;
 
 let _selectedTypeId   = {{ item.material_type_id if item else (auto_type.id if auto_type else 'null') }};
@@ -912,14 +947,14 @@ let _selectedTypeName = '{{ item.material_type.type_name if item and item.materi
 let _selectedColor    = '{{ item.material_type.color if item and item.material_type else (auto_type.color if auto_type else "#6366f1") }}';
 let _aliasList        = [];
 
-// ── Auto Code Generation ──────────────────────────────
+// -- Auto Code Generation ------------------------------
 async function autoGenCode() {
   const abbr = '{{ auto_type_abbr }}' || _selectedTypeAbbr || document.getElementById('fTypeAbbr')?.value;
   if (!abbr) { showToast('Item type select karo pehle', 'warning'); return; }
   // For PM: pass pm_sub so backend picks correct prefix
   const pmSub = (abbr === 'PM') ? (document.getElementById('fPmType')?.value || '') : '';
   const btn = document.getElementById('btnAutoCode');
-  if (btn) { btn.textContent = '⏳'; btn.disabled = true; }
+  if (btn) { btn.textContent = '...'; btn.disabled = true; }
   try {
     const url = '/material/api/next-code?type_abbr=' + abbr + (pmSub ? '&pm_sub=' + encodeURIComponent(pmSub) : '');
     const res  = await fetch(url);
@@ -930,10 +965,10 @@ async function autoGenCode() {
       setTimeout(() => { document.getElementById('fCode').style.borderColor = ''; }, 1500);
     }
   } catch(e) { showToast('Code generate nahi ho saka', 'danger'); }
-  finally { if (btn) { btn.textContent = '🔄 Auto'; btn.disabled = false; } }
+  finally { if (btn) { btn.textContent = 'Auto'; btn.disabled = false; } }
 }
 
-// ── Init ────────────────────────────────────────
+// -- Init ----------------------------------------
 document.addEventListener('DOMContentLoaded', function () {
   // Auto-generate code for new items
   const AUTO_TYPE_ABBR = '{{ auto_type_abbr }}';
@@ -949,9 +984,9 @@ document.addEventListener('DOMContentLoaded', function () {
   if (saved) {
     saved.split(',').map(a => a.trim()).filter(Boolean).forEach(addTag);
   }
-  // SKU Size is now a single numeric field — no tag loading needed
+  // SKU Size is now a single numeric field - no tag loading needed
 
-  // ── Select2 init ────────────────────────────────
+  // -- Select2 init --------------------------------
   function initSelect2(id, placeholder) {
     $('#' + id).select2({
       placeholder: placeholder || 'Select...',
@@ -984,7 +1019,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if(pmTypeVal) autoGenCode();
     {% endif %}
   });
-  // Material Type (HM/CM) → name prefix
+  // Material Type (HM/CM) - name prefix
   initSelect2('fPmClientType', '-- Select Type --');
   $('#fPmClientType').on('change select2:select select2:clear', function(){ updateNamePrefix($(this).val() || ''); });
   // Init prefix on page load (edit mode)
@@ -1005,7 +1040,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 });
 
-// ── Duplicate Name Check ────────────────────────
+// -- Duplicate Name Check ------------------------
 let _nameCheckTimer = null;
 const _ITEM_ID = '{{ item.id if item else "" }}';
 
@@ -1020,7 +1055,7 @@ async function debouncedNameCheck(val){
     inp.style.borderColor = '';
     return;
   }
-  icon.textContent = '⏳'; icon.style.display = 'inline';
+  icon.textContent = '...'; icon.style.color='#94a3b8'; icon.style.display = 'inline';
   _nameCheckTimer = setTimeout(async ()=>{
     try{
       const res = await fetch('/material/api/check-name',{
@@ -1029,11 +1064,11 @@ async function debouncedNameCheck(val){
       });
       const d = await res.json();
       if(d.exists){
-        icon.textContent = '❌'; icon.style.display = 'inline';
+        icon.textContent = '×'; icon.style.color='#ef4444'; icon.style.fontWeight='800'; icon.style.display = 'inline';
         dupErr.style.display = 'block';
         inp.style.borderColor = '#ef4444';
       } else {
-        icon.textContent = '✅'; icon.style.display = 'inline';
+        icon.textContent = 'OK'; icon.style.color='#16a34a'; icon.style.fontSize='10px'; icon.style.fontWeight='800'; icon.style.display = 'inline';
         dupErr.style.display = 'none';
         inp.style.borderColor = '#22c55e';
       }
@@ -1041,7 +1076,7 @@ async function debouncedNameCheck(val){
   }, 600);
 }
 
-// ── Type Selection ──────────────────────────────
+// -- Type Selection ------------------------------
 function selectType(id, abbr, name, color) {
   _selectedTypeId   = id;
   _selectedTypeAbbr = abbr;
@@ -1102,11 +1137,11 @@ function applyTypeFields(abbr, color, name) {
 
   // Update card header colour + title
   document.getElementById('hdrDot').style.background = color;
-  document.getElementById('hdrTitle').textContent = name + ' — Basic Information';
+  document.getElementById('hdrTitle').textContent = name + ' - Basic Information';
 
   // Footer badge
   const badge = document.getElementById('footerTypeBadge');
-  badge.textContent = abbr + ' — ' + name;
+  badge.textContent = abbr + ' - ' + name;
   badge.style.background = color + '22';
   badge.style.color = color;
   badge.style.border = '1px solid ' + color + '55';
@@ -1133,7 +1168,7 @@ function setRequired(id, req) {
   else     el.removeAttribute('required');
 }
 
-// ── Step Indicator ──────────────────────────────
+// -- Step Indicator ------------------------------
 function updateStepIndicator(activeStep) {
   [1,2,3].forEach(i => {
     const s = document.getElementById('step' + i);
@@ -1146,14 +1181,14 @@ function updateStepIndicator(activeStep) {
   });
 }
 
-// ── UOM Suffix Sync ─────────────────────────────
+// -- UOM Suffix Sync -----------------------------
 function syncUomSuffix() {
   const uom = document.getElementById('fUom').value;
   document.getElementById('mslUomSuffix').textContent = uom;
   document.getElementById('obUomSuffix').textContent  = uom;
 }
 
-// ── Tag Input ───────────────────────────────────
+// -- Tag Input -----------------------------------
 const tagInput = document.getElementById('tagInput');
 
 tagInput.addEventListener('keydown', function(e) {
@@ -1202,7 +1237,7 @@ function escH(s) {
 }
 
 
-// ── Active Toggle ────────────────────────────────
+// -- Active Toggle --------------------------------
 function toggleActive(btn) {
   btn.classList.toggle('on');
   const on = btn.classList.contains('on');
@@ -1210,7 +1245,7 @@ function toggleActive(btn) {
   document.getElementById('fActive').value = on ? '1' : '0';
 }
 
-// ── Validation ───────────────────────────────────
+// -- Validation -----------------------------------
 function validateForm() {
   let ok = true;
 
@@ -1224,7 +1259,7 @@ function validateForm() {
   ok = validateReq('fName') && ok;
   // Block if duplicate name detected
   if(document.getElementById('nameDupErr')?.style.display !== 'none'){
-    showToast('⚠️ Item name already exists — change karo', 'danger');
+    showToast('Item name already exists - change karo', 'danger');
     document.getElementById('fName').focus();
     ok = false;
   }
@@ -1245,7 +1280,7 @@ function validateForm() {
   const isPM   = _isPM;
   const isFG   = _isFG;
 
-  // Category — only for PM/FG; RM uses fCategoryRm instead
+  // Category - only for PM/FG; RM uses fCategoryRm instead
   if (isPMFG) ok = validateReq('fCategory') && ok;
 
   if (isPMFG) ok = validateReq('fBrand') && ok;
@@ -1263,7 +1298,7 @@ function validateForm() {
       document.getElementById('fPmType').style.borderColor = '';
       document.getElementById('pmTypeErr').style.display = 'none';
     }
-    // Material Type (HM/CM) — required for PM
+    // Material Type (HM/CM) - required for PM
     const pmClientVal = document.getElementById('fPmClientType')?.value || '';
     const pmClientErr = document.getElementById('pmClientTypeErr');
     const pmClientEl  = document.getElementById('fPmClientType');
@@ -1277,7 +1312,7 @@ function validateForm() {
     }
   }
 
-  // SKU Size validation — PM (only for regular PM, NOT Corrugation/Sleeves) + FG
+  // SKU Size validation - PM (only for regular PM, NOT Corrugation/Sleeves) + FG
   const _pmTypeForSku = document.getElementById('fPmType')?.value || '';
   const _needsSku = isFG || (isPM && _pmTypeForSku !== 'Corrugation' && _pmTypeForSku !== 'Sleeves');
   if (_needsSku) {
@@ -1291,7 +1326,7 @@ function validateForm() {
       document.getElementById('skuErr').style.display = 'none';
     }
   } else {
-    // Corrugation / Sleeves — clear any stale SKU error
+    // Corrugation / Sleeves - clear any stale SKU error
     document.getElementById('fSkuSizes').style.borderColor = '';
     document.getElementById('skuErr').style.display = 'none';
   }
@@ -1320,7 +1355,7 @@ function validateForm() {
     }
   }
 
-  // Rate, MSL, OB — can be 0 but must be a number
+  // Rate, MSL, OB - can be 0 but must be a number
   ok = validateNum('fRate') && ok;
   ok = validateNum('fMsl') && ok;
   ok = validateNum('fOb') && ok;
@@ -1370,7 +1405,7 @@ function validateNum(id) {
   return true;
 }
 
-// ── Submit ───────────────────────────────────────
+// -- Submit ---------------------------------------
 async function submitForm(e) {
   e.preventDefault();
   if (!validateForm()) {
@@ -1383,7 +1418,7 @@ async function submitForm(e) {
   const btn = document.getElementById('btnSave');
   const lbl = document.getElementById('btnSaveLabel');
   btn.disabled = true;
-  lbl.textContent = 'Saving…';
+  lbl.textContent = 'Saving...';
 
   const payload = {
     id:                  parseInt(document.getElementById('fItemId').value) || null,
@@ -1428,24 +1463,24 @@ async function submitForm(e) {
 
     if (data.status === 'ok') {
       const assignedCode = data.code || '';
-      showToast(`✅ Item saved! Code: ${assignedCode}`, 'success');
+      showToast(`Item saved! Code: ${assignedCode}`, 'success');
       // Redirect back to filtered list
       const itemTypeParam = '{{ auto_type_abbr }}';
       const backUrl = itemTypeParam ? `/material?item_type=${itemTypeParam}` : '/material';
       setTimeout(() => { window.location.href = backUrl; }, 1200);
     } else {
-      showToast('❌ ' + (data.message || 'Save failed'), 'error');
+      showToast((data.message || 'Save failed'), 'error');
       btn.disabled = false;
       lbl.textContent = payload.id ? 'Update Item' : 'Save Item';
     }
   } catch (err) {
-    showToast('❌ Network error: ' + err.message, 'error');
+    showToast('Network error: ' + err.message, 'error');
     btn.disabled = false;
     lbl.textContent = payload.id ? 'Update Item' : 'Save Item';
   }
 }
 
-// ── Product Image Upload ───────────────────────────────────
+// -- Product Image Upload -----------------------------------
 let _imgCropper = null;
 let _imgOrigDataUrl = null;
 let _imgResultDataUrl = null;
@@ -1491,7 +1526,7 @@ function imgApplyCrop(){
   _imgResultDataUrl = canvas.toDataURL('image/png', 0.9);
   closeCropModal();
   showImgPreview(_imgResultDataUrl);
-  // Auto-save immediately — no need for "Use This Image" click
+  // Auto-save immediately - no need for "Use This Image" click
   imgAutoSave();
 }
 
@@ -1532,7 +1567,7 @@ function showImgPreview(dataUrl){
   if(resultPreview) resultPreview.src=dataUrl;
   if(savedBadge)   savedBadge.style.display='none';
   const btn=document.getElementById('btnImgSave');
-  if(btn){ btn.textContent='✅ Use This Image'; btn.disabled=false; btn.style.background=''; }
+  if(btn){ btn.textContent='Use This Image'; btn.disabled=false; btn.style.background=''; }
 }
 
 function imgReCrop(){
@@ -1540,7 +1575,7 @@ function imgReCrop(){
 }
 
 async function imgAutoSave(){
-  // Compress image client-side and store in fImagePath directly — no separate API call needed
+  // Compress image client-side and store in fImagePath directly - no separate API call needed
   if(!_imgResultDataUrl) return;
   try{
     // Compress using canvas: resize to max 600px, JPEG 85%
@@ -1558,21 +1593,21 @@ async function imgAutoSave(){
       _imgResultDataUrl = compressed;  // update with compressed version
       document.getElementById('fImagePath').value = compressed;
       document.getElementById('imgSavedBadge').style.display='block';
-      document.getElementById('imgSavedBadge').textContent='✅ Image ready';
+      document.getElementById('imgSavedBadge').textContent='Image ready';
     };
     img.src = _imgResultDataUrl;
   } catch(e){
     // Fallback: store as-is
     document.getElementById('fImagePath').value = _imgResultDataUrl;
     document.getElementById('imgSavedBadge').style.display='block';
-    document.getElementById('imgSavedBadge').textContent='✅ Image ready';
+    document.getElementById('imgSavedBadge').textContent='Image ready';
   }
 }
 
 async function imgSaveToServer(){
   if(!_imgResultDataUrl){ showToast('Pehle crop karo','danger'); return; }
   const btn=document.getElementById('btnImgSave');
-  if(btn){ btn.textContent='⏳ Saving…'; btn.disabled=true; }
+  if(btn){ btn.textContent='Saving...'; btn.disabled=true; }
   try{
     const res=await fetch('/material/api/upload-image',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image_base64:_imgResultDataUrl})});
     const d=await res.json();
@@ -1580,10 +1615,10 @@ async function imgSaveToServer(){
       document.getElementById('fImagePath').value=d.url;
       const badge=document.getElementById('imgSavedBadge');
       if(badge){ badge.style.display='block'; }
-      if(btn){ btn.textContent='✅ Saved'; btn.style.background='#16a34a'; }
-      showToast('Image saved ✓','success');
-    } else { showToast(d.message||'Save failed','danger'); if(btn){ btn.textContent='✅ Use This Image'; btn.disabled=false; } }
-  } catch(e){ showToast('Network error','danger'); if(btn){ btn.textContent='✅ Use This Image'; btn.disabled=false; } }
+      if(btn){ btn.textContent='Saved'; btn.style.background='#16a34a'; }
+      showToast('Image saved','success');
+    } else { showToast(d.message||'Save failed','danger'); if(btn){ btn.textContent='Use This Image'; btn.disabled=false; } }
+  } catch(e){ showToast('Network error','danger'); if(btn){ btn.textContent='Use This Image'; btn.disabled=false; } }
 }
 
 function imgReset(){
@@ -1601,7 +1636,7 @@ function imgClearExisting(){
   if(a) a.style.display='none';
 }
 
-// ── PM Type Conditional Fields ──────────────────────────────
+// -- PM Type Conditional Fields ------------------------------
 function updatePmTypeFields(type){
   const showCorr    = type === 'Corrugation';
   const showSleeve  = type === 'Sleeves';
@@ -1627,22 +1662,22 @@ function updatePmTypeFields(type){
   }
 }
 
-// ── Name prefix badge: driven by Material Type (HM/CM) ──────────
+// -- Name prefix badge: driven by Material Type (HM/CM) ----------
 function updateNamePrefix(val){
   const namePfx = document.getElementById('nameTypePfx');
   if (!namePfx) return;
   if (val === 'HM') {
-    namePfx.textContent = 'HM —';
+    namePfx.textContent = 'HM -';
     namePfx.style.cssText = 'display:inline-flex;align-items:center;font-size:12px;font-weight:800;padding:6px 10px;border-radius:6px;white-space:nowrap;flex-shrink:0;background:#0891b218;color:#0891b2;border:1.5px solid #0891b244;';
   } else if (val === 'CM') {
-    namePfx.textContent = 'CM —';
+    namePfx.textContent = 'CM -';
     namePfx.style.cssText = 'display:inline-flex;align-items:center;font-size:12px;font-weight:800;padding:6px 10px;border-radius:6px;white-space:nowrap;flex-shrink:0;background:#7c3aed18;color:#7c3aed;border:1.5px solid #7c3aed44;';
   } else {
     namePfx.style.display = 'none';
   }
 }
 
-// ── PM Attribute Tags ──────────────────────────────────────
+// -- PM Attribute Tags --------------------------------------
 let _pmAttrList = [];
 function initPmAttrTags(){
   const saved = document.getElementById('fPmAttr')?.value || '';
@@ -1683,7 +1718,7 @@ function renderPmAttrTags(){
   document.getElementById('fPmAttr').value=_pmAttrList.join(',');
 }
 
-// ── Toast ─────────────────────────────────────────
+// -- Toast -----------------------------------------
 function showToast(msg, type) {
   const t = document.createElement('div');
   t.textContent = msg;
@@ -1697,6 +1732,17 @@ function showToast(msg, type) {
   document.body.appendChild(t);
   setTimeout(() => t.remove(), 3500);
 }
+/* == LUCIDE ICONS == */
+(function(){
+  function draw(){ if(window.lucide){ try{ lucide.createIcons({attrs:{'stroke-width':1.9}}); }catch(e){} } }
+  if(window.lucide){ document.addEventListener('DOMContentLoaded', draw); }
+  else {
+    var s=document.createElement('script');
+    s.src='https://unpkg.com/lucide@latest';
+    s.onload=draw;
+    document.head.appendChild(s);
+  }
+})();
 </script>
 <style>
 @keyframes slideUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }

@@ -5,87 +5,226 @@
 
 {% block extra_css %}
 <style>
-.cfg-row { display:grid; grid-template-columns:40px 1fr 2fr 130px; gap:1rem; align-items:center; padding:0.85rem 1rem; border-bottom:1px solid #f1f5f9; transition:background .12s; }
-.cfg-row:hover { background:#fafafa; }
-.cfg-label { font-weight:700; font-size:0.88rem; color:var(--text); }
-.cfg-code  { font-size:0.7rem; color:var(--text3); font-family:monospace; margin-top:1px; }
-.cfg-desc  { font-size:0.8rem; color:var(--text3); }
-.pts-input { width:70px; text-align:center; font-size:1rem; font-weight:700; padding:6px 8px; border:1.5px solid #e2e8f0; border-radius:8px; outline:none; transition:border-color .15s; }
-.pts-input:focus { border-color:#1e3a5f; }
-.sec-divider { background:#f8fafc; padding:8px 1rem; font-size:0.7rem; font-weight:800; color:var(--text3); text-transform:uppercase; letter-spacing:.09em; border-bottom:1px solid #e2e8f0; border-top:1px solid #e2e8f0; }
-@media (max-width:767px) {
-    .cfg-main-grid { grid-template-columns:1fr !important; }
-    .cfg-right-panel { position:static !important; }
-    .cfg-row { grid-template-columns:36px 1fr 70px !important; gap:8px !important; padding:10px 12px !important; }
-    .cfg-desc { display:none !important; }
-    .pts-input { width:60px !important; font-size:0.9rem !important; }
+:root {
+    --premium-bg: #f8fafc;
+    --card-bg: #ffffff;
+    --text-main: #0f172a;
+    --text-muted: #475569;
+    --text-light: #94a3b8;
+    --border-soft: #e2e8f0;
+    --border-lighter: #f1f5f9;
+    --primary: #2563eb;
+    --primary-hover: #1d4ed8;
+    --primary-light: #eff6ff;
+    --success: #10b981;
+    --success-bg: #ecfdf5;
+    --warning: #f59e0b;
+    --warning-bg: #fffbeb;
+    --danger: #ef4444;
+    --danger-bg: #fef2f2;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-pill: 9999px;
+    --shadow-soft: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.03);
+
+    /* Slab Colors */
+    --c-slab1: #0d9488; --bg-slab1: #ccfbf1;
+    --c-slab2: #2563eb; --bg-slab2: #dbeafe;
+    --c-slab3: #7c3aed; --bg-slab3: #f3e8ff;
+    --c-slab4: #d97706; --bg-slab4: #fef3c7;
+    --c-slab5: #64748b; --bg-slab5: #f1f5f9;
+}
+
+* { box-sizing: border-box; }
+
+svg { flex-shrink: 0; }
+
+/* ── Page Header ── */
+.page-hdr {
+    margin-bottom: 1.5rem; display: flex; align-items: center; gap: 12px;
+}
+.page-hdr-icon {
+    width: 42px; height: 42px; background: var(--primary-light); color: var(--primary);
+    border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center;
+    border: 1px solid #bfdbfe;
+}
+.page-hdr-title { font-size: 1.5rem; font-weight: 800; color: var(--text-main); margin: 0; letter-spacing: -0.02em; }
+.page-hdr-sub { font-size: 0.85rem; color: var(--text-muted); font-weight: 500; margin-top: 2px; }
+
+/* ── Global Cards ── */
+.card {
+    background: var(--card-bg); border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-soft); border: 1px solid var(--border-soft);
+    margin-bottom: 1.5rem; overflow: hidden;
+}
+.card-hdr {
+    padding: 16px 20px; border-bottom: 1px solid var(--border-soft);
+    background: #fdfdfe; display: flex; align-items: center; justify-content: space-between;
+}
+.card-title {
+    font-size: 1.1rem; font-weight: 800; color: var(--text-main);
+    display: flex; align-items: center; gap: 10px;
+}
+.card-body { padding: 20px; }
+
+/* ── Config Rows ── */
+.cfg-row {
+    display: grid; grid-template-columns: 46px 1fr 2fr 130px; gap: 1rem; align-items: center;
+    padding: 14px 20px; border-bottom: 1px solid var(--border-lighter); transition: background 0.2s;
+}
+.cfg-row:hover { background: #fdfdfe; }
+.cfg-row:last-child { border-bottom: none; }
+
+.cfg-icon {
+    width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center;
+}
+.cfg-icon svg { width: 18px; height: 18px; }
+
+.cfg-label { font-weight: 750; font-size: 0.95rem; color: var(--text-main); margin-bottom: 4px; }
+.cfg-code {
+    font-size: 0.7rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace;
+    background: var(--premium-bg); padding: 2px 6px; border-radius: 4px; font-weight: 600; display: inline-block;
+}
+.cfg-desc { font-size: 0.85rem; color: var(--text-muted); font-weight: 500; }
+
+.pts-wrap { display: flex; align-items: center; gap: 8px; justify-content: flex-end; }
+.pts-input {
+    width: 80px; text-align: center; font-size: 1.1rem; font-weight: 800; padding: 8px;
+    border: 1.5px solid var(--border-soft); border-radius: var(--radius-sm); outline: none;
+    transition: all 0.2s; background: #fff; font-family: 'Inter', sans-serif;
+}
+.pts-input:focus { box-shadow: 0 0 0 3px var(--primary-light); }
+.pts-lbl { font-size: 0.75rem; font-weight: 700; color: var(--text-light); text-transform: uppercase; }
+
+.sec-divider {
+    background: var(--premium-bg); padding: 12px 20px; font-size: 0.75rem; font-weight: 800;
+    color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;
+    border-bottom: 1px solid var(--border-soft); border-top: 1px solid var(--border-soft);
+    display: flex; align-items: center; gap: 8px;
+}
+.sec-divider:first-child { border-top: none; }
+
+/* ── Right Panel Elements ── */
+.slab-stat {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 14px; margin-bottom: 8px; background: #fff;
+    border-radius: var(--radius-sm); border: 1px solid var(--border-soft); border-left: 4px solid;
+    transition: all 0.2s;
+}
+.slab-stat:hover { transform: translateX(2px); box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+.slab-stat-lbl { font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.slab-stat-pts { font-size: 1.1rem; font-weight: 900; }
+
+.info-box {
+    background: var(--primary-light); border: 1px solid #bfdbfe;
+    border-radius: var(--radius-sm); padding: 14px; font-size: 0.8rem;
+    color: #1e40af; line-height: 1.6; margin-top: 1rem;
+}
+.info-box ul { margin: 8px 0 0 0; padding-left: 20px; font-weight: 500; }
+.info-box li { margin-bottom: 4px; }
+
+.btn-primary {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 12px; border-radius: var(--radius-sm); font-size: 0.9rem; font-weight: 700;
+    background: var(--primary); color: #fff; border: none; cursor: pointer;
+    transition: all 0.2s; box-shadow: 0 4px 6px rgba(37,99,235,0.2); width: 100%;
+}
+.btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); box-shadow: 0 6px 10px rgba(37,99,235,0.3); }
+
+/* ── Mobile Optimization ── */
+@media (max-width: 768px) {
+    .cfg-main-grid { grid-template-columns: 1fr !important; }
+    .cfg-right-panel { position: static !important; }
+    .cfg-row {
+        grid-template-columns: 46px 1fr; gap: 12px; padding: 16px;
+    }
+    .cfg-desc { grid-column: 1 / -1; margin-top: -4px; margin-bottom: 8px; font-size: 0.8rem; }
+    .pts-wrap { grid-column: 1 / -1; justify-content: flex-start; }
+    .pts-input { width: 100%; max-width: 120px; }
 }
 </style>
 {% endblock %}
 
 {% block content %}
-<form method="POST" action="{{ url_for('crm.contribution_config_save') }}">
-<div class="cfg-main-grid" style="display:grid;grid-template-columns:1fr 300px;gap:1rem;align-items:start;">
+<div class="page-hdr">
+    <div class="page-hdr-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"></path><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+    </div>
+    <div>
+        <h1 class="page-hdr-title">Points Configuration</h1>
+        <div class="page-hdr-sub">Set reward points for employee actions & lead closures</div>
+    </div>
+</div>
 
-    <!-- LEFT -->
-    <div class="card">
-        <div class="card-hdr">
-            <div class="card-title">⭐ Contribution Points Configuration</div>
-            <div style="font-size:0.78rem;color:var(--text3);">Har action pe kitne points milenge woh set karo</div>
-        </div>
+<form method="POST" action="{{ url_for('crm.contribution_config_save') }}">
+<div class="cfg-main-grid" style="display:grid;grid-template-columns:1fr 340px;gap:1.5rem;align-items:start;">
+
+    <!-- LEFT: Main Config -->
+    <div class="card" style="margin-bottom:0;">
         <div class="card-body" style="padding:0;">
 
             <!-- Close Slabs -->
-            <div class="sec-divider">⚡ Close Points — Slab wise (Active members mein divide honge)</div>
+            <div class="sec-divider">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                Close Points — Time Slabs (Divided among active members)
+            </div>
+
             {% set slabs = [
-                ('close_slab1', '1–7 days',   '#0d9488', '🟢'),
-                ('close_slab2', '8–14 days',  '#2563eb', '🔵'),
-                ('close_slab3', '15–21 days', '#7c3aed', '🟣'),
-                ('close_slab4', '22–28 days', '#d97706', '🟡'),
-                ('close_slab5', '29+ days',   '#94a3b8', '⚪'),
+                ('close_slab1', '1–7 days',   'var(--c-slab1)', 'var(--bg-slab1)'),
+                ('close_slab2', '8–14 days',  'var(--c-slab2)', 'var(--bg-slab2)'),
+                ('close_slab3', '15–21 days', 'var(--c-slab3)', 'var(--bg-slab3)'),
+                ('close_slab4', '22–28 days', 'var(--c-slab4)', 'var(--bg-slab4)'),
+                ('close_slab5', '29+ days',   'var(--c-slab5)', 'var(--bg-slab5)'),
             ] %}
-            {% for at, label, color, dot in slabs %}
+
+            {% for at, label, color, bg in slabs %}
             {% set cfg = configs | selectattr('action_type','eq',at) | first | default(none) %}
             <div class="cfg-row">
-                <div style="font-size:1.1rem;text-align:center;">{{ dot }}</div>
+                <div class="cfg-icon" style="background:{{ bg }}; color:{{ color }};">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                </div>
                 <div>
                     <div class="cfg-label" style="color:{{ color }};">{{ label }}</div>
                     <div class="cfg-code">{{ at }}</div>
                 </div>
-                <div class="cfg-desc">Lead {{ label }} mein close ho to — active members mein divide</div>
-                <div style="display:flex;align-items:center;gap:5px;">
-                    <input type="number" class="pts-input" name="pts_{{ at }}"
-                           value="{{ cfg.points if cfg else 0 }}" min="-100" max="100"
-                           style="color:{{ color }};">
-                    <span style="font-size:0.75rem;color:var(--text3);">pts</span>
+                <div class="cfg-desc">Lead closed within {{ label }}</div>
+                <div class="pts-wrap">
+                    <input type="number" class="pts-input" name="pts_{{ at }}" value="{{ cfg.points if cfg else 0 }}" min="-100" max="100" style="color:{{ color }}; border-color:{{ color }}40;">
+                    <span class="pts-lbl">pts</span>
                 </div>
             </div>
             {% endfor %}
 
             <!-- Regular Actions -->
-            <div class="sec-divider">📋 Regular Actions</div>
+            <div class="sec-divider" style="border-top:1px solid var(--border-soft);">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                Regular Actions
+            </div>
+
             {% set regular = [
-                ('comment',       '💬', 'Comment Added',    '#2563eb', 'Discussion board mein comment karne pe'),
-                ('edit',          '✏️', 'Lead Edited',       '#7c3aed', 'Lead record update karne pe'),
-                ('status_change', '🔄', 'Status Changed',   '#6366f1', 'Status change karne pe (siwa close/cancel)'),
-                ('follow_up',     '📅', 'Follow Up Set',    '#d97706', 'Follow up date set karne pe'),
-                ('reminder',      '🔔', 'Reminder Added',   '#0891b2', 'Reminder add karne pe'),
-                ('cancel',        '❌', 'Lead Cancelled',   '#ef4444', 'Lead cancel karne pe'),
+                ('comment',       '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>', 'Comment Added',    '#2563eb', '#eff6ff', 'Added a comment on discussion board'),
+                ('edit',          '<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>', 'Lead Edited',       '#7c3aed', '#f5f3ff', 'Updated lead details/record'),
+                ('status_change', '<polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>', 'Status Changed',   '#6366f1', '#eef2ff', 'Changed lead status (excluding Close/Cancel)'),
+                ('follow_up',     '<rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>', 'Follow Up Set',    '#d97706', '#fffbeb', 'Scheduled a follow-up date'),
+                ('reminder',      '<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path>', 'Reminder Added',   '#0891b2', '#ecfeff', 'Created a task reminder'),
+                ('cancel',        '<circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>', 'Lead Cancelled',   '#ef4444', '#fef2f2', 'Moved lead to Cancelled status'),
             ] %}
-            {% for at, icon, label, color, desc in regular %}
+
+            {% for at, svg_path, label, color, bg, desc in regular %}
             {% set cfg = configs | selectattr('action_type','eq',at) | first | default(none) %}
             <div class="cfg-row">
-                <div style="font-size:1.1rem;text-align:center;">{{ icon }}</div>
+                <div class="cfg-icon" style="background:{{ bg }}; color:{{ color }};">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">{{ svg_path|safe }}</svg>
+                </div>
                 <div>
                     <div class="cfg-label">{{ label }}</div>
                     <div class="cfg-code">{{ at }}</div>
                 </div>
                 <div class="cfg-desc">{{ desc }}</div>
-                <div style="display:flex;align-items:center;gap:5px;">
-                    <input type="number" class="pts-input" name="pts_{{ at }}"
-                           value="{{ cfg.points if cfg else 0 }}" min="-100" max="100"
-                           style="color:{{ color }};">
-                    <span style="font-size:0.75rem;color:var(--text3);">pts</span>
+                <div class="pts-wrap">
+                    <input type="number" class="pts-input" name="pts_{{ at }}" value="{{ cfg.points if cfg else 0 }}" min="-100" max="100" style="color:{{ color }}; border-color:{{ color }}40;">
+                    <span class="pts-lbl">pts</span>
                 </div>
             </div>
             {% endfor %}
@@ -93,29 +232,44 @@
     </div>
 
     <!-- RIGHT: Info + Save -->
-    <div class="cfg-right-panel" style="position:sticky;top:1rem;">
-        <div class="card" style="margin-bottom:1rem;">
-            <div class="card-hdr"><div class="card-title">📊 Current Slabs</div></div>
+    <div class="cfg-right-panel" style="position:sticky;top:1.5rem;">
+        <div class="card">
+            <div class="card-hdr">
+                <div class="card-title">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--primary);"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                    Current Slabs
+                </div>
+            </div>
             <div class="card-body">
-                {% for at, label, color, dot in slabs %}
+                {% for at, label, color, bg in slabs %}
                 {% set cfg = configs | selectattr('action_type','eq',at) | first | default(none) %}
-                <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;margin-bottom:4px;background:#f8fafc;border-radius:8px;border-left:3px solid {{ color }};">
-                    <span style="font-size:0.82rem;color:{{ color }};font-weight:600;">{{ dot }} {{ label }}</span>
-                    <span style="font-size:1rem;font-weight:900;color:{{ color }};">{{ cfg.points if cfg else 0 }} pts</span>
+                <div class="slab-stat" style="border-left-color:{{ color }};">
+                    <div class="slab-stat-lbl" style="color:{{ color }};">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                        {{ label }}
+                    </div>
+                    <div class="slab-stat-pts" style="color:{{ color }};">{{ cfg.points if cfg else 0 }} pts</div>
                 </div>
                 {% endfor %}
-                <div style="margin-top:0.85rem;font-size:0.78rem;color:var(--text2);line-height:1.65;background:#eff6ff;border-radius:8px;padding:0.75rem;">
-                    👥 <strong>Shared:</strong> Close points active members mein divide.<br>
-                    ⚡ <strong>Active:</strong> Pehle comment/edit/status karna zaroori.<br>
-                    📐 <strong>Example:</strong> 2 members + 10pts = <strong>5 pts each</strong>
+
+                <div class="info-box">
+                    <div style="font-weight:800;display:flex;align-items:center;gap:6px;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                        How it works
+                    </div>
+                    <ul>
+                        <li><strong>Shared:</strong> Close points are divided equally among active members.</li>
+                        <li><strong>Active:</strong> Member must have commented, edited, or changed status to be considered active.</li>
+                        <li><strong>Example:</strong> 2 active members + 10 points slab = <strong>5 pts each</strong></li>
+                    </ul>
                 </div>
             </div>
         </div>
-        <div class="card">
-            <div class="card-body">
-                <button type="submit" class="btn-primary" style="width:100%;font-size:0.88rem;padding:10px;">💾 Save Configuration</button>
-            </div>
-        </div>
+
+        <button type="submit" class="btn-primary">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+            Save Configuration
+        </button>
     </div>
 
 </div>

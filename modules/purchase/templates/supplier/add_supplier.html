@@ -1,46 +1,81 @@
 {% extends 'base.html' %}
-{% block title %}{% if supplier %}Edit Supplier{% else %}Add Supplier{% endif %} — HCP ERP{% endblock %}
+{% block title %}{% if supplier %}Edit Supplier{% else %}Add Supplier{% endif %} - HCP ERP{% endblock %}
 {% block page_title %}{% if supplier %}Edit Supplier{% else %}Add Supplier{% endif %}{% endblock %}
 {% block bread %}Procurement / Purchase / {% if sup_type %}{{ sup_type }} Supplier{% else %}Supplier{% endif %} / {% if supplier %}Edit{% else %}Add New{% endif %}{% endblock %}
 
 {% block extra_css %}
 <style>
-.sf-card { background:#fff;border:1.5px solid #e2e8f0;border-radius:12px;margin-bottom:18px;overflow:hidden; }
-.sf-hdr { display:flex;align-items:center;gap:10px;padding:14px 20px;background:#f8fafc;border-bottom:1px solid #f1f5f9; }
-.sf-hdr h2 { font-size:13.5px;font-weight:700;color:#1e293b;margin:0; }
+/* ============================================================
+   SUPPLIER ADD / EDIT - PREMIUM BLUE THEME
+   ============================================================ */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700&display=swap');
+
+.sf-card, .sf-card input, .sf-card select, .sf-card textarea, .sf-card button, .sf-card label,
+.footer-bar, .footer-bar a, .footer-bar button, .select2-container, .select2-dropdown {
+  font-family:'Inter','Segoe UI',system-ui,-apple-system,sans-serif;
+}
+#fGst, #fPan, #fIfsc, #fAccNo { font-family:'JetBrains Mono', ui-monospace, monospace; font-weight:600; letter-spacing:.02em; }
+
+.sf-card { background:#fff; border:1px solid #e2e8f0; border-radius:16px; margin-bottom:18px; overflow:hidden; box-shadow:0 1px 3px rgba(15,23,42,.05), 0 8px 24px rgba(15,23,42,.04); }
+.sf-hdr { display:flex; align-items:center; gap:10px; padding:14px 20px; background:#f8fafc; border-bottom:1px solid #e2e8f0; }
+.sf-hdr h2 { font-size:13.5px; font-weight:800; color:#0f172a; margin:0; letter-spacing:-.01em; }
 .sf-body { padding:22px; }
-.sf-grid-2 { display:grid;grid-template-columns:1fr 1fr;gap:16px; }
-.sf-grid-3 { display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px; }
-.sf-grid-4 { display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px; }
-.sf-fld { display:flex;flex-direction:column;gap:5px; }
-.sf-label { font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em; }
+.sf-grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.sf-grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; }
+.sf-grid-4 { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:12px; }
+.sf-fld { display:flex; flex-direction:column; gap:5px; }
+.sf-label { font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:.05em; }
 .sf-label .req { color:#ef4444; }
 .sf-input, .sf-select, .sf-textarea {
-  width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;
-  font-size:13px;font-family:inherit;color:#1e293b;background:#fff;
-  transition:border-color .15s;outline:none;box-sizing:border-box;
+  width:100%; padding:9px 12px; border:1.5px solid #e2e8f0; border-radius:9px;
+  font-size:13px; font-family:inherit; color:#0f172a; background:#fff;
+  transition:border-color .15s, box-shadow .15s; outline:none; box-sizing:border-box;
 }
-.sf-input:focus, .sf-select:focus, .sf-textarea:focus { border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1); }
-.sf-input.invalid, .sf-select.invalid { border-color:#ef4444; }
-.sf-textarea { resize:vertical;min-height:72px; }
-.sf-err { font-size:11px;color:#ef4444;font-weight:600;display:none; }
-.sf-hint { font-size:10.5px;color:#94a3b8; }
-.sf-divider { height:1px;background:#f1f5f9;margin:12px 0; }
-.sup-type-badge { display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:8px;font-size:12px;font-weight:800; }
-.sup-type-badge.rm { background:#dbeafe;color:#1d4ed8; }
-.sup-type-badge.pm { background:#fae8ff;color:#7e22ce; }
-.footer-bar { position:sticky;bottom:0;background:#fff;border-top:1.5px solid #e2e8f0;padding:14px 22px;display:flex;align-items:center;justify-content:space-between;z-index:10; }
+.sf-input:focus, .sf-select:focus, .sf-textarea:focus { border-color:#2563eb; box-shadow:0 0 0 3px rgba(37,99,235,.12); }
+.sf-input.invalid, .sf-select.invalid { border-color:#ef4444; box-shadow:0 0 0 3px rgba(239,68,68,.1); }
+.sf-textarea { resize:vertical; min-height:72px; }
+.sf-err { font-size:11px; color:#ef4444; font-weight:600; display:none; }
+.sf-hint { font-size:10.5px; color:#94a3b8; }
+.sf-divider { height:1px; background:#f1f5f9; margin:12px 0; }
+
+.sup-type-badge { display:inline-flex; align-items:center; gap:6px; padding:5px 14px; border-radius:999px; font-size:12px; font-weight:800; }
+.sup-type-badge.rm { background:#dbeafe; color:#1d4ed8; }
+.sup-type-badge.pm { background:#fae8ff; color:#7e22ce; }
+
+.footer-bar { position:sticky; bottom:0; background:rgba(255,255,255,.92); backdrop-filter:blur(8px); border-top:1px solid #e2e8f0; padding:13px 22px; display:flex; align-items:center; justify-content:space-between; z-index:10; box-shadow:0 -6px 24px rgba(15,23,42,.08); }
+
+/* -- Buttons (local premium defs) -- */
+.btn-add-new {
+  display:inline-flex; align-items:center; justify-content:center; gap:6px; height:38px; padding:0 20px;
+  background:linear-gradient(180deg,#3b82f6,#1d4ed8); color:#fff; border:none; border-radius:999px;
+  font-size:13px; font-weight:700; cursor:pointer; font-family:inherit; text-decoration:none;
+  box-shadow:0 2px 8px rgba(37,99,235,.28), inset 0 1px 0 rgba(255,255,255,.25); transition:all .18s; white-space:nowrap;
+}
+.btn-add-new:hover { transform:translateY(-1px); color:#fff; box-shadow:0 5px 14px rgba(37,99,235,.4); }
+.btn-add-new:disabled { opacity:.6; cursor:not-allowed; transform:none; box-shadow:none; }
+.btn-grid-action {
+  display:inline-flex; align-items:center; justify-content:center; gap:5px; height:38px; padding:0 18px;
+  border:1.5px solid #e2e8f0; border-radius:999px; background:#fff; color:#64748b;
+  font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; transition:all .15s; white-space:nowrap; text-decoration:none;
+}
+.btn-grid-action:hover { background:#fee2e2; border-color:#fca5a5; color:#dc2626; }
+
+/* -- Lucide sizing -- */
+.lucide-ic { width:1em; height:1em; vertical-align:-0.125em; }
+
 @media (max-width:768px){ .sf-grid-2,.sf-grid-3,.sf-grid-4 { grid-template-columns:1fr; } }
+@media print { .footer-bar { display:none !important; } }
 </style>
 {% endblock %}
 
 {% block content %}
-<div style="max-width:900px;margin:0 auto;padding:0 16px 80px;">
+<div style="width:100%;max-width:none;margin:0;padding:0 4px 80px;">
 
   <!-- Type badge -->
   <div style="margin-bottom:16px;display:flex;align-items:center;gap:10px;">
     <span class="sup-type-badge {{ 'rm' if sup_type == 'RM' else 'pm' }}">
-      {{ '🧪' if sup_type == 'RM' else '📦' }} {{ sup_type }} Supplier
+      <i data-lucide="{{ 'flask-conical' if sup_type == 'RM' else 'package' }}" style="width:13px;height:13px;"></i> {{ sup_type }} Supplier
     </span>
     <input type="hidden" id="fSupplierType" value="{{ sup_type }}">
     {% if supplier %}
@@ -50,7 +85,7 @@
 
   <!-- BASIC INFO -->
   <div class="sf-card">
-    <div class="sf-hdr"><span style="font-size:16px;">🏢</span><h2>Basic Information</h2></div>
+    <div class="sf-hdr"><i data-lucide="building-2" style="width:16px;height:16px;color:#2563eb;"></i><h2>Basic Information</h2></div>
     <div class="sf-body">
       <div class="sf-grid-2" style="margin-bottom:16px;">
         <div class="sf-fld">
@@ -82,7 +117,7 @@
           <label class="sf-label">Additional Emails</label>
           <div class="tag-wrap" id="emailTagWrap" onclick="document.getElementById('emailTagInput').focus()"
                style="min-height:40px;display:flex;flex-wrap:wrap;align-items:center;gap:4px;padding:6px 10px;border:1.5px solid #e2e8f0;border-radius:8px;cursor:text;background:#fff;transition:border-color .15s;">
-            <input type="text" id="emailTagInput" placeholder="Type email, press Enter…"
+            <input type="text" id="emailTagInput" placeholder="Type email, press Enter..."
                    style="border:none;outline:none;font-size:13px;font-family:inherit;color:#1e293b;background:transparent;flex:1;min-width:120px;"
                    autocomplete="off">
           </div>
@@ -100,11 +135,11 @@
     </div>
   </div>
 
-  <!-- ADDRESS — Dynamic Multiple -->
+  <!-- ADDRESS - Dynamic Multiple -->
   <div class="sf-card">
     <div class="sf-hdr" style="justify-content:space-between;">
       <div style="display:flex;align-items:center;gap:10px;">
-        <span style="font-size:16px;">📍</span><h2>Addresses</h2>
+        <i data-lucide="map-pin" style="width:16px;height:16px;color:#2563eb;"></i><h2>Addresses</h2>
       </div>
       <div style="display:flex;gap:8px;">
         <button type="button" onclick="addAddress('Billing')" style="display:inline-flex;align-items:center;gap:4px;padding:5px 12px;border:1.5px solid #2563eb;border-radius:7px;background:#eff6ff;color:#2563eb;font-size:12px;font-weight:700;cursor:pointer;">
@@ -127,10 +162,7 @@
 
   <!-- BUSINESS -->
   <div class="sf-card">
-    <div class="sf-hdr"><span style="font-size:16px;">📍</span><h2>Address</h2></div>
-  <!-- BUSINESS -->
-  <div class="sf-card">
-    <div class="sf-hdr"><span style="font-size:16px;">📋</span><h2>Business Details</h2></div>
+    <div class="sf-hdr"><i data-lucide="clipboard-list" style="width:16px;height:16px;color:#2563eb;"></i><h2>Business Details</h2></div>
     <div class="sf-body">
       <div class="sf-grid-2">
         <div class="sf-fld">
@@ -147,13 +179,13 @@
 
   <!-- PAYMENT -->
   <div class="sf-card">
-    <div class="sf-hdr"><span style="font-size:16px;">💳</span><h2>Payment & Terms</h2></div>
+    <div class="sf-hdr"><i data-lucide="credit-card" style="width:16px;height:16px;color:#2563eb;"></i><h2>Payment & Terms</h2></div>
     <div class="sf-body">
       <div class="sf-grid-3" style="margin-bottom:16px;">
         <div class="sf-fld">
           <label class="sf-label">Payment Type</label>
           <select class="sf-select" id="fPayType">
-            <option value="">— Select —</option>
+            <option value="">-- Select --</option>
             {% for pt in ['Advance Cheque','Advance NEFT','100% Advance','50% Advance','On Delivery','Credit','LC'] %}
             <option value="{{ pt }}" {% if supplier and supplier.payment_type == pt %}selected{% endif %}>{{ pt }}</option>
             {% endfor %}
@@ -164,7 +196,7 @@
           <input class="sf-input" id="fCreditDays" type="number" min="0" value="{{ supplier.credit_days if supplier else 30 }}">
         </div>
         <div class="sf-fld">
-          <label class="sf-label">Credit Limit (₹)</label>
+          <label class="sf-label">Credit Limit (&#8377;)</label>
           <input class="sf-input" id="fCreditLimit" type="number" min="0" placeholder="0" value="{{ supplier.credit_limit if supplier else 0 }}">
         </div>
       </div>
@@ -184,8 +216,8 @@
         <div class="sf-fld">
           <label class="sf-label">Rating</label>
           <select class="sf-select" id="fRating">
-            <option value="">— Not rated —</option>
-            {% for r,label in [('Excellent','⭐⭐⭐⭐⭐ Excellent'),('Good','⭐⭐⭐⭐ Good'),('Average','⭐⭐⭐ Average'),('Below Avg','⭐⭐ Below Avg'),('Poor','⭐ Poor')] %}
+            <option value="">-- Not rated --</option>
+            {% for r,label in [('Excellent','5 Star - Excellent'),('Good','4 Star - Good'),('Average','3 Star - Average'),('Below Avg','2 Star - Below Avg'),('Poor','1 Star - Poor')] %}
             <option value="{{ r }}" {% if supplier and supplier.rating == r %}selected{% endif %}>{{ label }}</option>
             {% endfor %}
           </select>
@@ -200,7 +232,7 @@
 
   <!-- BANKING -->
   <div class="sf-card">
-    <div class="sf-hdr"><span style="font-size:16px;">🏦</span><h2>Banking Details</h2></div>
+    <div class="sf-hdr"><i data-lucide="landmark" style="width:16px;height:16px;color:#2563eb;"></i><h2>Banking Details</h2></div>
     <div class="sf-body">
       <div class="sf-grid-2" style="margin-bottom:16px;">
         <div class="sf-fld">
@@ -227,7 +259,7 @@
 
   <!-- REMARKS -->
   <div class="sf-card">
-    <div class="sf-hdr"><span style="font-size:16px;">📝</span><h2>Remarks</h2></div>
+    <div class="sf-hdr"><i data-lucide="sticky-note" style="width:16px;height:16px;color:#2563eb;"></i><h2>Remarks</h2></div>
     <div class="sf-body">
       <div class="sf-fld">
         <label class="sf-label">Additional Notes</label>
@@ -242,7 +274,7 @@
 <div class="footer-bar">
   <span class="sup-type-badge {{ 'rm' if sup_type == 'RM' else 'pm' }}" style="font-size:12px;">{{ sup_type }} Supplier</span>
   <div style="display:flex;gap:10px;">
-    <a href="/supplier/?supplier_type={{ sup_type }}" class="btn-grid-action" style="text-decoration:none;display:inline-flex;align-items:center;gap:5px;">✕ Cancel</a>
+    <a href="/supplier/?supplier_type={{ sup_type }}" class="btn-grid-action" style="text-decoration:none;display:inline-flex;align-items:center;gap:5px;">× Cancel</a>
     <button class="btn-add-new" onclick="saveSupplier()" id="btnSave" style="display:inline-flex;align-items:center;gap:6px;">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
       {% if supplier %}Update Supplier{% else %}Save Supplier{% endif %}
@@ -258,16 +290,18 @@
 <style>
   /* Match Select2 dropdown height/border to existing .sf-input look */
   .sf-fld .select2-container--default .select2-selection--single{
-    height:38px; border:1.5px solid #e2e8f0; border-radius:8px; padding:2px 4px;
+    height:38px; border:1.5px solid #e2e8f0; border-radius:9px; padding:2px 4px; background:#fff;
   }
   .sf-fld .select2-container--default .select2-selection--single .select2-selection__rendered{
-    line-height:32px; padding-left:8px; color:#0f172a;
+    line-height:32px; padding-left:8px; color:#0f172a; font-family:inherit; font-size:13px;
   }
   .sf-fld .select2-container--default .select2-selection--single .select2-selection__arrow{ height:36px; }
   .sf-fld .select2-container--default.select2-container--focus .select2-selection--single,
   .sf-fld .select2-container--default .select2-selection--single:focus{
-    border-color:#2563eb; outline:none;
+    border-color:#2563eb; outline:none; box-shadow:0 0 0 3px rgba(37,99,235,.12);
   }
+  .select2-dropdown{ border:1px solid #e2e8f0 !important; border-radius:10px !important; box-shadow:0 12px 32px rgba(15,23,42,.14) !important; font-family:inherit; }
+  .select2-results__option--highlighted{ background:#eff6ff !important; color:#2563eb !important; }
 </style>
 <script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/ckeditor.js"></script>
 <script>
@@ -284,13 +318,13 @@ function updateSupType(){
   // Update footer badge
   const badge=document.getElementById('footerTypeBadge');
   if(badge){
-    if(rm&&pm) badge.textContent='🧪 RM + 📦 PM Supplier';
-    else if(rm) badge.textContent='🧪 RM Supplier';
-    else if(pm) badge.textContent='📦 PM Supplier';
+    if(rm&&pm) badge.textContent='RM + PM Supplier';
+    else if(rm) badge.textContent='RM Supplier';
+    else if(pm) badge.textContent='PM Supplier';
   }
 }
 
-// ── Email Tags ─────────────────────────────────────────────────────────────
+// -- Email Tags ------------------------------------------------------------
 let _emailList = '{{ supplier.email_list if supplier and supplier.email_list else '' }}'.split(',').map(e=>e.trim()).filter(Boolean);
 
 function renderEmailTags(){
@@ -300,7 +334,7 @@ function renderEmailTags(){
   _emailList.forEach(email=>{
     const tag=document.createElement('span');
     tag.className='email-tag';
-    tag.style.cssText='display:inline-flex;align-items:center;gap:4px;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:600;white-space:nowrap;';
+    tag.style.cssText='display:inline-flex;align-items:center;gap:4px;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;border-radius:999px;padding:2px 9px;font-size:12px;font-weight:600;white-space:nowrap;';
     tag.innerHTML=`${email} <button type="button" onclick="removeEmailTag('${email}')" style="border:none;background:none;cursor:pointer;color:#94a3b8;font-size:14px;line-height:1;padding:0;">×</button>`;
     wrap.insertBefore(tag, input);
   });
@@ -340,7 +374,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
 let _addresses = {{ supplier.addresses | safe if supplier and supplier.addresses else '[]' }};
 let _addrCounter = 0;
 
-// ── Geo masters cache (loaded once on page init) ─────────────────────────
+// -- Geo masters cache (loaded once on page init) ------------------------
 let _COUNTRIES = [];                    // [{id, name, iso2, ...}]
 let _STATES = [];                       // [{id, name, code, country_id, ...}]
 let _COUNTRY_NAME_TO_ID = {};           // 'India': 1, ...
@@ -397,13 +431,13 @@ function renderAddresses(){
   empty.style.display='none';
   container.innerHTML = _addresses.map((a,i)=>{
     const isBilling = a.type==='Billing';
-    return `<div style="border:1.5px solid ${isBilling?'#bfdbfe':'#ddd6fe'};border-radius:10px;padding:14px;position:relative;background:${isBilling?'#f0f9ff':'#faf5ff'};">
+    return `<div style="border:1.5px solid ${isBilling?'#bfdbfe':'#ddd6fe'};border-radius:12px;padding:14px;position:relative;background:${isBilling?'#f0f9ff':'#faf5ff'};">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-        <span style="font-size:11px;font-weight:800;color:${isBilling?'#1d4ed8':'#7c3aed'};text-transform:uppercase;letter-spacing:.08em;">
-          ${isBilling?'🏢':'🚚'} ${a.type} Address ${i===0?'':'#'+(i+1)}
+        <span style="display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:800;color:${isBilling?'#1d4ed8':'#7c3aed'};text-transform:uppercase;letter-spacing:.08em;">
+          <i data-lucide="${isBilling?'building-2':'truck'}" style="width:13px;height:13px;"></i> ${a.type} Address ${i===0?'':'#'+(i+1)}
         </span>
         <div style="display:flex;gap:6px;">
-          ${isBilling?`<button type="button" onclick="copyToShipping(${i})" style="font-size:11px;color:#7c3aed;background:none;border:none;cursor:pointer;font-weight:600;padding:0;">📋 Copy as Shipping</button>`:''}
+          ${isBilling?`<button type="button" onclick="copyToShipping(${i})" style="font-size:11px;color:#7c3aed;background:none;border:none;cursor:pointer;font-weight:600;padding:0;">Copy as Shipping</button>`:''}
           <button type="button" onclick="removeAddress(${i})" style="font-size:18px;color:#94a3b8;background:none;border:none;cursor:pointer;line-height:1;padding:0 4px;">×</button>
         </div>
       </div>
@@ -438,9 +472,10 @@ function renderAddresses(){
     </div>`;
   }).join('');
   initAddressSelects();   // make country/state dropdowns searchable
+  sfDrawLucide();
 }
 
-// ── Initialise Select2 on every country/state dropdown after render ─────
+// -- Initialise Select2 on every country/state dropdown after render ----
 function initAddressSelects(){
   if (typeof jQuery === 'undefined' || !jQuery.fn || !jQuery.fn.select2) return;
   jQuery('.addr-country').each(function(){
@@ -493,7 +528,7 @@ async function saveSupplier(){
   document.getElementById('errName').style.display='none';
 
   const btn = document.getElementById('btnSave');
-  btn.disabled=true; btn.textContent='⏳ Saving…';
+  btn.disabled=true; btn.textContent='Saving...';
 
   const payload = {
     id:               SUP_ID,
@@ -518,6 +553,7 @@ async function saveSupplier(){
     bank_name:        document.getElementById('fBank').value.trim(),
     account_number:   document.getElementById('fAccNo').value.trim(),
     ifsc_code:        document.getElementById('fIfsc').value.trim(),
+    branch_address:   document.getElementById('fBranch').value.trim(),
     remarks:          document.getElementById('fRemarks').value.trim(),
     is_active:        document.getElementById('fStatus').value === '1',
   };
@@ -526,7 +562,7 @@ async function saveSupplier(){
     const res = await fetch('/supplier/api/save', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
     const d = await res.json();
     if(d.status === 'ok'){
-      showToast(SUP_ID ? 'Updated ✓' : 'Supplier saved ✓', 'success');
+      showToast(SUP_ID ? 'Updated' : 'Supplier saved', 'success');
       setTimeout(()=>{ window.location.href=`/supplier/?supplier_type=${SUP_TYPE}`; }, 800);
     } else {
       showToast(d.message||'Save failed','danger');
@@ -537,5 +573,17 @@ async function saveSupplier(){
     btn.disabled=false; btn.textContent=SUP_ID?'Update Supplier':'Save Supplier';
   }
 }
+
+/* == LUCIDE ICONS == */
+function sfDrawLucide(){ if(window.lucide){ try{ lucide.createIcons({attrs:{'stroke-width':1.9}}); }catch(e){} } }
+(function(){
+  if(window.lucide){ document.addEventListener('DOMContentLoaded', sfDrawLucide); }
+  else {
+    var s=document.createElement('script');
+    s.src='https://unpkg.com/lucide@latest';
+    s.onload=sfDrawLucide;
+    document.head.appendChild(s);
+  }
+})();
 </script>
 {% endblock %}

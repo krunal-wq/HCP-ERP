@@ -5,325 +5,250 @@
 
 {% block extra_css %}
 <style>
-.master-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
-@media(max-width:900px){ .master-grid { grid-template-columns: 1fr; } }
+:root {
+    --premium-bg: #f8fafc;
+    --card-bg: #ffffff;
+    --text-main: #0f172a;
+    --text-muted: #475569;
+    --text-light: #94a3b8;
+    --border-soft: #e2e8f0;
+    --border-lighter: #f1f5f9;
+    --primary: #2563eb;
+    --primary-hover: #1d4ed8;
+    --primary-light: #eff6ff;
+    --danger: #dc2626;
+    --danger-bg: #fef2f2;
+    --success: #10b981;
+    --success-bg: #ecfdf5;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-pill: 9999px;
+    --shadow-soft: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.03);
+}
 
-.master-card { border-radius: 14px; border: 1.5px solid var(--border); overflow: hidden; background: #fff; }
+* { box-sizing: border-box; }
+svg { flex-shrink: 0; }
+.lucide-ic, .lucide-ic svg { width:1em; height:1em; vertical-align:-0.125em; }
+
+/* == Header == */
+.page-hdr {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 2rem; flex-wrap: wrap; gap: 16px;
+}
+.hdr-left { display: flex; align-items: center; gap: 16px; }
+.hdr-icon {
+    width: 48px; height: 48px; background: var(--primary-light); color: var(--primary);
+    border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center;
+    border: 1px solid #bfdbfe; flex-shrink: 0; font-size: 1.3rem;
+}
+.hdr-info h1 {
+    font-size: 1.5rem; font-weight: 800; color: var(--text-main);
+    letter-spacing: -0.03em; margin: 0 0 4px 0;
+}
+.hdr-info p { color: var(--text-muted); font-size: 0.9rem; font-weight: 500; margin: 0; }
+
+.btn-outline {
+    display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+    padding: 9px 18px; border-radius: var(--radius-pill); font-size: 0.85rem; font-weight: 650;
+    background: #fff; border: 1.5px solid var(--border-soft); color: var(--text-main);
+    text-decoration: none; transition: all 0.18s; box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    white-space: nowrap;
+}
+.btn-outline .lucide-ic { color: var(--text-muted); transition: color .18s; }
+.btn-outline:hover {
+    background: var(--primary-light); border-color: #bfdbfe; color: var(--primary-hover);
+    transform: translateX(-2px);
+}
+.btn-outline:hover .lucide-ic { color: var(--primary-hover); }
+
+/* == Main Grid == */
+.master-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; align-items: start; }
+
+/* == Cards == */
+.master-card {
+    background: var(--card-bg); border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-soft); border: 1px solid var(--border-soft);
+    overflow: hidden; display: flex; flex-direction: column;
+}
 .master-card-hdr {
-    padding: .75rem 1rem; display: flex; align-items: center; justify-content: space-between;
-    border-bottom: 2px solid var(--border);
+    padding: 16px 20px; display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid var(--border-soft); background: #f8fafc;
 }
-.master-card-hdr.status-hdr   { background: #eff6ff; border-color: #bfdbfe; }
-.master-card-hdr.source-hdr   { background: #f0fdf4; border-color: #86efac; }
-.master-card-hdr.category-hdr { background: #fef9c3; border-color: #fde68a; }
-.master-card-hdr.range-hdr    { background: #fdf4ff; border-color: #e9d5ff; }
+.hdr-title-wrap { display: flex; align-items: center; gap: 10px; }
+.hdr-svg-box { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: #fff; border: 1px solid var(--border-soft); }
+.master-hdr-title { font-size: 1.05rem; font-weight: 800; color: var(--text-main); }
+.item-count { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; background: var(--premium-bg); padding: 4px 10px; border-radius: var(--radius-pill); border: 1px solid var(--border-soft); }
 
-.master-hdr-title { font-size: .9rem; font-weight: 800; }
+/* == List Rows == */
+.master-list-body { flex: 1; min-height: 200px; display: flex; flex-direction: column; }
 .master-row {
-    display: flex; align-items: center; gap: .6rem;
-    padding: .55rem 1rem; border-bottom: 1px solid #f1f5f9;
-    transition: background .12s;
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 20px; border-bottom: 1px solid var(--border-lighter);
+    transition: background 0.2s;
 }
-.master-row:last-child { border-bottom: none; }
-.master-row:hover { background: #f8fafc; }
-.master-row.inactive { opacity: .5; }
+.master-row:hover { background: #f8fbff; }
+.master-row.inactive { opacity: 0.6; }
+.master-row.inactive .master-name { text-decoration: line-through; color: var(--text-light); }
+.color-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1); }
+.master-icon { width: 28px; height: 28px; border-radius: 6px; background: var(--premium-bg); display: flex; align-items: center; justify-content: center; font-size: 0.9rem; color: var(--text-muted); border: 1px solid var(--border-soft); }
+.master-name { flex: 1; font-size: 0.9rem; font-weight: 700; color: var(--text-main); }
+.master-order { font-size: 0.75rem; color: var(--text-light); font-weight: 600; font-family: 'JetBrains Mono', monospace; }
 
-.color-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
-.master-icon { font-size: .95rem; flex-shrink: 0; width: 22px; text-align: center; }
-.master-name { flex: 1; font-size: .85rem; font-weight: 600; }
-.master-order { font-size: .72rem; color: var(--text3); margin-right: 4px; }
-
-.row-actions { display: flex; gap: 4px; opacity: 0; transition: opacity .15s; }
-.master-row:hover .row-actions { opacity: 1; }
+/* == Premium Action Buttons == */
+.row-actions { display: flex; gap: 7px; opacity: 0; transform: translateX(4px); transition: opacity .18s, transform .18s; }
+.master-row:hover .row-actions { opacity: 1; transform: translateX(0); }
 .row-btn {
-    padding: 3px 8px; border-radius: 6px; font-size: .72rem;
-    font-weight: 600; cursor: pointer; border: 1.5px solid transparent;
-    font-family: 'Plus Jakarta Sans', sans-serif;
+    width: 30px; height: 30px; border-radius: 9px;
+    display: inline-flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.15s; padding: 0;
+    font-size: 0.85rem;
 }
-.row-btn-edit   { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
-.row-btn-del    { background: #fee2e2; color: #dc2626; border-color: #fecaca; }
-.row-btn-toggle { background: #f1f5f9; color: #64748b; border-color: #e2e8f0; }
+.row-btn:active { transform: scale(.9); }
+.row-btn-edit {
+    background: var(--primary-light); color: var(--primary-hover);
+    border: 1px solid #bfdbfe;
+}
+.row-btn-edit:hover { background: #dbeafe; border-color: #93c5fd; box-shadow: 0 2px 6px rgba(37,99,235,.2); }
+.row-btn-del {
+    background: var(--danger-bg); color: var(--danger);
+    border: 1px solid #fecaca;
+}
+.row-btn-del:hover { background: #fee2e2; border-color: #fca5a5; box-shadow: 0 2px 6px rgba(220,38,38,.2); }
+.row-btn-toggle { background: var(--premium-bg); color: var(--text-muted); border: 1px solid var(--border-soft); }
+.row-btn-toggle:hover { background: var(--border-lighter); color: var(--text-main); }
 
-/* Add form inside card */
-.add-form-wrap {
-    padding: .75rem 1rem; background: #f8fafc;
-    border-top: 1.5px dashed var(--border);
+/* Touch devices: actions hamesha visible */
+@media (hover: none) {
+    .row-actions { opacity: 1; transform: none; }
 }
-.add-form-row { display: flex; gap: .5rem; align-items: flex-start; flex-wrap: wrap; }
-.add-form-row .fi { height: 36px; padding: 6px 10px; font-size: .83rem; flex: 1; min-width: 100px; }
-.add-form-row .fi-sm { width: 60px; flex: unset; }
-.add-form-row .fi-color { width: 50px; height: 36px; padding: 2px; flex: unset; cursor: pointer; }
+
+/* == Add Form == */
+.add-form-wrap { padding: 16px 20px; background: var(--premium-bg); border-top: 1px solid var(--border-soft); border-radius: 0 0 var(--radius-lg) var(--radius-lg); }
+.add-form-row { display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap; }
+.input-col { flex: 1; min-width: 140px; display: flex; flex-direction: column; }
+.fi { height: 40px; padding: 0 14px; border: 1.5px solid var(--border-soft); border-radius: var(--radius-sm); font-size: 0.85rem; background: #fff; width: 100%; outline: none; transition: border-color .15s, box-shadow .15s; }
+.fi:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
 .add-form-submit {
-    padding: 7px 16px; background: var(--blue); color: #fff;
-    border: none; border-radius: 9px; font-size: .82rem;
-    font-weight: 700; cursor: pointer; font-family: 'Plus Jakarta Sans', sans-serif;
-    white-space: nowrap; height: 36px; margin-top: 0;
+    height: 40px; padding: 0 16px; background: var(--text-main); color: #fff;
+    border: none; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 700; cursor: pointer;
 }
-.add-form-submit:hover { background: #1d4ed8; }
 
-/* Validation styles */
-.fi.v-error {
-    border-color: #ef4444 !important;
-    background: #fff5f5 !important;
-    box-shadow: 0 0 0 3px rgba(239,68,68,.12) !important;
-    animation: vShake .35s ease;
-}
-@keyframes vShake {
-    0%,100%{transform:translateX(0)}
-    20%{transform:translateX(-5px)}
-    40%{transform:translateX(5px)}
-    60%{transform:translateX(-3px)}
-    80%{transform:translateX(3px)}
-}
-.v-msg {
-    font-size: .7rem; color: #dc2626; font-weight: 700;
-    margin-top: 3px; display: flex; align-items: center; gap: 3px;
-    animation: vFade .2s ease;
-}
-@keyframes vFade { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:none} }
-.fi.v-ok { border-color: #22c55e !important; }
-
-/* Edit modal */
+/* == Edit Modal == */
 .edit-modal-overlay {
-    display: none; position: fixed; inset: 0;
-    background: rgba(0,0,0,.4); z-index: 1000;
-    align-items: center; justify-content: center;
+    display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.6);
+    backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center; padding: 1rem;
 }
 .edit-modal-overlay.show { display: flex; }
-.edit-modal {
-    background: #fff; border-radius: 16px; padding: 1.5rem;
-    width: 420px; max-width: 95vw;
-    box-shadow: 0 20px 60px rgba(0,0,0,.2);
+.edit-modal { background: #fff; border-radius: var(--radius-lg); width: 100%; max-width: 440px; overflow: hidden; box-shadow: 0 24px 60px -20px rgba(15,23,42,.45); }
+.modal-hdr { padding: 18px 24px; border-bottom: 1px solid var(--border-soft); display: flex; align-items: center; justify-content: space-between; }
+.modal-title { font-size: 1.1rem; font-weight: 800; margin: 0; }
+.modal-close {
+    width: 32px; height: 32px; border-radius: 9px;
+    background: var(--premium-bg); border: 1px solid var(--border-soft);
+    color: var(--text-muted); cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 0.85rem; transition: all .15s;
 }
-.edit-modal h3 { font-size: .95rem; font-weight: 800; margin-bottom: 1rem; }
-.edit-modal .fg { margin-bottom: .75rem; }
-.edit-modal-actions { display: flex; gap: .5rem; justify-content: flex-end; margin-top: 1rem; }
+.modal-close:hover { background: var(--danger-bg); border-color: #fecaca; color: var(--danger); }
+.modal-body { padding: 24px; }
+.modal-foot { padding: 16px 24px; background: var(--premium-bg); display: flex; gap: 12px; justify-content: flex-end; }
+.btn-save { padding: 10px 18px; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 600; background: var(--primary); color: #fff; border: none; cursor: pointer; }
+.btn-save:hover { background: var(--primary-hover); }
+.btn-cancel { padding: 10px 18px; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 600; background: #fff; border: 1px solid var(--border-soft); cursor: pointer; }
+.btn-cancel:hover { background: var(--border-lighter); }
+
+@media(max-width:900px){ .master-grid { grid-template-columns: 1fr; } }
+@media(max-width:560px){
+    .page-hdr { align-items: stretch; }
+    .page-hdr .btn-outline { width: 100%; order: 5; }
+}
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="page-hdr">
-    <div>
-        <h1 style="font-size:1.2rem;">⚙️ Lead Masters</h1>
-        <p style="font-size:.78rem;color:var(--text3);">Manage dropdown values for Lead form</p>
+    <div class="hdr-left">
+        <div class="hdr-icon">
+            <i data-lucide="settings" class="lucide-ic"></i>
+        </div>
+        <div class="hdr-info">
+            <h1>Lead Masters</h1>
+            <p>Manage dropdown values for the Lead form</p>
+        </div>
     </div>
+    <a href="javascript:history.back()" class="btn-outline">
+        <i data-lucide="arrow-left" class="lucide-ic"></i>
+        Back
+    </a>
 </div>
 
 <div class="master-grid">
+    {% for mtype, items in data.items() %}
+    {% set labels = {'status':'Lead Status','source':'Lead Source','category':'Lead Category','range':'Product Range'} %}
 
-{% for mtype, items in data.items() %}
-{% set labels = {'status':'Lead Status','source':'Lead Source','category':'Lead Category','range':'Product Range'} %}
-{% set hdrcls = {'status':'status-hdr','source':'source-hdr','category':'category-hdr','range':'range-hdr'} %}
-{% set icons  = {'status':'🔵','source':'📌','category':'🏷️','range':'📦'} %}
-<div class="master-card" id="{{ mtype }}">
-    <div class="master-card-hdr {{ hdrcls[mtype] }}">
-        <span class="master-hdr-title">{{ icons[mtype] }} {{ labels[mtype] }}</span>
-        <span style="font-size:.72rem;color:var(--text3);">{{ items|length }} items</span>
-    </div>
-
-    <!-- Items list -->
-    <div>
-        {% for item in items %}
-        <div class="master-row {{ 'inactive' if not item.is_active }}">
-            {% if mtype == 'status' %}
-            <span class="color-dot" style="background:{{ item.color }};"></span>
-            {% endif %}
-            <span class="master-icon">{{ item.icon }}</span>
-            <span class="master-name">{{ item.name }}</span>
-            <span class="master-order">#{{ item.sort_order }}</span>
-            <div class="row-actions">
-                {% if perm and perm.can_edit %}<button class="row-btn row-btn-edit"
-                    onclick="openEdit('{{ mtype }}',{{ item.id }},'{{ item.name }}','{{ item.icon }}',{{ item.sort_order }},'{{ item.color if mtype=='status' else '' }}',{{ item.is_active|lower }})">
-                    ✏️ Edit
-                </button>{% endif %}
-                <form method="POST" action="{{ url_for('masters.toggle', mtype=mtype, id=item.id) }}"
-                    style="display:inline;" onsubmit="return true;">
-                    <button class="row-btn row-btn-toggle" type="submit">
-                        {{ '✅' if item.is_active else '⛔' }}
-                    </button>
-                </form>
-                {% if perm and perm.can_delete %}<form method="POST" action="{{ url_for('masters.delete', mtype=mtype, id=item.id) }}"
-                    style="display:inline;"
-                    onsubmit="return confirm('Delete {{ item.name }}?')">
-                    <button class="row-btn row-btn-del" type="submit">🗑️</button>
-                </form>{% endif %}
-            </div>
+    <div class="master-card">
+        <div class="master-card-hdr">
+            <span class="master-hdr-title">{{ labels[mtype] }}</span>
+            <span class="item-count">{{ items|length }} items</span>
         </div>
-        {% else %}
-        <div style="padding:.75rem 1rem; text-align:center; color:var(--text3); font-size:.82rem;">
-            No items yet. Add one below.
-        </div>
-        {% endfor %}
-    </div>
-
-    {% if perm and perm.can_add %}<!-- Add new form -->
-    <div class="add-form-wrap">
-        <form method="POST" action="{{ url_for('masters.add', mtype=mtype) }}" novalidate onsubmit="return validateAddForm(this)">
-            <div class="add-form-row">
-                <div style="flex:1;min-width:100px;">
-                    <input type="text" name="name" class="fi" placeholder="Add new {{ labels[mtype] }}..." style="width:100%;box-sizing:border-box;" autocomplete="off">
-                    <div class="v-msg" style="display:none;">⚠ Name is required</div>
+        <div class="master-list-body">
+            {% for item in items %}
+            <div class="master-row">
+                <span class="master-name">{{ item.name }}</span>
+                <div class="row-actions">
+                    <button class="row-btn row-btn-edit" title="Edit" onclick="openEdit('{{ mtype }}',{{ item.id }},'{{ item.name }}',{{ item.is_active|lower }})"><i data-lucide="pencil" class="lucide-ic"></i></button>
+                    <form method="POST" action="{{ url_for('masters.delete', mtype=mtype, id=item.id) }}" style="display:inline;" onsubmit="return confirm('Delete?')">
+                        <button type="submit" class="row-btn row-btn-del" title="Delete"><i data-lucide="trash-2" class="lucide-ic"></i></button>
+                    </form>
                 </div>
-                <input type="text" name="icon" class="fi fi-sm" placeholder="🔵" maxlength="4" style="margin-top:0;">
-                {% if mtype == 'status' %}
-                <input type="color" name="color" class="fi fi-color" value="#6b7280" title="Status color">
-                {% endif %}
-                <input type="number" name="sort_order" class="fi fi-sm" placeholder="0" value="0" min="0">
-                <label style="display:flex;align-items:center;gap:4px;font-size:.78rem;font-weight:600;cursor:pointer;margin-top:8px;">
-                    <input type="checkbox" name="is_active" checked> Active
-                </label>
-                <button type="submit" class="add-form-submit" style="margin-top:0;">＋ Add</button>
             </div>
-        </form>
+            {% endfor %}
+        </div>
     </div>
-</div>
-    {% endif %}
-{% endfor %}
-
+    {% endfor %}
 </div>
 
-<!-- Edit Modal -->
-<div class="edit-modal-overlay" id="editModal" onclick="if(event.target===this)closeEdit()">
+<div class="edit-modal-overlay" id="editModal">
     <div class="edit-modal">
-        <h3>✏️ Edit <span id="editModalTitle"></span></h3>
-        <form id="editForm" method="POST" novalidate onsubmit="return validateEditForm(this)">
-            <div class="fg">
-                <label class="fl">Name <span style="color:#ef4444;">*</span></label>
-                <input type="text" name="name" id="editName" class="fi" placeholder="Enter name..." autocomplete="off">
-                <div class="v-msg" id="editNameErr" style="display:none;">⚠ Name is required</div>
-            </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem;">
-                <div class="fg">
-                    <label class="fl">Icon / Emoji</label>
-                    <input type="text" name="icon" id="editIcon" class="fi" maxlength="4" placeholder="🔵">
-                </div>
-                <div class="fg">
-                    <label class="fl">Sort Order</label>
-                    <input type="number" name="sort_order" id="editOrder" class="fi" min="0">
-                </div>
-            </div>
-            <div class="fg" id="editColorRow" style="display:none;">
-                <label class="fl">Status Color</label>
-                <input type="color" name="color" id="editColor" class="fi" style="height:40px;padding:3px;">
-            </div>
-            <div class="fg">
-                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:.83rem;font-weight:600;">
+        <div class="modal-hdr">
+            <h3 class="modal-title">Edit Item</h3>
+            <button class="modal-close" onclick="closeEdit()"><i data-lucide="x" class="lucide-ic"></i></button>
+        </div>
+        <form id="editForm" method="POST">
+            <div class="modal-body">
+                <input type="text" name="name" id="editName" class="fi" required>
+                <label style="margin-top:10px; display:flex; align-items:center; gap:8px;">
                     <input type="checkbox" name="is_active" id="editActive"> Active
                 </label>
             </div>
-            <div class="edit-modal-actions">
-                <button type="button" class="btn-outline" onclick="closeEdit()">Cancel</button>
-                <button type="submit" class="btn-primary">💾 Save Changes</button>
+            <div class="modal-foot">
+                <button type="button" class="btn-cancel" onclick="closeEdit()">Cancel</button>
+                <button type="submit" class="btn-save">Save</button>
             </div>
         </form>
     </div>
 </div>
 
 <script>
-// ── Validation Helpers ────────────────────────────────────────────────
-function vSetError(input, msgEl, msg) {
-    input.classList.add('v-error');
-    input.classList.remove('v-ok');
-    if (msgEl) { msgEl.textContent = '⚠ ' + msg; msgEl.style.display = 'flex'; }
-    input.focus();
-}
-function vClearError(input, msgEl) {
-    input.classList.remove('v-error');
-    if (msgEl) msgEl.style.display = 'none';
-}
-function vSetOk(input) {
-    input.classList.remove('v-error');
-    input.classList.add('v-ok');
-}
-
-// Clear error on input
-document.addEventListener('input', function(e) {
-    var inp = e.target;
-    if (!inp.classList.contains('v-error')) return;
-    if (inp.value.trim()) {
-        inp.classList.remove('v-error');
-        inp.classList.add('v-ok');
-        var msg = inp.closest('.fg, div') && inp.closest('.fg, div').querySelector('.v-msg');
-        if (msg) msg.style.display = 'none';
-    }
-});
-
-// ── Add Form Validation ───────────────────────────────────────────────
-function validateAddForm(form) {
-    var nameInput = form.querySelector('input[name="name"]');
-    var msgEl     = form.querySelector('.v-msg');
-    var val = nameInput ? nameInput.value.trim() : '';
-
-    if (!val) {
-        vSetError(nameInput, msgEl, 'Name is required');
-        // shake the button too
-        var btn = form.querySelector('.add-form-submit');
-        if (btn) { btn.style.animation = 'none'; btn.offsetHeight; btn.style.animation = 'vShake .35s ease'; }
-        return false;
-    }
-
-    // Check duplicate within same card list
-    var card = form.closest('.master-card');
-    if (card) {
-        var existing = Array.from(card.querySelectorAll('.master-name'))
-                           .map(function(el){ return el.textContent.trim().toLowerCase(); });
-        if (existing.includes(val.toLowerCase())) {
-            vSetError(nameInput, msgEl, '"' + val + '" already exists');
-            return false;
-        }
-    }
-
-    vSetOk(nameInput);
-    return true;   // allow submit
-}
-
-// ── Edit Modal Validation ─────────────────────────────────────────────
-function validateEditForm(form) {
-    var nameInput = document.getElementById('editName');
-    var msgEl     = document.getElementById('editNameErr');
-    var val = nameInput ? nameInput.value.trim() : '';
-
-    if (!val) {
-        vSetError(nameInput, msgEl, 'Name is required');
-        return false;
-    }
-    vSetOk(nameInput);
-    return true;
-}
-
-// ── Modal Open/Close ──────────────────────────────────────────────────
-function openEdit(mtype, id, name, icon, order, color, isActive) {
-    document.getElementById('editModalTitle').textContent =
-        {status:'Lead Status',source:'Lead Source',category:'Lead Category',range:'Product Range'}[mtype];
+function openEdit(mtype, id, name, isActive) {
     document.getElementById('editForm').action = '/masters/' + mtype + '/' + id + '/edit';
-
-    var nameEl = document.getElementById('editName');
-    nameEl.value = name;
-    nameEl.classList.remove('v-error','v-ok');
-    document.getElementById('editNameErr').style.display = 'none';
-
-    document.getElementById('editIcon').value  = icon;
-    document.getElementById('editOrder').value = order;
+    document.getElementById('editName').value = name;
     document.getElementById('editActive').checked = isActive;
-
-    var colorRow = document.getElementById('editColorRow');
-    if (mtype === 'status') {
-        colorRow.style.display = 'block';
-        document.getElementById('editColor').value = color || '#6b7280';
-    } else {
-        colorRow.style.display = 'none';
-    }
     document.getElementById('editModal').classList.add('show');
-    setTimeout(function(){ nameEl.focus(); nameEl.select(); }, 120);
 }
+function closeEdit() { document.getElementById('editModal').classList.remove('show'); }
 
-function closeEdit() {
-    document.getElementById('editModal').classList.remove('show');
-}
-
-// Close modal on ESC
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') closeEdit();
-});
+// == Lucide icons render ==
+(function(){
+  function drawIcons(){ if(window.lucide && window.lucide.createIcons) window.lucide.createIcons({attrs:{'stroke-width':1.9}}); }
+  if(window.lucide){ drawIcons(); }
+  else{
+    var s=document.createElement('script');
+    s.src='https://unpkg.com/lucide@latest';
+    s.onload=drawIcons;
+    document.head.appendChild(s);
+  }
+})();
 </script>
 {% endblock %}

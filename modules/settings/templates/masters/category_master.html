@@ -5,130 +5,335 @@
 
 {% block extra_css %}
 <style>
-.m-table { width:100%; border-collapse:collapse; }
-.m-table th { background:#f1f5f9; padding:10px 14px; text-align:left; font-size:0.8rem; font-weight:700; color:#374151; border-bottom:2px solid #e2e8f0; white-space:nowrap; }
-.m-table td { padding:10px 14px; font-size:0.85rem; color:var(--text); border-bottom:1px solid #f1f5f9; vertical-align:middle; }
-.m-table tr:hover td { background:#f8fafc; }
-.badge-active   { background:#dcfce7; color:#166534; padding:3px 10px; border-radius:100px; font-size:0.75rem; font-weight:700; }
-.badge-inactive { background:#f1f5f9; color:#64748b; padding:3px 10px; border-radius:100px; font-size:0.75rem; font-weight:700; }
+:root {
+    --premium-bg: #f8fafc;
+    --card-bg: #ffffff;
+    --text-main: #0f172a;
+    --text-muted: #475569;
+    --text-light: #94a3b8;
+    --border-soft: #e2e8f0;
+    --border-lighter: #f1f5f9;
+    --primary: #2563eb;
+    --primary-hover: #1d4ed8;
+    --primary-light: #eff6ff;
+    --success: #10b981;
+    --success-bg: #ecfdf5;
+    --danger: #ef4444;
+    --danger-bg: #fef2f2;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-pill: 9999px;
+    --shadow-soft: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.03);
+    --shadow-hover: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.04);
+}
+
+* { box-sizing: border-box; }
+
+/* ── Page Header & Back Button ── */
+.page-hdr {
+    display: flex; align-items: center; margin-bottom: 1.5rem;
+}
+
+/* ── Global Card & Headers ── */
+.card {
+    background: var(--card-bg); border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-soft); border: 1px solid var(--border-soft);
+    margin-bottom: 1.5rem; overflow: hidden;
+}
+.card-hdr {
+    padding: 16px 20px; border-bottom: 1px solid var(--border-soft);
+    background: #fdfdfe; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+}
+.card-title {
+    font-size: 1.15rem; font-weight: 800; color: var(--text-main);
+    display: flex; align-items: center; gap: 8px; margin: 0;
+}
+
+/* ── Buttons ── */
+.btn-primary {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 8px 16px; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 600;
+    background: var(--primary); color: #fff; border: none; cursor: pointer;
+    text-decoration: none; transition: all 0.2s; box-shadow: 0 2px 4px rgba(37,99,235,0.15);
+    white-space: nowrap;
+}
+.btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); }
+.btn-outline {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 8px 16px; border-radius: var(--radius-pill); font-size: 0.85rem; font-weight: 600;
+    background: #fff; border: 1px solid var(--border-soft); color: var(--text-main);
+    text-decoration: none; transition: all 0.2s; cursor: pointer; white-space: nowrap;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+}
+.btn-outline:hover { background: var(--border-lighter); transform: translateX(-2px); }
+
+/* ── Search & Form Inputs ── */
+.search-form { display: flex; gap: 8px; align-items: center; }
+.search-wrap { position: relative; display: flex; align-items: center; }
+.search-wrap svg { position: absolute; left: 12px; color: var(--text-light); width: 16px; height: 16px; pointer-events: none; }
+.search-wrap input { padding-left: 36px !important; }
+
+.fi {
+    padding: 9px 14px; border: 1px solid var(--border-soft);
+    border-radius: var(--radius-sm); font-size: 0.85rem; color: var(--text-main);
+    outline: none; transition: all 0.2s; font-family: 'Inter', sans-serif;
+    font-weight: 500; background: #fff; width: 100%;
+}
+.fi:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
+.fi::placeholder { color: var(--text-light); }
+
+.add-form-wrap { padding: 20px; background: var(--premium-bg); border-bottom: 1px solid var(--border-soft); }
+.add-form-row { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
+.add-form-group { flex: 1; min-width: 240px; max-width: 320px; }
+.add-form-label { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+
+/* ── Table ── */
+.table-wrap { overflow-x: auto; width: 100%; }
+.m-table { width: 100%; border-collapse: collapse; text-align: left; }
+.m-table th { background: var(--premium-bg); padding: 12px 20px; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); border-bottom: 1px solid var(--border-soft); text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap; }
+.m-table td { padding: 12px 20px; font-size: 0.85rem; color: var(--text-main); border-bottom: 1px solid var(--border-lighter); vertical-align: middle; }
+.m-table tr:hover td { background: #fdfdfe; }
+.m-table tr:last-child td { border-bottom: none; }
+
+/* ── Badges & Actions ── */
+.status-badge {
+    display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px;
+    border-radius: var(--radius-pill); font-size: 0.75rem; font-weight: 700;
+    transition: all 0.2s; border: 1px solid transparent; text-transform: uppercase; letter-spacing: 0.02em;
+}
+.status-badge svg { width: 12px; height: 12px; }
+.badge-active { background: var(--success-bg); color: #166534; border-color: #bbf7d0; }
+.badge-inactive { background: var(--danger-bg); color: var(--danger); border-color: #fecaca; }
+
+.action-btns { display: flex; gap: 8px; align-items: center; }
+.act-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 6px 12px; border-radius: 6px; font-size: 0.75rem; font-weight: 600;
+    cursor: pointer; border: 1px solid transparent; transition: all 0.2s; background: none; text-decoration: none;
+}
+.act-btn svg { width: 14px; height: 14px; }
+.act-btn-edit { color: var(--primary); background: var(--primary-light); border-color: #bfdbfe; }
+.act-btn-edit:hover { background: #dbeafe; }
+.act-btn-del { color: var(--danger); background: var(--danger-bg); border-color: #fecaca; }
+.act-btn-del:hover { background: #fee2e2; }
+
+/* ── Modal ── */
+.modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.6);
+    backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center;
+    padding: 1rem; opacity: 0; transition: opacity 0.2s;
+}
+.modal-overlay.show { display: flex; opacity: 1; }
+.modal-box {
+    background: #fff; border-radius: var(--radius-md); width: 100%; max-width: 440px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); transform: scale(0.95);
+    transition: transform 0.2s; overflow: hidden;
+}
+.modal-overlay.show .modal-box { transform: scale(1); }
+.modal-hdr {
+    padding: 20px 24px; border-bottom: 1px solid var(--border-soft);
+    display: flex; align-items: center; justify-content: space-between; background: #fff;
+}
+.modal-title { font-size: 1.1rem; font-weight: 800; color: var(--text-main); display: flex; align-items: center; gap: 8px; margin: 0; }
+.modal-close {
+    background: var(--premium-bg); border: none; color: var(--text-muted); width: 32px; height: 32px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;
+}
+.modal-close:hover { background: var(--border-soft); color: var(--text-main); }
+.modal-body { padding: 24px; display: flex; flex-direction: column; gap: 16px; }
+.modal-foot {
+    padding: 16px 24px; background: var(--premium-bg); border-top: 1px solid var(--border-soft);
+    display: flex; gap: 12px; justify-content: flex-end;
+}
+.btn-cancel {
+    padding: 10px 18px; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 600;
+    background: #fff; border: 1px solid var(--border-soft); color: var(--text-main); cursor: pointer; transition: all 0.2s;
+}
+.btn-cancel:hover { background: var(--border-lighter); }
+
+.empty-state { text-align: center; padding: 4rem 1rem; color: var(--text-muted); }
+.empty-state svg { width: 48px; height: 48px; color: var(--border-soft); margin-bottom: 12px; }
+.empty-state h3 { font-size: 1.1rem; font-weight: 700; color: var(--text-main); margin: 0 0 4px 0; }
+.empty-state p { font-size: 0.9rem; margin: 0; }
+
+@media (max-width: 767px) {
+    .card-hdr { flex-direction: column; align-items: stretch; }
+    .search-form { width: 100%; }
+    .search-wrap { width: 100%; }
+    .search-wrap input { width: 100%; }
+    .add-form-row { flex-direction: column; align-items: stretch; }
+    .add-form-group { max-width: 100%; }
+    .btn-primary { width: 100%; justify-content: center; }
+}
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="card" style="margin-bottom:1.2rem;">
+
+<!-- Back Button -->
+<div class="page-hdr">
+    <a href="javascript:history.back()" class="btn-outline">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+        Back
+    </a>
+</div>
+
+<div class="card">
     <div class="card-hdr">
-        <div class="card-title">🗂️ Category Master</div>
-        <form method="GET" style="display:flex;gap:.5rem;align-items:center;">
-            <input type="text" name="search" value="{{ search }}" placeholder="Search category..." class="fi" style="font-size:0.83rem;width:220px;padding:6px 10px;">
-            <button type="submit" class="btn-primary" style="font-size:0.83rem;padding:6px 14px;">🔍 Search</button>
-            {% if search %}<a href="{{ url_for('masters.category_master_list') }}" class="btn-outline" style="font-size:0.83rem;padding:6px 12px;">✕</a>{% endif %}
+        <h2 class="card-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+            Category Master
+        </h2>
+        <form method="GET" class="search-form">
+            <div class="search-wrap">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <input type="text" name="search" value="{{ search }}" placeholder="Search category..." class="fi" autocomplete="off">
+            </div>
+            <button type="submit" class="btn-primary">Search</button>
+            {% if search %}
+            <a href="{{ url_for('masters.category_master_list') }}" class="btn-outline" style="padding: 8px 12px; border-radius: var(--radius-sm);" title="Clear Search">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </a>
+            {% endif %}
         </form>
     </div>
 
     {# Add Form #}
-    <div style="padding:1rem 1.25rem;background:#f8fafc;border-bottom:1px solid #e5e7eb;">
-        <form method="POST" action="{{ url_for('masters.category_master_add') }}" style="display:flex;gap:.75rem;align-items:flex-end;flex-wrap:wrap;">
-            <div>
-                <label style="font-size:0.78rem;font-weight:600;color:#374151;display:block;margin-bottom:3px;">Category Name *</label>
-                <input type="text" name="name" class="fi" required placeholder="e.g. Cosmetics" style="font-size:0.85rem;width:280px;">
+    <div class="add-form-wrap">
+        <form method="POST" action="{{ url_for('masters.category_master_add') }}" class="add-form-row">
+            <div class="add-form-group">
+                <label class="add-form-label">Category Name <span style="color:var(--danger);">*</span></label>
+                <input type="text" name="name" class="fi" required placeholder="e.g. Cosmetics" autocomplete="off">
             </div>
-            <button type="submit" class="btn-primary" style="font-size:0.83rem;padding:7px 18px;">+ Add Category</button>
+            <button type="submit" class="btn-primary" style="height:38px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                Add Category
+            </button>
         </form>
     </div>
 
-    <div class="card-body" style="padding:0;">
+    <div class="table-wrap">
         {% if items %}
         <table class="m-table">
             <thead>
                 <tr>
-                    <th>#</th>
+                    <th style="width:50px;">#</th>
                     <th>Name</th>
                     <th>Status</th>
                     <th>Created At</th>
                     <th>Modified At</th>
-                    <th>Actions</th>
+                    <th style="text-align:right;">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 {% for item in items %}
                 <tr>
-                    <td style="color:var(--text3);font-size:0.78rem;">{{ loop.index }}</td>
-                    <td style="font-weight:600;">{{ item.name }}</td>
+                    <td style="color:var(--text-light);font-weight:600;">{{ loop.index }}</td>
+                    <td style="font-weight:700;color:var(--text-main);">{{ item.name }}</td>
                     <td>
-                        <button onclick="toggleStatus('cat', {{ item.id }}, this)"
-                                style="background:none;border:none;cursor:pointer;padding:0;">
-                            <span class="badge-{{ 'active' if item.status else 'inactive' }}">
-                                {{ '✅ Active' if item.status else '⛔ Inactive' }}
+                        <button onclick="toggleStatus({{ item.id }}, this)" style="background:none;border:none;cursor:pointer;padding:0;outline:none;">
+                            <span class="status-badge {{ 'badge-active' if item.status else 'badge-inactive' }}">
+                                {% if item.status %}
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Active
+                                {% else %}
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg> Inactive
+                                {% endif %}
                             </span>
                         </button>
                     </td>
-                    <td style="font-size:0.8rem;color:var(--text2);">{{ item.created_at.strftime('%d-%m-%Y %H:%M') if item.created_at else '—' }}</td>
-                    <td style="font-size:0.8rem;color:var(--text2);">{{ item.modified_at.strftime('%d-%m-%Y %H:%M') if item.modified_at else '—' }}</td>
-                    <td>
-                        <button onclick="openEditModal({{ item.id }}, '{{ item.name | e }}', {{ '1' if item.status else '0' }})"
-                                style="background:#eff6ff;color:#1d4ed8;border:none;padding:5px 10px;border-radius:6px;font-size:0.78rem;font-weight:600;cursor:pointer;">✏️ Edit</button>
-                        <form method="POST" action="{{ url_for('masters.category_master_delete', id=item.id) }}" style="display:inline;"
-                              onsubmit="return confirm('Delete {{ item.name }}?')">
-                            <button type="submit" style="background:#fef2f2;color:#dc2626;border:none;padding:5px 10px;border-radius:6px;font-size:0.78rem;font-weight:600;cursor:pointer;margin-left:4px;">🗑 Delete</button>
-                        </form>
+                    <td style="font-size:0.8rem;color:var(--text-muted);font-weight:500;">{{ item.created_at.strftime('%d %b %Y, %H:%M') if item.created_at else '—' }}</td>
+                    <td style="font-size:0.8rem;color:var(--text-muted);font-weight:500;">{{ item.modified_at.strftime('%d %b %Y, %H:%M') if item.modified_at else '—' }}</td>
+                    <td style="text-align:right;">
+                        <div class="action-btns" style="justify-content:flex-end;">
+                            <button class="act-btn act-btn-edit" onclick="openEditModal({{ item.id }}, '{{ item.name | e }}', {{ '1' if item.status else '0' }})" title="Edit">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path><path d="m15 5 4 4"></path></svg>
+                                Edit
+                            </button>
+                            <form method="POST" action="{{ url_for('masters.category_master_delete', id=item.id) }}" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete {{ item.name }}?')">
+                                <button type="submit" class="act-btn act-btn-del" title="Delete">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                    Delete
+                                </button>
+                            </form>
+                        </div>
                     </td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
         {% else %}
-        <div style="text-align:center;padding:3rem;color:var(--text3);">
-            <div style="font-size:2rem;margin-bottom:.5rem;">🗂️</div>
-            <div style="font-weight:600;">No categories yet</div>
+        <div class="empty-state">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+            <h3>No categories found</h3>
+            <p>Add a new category using the form above.</p>
         </div>
         {% endif %}
     </div>
 </div>
 
 {# Edit Modal #}
-<div id="editModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center;">
-    <div style="background:#fff;border-radius:12px;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.2);overflow:hidden;">
-        <div style="background:#1e3a5f;color:#fff;padding:.9rem 1.25rem;display:flex;align-items:center;justify-content:space-between;">
-            <span style="font-weight:700;">✏️ Edit Category</span>
-            <button onclick="document.getElementById('editModal').style.display='none'" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:26px;height:26px;border-radius:50%;cursor:pointer;">✕</button>
+<div id="editModal" class="modal-overlay" onclick="if(event.target===this) closeEditModal()">
+    <div class="modal-box">
+        <div class="modal-hdr">
+            <h3 class="modal-title">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path><path d="m15 5 4 4"></path></svg>
+                Edit Category
+            </h3>
+            <button class="modal-close" onclick="closeEditModal()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
         </div>
         <form method="POST" id="editForm" action="">
-            <div style="padding:1.25rem;display:flex;flex-direction:column;gap:.85rem;">
+            <div class="modal-body">
                 <div>
-                    <label style="font-size:0.8rem;font-weight:600;color:#374151;display:block;margin-bottom:3px;">Name *</label>
-                    <input type="text" name="name" id="editName" class="fi" required style="font-size:0.85rem;">
+                    <label class="add-form-label">Category Name <span style="color:var(--danger);">*</span></label>
+                    <input type="text" name="name" id="editName" class="fi" required autocomplete="off">
                 </div>
                 <div>
-                    <label style="font-size:0.8rem;font-weight:600;color:#374151;display:block;margin-bottom:3px;">Status</label>
-                    <select name="status" id="editStatus" class="fi" style="font-size:0.85rem;">
-                        <option value="1">✅ Active</option>
-                        <option value="0">⛔ Inactive</option>
+                    <label class="add-form-label">Status</label>
+                    <select name="status" id="editStatus" class="fi" style="cursor:pointer;">
+                        <option value="1">Active</option>
+                        <option value="0">Inactive</option>
                     </select>
                 </div>
             </div>
-            <div style="padding:.9rem 1.25rem;border-top:1px solid #e5e7eb;display:flex;justify-content:flex-end;gap:.5rem;background:#f9fafb;">
-                <button type="button" onclick="document.getElementById('editModal').style.display='none'" class="btn-outline" style="font-size:0.83rem;">Cancel</button>
-                <button type="submit" class="btn-primary" style="font-size:0.83rem;">Save Changes</button>
+            <div class="modal-foot">
+                <button type="button" onclick="closeEditModal()" class="btn-cancel">Cancel</button>
+                <button type="submit" class="btn-primary">Save Changes</button>
             </div>
         </form>
     </div>
 </div>
 
 <script>
+const modal = document.getElementById('editModal');
+
 function openEditModal(id, name, status) {
     document.getElementById('editForm').action = '/masters/category-master/' + id + '/edit';
     document.getElementById('editName').value   = name;
     document.getElementById('editStatus').value = status;
-    document.getElementById('editModal').style.display = 'flex';
+    modal.classList.add('show');
+    setTimeout(() => document.getElementById('editName').focus(), 150);
 }
-document.getElementById('editModal').addEventListener('click', function(e){ if(e.target===this) this.style.display='none'; });
 
-function toggleStatus(type, id, btn) {
+function closeEditModal() {
+    modal.classList.remove('show');
+}
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && modal.classList.contains('show')) closeEditModal();
+});
+
+const svgActive = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Active`;
+const svgInactive = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg> Inactive`;
+
+function toggleStatus(id, btn) {
     fetch('/masters/category-master/' + id + '/toggle', {method:'POST', headers:{'X-CSRFToken': ''}})
         .then(r=>r.json()).then(d=>{
             const span = btn.querySelector('span');
-            span.className = d.status ? 'badge-active' : 'badge-inactive';
-            span.textContent = d.status ? '✅ Active' : '⛔ Inactive';
+            span.className = 'status-badge ' + (d.status ? 'badge-active' : 'badge-inactive');
+            span.innerHTML = d.status ? svgActive : svgInactive;
         });
 }
 </script>

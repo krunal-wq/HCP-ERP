@@ -5,119 +5,176 @@
 
 {% block extra_css %}
 <style>
+:root {
+    --premium-bg: #f8fafc;
+    --card-bg: #ffffff;
+    --text-main: #0f172a;
+    --text-muted: #475569;
+    --text-light: #94a3b8;
+    --border-soft: #e2e8f0;
+    --border-lighter: #f1f5f9;
+    --primary: #2563eb;
+    --primary-hover: #1d4ed8;
+    --primary-light: #eff6ff;
+    --danger: #ef4444;
+    --danger-bg: #fef2f2;
+    --success: #10b981;
+    --success-bg: #ecfdf5;
+    --warning: #f59e0b;
+    --warning-bg: #fffbeb;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-pill: 9999px;
+    --shadow-soft: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.03);
+    --shadow-hover: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.04);
+}
+
 * { box-sizing: border-box; }
 
-/* ── Search bar ── */
-.qp-search-wrap { position:relative; width:100%; }
-.qp-search-wrap input { width:100%; padding:10px 36px 10px 36px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:0.88rem; outline:none; color:#374151; background:#fff; }
-.qp-search-wrap input:focus { border-color:#1e3a5f; box-shadow:0 0 0 3px rgba(30,58,95,0.08); }
-.qp-search-icon { position:absolute; left:11px; top:50%; transform:translateY(-50%); color:#94a3b8; font-size:0.9rem; pointer-events:none; }
-.qp-clear-btn   { position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; color:#94a3b8; font-size:1rem; cursor:pointer; display:none; line-height:1; padding:2px; }
+.card {
+    background: var(--card-bg);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-soft);
+    border: 1px solid var(--border-soft);
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+}
 
-/* ── Stats bar ── */
-.qp-stats { display:flex; align-items:center; gap:12px; padding:8px 14px; background:#f8fafc; border-bottom:1px solid #e2e8f0; font-size:0.8rem; flex-wrap:wrap; }
-.qp-stat-item { display:flex; align-items:center; gap:5px; color:#64748b; }
-.qp-stat-item strong { color:#1e3a5f; font-size:0.85rem; }
-#qpCount { margin-left:auto; font-size:0.78rem; color:#94a3b8; }
+/* ── Header & Search ── */
+.card-hdr {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 16px 20px; border-bottom: 1px solid var(--border-soft); flex-wrap: wrap; gap: 16px;
+    background: #fdfdfe;
+}
+.card-title {
+    font-size: 1.25rem; font-weight: 800; color: var(--text-main);
+    display: flex; align-items: center; gap: 10px;
+}
+.count-badge {
+    background: var(--primary-light); color: var(--primary);
+    font-size: 0.75rem; font-weight: 700; padding: 2px 8px;
+    border-radius: var(--radius-pill); border: 1px solid #bfdbfe;
+    display: inline-flex; align-items: center;
+}
+
+.qp-search-bar { display: flex; align-items: center; gap: 12px; flex: 1; max-width: 400px; justify-content: flex-end; }
+.search-wrap { position: relative; width: 100%; display: flex; align-items: center; }
+.search-wrap input {
+    width: 100%; padding: 10px 16px 10px 40px; border: 1px solid var(--border-soft);
+    border-radius: var(--radius-pill); font-size: 0.85rem; color: var(--text-main);
+    outline: none; background: var(--premium-bg); transition: all 0.2s;
+}
+.search-wrap input:focus { background: #fff; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
+.search-icon { position: absolute; left: 14px; color: var(--text-light); pointer-events: none; display: flex; align-items: center; }
+.search-icon svg { width: 16px; height: 16px; }
+.clear-btn {
+    position: absolute; right: 12px; background: none; border: none;
+    color: var(--text-light); cursor: pointer; display: none;
+    padding: 4px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+}
+.clear-btn svg { width: 14px; height: 14px; }
+.clear-btn:hover { background: var(--border-soft); color: var(--text-main); }
 
 /* ════════ MOBILE CARDS ════════ */
-.qp-cards { display:none; padding:8px 12px 16px; gap:10px; flex-direction:column; }
+.qp-cards { display: none; padding: 16px; flex-direction: column; gap: 12px; background: var(--premium-bg); }
 .qp-card {
-    background:#fff;
-    border:1.5px solid #e8edf5;
-    border-radius:14px;
-    overflow:hidden;
-    box-shadow:0 2px 10px rgba(30,58,95,0.06);
+    background: #fff; border-radius: var(--radius-md);
+    border: 1px solid var(--border-soft); box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    overflow: hidden; transition: all 0.2s;
 }
+.qp-card:hover { border-color: #cbd5e1; box-shadow: var(--shadow-hover); }
+
 .qp-card-header {
-    background:linear-gradient(135deg,#1e3a5f,#2d5a8e);
-    color:#fff;
-    padding:12px 14px;
-    display:flex;
-    align-items:flex-start;
-    justify-content:space-between;
-    gap:10px;
+    background: #fdfdfe; border-bottom: 1px solid var(--border-lighter);
+    padding: 16px; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
 }
-.qp-card-product { font-size:1rem; font-weight:800; line-height:1.3; }
-.qp-card-company { font-size:0.75rem; opacity:0.8; margin-top:3px; }
-.qp-card-final { text-align:right; flex-shrink:0; }
-.qp-card-final-label { font-size:0.65rem; opacity:0.75; text-transform:uppercase; letter-spacing:.5px; }
-.qp-card-final-amt { font-size:1.15rem; font-weight:800; }
-.qp-card-body { padding:12px 14px; }
-.qp-card-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px 14px; margin-bottom:10px; }
-.qp-card-grid-3 { grid-template-columns:1fr 1fr 1fr; }
-.qp-card-field label { font-size:0.65rem; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.5px; display:block; margin-bottom:2px; }
-.qp-card-field span { font-size:0.82rem; color:#374151; font-weight:600; }
+.qp-card-product { font-size: 1.05rem; font-weight: 800; color: var(--text-main); line-height: 1.3; }
+.qp-card-company {
+    font-size: 0.8rem; color: var(--text-muted); font-weight: 600; margin-top: 4px;
+    display: flex; align-items: center; gap: 4px;
+}
+.qp-card-company svg { width: 14px; height: 14px; color: var(--text-light); }
+.qp-card-final { text-align: right; flex-shrink: 0; }
+.qp-card-final-label { font-size: 0.65rem; color: var(--text-light); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+.qp-card-final-amt { font-size: 1.2rem; font-weight: 800; color: var(--primary); margin-top: 2px; }
+
+.qp-card-body { padding: 16px; }
+.qp-card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+.qp-card-field label { font-size: 0.65rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 4px; }
+.qp-card-field span { font-size: 0.85rem; color: var(--text-main); font-weight: 600; }
+
 .qp-card-costs {
-    display:grid;
-    grid-template-columns:1fr 1fr 1fr;
-    gap:6px;
-    background:#f8fafc;
-    border-radius:10px;
-    padding:10px;
-    border:1px solid #e2e8f0;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+    background: var(--premium-bg); border-radius: var(--radius-sm);
+    padding: 12px; border: 1px solid var(--border-soft);
 }
-.qp-cost-item { text-align:center; }
-.qp-cost-item label { font-size:0.62rem; font-weight:700; color:#94a3b8; text-transform:uppercase; display:block; margin-bottom:3px; }
-.qp-cost-item span { font-size:0.82rem; font-weight:700; color:#1e3a5f; }
-.qp-card-pm { background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:8px 10px; margin-top:8px; }
-.qp-card-pm label { font-size:0.65rem; font-weight:700; color:#92400e; text-transform:uppercase; display:block; margin-bottom:2px; }
-.qp-card-pm span { font-size:0.8rem; color:#78350f; }
-.qp-card-footer { display:flex; justify-content:space-between; align-items:center; padding:8px 14px; background:#f8fafc; border-top:1px solid #e2e8f0; }
-.qp-card-date { font-size:0.75rem; color:#94a3b8; }
-.qp-card-cat { background:#eff6ff; color:#1d4ed8; padding:3px 9px; border-radius:100px; font-size:0.72rem; font-weight:700; }
+.qp-cost-item { text-align: left; }
+.qp-cost-item label { font-size: 0.65rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 4px; }
+.qp-cost-item span { font-size: 0.9rem; font-weight: 700; color: var(--text-main); }
+
+.qp-card-pm { background: var(--warning-bg); border: 1px solid #fde68a; border-radius: var(--radius-sm); padding: 10px 12px; margin-top: 12px; }
+.qp-card-pm label { font-size: 0.65rem; font-weight: 700; color: #b45309; text-transform: uppercase; display: block; margin-bottom: 4px; }
+.qp-card-pm span { font-size: 0.85rem; color: #78350f; font-weight: 500; }
+
+.qp-card-footer {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 16px; background: #fff; border-top: 1px solid var(--border-lighter);
+}
+.qp-card-date { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; display: flex; align-items: center; gap: 6px; }
+.qp-card-date svg { width: 14px; height: 14px; color: var(--text-light); }
+.qp-card-cat { background: var(--primary-light); color: var(--primary); padding: 4px 10px; border-radius: var(--radius-pill); font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
 
 /* ════════ DESKTOP TABLE ════════ */
-.qp-tbl-wrap { display:none; overflow-x:auto; }
-.qp-table { width:100%; border-collapse:collapse; min-width:1150px; font-size:0.82rem; }
-.qp-table thead tr { background:#f1f5f9; }
-.qp-table th { padding:10px 10px; font-size:0.78rem; font-weight:700; color:#374151; text-transform:uppercase; letter-spacing:.04em; border-bottom:2px solid #e2e8f0; white-space:nowrap; border-right:none; }
-.qp-table tbody tr { border-bottom:1px solid #f1f5f9; transition:.1s; }
-.qp-table tbody tr:hover { background:#f5f8ff; }
-.qp-table tbody tr:nth-child(even) { background:#fafbff; }
-.qp-table tbody tr:nth-child(even):hover { background:#f0f5ff; }
-.qp-table td { padding:9px 10px; vertical-align:middle; }
+.qp-tbl-wrap { overflow-x: auto; width: 100%; display: block; }
+.qp-table { width: 100%; border-collapse: collapse; min-width: 1000px; text-align: left; }
+.qp-table th {
+    background: var(--premium-bg); color: var(--text-muted);
+    font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.05em; padding: 14px 16px; border-bottom: 1px solid var(--border-soft); white-space: nowrap;
+}
+.qp-table td { padding: 14px 16px; font-size: 0.85rem; color: var(--text-main); border-bottom: 1px solid var(--border-lighter); vertical-align: middle; }
+.qp-table tr:hover td { background: #fdfdfe; }
 
-/* ── Empty ── */
-.qp-empty { text-align:center; padding:3rem 1rem; color:var(--text3); }
+/* ── Pagination & Empty ── */
+.qp-pagination { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-top: 1px solid var(--border-soft); background: #fff; }
+.pgn-btn { background: #fff; border: 1px solid var(--border-soft); padding: 8px 14px; border-radius: var(--radius-sm); font-size: 0.8rem; font-weight: 600; color: var(--text-main); cursor: pointer; text-decoration: none; transition: all 0.2s; }
+.pgn-btn:hover { background: var(--premium-bg); }
+
+.qp-empty { text-align: center; padding: 4rem 1rem; color: var(--text-muted); background: #fff; }
 
 /* ── Toast ── */
-#qpToast { display:none; position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#1e3a5f; color:#fff; padding:12px 20px; border-radius:12px; font-size:0.85rem; font-weight:600; z-index:9999; box-shadow:0 8px 30px rgba(0,0,0,0.25); max-width:90vw; }
-#qpToast.show { display:block; animation:qpToastIn .25s ease; }
+#qpToast { display: none; position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--text-main); color: #fff; padding: 12px 24px; border-radius: var(--radius-pill); font-size: 0.85rem; font-weight: 600; z-index: 9999; box-shadow: 0 8px 30px rgba(0,0,0,0.2); }
+#qpToast.show { display: flex; align-items: center; gap: 8px; animation: qpToastIn 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
 
-@keyframes qpToastIn { from{opacity:0;transform:translateX(-50%) translateY(10px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
+@keyframes qpToastIn { from { opacity: 0; transform: translate(-50%, 20px); } to { opacity: 1; transform: translate(-50%, 0); } }
 
 /* ── Responsive ── */
-@media (max-width:767px) {
-    .qp-cards    { display:flex; }
-    .qp-tbl-wrap { display:none !important; }
-    .card-hdr    { flex-direction:column; align-items:stretch; gap:10px; padding:12px; }
-}
-@media (min-width:768px) {
-    .qp-cards    { display:none !important; }
-    .qp-tbl-wrap { display:block; }
+@media (max-width: 768px) {
+    .qp-cards    { display: flex; }
+    .qp-tbl-wrap { display: none !important; }
+    .card-hdr    { flex-direction: column; align-items: stretch; }
+    .qp-search-bar { max-width: 100%; justify-content: flex-start; }
 }
 </style>
 {% endblock %}
 
 {% block content %}
-<!-- Search Card -->
-<div class="card" style="margin-bottom:12px;">
-    <div class="card-body" style="padding:12px 14px;">
-        <div class="qp-search-wrap">
-            <span class="qp-search-icon">🔍</span>
-            <input type="text" id="qpSearch" value="{{ search }}" placeholder="Search product name, category, company..." autocomplete="off">
-            <button class="qp-clear-btn" id="qpClearBtn" onclick="qpClear()">✕</button>
-        </div>
-    </div>
-</div>
-
 <!-- Main Card -->
 <div class="card">
-    <!-- Stats bar -->
-    <div class="qp-stats">
-        <div class="qp-stat-item">📦 Products: <strong id="qpCount">{{ rows|length }}</strong></div>
-        <div class="qp-stat-item" id="qpStatsExtra"></div>
+    <div class="card-hdr">
+        <div class="card-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--primary);"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+            Quotation Products
+            <span class="count-badge" id="qpCount">{{ rows|length }}</span>
+        </div>
+        <div class="qp-search-bar">
+            <div class="search-wrap">
+                <span class="search-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></span>
+                <input type="text" id="qpSearch" value="{{ search }}" placeholder="Search product, category, company..." autocomplete="off">
+                <button class="clear-btn" id="qpClearBtn" onclick="qpClear()" style="display:none;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+            </div>
+        </div>
     </div>
 
     <!-- ═══ MOBILE CARDS ═══ -->
@@ -127,7 +184,10 @@
             <div class="qp-card-header">
                 <div>
                     <div class="qp-card-product">{{ row.name }}</div>
-                    <div class="qp-card-company">🏢 {{ row.company }}</div>
+                    <div class="qp-card-company">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><line x1="9" y1="22" x2="9" y2="2"></line><line x1="15" y1="22" x2="15" y2="2"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="7" x2="9" y2="7"></line><line x1="4" y1="17" x2="9" y2="17"></line><line x1="15" y1="7" x2="20" y2="7"></line><line x1="15" y1="17" x2="20" y2="17"></line></svg>
+                        {{ row.company }}
+                    </div>
                 </div>
                 <div class="qp-card-final">
                     <div class="qp-card-final-label">Final Cost</div>
@@ -147,15 +207,12 @@
                 </div>
                 <div class="qp-card-costs">
                     <div class="qp-cost-item">
-                        <label>Cost</label>
+                        <label>Base Cost</label>
                         <span>{% if row.cost and row.cost != 0 %}₹{{ '{:,.0f}'.format(row.cost|float) }}{% else %}—{% endif %}</span>
                     </div>
                     <div class="qp-cost-item">
                         <label>PM Cost</label>
                         <span>{% if row.pm_cost and row.pm_cost != 0 %}₹{{ '{:,.0f}'.format(row.pm_cost|float) }}{% else %}—{% endif %}</span>
-                    </div>
-                    <div class="qp-cost-item">
-
                     </div>
                 </div>
                 {% if row.pm_spec and row.pm_spec != '—' %}
@@ -166,17 +223,14 @@
                 {% endif %}
             </div>
             <div class="qp-card-footer">
-                <span class="qp-card-date">📅 {{ row.quot_date }}</span>
+                <span class="qp-card-date">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                    {{ row.quot_date }}
+                </span>
                 {% if row.category and row.category != '—' %}
                 <span class="qp-card-cat">{{ row.category }}</span>
                 {% endif %}
             </div>
-        </div>
-        {% else %}
-        <div class="qp-empty">
-            <div style="font-size:2.5rem;margin-bottom:0.5rem;">📦</div>
-            <div style="font-weight:600;">No products found</div>
-            <div style="font-size:0.85rem;margin-top:4px;">Quotations mein products add karein</div>
         </div>
         {% endfor %}
     </div>
@@ -186,37 +240,38 @@
         <table class="qp-table">
             <thead>
                 <tr>
-                    <th style="width:40px;text-align:center;">Sr.</th>
+                    <th style="width:40px;text-align:center;">#</th>
                     <th>Date</th>
                     <th>Company</th>
                     <th style="min-width:150px;">Product Name</th>
-                    <th>Size</th>
-                    <th style="text-align:right;">Cost (INR)</th>
-                    <th style="text-align:center;">MOQ</th>
-                    <th style="min-width:120px;">PM Specification</th>
-                    <th style="text-align:right;">PM Cost</th>
-                    
                     <th>Category</th>
-                    <th style="text-align:right;">Final Cost</th>
+                    <th style="text-align:center;">Size</th>
+                    <th style="text-align:center;">MOQ</th>
+                    <th style="text-align:right;">Cost (₹)</th>
+                    <th style="min-width:120px;">PM Spec</th>
+                    <th style="text-align:right;">PM Cost (₹)</th>
+                    <th style="text-align:right;">Final Cost (₹)</th>
                 </tr>
             </thead>
             <tbody id="qpTbody">
                 {% for row in rows %}
                 <tr>
-                    <td style="text-align:center;color:#9ca3af;font-size:0.78rem;">{{ row.sr }}</td>
-                    <td style="white-space:nowrap;color:#6b7280;font-size:0.8rem;">{{ row.quot_date }}</td>
-                    <td style="font-size:0.82rem;font-weight:600;">{{ row.company }}</td>
-                    <td style="font-weight:600;color:#111827;">{{ row.name }}</td>
-                    <td style="text-align:center;color:#374151;">{{ row.size }}{% if row.uom %} {{ row.uom }}{% endif %}</td>
-                    <td style="text-align:right;">{% if row.cost and row.cost != 0 %}₹ {{ '{:,.2f}'.format(row.cost|float) }}{% else %}—{% endif %}</td>
-                    <td style="text-align:center;font-weight:600;">{% if row.moq %}{{ '{:,}'.format(row.moq|int) }}{% else %}—{% endif %}</td>
-                    <td style="font-size:0.78rem;color:#6b7280;">{{ row.pm_spec if row.pm_spec and row.pm_spec != '—' else '—' }}</td>
-                    <td style="text-align:right;">{% if row.pm_cost and row.pm_cost != 0 %}₹ {{ '{:,.2f}'.format(row.pm_cost|float) }}{% else %}—{% endif %}</td>
-                    <td style="font-size:0.8rem;">{{ row.category if row.category and row.category != '—' else '—' }}</td>
-                    <td style="text-align:right;font-weight:700;color:#1e3a5f;font-size:0.85rem;">{% if row.final_cost and row.final_cost != 0 %}₹ {{ '{:,.2f}'.format(row.final_cost|float) }}{% else %}—{% endif %}</td>
+                    <td style="text-align:center;color:var(--text-light);font-weight:600;">{{ row.sr }}</td>
+                    <td style="white-space:nowrap;color:var(--text-muted);font-size:0.8rem;">{{ row.quot_date }}</td>
+                    <td style="font-weight:600;color:var(--text-main);">{{ row.company }}</td>
+                    <td style="font-weight:700;color:var(--primary);">{{ row.name }}</td>
+                    <td>
+                        {% if row.category and row.category != '—' %}
+                        <span style="background:var(--premium-bg);color:var(--text-muted);padding:2px 8px;border-radius:var(--radius-pill);font-size:0.75rem;font-weight:600;border:1px solid var(--border-soft);">{{ row.category }}</span>
+                        {% else %}—{% endif %}
+                    </td>
+                    <td style="text-align:center;font-weight:500;">{{ row.size }}{% if row.uom %} {{ row.uom }}{% endif %}</td>
+                    <td style="text-align:center;font-weight:600;color:var(--text-muted);">{% if row.moq %}{{ '{:,}'.format(row.moq|int) }}{% else %}—{% endif %}</td>
+                    <td style="text-align:right;font-weight:500;">{% if row.cost and row.cost != 0 %}{{ '{:,.2f}'.format(row.cost|float) }}{% else %}—{% endif %}</td>
+                    <td style="font-size:0.8rem;color:var(--text-muted);">{{ row.pm_spec if row.pm_spec and row.pm_spec != '—' else '—' }}</td>
+                    <td style="text-align:right;font-weight:500;">{% if row.pm_cost and row.pm_cost != 0 %}{{ '{:,.2f}'.format(row.pm_cost|float) }}{% else %}—{% endif %}</td>
+                    <td style="text-align:right;font-weight:800;color:var(--text-main);">{% if row.final_cost and row.final_cost != 0 %}{{ '{:,.2f}'.format(row.final_cost|float) }}{% else %}—{% endif %}</td>
                 </tr>
-                {% else %}
-                <tr><td colspan="12" class="qp-empty">No products found. Quotations mein products add karein.</td></tr>
                 {% endfor %}
             </tbody>
         </table>
@@ -224,40 +279,51 @@
 
     {% if not rows %}
     <div class="qp-empty" id="qpEmpty">
-        <div style="font-size:2.5rem;margin-bottom:0.5rem;">📦</div>
-        <div style="font-weight:600;">No products found</div>
-        <div style="font-size:0.85rem;margin-top:4px;">Quotations mein products add karein</div>
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-light);margin-bottom:12px;"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+        <div style="font-size:1.1rem;font-weight:700;color:var(--text-main);margin-bottom:4px;">No products found</div>
+        <div style="font-size:0.9rem;">Quotations mein products add karein.</div>
+    </div>
+    {% endif %}
+
+    <!-- Pagination -->
+    {% if pagination.pages > 1 %}
+    <div class="qp-pagination" id="qpPagination">
+        <div style="flex:1;">
+            {% if pagination.has_prev %}
+            <a href="{{ url_for('crm.quotation_products_list', page=pagination.prev_num, search=search, date_from=date_from, date_to=date_to) }}" class="pgn-btn">← Previous</a>
+            {% endif %}
+        </div>
+        <span style="color:var(--text-muted);font-size:0.85rem;font-weight:600;">Page {{ pagination.page }} of {{ pagination.pages }}</span>
+        <div style="flex:1;text-align:right;">
+            {% if pagination.has_next %}
+            <a href="{{ url_for('crm.quotation_products_list', page=pagination.next_num, search=search, date_from=date_from, date_to=date_to) }}" class="pgn-btn">Next →</a>
+            {% endif %}
+        </div>
     </div>
     {% endif %}
 </div>
 
-<!-- Pagination -->
-{% if pagination.pages > 1 %}
-<div style="display:flex;justify-content:center;align-items:center;gap:8px;padding:14px;flex-wrap:wrap;">
-    {% if pagination.has_prev %}
-    <a href="{{ url_for('crm.quotation_products_list', page=pagination.prev_num, search=search, date_from=date_from, date_to=date_to) }}" class="btn-outline" style="padding:7px 14px;font-size:0.83rem;">← Prev</a>
-    {% endif %}
-    <span style="color:var(--text2);font-size:0.83rem;">Page {{ pagination.page }} of {{ pagination.pages }}</span>
-    {% if pagination.has_next %}
-    <a href="{{ url_for('crm.quotation_products_list', page=pagination.next_num, search=search, date_from=date_from, date_to=date_to) }}" class="btn-outline" style="padding:7px 14px;font-size:0.83rem;">Next →</a>
-    {% endif %}
+<div id="qpToast">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+    <span id="toastMsg"></span>
 </div>
-{% endif %}
-
-<div id="qpToast"></div>
 
 <script>
+// SVG Constants for JS Template Literal Rendering
+const svgBuilding = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><line x1="9" y1="22" x2="9" y2="2"></line><line x1="15" y1="22" x2="15" y2="2"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="7" x2="9" y2="7"></line><line x1="4" y1="17" x2="9" y2="17"></line><line x1="15" y1="7" x2="20" y2="7"></line><line x1="15" y1="17" x2="20" y2="17"></line></svg>`;
+const svgCalendar = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>`;
+
 // ── Live Search ───────────────────────────────────────────────
 let qpTimer = null;
 
 document.getElementById('qpSearch').addEventListener('input', function() {
-    document.getElementById('qpClearBtn').style.display = this.value ? 'block' : 'none';
+    document.getElementById('qpClearBtn').style.display = this.value ? 'flex' : 'none';
     clearTimeout(qpTimer);
     qpTimer = setTimeout(qpDoSearch, 350);
 });
 
 if (document.getElementById('qpSearch').value)
-    document.getElementById('qpClearBtn').style.display = 'block';
+    document.getElementById('qpClearBtn').style.display = 'flex';
 
 function qpClear() {
     document.getElementById('qpSearch').value = '';
@@ -267,7 +333,7 @@ function qpClear() {
 
 function qpDoSearch() {
     const q = document.getElementById('qpSearch').value.trim();
-    document.getElementById('qpCount').textContent = '⏳';
+    document.getElementById('qpCount').innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation:spin .7s linear infinite"><path d="M21 12a9 9 0 1 1-6.22-8.56"/></svg>';
 
     fetch('/crm/quotations/products/ajax?search=' + encodeURIComponent(q))
         .then(r => r.json())
@@ -286,10 +352,11 @@ function qpRenderCards(rows) {
     container.innerHTML = '';
 
     if (!rows || !rows.length) {
-        container.innerHTML = `<div class="qp-empty">
-            <div style="font-size:2.5rem;margin-bottom:0.5rem;">📦</div>
-            <div style="font-weight:600;">No products found</div>
-            <div style="font-size:0.85rem;margin-top:4px;">Search modify karein</div>
+        container.innerHTML = `
+        <div class="qp-empty">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-light);margin-bottom:12px;"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+            <div style="font-size:1.1rem;font-weight:700;color:var(--text-main);margin-bottom:4px;">No products found</div>
+            <div style="font-size:0.9rem;">Search query modify karein.</div>
         </div>`;
         return;
     }
@@ -312,7 +379,7 @@ function qpRenderCards(rows) {
             <div class="qp-card-header">
                 <div>
                     <div class="qp-card-product">${esc(row.name)}</div>
-                    <div class="qp-card-company">🏢 ${esc(row.company)}</div>
+                    <div class="qp-card-company">${svgBuilding} ${esc(row.company)}</div>
                 </div>
                 <div class="qp-card-final">
                     <div class="qp-card-final-label">Final Cost</div>
@@ -325,13 +392,13 @@ function qpRenderCards(rows) {
                     <div class="qp-card-field"><label>MOQ</label><span>${moq}</span></div>
                 </div>
                 <div class="qp-card-costs">
-                    <div class="qp-cost-item"><label>Cost</label><span>${costFmt(row.cost)}</span></div>
+                    <div class="qp-cost-item"><label>Base Cost</label><span>${costFmt(row.cost)}</span></div>
                     <div class="qp-cost-item"><label>PM Cost</label><span>${costFmt(row.pm_cost)}</span></div>
                 </div>
                 ${pmSpec}
             </div>
             <div class="qp-card-footer">
-                <span class="qp-card-date">📅 ${esc(row.quot_date)}</span>
+                <span class="qp-card-date">${svgCalendar} ${esc(row.quot_date)}</span>
                 ${catBadge}
             </div>`;
         container.appendChild(div);
@@ -341,28 +408,35 @@ function qpRenderCards(rows) {
 // ── Render Table (Desktop) ────────────────────────────────────
 function qpRenderTable(rows) {
     const tbody = document.getElementById('qpTbody');
+    const tableWrap = document.getElementById('qpTblWrap');
+    const emptyEl = document.getElementById('qpEmpty');
     if (!tbody) return;
 
     if (!rows || !rows.length) {
-        tbody.innerHTML = '<tr><td colspan="12" class="qp-empty">No products found.</td></tr>';
+        tbody.innerHTML = '';
+        if(tableWrap) tableWrap.style.display = 'none';
+        if(emptyEl) emptyEl.style.display = 'block';
         return;
     }
 
-    const fmt = v => (v && v != 0) ? '₹ ' + parseFloat(v).toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2}) : '—';
+    if(tableWrap) tableWrap.style.display = 'block';
+    if(emptyEl) emptyEl.style.display = 'none';
+
+    const fmt = v => (v && v != 0) ? parseFloat(v).toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2}) : '—';
 
     tbody.innerHTML = rows.map((row, i) => `
         <tr>
-            <td style="text-align:center;color:#9ca3af;font-size:0.78rem;">${i+1}</td>
-            <td style="white-space:nowrap;color:#6b7280;font-size:0.8rem;">${esc(row.quot_date)}</td>
-            <td style="font-size:0.82rem;font-weight:600;">${esc(row.company)}</td>
-            <td style="font-weight:600;color:#111827;">${esc(row.name)}</td>
-            <td style="text-align:center;">${esc([row.size, row.uom].filter(Boolean).join(' ') || '—')}</td>
-            <td style="text-align:right;">${fmt(row.cost)}</td>
-            <td style="text-align:center;font-weight:600;">${row.moq ? Number(row.moq).toLocaleString('en-IN') : '—'}</td>
-            <td style="font-size:0.78rem;color:#6b7280;">${(row.pm_spec && row.pm_spec !== '—') ? esc(row.pm_spec) : '—'}</td>
-            <td style="text-align:right;">${fmt(row.pm_cost)}</td>
-            <td style="font-size:0.8rem;">${(row.category && row.category !== '—') ? esc(row.category) : '—'}</td>
-            <td style="text-align:right;font-weight:700;color:#1e3a5f;font-size:0.85rem;">${fmt(row.final_cost)}</td>
+            <td style="text-align:center;color:var(--text-light);font-weight:600;">${row.sr || (i+1)}</td>
+            <td style="white-space:nowrap;color:var(--text-muted);font-size:0.8rem;">${esc(row.quot_date)}</td>
+            <td style="font-weight:600;color:var(--text-main);">${esc(row.company)}</td>
+            <td style="font-weight:700;color:var(--primary);">${esc(row.name)}</td>
+            <td>${(row.category && row.category !== '—') ? `<span style="background:var(--premium-bg);color:var(--text-muted);padding:2px 8px;border-radius:var(--radius-pill);font-size:0.75rem;font-weight:600;border:1px solid var(--border-soft);">${esc(row.category)}</span>` : '—'}</td>
+            <td style="text-align:center;font-weight:500;">${esc([row.size, row.uom].filter(Boolean).join(' ') || '—')}</td>
+            <td style="text-align:center;font-weight:600;color:var(--text-muted);">${row.moq ? Number(row.moq).toLocaleString('en-IN') : '—'}</td>
+            <td style="text-align:right;font-weight:500;">${fmt(row.cost)}</td>
+            <td style="font-size:0.8rem;color:var(--text-muted);">${(row.pm_spec && row.pm_spec !== '—') ? esc(row.pm_spec) : '—'}</td>
+            <td style="text-align:right;font-weight:500;">${fmt(row.pm_cost)}</td>
+            <td style="text-align:right;font-weight:800;color:var(--text-main);">${fmt(row.final_cost)}</td>
         </tr>`).join('');
 }
 
@@ -370,4 +444,8 @@ function esc(s) {
     return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 </script>
+<style>
+/* Addition for spinner animation used in JS */
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
 {% endblock %}

@@ -363,6 +363,7 @@ def clients():
     grid_cols = get_grid_columns('clients', CLIENT_COLS_DEFAULT, list(CLIENT_COLS_ALL.keys()))
 
     deleted_count = ClientMaster.query.filter_by(is_deleted=True).count()
+    active_count = ClientMaster.query.filter_by(is_deleted=False).count()
     perm = get_perm('crm_clients')
     from core.permissions import get_sub_perm
     sub_perms = {
@@ -669,6 +670,33 @@ def client_permanent_delete(id):
     flash(f'Client "{name}" permanently deleted.', 'success')
     return redirect(url_for('crm.clients', trash=1))
 
+
+@crm.route('/clients/bulk-delete', methods=['POST'])
+@login_required
+def clients_bulk_delete():
+    """Soft-delete selected clients (bulk)."""
+    perm = get_perm('crm_clients')
+    if not perm or not perm.can_delete:
+        return jsonify(success=False, error='Delete permission nahi hai.'), 403
+
+    data = request.get_json(silent=True) or {}
+    raw_ids = data.get('ids') or []
+    try:
+        ids = [int(i) for i in raw_ids]
+    except (TypeError, ValueError):
+        return jsonify(success=False, error='Invalid ids.'), 400
+    if not ids:
+        return jsonify(success=False, error='No clients selected.'), 400
+
+    count = 0
+    for cid in ids:
+        c = ClientMaster.query.get(cid)
+        if c and not c.is_deleted:
+            c.is_deleted = True
+            c.deleted_at = datetime.utcnow()
+            count += 1
+    db.session.commit()
+    return jsonify(success=True, deleted=count)
 
 # ══════════════════════════════════════
 # LEAD ROUTES
@@ -4188,17 +4216,6 @@ def _build_quotation_pdf(quot, lead):
     story.append(Paragraph('<b>QUOTATION</b>',
         S('qt', fontSize=16, fontName='Helvetica-Bold', alignment=TA_CENTER, spaceAfter=5)))
 
-    # ══════════════════════════════════
-    # HEADER BOX
-    # Layout exactly like Image 1:
-    # ┌──────────────────┬────────────────────────────────────┐
-    # │  Logo            │  Quot No.:      Dated.:            │
-    # │                  │  QT-008/25-26   19-Mar-2026        │
-    # ├──────────────────┼────────────────────────────────────┤
-    # │  HCP Wellness    │  INVOICE TO                        │
-    # │  address...      │  ABC Corp / address                │
-    # └──────────────────┴────────────────────────────────────┘
-    # ══════════════════════════════════
     logo_path = os.path.join(os.path.dirname(__file__), 'static', 'images', 'icons', 'hcp-logo.png')
     logo_img  = Image(logo_path, width=30*mm, height=14*mm, kind='proportional') if os.path.exists(logo_path) else Paragraph('<b>HCP</b>', nb)
 

@@ -5,80 +5,239 @@
 
 {% block extra_css %}
 <style>
-.tpl-card { background:#fff; border:1.5px solid var(--border); border-radius:12px; padding:1rem 1.25rem; margin-bottom:0.75rem; display:flex; align-items:center; justify-content:space-between; gap:1rem; transition:box-shadow .15s; }
-.tpl-card:hover { box-shadow:0 4px 16px rgba(0,0,0,0.07); }
-.tpl-icon { width:40px; height:40px; border-radius:10px; background:#eff6ff; display:flex; align-items:center; justify-content:center; font-size:1.2rem; flex-shrink:0; }
-.tpl-info { flex:1; min-width:0; }
-.tpl-name { font-weight:700; font-size:0.92rem; color:var(--text); }
-.tpl-code { font-size:0.75rem; color:var(--text3); font-family:monospace; margin-top:1px; }
-.tpl-subject { font-size:0.82rem; color:var(--text2); margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:500px; }
-.tpl-badge-active   { background:#dcfce7; color:#166534; padding:2px 10px; border-radius:100px; font-size:0.72rem; font-weight:700; }
-.tpl-badge-inactive { background:#fee2e2; color:#dc2626; padding:2px 10px; border-radius:100px; font-size:0.72rem; font-weight:700; }
-@media (max-width:767px) {
-    .tpl-card { flex-direction:column; align-items:flex-start; gap:12px; padding:14px; }
-    .tpl-card-top { display:flex; align-items:center; gap:10px; width:100%; }
-    .tpl-card-bottom { display:flex; align-items:center; justify-content:space-between; width:100%; }
-    .tpl-subject { max-width:100% !important; font-size:0.8rem; }
-    .tpl-card > div:last-child { width:100%; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:6px; }
-    .tpl-card > div:last-child a { flex:1; text-align:center; }
+:root {
+    --premium-bg: #f8fafc;
+    --card-bg: #ffffff;
+    --text-main: #0f172a;
+    --text-muted: #475569;
+    --text-light: #94a3b8;
+    --border-soft: #e2e8f0;
+    --border-lighter: #f1f5f9;
+    --primary: #2563eb;
+    --primary-hover: #1d4ed8;
+    --primary-light: #eff6ff;
+    --success: #10b981;
+    --success-bg: #ecfdf5;
+    --danger: #ef4444;
+    --danger-bg: #fef2f2;
+    --warning: #f59e0b;
+    --warning-bg: #fffbeb;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-pill: 9999px;
+    --shadow-soft: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.03);
+    --shadow-hover: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.04);
+}
+
+* { box-sizing: border-box; }
+
+/* ── Header ── */
+.page-hdr {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    margin-bottom: 2rem; flex-wrap: wrap; gap: 16px;
+}
+.hdr-left { display: flex; align-items: center; gap: 16px; }
+.hdr-icon {
+    width: 48px; height: 48px; background: var(--primary-light); color: var(--primary);
+    border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center;
+    border: 1px solid #bfdbfe; flex-shrink: 0;
+}
+.hdr-info h1 {
+    font-size: 1.5rem; font-weight: 800; color: var(--text-main);
+    letter-spacing: -0.03em; margin: 0 0 4px 0;
+}
+.hdr-info p { color: var(--text-muted); font-size: 0.9rem; font-weight: 500; margin: 0; }
+
+/* ── Containers ── */
+.card {
+    background: var(--card-bg); border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-soft); border: 1px solid var(--border-soft);
+    margin-bottom: 1.5rem; overflow: hidden;
+}
+.card-hdr {
+    padding: 20px 24px; border-bottom: 1px solid var(--border-soft);
+    background: #fdfdfe; display: flex; align-items: center; justify-content: space-between;
+}
+.card-title {
+    font-size: 1.15rem; font-weight: 800; color: var(--text-main);
+    display: flex; align-items: center; gap: 10px;
+}
+.card-title svg { color: var(--primary); }
+.card-body { padding: 24px; }
+
+/* ── Template Cards List ── */
+.tpl-list { display: flex; flex-direction: column; gap: 12px; }
+.tpl-card {
+    background: #fff; border: 1px solid var(--border-soft); border-radius: var(--radius-md);
+    padding: 16px 20px; display: flex; align-items: center; gap: 20px;
+    transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+}
+.tpl-card:hover { border-color: #cbd5e1; box-shadow: var(--shadow-hover); transform: translateY(-1px); }
+
+.tpl-icon {
+    width: 48px; height: 48px; border-radius: var(--radius-sm);
+    background: var(--primary-light); color: var(--primary);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.tpl-info { flex: 1; min-width: 0; }
+.tpl-name-row { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+.tpl-name { font-weight: 750; font-size: 1.05rem; color: var(--text-main); }
+
+.tpl-code {
+    font-size: 0.75rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace;
+    background: var(--border-lighter); padding: 2px 8px; border-radius: 6px; font-weight: 600;
+}
+.tpl-subject {
+    font-size: 0.85rem; color: var(--text-muted); font-weight: 500;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 600px;
+}
+
+/* ── Badges ── */
+.badge {
+    padding: 4px 10px; border-radius: var(--radius-pill); font-size: 0.7rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.05em; display: inline-flex; align-items: center; gap: 4px;
+}
+.badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; }
+.badge-active { background: var(--success-bg); color: #166534; border: 1px solid #bbf7d0; }
+.badge-active::before { background: #16a34a; }
+.badge-inactive { background: var(--danger-bg); color: var(--danger); border: 1px solid #fecaca; }
+.badge-inactive::before { background: var(--danger); }
+
+/* ── Actions ── */
+.tpl-actions { display: flex; align-items: center; gap: 16px; flex-shrink: 0; }
+.tpl-date { font-size: 0.75rem; color: var(--text-light); font-weight: 600; display: flex; flex-direction: column; text-align: right; }
+.tpl-date span { color: var(--text-main); font-weight: 700; font-size: 0.8rem; }
+
+.btn-primary {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 8px 16px; border-radius: var(--radius-pill); font-size: 0.85rem; font-weight: 600;
+    background: var(--primary); color: #fff; border: none; cursor: pointer;
+    text-decoration: none; transition: all 0.2s; box-shadow: 0 4px 6px rgba(37,99,235,0.2);
+}
+.btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); }
+
+/* ── Variables Section ── */
+.var-wrap {
+    background: var(--premium-bg); border: 1px solid var(--border-soft);
+    border-radius: var(--radius-md); padding: 20px;
+}
+.var-wrap p { margin: 0 0 16px 0; color: var(--text-muted); font-size: 0.9rem; font-weight: 500; }
+.var-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+.var-item {
+    background: #fff; border: 1px solid var(--border-soft); border-radius: var(--radius-sm);
+    padding: 10px 14px; display: flex; align-items: center; gap: 10px; font-size: 0.85rem;
+}
+.var-item code {
+    background: var(--primary-light); color: var(--primary);
+    padding: 4px 8px; border-radius: 6px; font-weight: 700; font-family: 'JetBrains Mono', monospace;
+}
+.var-item span { color: var(--text-muted); font-weight: 600; }
+
+.empty-state { text-align: center; padding: 3rem 1rem; color: var(--text-muted); }
+.empty-state svg { width: 48px; height: 48px; color: var(--border-soft); margin-bottom: 12px; }
+
+/* ── Mobile Optimization ── */
+@media (max-width: 768px) {
+    .tpl-card { flex-direction: column; align-items: flex-start; gap: 16px; }
+    .tpl-info { width: 100%; }
+    .tpl-name-row { flex-wrap: wrap; }
+    .tpl-subject { max-width: 100%; white-space: normal; line-height: 1.4; }
+    .tpl-actions { width: 100%; justify-content: space-between; border-top: 1px solid var(--border-lighter); padding-top: 16px; }
+    .var-grid { grid-template-columns: 1fr; }
 }
 </style>
 {% endblock %}
 
 {% block content %}
+<div class="page-hdr">
+    <div class="hdr-left">
+        <div class="hdr-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+        </div>
+        <div class="hdr-info">
+            <h1>Mail Templates</h1>
+            <p>View and manage automated email templates for clients</p>
+        </div>
+    </div>
+</div>
+
 <div class="card">
     <div class="card-hdr">
-        <div class="card-title">✉️ Mail Templates</div>
-        <div style="font-size:0.8rem;color:var(--text3);">Yahan se email templates customize karein</div>
+        <div class="card-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path></svg>
+            Available Templates
+        </div>
     </div>
     <div class="card-body">
         {% if templates %}
-            {% for t in templates %}
-            <div class="tpl-card">
-                <div class="tpl-icon">✉️</div>
-                <div class="tpl-info">
-                    <div class="tpl-name">{{ t.name }}</div>
-                    <div class="tpl-code">code: {{ t.code }}</div>
-                    <div class="tpl-subject">Subject: {{ t.subject[:80] }}{% if t.subject|length > 80 %}...{% endif %}</div>
+            <div class="tpl-list">
+                {% for t in templates %}
+                <div class="tpl-card">
+                    <div class="tpl-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                    </div>
+                    <div class="tpl-info">
+                        <div class="tpl-name-row">
+                            <span class="tpl-name">{{ t.name }}</span>
+                            <span class="badge {{ 'badge-active' if t.is_active else 'badge-inactive' }}">
+                                {{ 'Active' if t.is_active else 'Inactive' }}
+                            </span>
+                        </div>
+                        <div style="margin-bottom: 6px;"><span class="tpl-code">{{ t.code }}</span></div>
+                        <div class="tpl-subject"><strong>Subject:</strong> {{ t.subject[:80] }}{% if t.subject|length > 80 %}...{% endif %}</div>
+                    </div>
+                    <div class="tpl-actions">
+                        {% if t.updated_at %}
+                        <div class="tpl-date">
+                            Last Updated
+                            <span>{{ t.updated_at.strftime('%d %b %Y') }}</span>
+                        </div>
+                        {% endif %}
+                        <a href="{{ url_for('mail.mail_template_edit', code=t.code) }}" class="btn-primary">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path><path d="m15 5 4 4"></path></svg>
+                            Edit
+                        </a>
+                    </div>
                 </div>
-                <div style="display:flex;align-items:center;gap:0.75rem;flex-shrink:0;">
-                    <span class="{{ 'tpl-badge-active' if t.is_active else 'tpl-badge-inactive' }}">
-                        {{ 'Active' if t.is_active else 'Inactive' }}
-                    </span>
-                    {% if t.updated_at %}
-                    <span style="font-size:0.75rem;color:var(--text3);">
-                        Updated: {{ t.updated_at.strftime('%d-%m-%Y') }}
-                    </span>
-                    {% endif %}
-                    <a href="{{ url_for('mail.mail_template_edit', code=t.code) }}" class="btn-primary" style="font-size:0.8rem;padding:6px 14px;">✏️ Edit</a>
-                </div>
+                {% endfor %}
             </div>
-            {% endfor %}
         {% else %}
-            <p style="text-align:center;color:var(--text3);padding:2rem;">No templates found.</p>
+            <div class="empty-state">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path></svg>
+                <h3>No Templates Found</h3>
+                <p>There are no email templates available in the system yet.</p>
+            </div>
         {% endif %}
     </div>
 </div>
 
-<div class="card" style="margin-top:1rem;">
-    <div class="card-hdr"><div class="card-title">📌 Template Variables</div></div>
+<div class="card">
+    <div class="card-hdr">
+        <div class="card-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--warning);"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+            Template Variables Guide
+        </div>
+    </div>
     <div class="card-body">
-        <p style="font-size:0.85rem;color:var(--text2);margin-bottom:0.75rem;">Subject aur Body mein yeh variables use kar sakte hain — automatically lead data se replace ho jaayenge:</p>
-        <div style="display:flex;flex-wrap:wrap;gap:0.5rem;">
-            {% for var, desc in [
-                ('{client_name}', 'Contact name'),
-                ('{company}',     'Company name'),
-                ('{email}',       'Email address'),
-                ('{phone}',       'Phone number'),
-                ('{product}',     'Product name'),
-                ('{city}',        'City'),
-                ('{lead_code}',   'Lead code'),
-            ] %}
-            <div style="background:#f1f5f9;border-radius:8px;padding:6px 12px;font-size:0.82rem;">
-                <code style="color:#1e3a5f;font-weight:700;">{{ var }}</code>
-                <span style="color:var(--text2);margin-left:6px;">→ {{ desc }}</span>
+        <div class="var-wrap">
+            <p>You can use the following variables in your Email Subject and Body. They will be automatically replaced with the actual Lead/Client data when the email is sent.</p>
+            <div class="var-grid">
+                {% for var, desc in [
+                    ('{client_name}', 'Contact name'),
+                    ('{company}',     'Company name'),
+                    ('{email}',       'Email address'),
+                    ('{phone}',       'Phone number'),
+                    ('{product}',     'Product name'),
+                    ('{city}',        'City'),
+                    ('{lead_code}',   'Lead code'),
+                ] %}
+                <div class="var-item">
+                    <code>{{ var }}</code>
+                    <span>{{ desc }}</span>
+                </div>
+                {% endfor %}
             </div>
-            {% endfor %}
         </div>
     </div>
 </div>

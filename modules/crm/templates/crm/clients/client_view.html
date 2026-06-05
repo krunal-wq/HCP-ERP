@@ -5,101 +5,273 @@
 
 {% block extra_css %}
 <style>
-.info-grid { display:grid; grid-template-columns:1fr 1fr; gap:0.5rem 2rem; }
-.info-row { display:flex; gap:0.5rem; padding:0.4rem 0; border-bottom:1px solid var(--border); }
-.info-lbl { font-size:0.82rem; font-weight:600; color:var(--text2); min-width:130px; }
-.info-val { font-size:0.85rem; color:var(--text); }
-.brand-card { background:#f8fafc; border:1.5px solid var(--border); border-radius:10px; padding:0.85rem 1rem; margin-bottom:0.5rem; }
-.brand-name { font-weight:700; font-size:0.95rem; color:var(--text); }
-.brand-cat  { font-size:0.78rem; color:var(--blue); background:#eff6ff; padding:2px 8px; border-radius:100px; font-weight:600; }
+:root {
+    --premium-bg: #f8fafc;
+    --card-bg: #ffffff;
+    --text-main: #0f172a;
+    --text-muted: #475569;
+    --text-light: #94a3b8;
+    --border-soft: #e2e8f0;
+    --border-lighter: #f1f5f9;
+    --primary: #2563eb;
+    --primary-hover: #1d4ed8;
+    --primary-light: #eff6ff;
+    --danger: #ef4444;
+    --danger-bg: #fef2f2;
+    --success: #10b981;
+    --success-bg: #f0fdf4;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --shadow-soft: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.03);
+}
+
+* { box-sizing: border-box; }
+
+/* ── Page Header ── */
+.page-hdr {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    margin-bottom: 1.5rem; flex-wrap: wrap; gap: 16px;
+}
+.hdr-left { display: flex; align-items: center; gap: 16px; }
+.hdr-avatar {
+    width: 56px; height: 56px; border-radius: 50%;
+    background: var(--primary-light); color: var(--primary);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem; flex-shrink: 0; border: 2px solid #bfdbfe;
+}
+.hdr-avatar svg { width: 28px; height: 28px; }
+.hdr-info h1 {
+    font-size: 1.5rem; font-weight: 800; color: var(--text-main);
+    letter-spacing: -0.03em; margin: 0 0 4px 0;
+}
+.hdr-info p {
+    color: var(--text-muted); font-size: 0.9rem; font-weight: 500; margin: 0;
+    display: flex; align-items: center; gap: 6px;
+}
+
+.hdr-actions { display: flex; gap: 10px; }
+.btn-action {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 8px 16px; border-radius: 999px; font-size: 0.85rem; font-weight: 600;
+    cursor: pointer; text-decoration: none; transition: all 0.2s; border: none;
+}
+.btn-outline { background: #fff; border: 1px solid var(--border-soft); color: var(--text-main); box-shadow: 0 1px 2px rgba(0,0,0,0.02); }
+.btn-outline:hover { background: var(--border-lighter); }
+.btn-primary { background: var(--primary); color: #fff; box-shadow: 0 4px 6px rgba(37,99,235,0.2); }
+.btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); }
+
+/* ── Tabs ── */
+.premium-tabs {
+    display: flex; gap: 16px; border-bottom: 1px solid var(--border-soft);
+    margin-bottom: 1.5rem; overflow-x: auto; padding-bottom: 2px;
+}
+.vw-tab {
+    padding: 8px 4px 12px; font-size: 0.9rem; font-weight: 600;
+    color: var(--text-muted); border: none; background: none;
+    cursor: pointer; position: relative; white-space: nowrap;
+    display: flex; align-items: center; gap: 8px; transition: color 0.2s;
+}
+.vw-tab svg { width: 16px; height: 16px; }
+.vw-tab:hover { color: var(--text-main); }
+.vw-tab.active { color: var(--primary); }
+.vw-tab.active::after {
+    content: ''; position: absolute; bottom: -3px; left: 0; right: 0;
+    height: 3px; background: var(--primary); border-radius: 3px 3px 0 0;
+}
+
+/* ── Layout & Cards ── */
+.layout-grid {
+    display: grid; grid-template-columns: 3fr 2fr; gap: 1.5rem;
+    align-items: start;
+}
+.card {
+    background: var(--card-bg); border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-soft); border: 1px solid var(--border-soft);
+    overflow: hidden; margin-bottom: 1.5rem;
+}
+.card-hdr {
+    padding: 16px 20px; border-bottom: 1px solid var(--border-soft);
+    background: #fdfdfe; display: flex; align-items: center; gap: 10px;
+}
+.card-hdr svg { width: 18px; height: 18px; color: var(--primary); }
+.card-title { font-size: 1.05rem; font-weight: 700; color: var(--text-main); }
+.card-body { padding: 20px; }
+
+/* ── Info Rows ── */
+.info-grid { display: flex; flex-direction: column; gap: 12px; }
+.info-row {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    padding-bottom: 12px; border-bottom: 1px solid var(--border-lighter);
+}
+.info-row:last-child { border-bottom: none; padding-bottom: 0; }
+.info-lbl { font-size: 0.8rem; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.05em; width: 35%; flex-shrink: 0; }
+.info-val { font-size: 0.9rem; font-weight: 500; color: var(--text-main); width: 65%; text-align: right; word-break: break-word; }
+.info-val a { color: var(--primary); text-decoration: none; font-weight: 600; transition: color 0.2s; }
+.info-val a:hover { color: var(--primary-hover); text-decoration: underline; }
+
+/* ── Brand Cards ── */
+.brands-wrap { display: flex; flex-direction: column; gap: 12px; }
+.brand-card {
+    background: #f8fafc; border: 1px solid var(--border-soft);
+    border-radius: var(--radius-md); padding: 14px;
+    transition: border-color 0.2s; display: flex; align-items: flex-start; gap: 12px;
+}
+.brand-card:hover { border-color: #cbd5e1; }
+.brand-icon {
+    width: 32px; height: 32px; border-radius: 8px; background: #fff;
+    border: 1px solid var(--border-soft); display: flex; align-items: center; justify-content: center;
+    color: #f59e0b; flex-shrink: 0;
+}
+.brand-icon svg { width: 16px; height: 16px; }
+.brand-details { flex: 1; }
+.brand-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; gap: 8px; }
+.brand-name { font-weight: 700; font-size: 0.95rem; color: var(--text-main); }
+.brand-cat {
+    font-size: 0.7rem; color: var(--primary); background: var(--primary-light);
+    padding: 2px 8px; border-radius: 999px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+}
+.brand-desc { font-size: 0.85rem; color: var(--text-muted); margin: 0; line-height: 1.4; }
+
+/* ── Notes ── */
+.notes-text { font-size: 0.9rem; color: var(--text-muted); line-height: 1.6; margin: 0; white-space: pre-wrap; }
+
+/* ── Mobile Responsiveness ── */
+@media (max-width: 768px) {
+    .layout-grid { grid-template-columns: 1fr; }
+    .page-hdr { flex-direction: column; align-items: stretch; }
+    .hdr-actions { width: 100%; display: flex; }
+    .btn-action { flex: 1; }
+    .info-row { flex-direction: column; gap: 4px; }
+    .info-lbl { width: 100%; }
+    .info-val { width: 100%; text-align: left; }
+}
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="page-hdr">
-    <div>
-        <h1>👤 {{ client.contact_name }}</h1>
-        <p>{{ client.company_name or '' }} {% if client.city %}· {{ client.city }}{% endif %}</p>
+    <div class="hdr-left">
+        <div class="hdr-avatar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+        </div>
+        <div class="hdr-info">
+            <h1>{{ client.contact_name }}</h1>
+            <p>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+                {{ client.company_name or 'Independent' }}
+                {% if client.city %}
+                &nbsp;·&nbsp;
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                {{ client.city }}
+                {% endif %}
+            </p>
+        </div>
     </div>
-    <div style="display:flex;gap:0.75rem;">
-        <a href="{{ url_for('crm.client_edit', id=client.id) }}" class="btn-primary">✏️ Edit</a>
-        <a href="{{ url_for('crm.clients') }}" class="btn-outline">← Back</a>
+    <div class="hdr-actions">
+        <a href="{{ url_for('crm.clients') }}" class="btn-action btn-outline">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            Back
+        </a>
+        <a href="{{ url_for('crm.client_edit', id=client.id) }}" class="btn-action btn-primary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+            Edit Client
+        </a>
     </div>
 </div>
 
-<!-- ── Tabs ── -->
-<div style="display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:1.25rem;overflow-x:auto;">
-    <button class="vw-tab active" onclick="cTab('ct-overview',this)" style="padding:.55rem 1.1rem;font-size:.78rem;font-weight:700;color:var(--blue);border:none;background:none;cursor:pointer;border-bottom:3px solid var(--blue);margin-bottom:-2px;white-space:nowrap;">
-        👤 Overview
+<div class="premium-tabs">
+    <button class="vw-tab active" onclick="cTab('ct-overview',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+        Overview
     </button>
-
-</div>
-
-<!-- Tab: Overview -->
-<div id="ct-overview">
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
-    <div class="card">
-        <div class="card-hdr"><div class="card-title">Contact Information</div></div>
-        <div class="card-body">
-            <div class="info-row"><span class="info-lbl">Name</span><span class="info-val">{{ client.contact_name }}</span></div>
-            <div class="info-row"><span class="info-lbl">Position</span><span class="info-val">{{ client.position or 'N/A' }}</span></div>
-            <div class="info-row"><span class="info-lbl">Email</span><span class="info-val"><a href="mailto:{{ client.email }}" style="color:var(--blue);">{{ client.email or 'N/A' }}</a></span></div>
-            <div class="info-row"><span class="info-lbl">Mobile</span><span class="info-val">{{ client.mobile or 'N/A' }}</span></div>
-            <div class="info-row"><span class="info-lbl">Alt. Mobile</span><span class="info-val">{{ client.alternate_mobile or 'N/A' }}</span></div>
-            <div class="info-row"><span class="info-lbl">Website</span><span class="info-val">{{ client.website or 'N/A' }}</span></div>
-            <div class="info-row"><span class="info-lbl">Company</span><span class="info-val">{{ client.company_name or 'N/A' }}</span></div>
-            <div class="info-row"><span class="info-lbl">GSTIN</span><span class="info-val">{{ client.gstin or 'N/A' }}</span></div>
-            <div class="info-row"><span class="info-lbl">Address</span><span class="info-val">{{ client.address or '' }}</span></div>
-            <div class="info-row"><span class="info-lbl">City</span><span class="info-val">{{ client.city or 'N/A' }}</span></div>
-            <div class="info-row"><span class="info-lbl">State</span><span class="info-val">{{ client.state or 'N/A' }}</span></div>
-            <div class="info-row"><span class="info-lbl">Country</span><span class="info-val">{{ client.country or 'N/A' }}</span></div>
-            <div class="info-row"><span class="info-lbl">Zip Code</span><span class="info-val">{{ client.zip_code or 'N/A' }}</span></div>
-        </div>
     </div>
 
-    <div class="card">
-        <div class="card-hdr">
-            <div class="card-title">🏷️ Brands ({{ brands|length }})</div>
-        </div>
-        <div class="card-body">
-            {% for b in brands %}
-            <div class="brand-card">
-                <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
-                    <span class="brand-name">{{ b.brand_name }}</span>
-                    {% if b.category %}<span class="brand-cat">{{ b.category }}</span>{% endif %}
-                </div>
-                {% if b.description %}<p style="font-size:0.82rem;color:var(--text2);margin:0;">{{ b.description }}</p>{% endif %}
+<div id="ct-overview" class="layout-grid">
+
+    <div>
+        <div class="card">
+            <div class="card-hdr">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                <div class="card-title">Contact Details</div>
             </div>
-            {% else %}
-            <p style="color:var(--text3);font-size:0.88rem;">No brands added yet.</p>
-            {% endfor %}
+            <div class="card-body">
+                <div class="info-grid">
+                    <div class="info-row"><span class="info-lbl">Name</span><span class="info-val">{{ client.contact_name }}</span></div>
+                    <div class="info-row"><span class="info-lbl">Position</span><span class="info-val">{{ client.position or '—' }}</span></div>
+                    <div class="info-row"><span class="info-lbl">Email</span><span class="info-val">{% if client.email %}<a href="mailto:{{ client.email }}">{{ client.email }}</a>{% else %}—{% endif %}</span></div>
+                    <div class="info-row"><span class="info-lbl">Mobile</span><span class="info-val">{{ client.mobile or '—' }}</span></div>
+                    <div class="info-row"><span class="info-lbl">Alt. Mobile</span><span class="info-val">{{ client.alternate_mobile or '—' }}</span></div>
+                    <div class="info-row"><span class="info-lbl">Website</span><span class="info-val">{% if client.website %}<a href="{{ client.website }}" target="_blank">{{ client.website }}</a>{% else %}—{% endif %}</span></div>
+                    <div class="info-row"><span class="info-lbl">Company</span><span class="info-val">{{ client.company_name or '—' }}</span></div>
+                    <div class="info-row"><span class="info-lbl">GSTIN</span><span class="info-val" style="font-family:monospace;letter-spacing:0.05em;">{{ client.gstin or '—' }}</span></div>
+                    <div class="info-row"><span class="info-lbl">Address</span><span class="info-val">{{ client.address or '—' }}</span></div>
+                    <div class="info-row"><span class="info-lbl">City / State</span><span class="info-val">{{ client.city or '—' }}{% if client.state %}, {{ client.state }}{% endif %}</span></div>
+                    <div class="info-row"><span class="info-lbl">Country</span><span class="info-val">{{ client.country or '—' }}</span></div>
+                    <div class="info-row"><span class="info-lbl">Zip Code</span><span class="info-val">{{ client.zip_code or '—' }}</span></div>
+                </div>
+            </div>
+        </div>
+
+        {% if client.notes %}
+        <div class="card">
+            <div class="card-hdr">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:#8b5cf6;"><path d="M14 2H6a2 2 0 0 0-2 2v16c0 1.1.9 2 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/><path d="M14 3v5h5M16 13H8M16 17H8M10 9H8"/></svg>
+                <div class="card-title">Notes</div>
+            </div>
+            <div class="card-body">
+                <p class="notes-text">{{ client.notes }}</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div>
+        <div class="card">
+            <div class="card-hdr">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:#f59e0b;"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+                <div class="card-title">Brands ({{ brands|length }})</div>
+            </div>
+            <div class="card-body">
+                <div class="brands-wrap">
+                    {% for b in brands %}
+                    <div class="brand-card">
+                        <div class="brand-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+                        </div>
+                        <div class="brand-details">
+                            <div class="brand-header">
+                                <span class="brand-name">{{ b.brand_name }}</span>
+                                {% if b.category %}<span class="brand-cat">{{ b.category }}</span>{% endif %}
+                            </div>
+                            {% if b.description %}
+                            <p class="brand-desc">{{ b.description }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% else %}
+                    <div style="text-align:center; padding: 20px 0;">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--border-soft);margin-bottom:8px;"><circle cx="12" cy="12" r="10"></circle><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+                        <p style="color:var(--text-light);font-size:0.9rem;margin:0;">No brands associated yet.</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
         </div>
     </div>
-</div>
 
-{% if client.notes %}
-<div class="card" style="margin-top:1rem;">
-    <div class="card-hdr"><div class="card-title">Notes</div></div>
-    <div class="card-body"><p style="color:var(--text2);">{{ client.notes }}</p></div>
-</div>
-{% endif %}
-</div><!-- /ct-overview -->
-
-
-
-{% endblock %}
+</div>{% endblock %}
 
 {% block extra_js %}
 <script>
 function cTab(id, btn) {
     document.querySelectorAll('[id^="ct-"]').forEach(el => el.style.display = 'none');
-    document.getElementById(id).style.display = 'block';
+    document.getElementById(id).style.display = 'grid'; // Changed to grid to maintain layout
+
     document.querySelectorAll('.vw-tab').forEach(b => {
-        b.style.color = 'var(--text2)';
-        b.style.borderBottomColor = 'transparent';
+        b.classList.remove('active');
     });
-    btn.style.color = 'var(--blue)';
-    btn.style.borderBottomColor = 'var(--blue)';
+    btn.classList.add('active');
 }
 </script>
 {% endblock %}
