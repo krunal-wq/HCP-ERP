@@ -58,6 +58,10 @@
 .chip-mispunch { background:#06b6d4; }
 .chip-absent   { background:#ef4444; }
 .chip-wop      { background:#7c3aed; }
+.chip-holiday  { background:#ea580c; }
+.chip-leave    { background:#0891b2; }
+.chip-hlp      { background:#e11d48; }
+.chip-weekoff  { background:#94a3b8; }
 .dat-chips .spacer { flex:1; }
 .dat-chips .day-label {
   font-size:.85rem; font-weight:700; color:var(--text2);
@@ -108,8 +112,16 @@
 .sp-Absent    { background:#fee2e2; color:#dc2626; }
 .sp-HalfDay   { background:#fef3c7; color:#b45309; }
 .sp-MISPUNCH  { background:#cffafe; color:#0891b2; }
-.sp-Holiday   { background:#f3e8ff; color:#7c3aed; }
+.sp-Holiday   { background:#ffedd5; color:#ea580c; }
+.sp-OnLeave   { background:#cffafe; color:#0891b2; }
+.sp-HLP       { background:#ffe4e6; color:#e11d48; }
+.sp-WeekOff   { background:#e2e8f0; color:#475569; }
 .sp-WOP       { background:#ede9fe; color:#7c3aed; }
+.trow-Holiday td { background:#fff7ed !important; }
+.trow-OnLeave td { background:#ecfeff !important; }
+.trow-HLP td { background:#fff1f2 !important; }
+.trow-WeekOff td { background:#f8fafc !important; }
+.sp-note { display:block; font-size:.68rem; color:var(--text3); font-style:italic; margin-top:2px; }
 </style>
 {% endblock %}
 
@@ -151,6 +163,10 @@
   <span class="chip chip-mispunch">MIS-PUNCH: {{ stats.mispunch }}</span>
   <span class="chip chip-absent">Absent: {{ stats.absent }}</span>
   {% if stats.wop %}<span class="chip chip-wop">WOP: {{ stats.wop }}</span>{% endif %}
+  {% if stats.holiday %}<span class="chip chip-holiday">Holiday: {{ stats.holiday }}</span>{% endif %}
+  {% if stats.leave %}<span class="chip chip-leave">On Leave: {{ stats.leave }}</span>{% endif %}
+  {% if stats.hlp %}<span class="chip chip-hlp">Holiday Present: {{ stats.hlp }}</span>{% endif %}
+  {% if stats.weekoff %}<span class="chip chip-weekoff">Week Off: {{ stats.weekoff }}</span>{% endif %}
   <span class="spacer"></span>
   <span class="day-label">{{ sel_date.strftime('%A, %d %B %Y') }}</span>
 </div>
@@ -180,7 +196,8 @@
           {% for r in rows %}
           {% set fn = (r.full_name or 'NA') %}
           {% set ini = fn[:1]|upper %}
-          <tr>
+          {% set stcls = r.status|replace(' ','')|replace('-','') %}
+          <tr class="trow-{{ stcls }}">
             <td>{{ loop.index }}</td>
             <td>
               <div class="emp-cell">
@@ -196,7 +213,7 @@
             <td>{{ r.att.punch_in.strftime('%H:%M') if r.att and r.att.punch_in else '—' }}</td>
             <td>{{ r.att.punch_out.strftime('%H:%M') if r.att and r.att.punch_out else '—' }}</td>
             <td>{{ '%.2f'|format(r.att.total_hours|float) if r.att and r.att.total_hours else '—' }}</td>
-            <td><span class="sp sp-{{ r.status|replace(' ','')|replace('-','') }}">{{ r.status }}</span></td>
+            <td><span class="sp sp-{{ stcls }}">{{ r.status }}</span>{% if r.note %}<span class="sp-note">🎉 {{ r.note }}</span>{% endif %}</td>
             <td>—</td>
             <td>{{ r.emp.employee_type or '—' }}</td>
             <td>{{ r.att.in_device or '—' if r.att else '—' }}</td>

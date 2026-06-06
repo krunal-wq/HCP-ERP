@@ -395,89 +395,204 @@ def receive_logs():
 @attendance_bp.route('/hr/attendance')
 @login_required
 def attendance_dashboard():
-    today       = date.today()
-    month_start = today.replace(day=1)
+    from models.hr_rules import HRLeaveApplication
 
-    # Today stats
-    today_present  = Attendance.query.filter(
-        Attendance.attendance_date == today,
-        Attendance.status == 'Present'
-    ).count()
-    today_absent   = Attendance.query.filter(
-        Attendance.attendance_date == today,
-        Attendance.status == 'Absent'
-    ).count()
-    today_halfday  = Attendance.query.filter(
-        Attendance.attendance_date == today,
-        Attendance.status == 'Half Day'
-    ).count()
-    today_mispunch = Attendance.query.filter(
-        Attendance.attendance_date == today,
-        Attendance.status == 'MIS-PUNCH'
-    ).count()
-    today_holiday  = Attendance.query.filter(
-        Attendance.attendance_date == today,
-        Attendance.status == 'Holiday'
-    ).count()
+    # ── Selected date (?date=YYYY-MM-DD, default = today) ──
+    sel_date_str = request.args.get('date', date.today().isoformat())
+    try:
+        sel_date = datetime.strptime(sel_date_str, '%Y-%m-%d').date()
+    except ValueError:
+        sel_date = date.today()
 
-    total_employees = Employee.query.filter_by(status='active').count()
+    # ── Active employees ──
+    employees = Employee.query.filter(
+        Employee.status == 'active',
+        db.or_(Employee.is_deleted.is_(False), Employee.is_deleted.is_(None)),
+    ).all()
+    total_employees = len(employees)
 
-    # Last sync time
+    # ── Selected day ka attendance + approved leaves ──
+    att_map = {r.employee_code: r for r in Attendance.query.filter_by(
+        attendance_date=sel_date).all()}
+
+    leaves = HRLeaveApplication.query.filter(
+        HRLeaveApplication.status == 'approved',
+        HRLeaveApplication.from_date <= sel_date,
+        HRLeaveApplication.to_date   >= sel_date,
+    ).all()
+    leave_by_emp = {l.employee_id: l for l in leaves}
+
+    # ── Per-employee status resolve ──
+    # Attendance row > approved leave > week off > Absent
+    def _resolve(emp):
+        att = att_map.get(emp.employee_code) or att_map.get(emp.employee_id)
+        if att:
+            return att.status, att
+        if emp.id in leave_by_emp:
+            return 'On Leave', None
+        if _is_week_off(emp.employee_type or '', sel_date):
+            return 'Week Off', None
+        return 'Absent', None
+
+    STATUS_COLORS = {
+        'Present':   '#10b981', 'Half Day': '#8b5cf6', 'MIS-PUNCH': '#f59e0b',
+        'Absent':    '#ef4444', 'On Leave': '#3b82f6', 'Week Off':  '#94a3b8',
+        'WOP':       '#06b6d4', 'Holiday':  '#64748b',
+    }
+
+    overview_counts = {}
+    cat_grp, dept_grp, shift_grp = {}, {}, {}
+    gender_present = {}
+    present_n = absent_n = mispunch_n = on_leave_n = 0
+
+    def _bump(grp, key, field):
+        g = grp.setdefault(key or '—', dict(total=0, present=0, absent=0,
+                                            mispunch=0, on_leave=0))
+        g['total'] += 1
+        if field:
+            g[field] += 1
+
+    for emp in employees:
+        st, att = _resolve(emp)
+        overview_counts[st] = overview_counts.get(st, 0) + 1
+
+        if st in ('Present', 'WOP'):
+            present_n += 1;  fld = 'present'
+            gkey = (emp.gender or 'Other').title()
+            gender_present[gkey] = gender_present.get(gkey, 0) + 1
+        elif st == 'Half Day':
+            present_n += 1;  fld = 'present'
+            gkey = (emp.gender or 'Other').title()
+            gender_present[gkey] = gender_present.get(gkey, 0) + 1
+        elif st == 'MIS-PUNCH':
+            mispunch_n += 1; fld = 'mispunch'
+        elif st == 'On Leave':
+            on_leave_n += 1; fld = 'on_leave'
+        elif st == 'Absent':
+            absent_n += 1;   fld = 'absent'
+        else:                       # Week Off / Holiday — kisi KPI bucket mein nahi
+            fld = None
+
+        _bump(cat_grp,   emp.employee_type, fld)
+        _bump(dept_grp,  emp.department,    fld)
+        _bump(shift_grp, emp.shift,         fld)
+
+    def _pct(n):
+        return round(n * 100.0 / total_employees, 1) if total_employees else 0
+
+    # ── Working days (selected month — Sundays exclude) ──
+    month_start = sel_date.replace(day=1)
+    if month_start.month == 12:
+        next_month = month_start.replace(year=month_start.year + 1, month=1)
+    else:
+        next_month = month_start.replace(month=month_start.month + 1)
+    days_in_month = (next_month - month_start).days
+    working_days = sum(1 for i in range(days_in_month)
+                       if (month_start + timedelta(days=i)).weekday() != 6)
+
+    # ── 7-day trend (sel_date tak) ──
+    trend_start = sel_date - timedelta(days=6)
+    trend_rows = Attendance.query.filter(
+        Attendance.attendance_date >= trend_start,
+        Attendance.attendance_date <= sel_date,
+    ).all()
+    by_day = {}
+    for r in trend_rows:
+        d = by_day.setdefault(r.attendance_date, dict(present=0, absent=0, mispunch=0))
+        if r.status in ('Present', 'Half Day', 'WOP'):
+            d['present'] += 1
+        elif r.status == 'Absent':
+            d['absent'] += 1
+        elif r.status == 'MIS-PUNCH':
+            d['mispunch'] += 1
+
+    trend_leaves = HRLeaveApplication.query.filter(
+        HRLeaveApplication.status == 'approved',
+        HRLeaveApplication.from_date <= sel_date,
+        HRLeaveApplication.to_date   >= trend_start,
+    ).all()
+
+    trend = []
+    for i in range(6, -1, -1):
+        d = sel_date - timedelta(days=i)
+        day = by_day.get(d, {})
+        lv = sum(1 for l in trend_leaves if l.from_date <= d <= l.to_date)
+        trend.append({
+            'label':    d.strftime('%d %b'),
+            'present':  day.get('present', 0),
+            'absent':   day.get('absent', 0),
+            'mispunch': day.get('mispunch', 0),
+            'on_leave': lv,
+        })
+
+    # ── Top mis-punch list (selected day) ──
+    top_mispunch = []
+    for code, att in att_map.items():
+        if att.status != 'MIS-PUNCH':
+            continue
+        emp = att.employee
+        top_mispunch.append({
+            'code':  code,
+            'name':  (emp.full_name if emp else code),
+            'in':    att.punch_in.strftime('%I:%M %p') if att.punch_in else '—',
+            'issue': 'Punch Out Missing' if att.punch_in else 'Punch In Missing',
+        })
+        if len(top_mispunch) >= 8:
+            break
+
+    # ── On-leave list (selected day) ──
+    leave_rows = [{
+        'code': (l.employee.employee_code if l.employee else l.employee_id),
+        'name': (l.employee.full_name if l.employee else str(l.employee_id)),
+        'type': l.type_label,
+        'days': float(l.days or 0),
+    } for l in leaves[:8]]
+
+    # ── Group dicts → sorted lists ──
+    def _to_rows(grp):
+        return [dict(label=k, **v) for k, v in
+                sorted(grp.items(), key=lambda kv: -kv[1]['total'])]
+
+    category_summary = _to_rows(cat_grp)
+    dept_summary     = _to_rows(dept_grp)
+    shift_summary    = _to_rows(shift_grp)
+    category_bar     = category_summary[:8]
+
+    overview = [{'label': k, 'value': v, 'color': STATUS_COLORS.get(k, '#94a3b8')}
+                for k, v in sorted(overview_counts.items(), key=lambda kv: -kv[1])
+                if v > 0]
+    GENDER_COLORS = {'Male': '#6366f1', 'Female': '#ec4899'}
+    gender = [{'label': k, 'value': v, 'color': GENDER_COLORS.get(k, '#94a3b8')}
+              for k, v in sorted(gender_present.items(), key=lambda kv: -kv[1])]
+
+    # ── Last sync ──
     last_raw  = RawPunchLog.query.order_by(RawPunchLog.synced_at.desc()).first()
     last_sync = last_raw.synced_at.strftime('%d %b %Y, %I:%M %p') if last_raw else 'No data yet'
 
-    # Today list â€” all statuses (Present, Absent, Half Day, MIS-PUNCH, Holiday)
-    today_list = db.session.query(Attendance).filter(
-        Attendance.attendance_date == today
-    ).order_by(
-        db.case(
-            (Attendance.status == 'Present',  1),
-            (Attendance.status == 'Half Day', 2),
-            (Attendance.status == 'MIS-PUNCH',3),
-            (Attendance.status == 'Absent',   4),
-            (Attendance.status == 'Holiday',  5),
-            else_=6
-        ),
-        Attendance.punch_in
-    ).limit(200).all()
-
-    # Last 7 days trend â€” Present / Absent / Half Day
-    trend_data = []
-    for i in range(6, -1, -1):
-        d = today - timedelta(days=i)
-        stats = dict(
-            db.session.query(Attendance.status, db.func.count(Attendance.id))
-            .filter(Attendance.attendance_date == d)
-            .group_by(Attendance.status).all()
-        )
-        trend_data.append({
-            'date':     d.strftime('%d %b'),
-            'present':  stats.get('Present', 0),
-            'absent':   stats.get('Absent', 0),
-            'half_day': stats.get('Half Day', 0),
-        })
-
-    # This month present count
-    month_present = Attendance.query.filter(
-        Attendance.attendance_date >= month_start,
-        Attendance.attendance_date <= today,
-        Attendance.status == 'Present'
-    ).count()
+    a = {
+        'total_employees': total_employees,
+        'present':         present_n,   'present_pct':  _pct(present_n),
+        'absent':          absent_n,    'absent_pct':   _pct(absent_n),
+        'mispunch':        mispunch_n,  'mispunch_pct': _pct(mispunch_n),
+        'on_leave':        on_leave_n,  'on_leave_pct': _pct(on_leave_n),
+        'working_days':    working_days,
+        'overview':         overview,
+        'gender':           gender,
+        'trend':            trend,
+        'category_bar':     category_bar,
+        'category_summary': category_summary,
+        'dept_summary':     dept_summary,
+        'shift_summary':    shift_summary,
+        'top_mispunch':     top_mispunch,
+        'leave_rows':       leave_rows,
+        'last_sync':        last_sync,
+    }
 
     return render_template(
         'hr/attendance/dashboard.html',
-        today           = today,
-        today_present   = today_present,
-        today_absent    = today_absent,
-        today_halfday   = today_halfday,
-        today_mispunch  = today_mispunch,
-        today_holiday   = today_holiday,
-        total_employees = total_employees,
-        last_sync       = last_sync,
-        today_list      = today_list,
-        trend_data      = json.dumps(trend_data),
-        month_present   = month_present,
-        active_page     = 'hr_attendance',
+        sel_date    = sel_date,
+        analytics   = a,          # template line 71: {% set a = analytics ... %}
+        active_page = 'hr_attendance',
     )
 
 
@@ -870,6 +985,9 @@ def holiday_master():
         title        = request.form.get('title', '').strip()
         holiday_date = request.form.get('holiday_date', '').strip()
         holiday_type = request.form.get('holiday_type', 'National')
+        location     = request.form.get('location', 'All').strip() or 'All'
+        if location not in ('All', 'HO', 'Plant'):
+            location = 'All'
         description  = request.form.get('description', '').strip()
 
         if not title or not holiday_date:
@@ -877,13 +995,22 @@ def holiday_master():
         else:
             try:
                 hdate = datetime.strptime(holiday_date, '%Y-%m-%d').date()
-                existing = HolidayMaster.query.filter_by(holiday_date=hdate).first()
-                if existing:
-                    msg = ('error', f'{holiday_date} pe pehle se holiday hai: {existing.title}')
+                # Conflict check: same date par —
+                #   same location duplicate, ya 'All' kisi ke saath overlap
+                same_day = HolidayMaster.query.filter_by(holiday_date=hdate).all()
+                conflict = None
+                for ex in same_day:
+                    if ex.location == location or ex.location == 'All' or location == 'All':
+                        conflict = ex
+                        break
+                if conflict:
+                    msg = ('error', f'{holiday_date} pe pehle se holiday hai '
+                                    f'({conflict.location}): {conflict.title}')
                 else:
                     h = HolidayMaster(
                         title=title, holiday_date=hdate,
-                        holiday_type=holiday_type, description=description,
+                        holiday_type=holiday_type, location=location,
+                        description=description,
                         created_by=current_user.id
                     )
                     db.session.add(h)
@@ -1433,6 +1560,34 @@ def attendance_daily():
     att_map = {a.employee_code: a for a in Attendance.query.filter_by(
         attendance_date=sel_date).all()}
 
+    # ── Holidays (location-wise) + approved leaves for this day ──
+    from models.attendance import HolidayMaster
+    day_hols = HolidayMaster.query.filter(
+        HolidayMaster.is_active.is_(True),
+        HolidayMaster.holiday_date == sel_date,
+    ).all()
+
+    def _emp_zone(emp):
+        loc = (emp.location or '').strip().lower()
+        if loc:
+            return 'HO' if ('office' in loc or loc in ('ho', 'h.o', 'h.o.')) else 'Plant'
+        return 'HO' if (emp.employee_type or '').strip().upper() == 'HCP OFFICE' else 'Plant'
+
+    def _holiday_for(emp):
+        zone = _emp_zone(emp)
+        for h in day_hols:
+            if getattr(h, 'location', 'All') in ('All', zone):
+                return h
+        return None
+
+    from models.hr_rules import HRLeaveApplication
+    day_leaves = HRLeaveApplication.query.filter(
+        HRLeaveApplication.status == 'approved',
+        HRLeaveApplication.from_date <= sel_date,
+        HRLeaveApplication.to_date   >= sel_date,
+    ).all()
+    leave_by_emp = {l.employee_id: l for l in day_leaves}
+
     rows = []
     for emp in employees:
         # Match by employee_code OR employee_id
@@ -1445,11 +1600,44 @@ def attendance_daily():
                                           emp.designation or ''])).lower()
             if search_q not in hay:
                 continue
+        # Status resolve — att row ho to wahi, warna Holiday > Leave > Week Off > Absent
+        note = ''
+        if att:
+            status = att.status
+            if status == 'Present':
+                h = _holiday_for(emp)
+                if h:
+                    status = 'HLP'; note = h.title   # Holiday par kaam
+            elif status == 'Holiday':
+                h = _holiday_for(emp)
+                note = h.title if h else ''
+            elif status == 'Absent':
+                # Absent row par bhi Holiday/Leave/WeekOff override (monthly jaisa)
+                h  = _holiday_for(emp)
+                lv = leave_by_emp.get(emp.id)
+                if h:
+                    status = 'Holiday';  note = h.title
+                elif lv:
+                    status = 'On Leave'; note = lv.type_label
+                elif _is_week_off(emp.employee_type or '', sel_date):
+                    status = 'Week Off'
+        else:
+            h  = _holiday_for(emp)
+            lv = leave_by_emp.get(emp.id)
+            if h:
+                status = 'Holiday';  note = h.title
+            elif lv:
+                status = 'On Leave'; note = lv.type_label
+            elif _is_week_off(emp.employee_type or '', sel_date):
+                status = 'Week Off'
+            else:
+                status = 'Absent'
         rows.append({
             'emp':         emp,
             'full_name':   full_name,
             'att':         att,
-            'status':      att.status if att else 'Absent',
+            'status':      status,
+            'note':        note,
         })
 
     # Stats
@@ -1459,6 +1647,10 @@ def attendance_daily():
     mispunch_n  = sum(1 for r in rows if r['status'] == 'MIS-PUNCH')
     absent_n    = sum(1 for r in rows if r['status'] == 'Absent')
     wop_n       = sum(1 for r in rows if r['status'] == 'WOP')
+    holiday_n   = sum(1 for r in rows if r['status'] == 'Holiday')
+    hlp_n       = sum(1 for r in rows if r['status'] == 'HLP')
+    leave_n     = sum(1 for r in rows if r['status'] == 'On Leave')
+    weekoff_n   = sum(1 for r in rows if r['status'] == 'Week Off')
 
     # Distinct employee types for the filter dropdown
     type_rows = db.session.query(Employee.employee_type).filter(
@@ -1472,7 +1664,9 @@ def attendance_daily():
         rows=rows, sel_date=sel_date, search_q=search_q, emp_type=emp_type,
         emp_types=emp_types,
         stats=dict(total=total, present=present_n, halfday=halfday_n,
-                   mispunch=mispunch_n, absent=absent_n, wop=wop_n),
+                   mispunch=mispunch_n, absent=absent_n, wop=wop_n,
+                   holiday=holiday_n, leave=leave_n, weekoff=weekoff_n,
+                   hlp=hlp_n),
         prev_date=(sel_date - timedelta(days=1)).isoformat(),
         next_date=(sel_date + timedelta(days=1)).isoformat(),
         today_str=date.today().isoformat(),
@@ -1484,26 +1678,9 @@ def attendance_daily():
 # MONTHLY ATTENDANCE VIEW â€” /hr/attendance/monthly
 # Image 3 ka design â€” year/month, per-employee day-wise grid
 # â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-@attendance_bp.route('/hr/attendance/monthly')
-@login_required
-def attendance_monthly():
-    if not _require_sub_perm('hr', 'att_monthly'):
-        flash('Access denied: Monthly Attendance permission nahi hai.', 'error')
-        return redirect(url_for('attendance.attendance_dashboard'))
+def _build_monthly_data(year, month, emp_type, search_q):
+    """Monthly view + Excel export — shared data builder."""
     import calendar as _cal
-    today = date.today()
-    try:
-        year  = int(request.args.get('year',  today.year))
-        month = int(request.args.get('month', today.month))
-    except ValueError:
-        year, month = today.year, today.month
-
-    if not (1 <= month <= 12) or year < 2000 or year > 2100:
-        year, month = today.year, today.month
-
-    search_q = (request.args.get('q') or '').strip().lower()
-    emp_type = (request.args.get('emp_type') or '').strip()
-
     days_in_month = _cal.monthrange(year, month)[1]
     month_start   = date(year, month, 1)
     month_end     = date(year, month, days_in_month)
@@ -1537,6 +1714,48 @@ def attendance_monthly():
     for a in att_records:
         att_by_emp.setdefault(a.employee_code, {})[a.attendance_date] = a
 
+    # ── Holidays (location-wise: All / HO / Plant) ──
+    from models.attendance import HolidayMaster
+    hol_rows = HolidayMaster.query.filter(
+        HolidayMaster.is_active.is_(True),
+        HolidayMaster.holiday_date >= month_start,
+        HolidayMaster.holiday_date <= month_end,
+    ).all()
+    day_hols = {}
+    for h in hol_rows:
+        day_hols.setdefault(h.holiday_date, []).append(h)
+
+    def _emp_zone(emp):
+        """Employee kis zone mein hai — HO ya Plant."""
+        loc = (emp.location or '').strip().lower()
+        if loc:
+            return 'HO' if ('office' in loc or loc in ('ho', 'h.o', 'h.o.')) else 'Plant'
+        return 'HO' if (emp.employee_type or '').strip().upper() == 'HCP OFFICE' else 'Plant'
+
+    def _holiday_for(emp, d):
+        zone = _emp_zone(emp)
+        for h in day_hols.get(d, []):
+            if getattr(h, 'location', 'All') in ('All', zone):
+                return h
+        return None
+
+    # ── Approved leaves (month overlap) ──
+    from models.hr_rules import HRLeaveApplication
+    leave_rows = HRLeaveApplication.query.filter(
+        HRLeaveApplication.status == 'approved',
+        HRLeaveApplication.from_date <= month_end,
+        HRLeaveApplication.to_date   >= month_start,
+    ).all()
+    leaves_by_emp = {}
+    for l in leave_rows:
+        leaves_by_emp.setdefault(l.employee_id, []).append(l)
+
+    def _leave_for(emp, d):
+        for l in leaves_by_emp.get(emp.id, []):
+            if l.from_date <= d <= l.to_date:
+                return l
+        return None
+
     # Build per-employee rows
     emp_rows = []
     day_list = [date(year, month, d) for d in range(1, days_in_month + 1)]
@@ -1548,29 +1767,80 @@ def attendance_monthly():
     for emp in employees:
         per_emp = att_by_emp.get(emp.employee_code) or att_by_emp.get(emp.employee_id) or {}
         days = []
-        cnt = dict(P=0, HD=0, AB=0, MP=0, WO=0, WOP=0)
+        cnt = dict(P=0, HD=0, AB=0, MP=0, WO=0, WOP=0, HOL=0, LV=0, HLP=0)
         for d in day_list:
-            a = per_emp.get(d)
-            wo = _is_week_off(emp.employee_type, d)
+            a    = per_emp.get(d)
+            wo   = _is_week_off(emp.employee_type, d)
+            hol  = _holiday_for(emp, d)
+            lv   = _leave_for(emp, d)
+            note = ''
+            lv_code = ''
             if a is None:
-                if wo: code = 'WO'
-                else:  code = 'AB'
+                # Priority: Holiday > Leave > Week Off > Absent
+                if hol:
+                    code = 'HOL'; note = hol.title
+                elif lv:
+                    code = 'LV';  note = lv.type_label; lv_code = lv.leave_type
+                elif wo:
+                    code = 'WO'
+                else:
+                    code = 'AB'
                 in_t = out_t = ''
                 tot = 0.0
             else:
-                if a.status == 'Present':       code = 'P'
+                if a.status == 'Present':
+                    if hol:
+                        code = 'HLP'; note = hol.title   # Holiday par kaam
+                    else:
+                        code = 'P'
                 elif a.status == 'Half Day':    code = 'HD'
                 elif a.status == 'MIS-PUNCH':   code = 'MP'
                 elif a.status == 'WOP':         code = 'WOP'
-                elif a.status == 'Holiday':     code = 'WO'
-                elif a.status == 'Absent':      code = 'WO' if wo else 'AB'
+                elif a.status == 'Holiday':     code = 'HOL'; note = hol.title if hol else 'Holiday'
+                elif a.status == 'Absent':
+                    if hol:  code = 'HOL'; note = hol.title
+                    elif lv: code = 'LV';  note = lv.type_label; lv_code = lv.leave_type
+                    elif wo: code = 'WO'
+                    else:    code = 'AB'
                 else:                            code = 'AB'
                 in_t  = a.punch_in.strftime('%H:%M')  if a.punch_in  else ''
                 out_t = a.punch_out.strftime('%H:%M') if a.punch_out else ''
                 tot   = float(a.total_hours or 0)
             cnt[code] = cnt.get(code, 0) + 1
-            days.append(dict(date=d, in_t=in_t, out_t=out_t, tot=tot, code=code))
+            days.append(dict(date=d, in_t=in_t, out_t=out_t, tot=tot, code=code, note=note, lv_code=lv_code))
         emp_rows.append(dict(emp=emp, days=days, cnt=cnt))
+    return dict(emp_rows=emp_rows, day_list=day_list, emp_types=emp_types,
+                working_days=working_days, days_in_month=days_in_month,
+                month_start=month_start, month_end=month_end,
+                employees=employees)
+
+
+@attendance_bp.route('/hr/attendance/monthly')
+@login_required
+def attendance_monthly():
+    if not _require_sub_perm('hr', 'att_monthly'):
+        flash('Access denied: Monthly Attendance permission nahi hai.', 'error')
+        return redirect(url_for('attendance.attendance_dashboard'))
+    import calendar as _cal
+    today = date.today()
+    try:
+        year  = int(request.args.get('year',  today.year))
+        month = int(request.args.get('month', today.month))
+    except ValueError:
+        year, month = today.year, today.month
+
+    if not (1 <= month <= 12) or year < 2000 or year > 2100:
+        year, month = today.year, today.month
+
+    search_q = (request.args.get('q') or '').strip().lower()
+    emp_type = (request.args.get('emp_type') or '').strip()
+
+    _md = _build_monthly_data(year, month, emp_type, search_q)
+    emp_rows      = _md['emp_rows']
+    day_list      = _md['day_list']
+    emp_types     = _md['emp_types']
+    working_days  = _md['working_days']
+    employees     = _md['employees']
 
     return render_template('hr/attendance/monthly.html',
         year=year, month=month, month_name=_cal.month_name[month],
@@ -1583,5 +1853,266 @@ def attendance_monthly():
         next_month=(month + 1 if month < 12 else 1),
         active_page='att_monthly',
     )
+
+
+# ══════════════════════════════════════════════════════════════
+# MONTHLY ATTENDANCE — EXCEL EXPORT
+# GET /hr/attendance/monthly/export
+# ══════════════════════════════════════════════════════════════
+@attendance_bp.route('/hr/attendance/monthly/export')
+@login_required
+def attendance_monthly_export():
+    """HCP format Excel — Sheet1: Attendance (In/Out/Shift/Status blocks),
+    Sheet2: Late Coming (late times + penalty slabs)."""
+    if not _require_sub_perm('hr', 'att_monthly'):
+        flash('Access denied: Monthly Attendance permission nahi hai.', 'error')
+        return redirect(url_for('attendance.attendance_dashboard'))
+    import calendar as _cal
+    from io import BytesIO
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+    from openpyxl.utils import get_column_letter
+    from models.attendance import LateShiftRule, LatePenaltyRule
+
+    today = date.today()
+    try:
+        year  = int(request.args.get('year',  today.year))
+        month = int(request.args.get('month', today.month))
+    except ValueError:
+        year, month = today.year, today.month
+    if not (1 <= month <= 12) or year < 2000 or year > 2100:
+        year, month = today.year, today.month
+    search_q = (request.args.get('q') or '').strip().lower()
+    emp_type = (request.args.get('emp_type') or '').strip()
+
+    md = _build_monthly_data(year, month, emp_type, search_q)
+    emp_rows, day_list = md['emp_rows'], md['day_list']
+    n_days     = len(day_list)
+    month_name = _cal.month_name[month]
+
+    # ── Styles (sample file se exact) ──
+    F  = lambda hexc: PatternFill('solid', start_color=hexc)
+    ctr  = Alignment(horizontal='center', vertical='center')
+    ctrw = Alignment(horizontal='center', vertical='center', wrap_text=True)
+    thin = Side(style='thin', color='B0B0B0')
+    bord = Border(left=thin, right=thin, top=thin, bottom=thin)
+    TITLE_FILL  = F('F4B084'); HDR_FILL = F('D9E1F2'); SUMM_FILL = F('DEEAF1')
+    IN_FILL = F('E2EFDA'); OUT_FILL = F('FCE4D6'); SHIFT_FILL = F('EBF3FB')
+    ST_STYLE = {                       # status -> (fill, font color)
+        'P':  ('00B050', 'FFFFFF'), 'WO': ('BFBFBF', '000000'),
+        'WOP':('FFFF00', '000000'), 'HD': ('00B0F0', 'FFFFFF'),
+        'AB': ('FF0000', 'FFFFFF'), 'MP': ('FFC000', '000000'),
+        'PH': ('ED7D31', 'FFFFFF'), 'HLP': ('E11D48', 'FFFFFF'),
+        'CL': ('0070C0', 'FFFFFF'),
+        'SL': ('7030A0', 'FFFFFF'), 'PL': ('0070C0', 'FFFFFF'),
+        'LOP':('C00000', 'FFFFFF'),
+    }
+    SUMMARY_HDRS = ['Total Present', 'Paid Holiday', 'Total Absent', 'Total Half day',
+                    'Total Paid leave', 'Total Casual leave', 'Total Sick leave',
+                    'Total week off', 'Punch Incomplete', 'Week off Present',
+                    'Holiday Present',
+                    '8 Hrs', '10 Hrs', '12 Hrs', '16 Hrs', '24 Hrs', 'Half day']
+    SUMMARY_CODE = ['P', 'PH', 'AB', 'HD', 'PL', 'CL', 'SL', 'WO', 'MP', 'WOP', 'HLP']
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = 'Worksheet'
+
+    FIX = 7                                            # Sr, Punch ID, Period, Name, Desig, Dept, Remarks
+    total_cols = FIX + n_days + len(SUMMARY_HDRS)
+
+    # ── Title rows (1-3) ──
+    titles = ['HCP Wellness Pvt. Ltd.',
+              f'ATTENDANCE SHEET FOR {month_name.upper()} {year}',
+              'Address: 403, Maruti Elanza Vertex, Opp. Sterling Hospital, Ahmedabad']
+    for r, txt in enumerate(titles, start=1):
+        ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=total_cols)
+        c = ws.cell(row=r, column=1, value=txt)
+        c.font = Font(bold=True); c.fill = TITLE_FILL; c.alignment = ctr
+
+    # ── Header rows (4-5) ──
+    fixed_hdrs = ['Sr.', 'New Punch ID', 'Period', 'Employee Name',
+                  'Designation', 'Department', 'Remarks']
+    for c, h in enumerate(fixed_hdrs, start=1):
+        ws.merge_cells(start_row=4, start_column=c, end_row=5, end_column=c)
+        cell = ws.cell(row=4, column=c, value=h)
+        cell.fill = HDR_FILL; cell.alignment = ctr; cell.border = bord
+    for i, d in enumerate(day_list):
+        c1 = ws.cell(row=4, column=FIX + 1 + i, value=d.day)
+        c2 = ws.cell(row=5, column=FIX + 1 + i, value=d.strftime('%a'))
+        for cell in (c1, c2):
+            cell.fill = HDR_FILL; cell.alignment = ctr; cell.border = bord
+    for j, h in enumerate(SUMMARY_HDRS):
+        col = FIX + n_days + 1 + j
+        ws.merge_cells(start_row=4, start_column=col, end_row=5, end_column=col)
+        cell = ws.cell(row=4, column=col, value=h)
+        cell.fill = HDR_FILL; cell.alignment = ctrw; cell.border = bord
+    ws.row_dimensions[4].height = 30
+
+    # ── Employee blocks (4 rows each: In/Out/Shift/Status) ──
+    def daycode(dd):
+        if dd['code'] == 'HOL': return 'PH'
+        if dd['code'] == 'LV':  return dd.get('lv_code') or 'PL'
+        return dd['code']
+
+    r = 6
+    for sr, er in enumerate(emp_rows, start=1):
+        emp = er['emp']
+        rs, re_ = r, r + 3
+        fixed_vals = [sr, emp.employee_id or emp.employee_code or '',
+                      'Probation' if emp.is_probation else 'Permanent',
+                      emp.full_name, emp.designation or '', emp.department or '']
+        for c, v in enumerate(fixed_vals, start=1):
+            ws.merge_cells(start_row=rs, start_column=c, end_row=re_, end_column=c)
+            cell = ws.cell(row=rs, column=c, value=v)
+            cell.alignment = ctrw; cell.border = bord
+        for rr, (lbl, fill) in zip(range(rs, re_ + 1),
+                [('In Time', IN_FILL), ('Out Time', OUT_FILL),
+                 ('Shift', SHIFT_FILL), ('Status', None)]):
+            g = ws.cell(row=rr, column=7, value=lbl)
+            g.border = bord
+            if fill: g.fill = fill
+        for i, dd in enumerate(er['days']):
+            col = FIX + 1 + i
+            cin  = ws.cell(row=rs,     column=col, value=dd['in_t'] or None)
+            cout = ws.cell(row=rs + 1, column=col, value=dd['out_t'] or None)
+            csh  = ws.cell(row=rs + 2, column=col,
+                           value=round(dd['tot'], 2) if dd['tot'] else 0)
+            code = daycode(dd)
+            cst  = ws.cell(row=rs + 3, column=col, value=code)
+            cin.fill, cout.fill, csh.fill = IN_FILL, OUT_FILL, SHIFT_FILL
+            bg, fg = ST_STYLE.get(code, ('FFFFFF', '000000'))
+            cst.fill = F(bg); cst.font = Font(bold=True, color=fg)
+            for cell in (cin, cout, csh, cst):
+                cell.alignment = ctr; cell.border = bord
+            if dd.get('note'):
+                from openpyxl.comments import Comment
+                cst.comment = Comment(dd['note'], 'HCP ERP')
+        # ── Summary (merged 4 rows, COUNTIF formulas) ──
+        d1 = get_column_letter(FIX + 1); d2 = get_column_letter(FIX + n_days)
+        strow, shrow = rs + 3, rs + 2
+        for j, h in enumerate(SUMMARY_HDRS):
+            col = FIX + n_days + 1 + j
+            ws.merge_cells(start_row=rs, start_column=col, end_row=re_, end_column=col)
+            if j < len(SUMMARY_CODE):
+                fml = f'=COUNTIF({d1}{strow}:{d2}{strow},"{SUMMARY_CODE[j]}")'
+            elif h == '8 Hrs':
+                fml = f'=COUNTIFS({d1}{shrow}:{d2}{shrow},">=8",{d1}{shrow}:{d2}{shrow},"<10")'
+            elif h == '10 Hrs':
+                fml = f'=COUNTIFS({d1}{shrow}:{d2}{shrow},">=10",{d1}{shrow}:{d2}{shrow},"<12")'
+            elif h == '12 Hrs':
+                fml = f'=COUNTIFS({d1}{shrow}:{d2}{shrow},">=12",{d1}{shrow}:{d2}{shrow},"<16")'
+            elif h == '16 Hrs':
+                fml = f'=COUNTIFS({d1}{shrow}:{d2}{shrow},">=16",{d1}{shrow}:{d2}{shrow},"<24")'
+            elif h == '24 Hrs':
+                fml = f'=COUNTIF({d1}{shrow}:{d2}{shrow},">=24")'
+            else:   # Half day (hours-wise 4–8)
+                fml = f'=COUNTIFS({d1}{shrow}:{d2}{shrow},">=4",{d1}{shrow}:{d2}{shrow},"<8")'
+            cell = ws.cell(row=rs, column=col, value=fml)
+            cell.fill = SUMM_FILL; cell.alignment = ctr; cell.border = bord
+        r += 4
+
+    # widths + freeze
+    for col, w in zip('ABCDEFG', [4, 12, 11, 20, 16, 13, 9]):
+        ws.column_dimensions[col].width = w
+    for i in range(n_days):
+        ws.column_dimensions[get_column_letter(FIX + 1 + i)].width = 6
+    for j in range(len(SUMMARY_HDRS)):
+        ws.column_dimensions[get_column_letter(FIX + n_days + 1 + j)].width = 8
+    ws.freeze_panes = 'H6'
+
+    # ════════════════ Sheet 2: LATE COMING ════════════════
+    ws2 = wb.create_sheet('Late Coming')
+    LFIX = 4
+    l_total = LFIX + n_days + 4
+
+    # type-wise late rules + penalty rates
+    rules = {r_.employee_type: r_ for r_ in LateShiftRule.query.filter_by(is_active=True).all()}
+    def _rates(rule):
+        r1 = r2 = r3 = None; band_end = None
+        if rule:
+            for s in rule.penalty_rules:
+                if not s.is_active: continue
+                if s.time_to:                      # band slab
+                    band_end = s.time_to
+                    if s.from_count <= 3 <= (s.to_count or 999): r1 = float(s.penalty_amount)
+                    if s.from_count >= 4: r2 = float(s.penalty_amount)
+                else:
+                    r3 = float(s.penalty_amount)   # after-band slab
+        return (r1 or 120, r2 or 250, r3 or 250,
+                band_end or '10:59',
+                rule.late_after if rule else '10:46')
+
+    for r_, txt in enumerate(['HCP Wellness Pvt. Ltd.',
+                              f'LATE COMING FOR THE {month_name.upper()} {year}'], start=1):
+        ws2.merge_cells(start_row=r_, start_column=1, end_row=r_, end_column=l_total)
+        c = ws2.cell(row=r_, column=1, value=txt)
+        c.font = Font(bold=True); c.fill = TITLE_FILL; c.alignment = ctr
+
+    for c, h in enumerate(['Sr.No.', 'Employee Name', 'Designation', 'Department'], start=1):
+        ws2.merge_cells(start_row=4, start_column=c, end_row=5, end_column=c)
+        cell = ws2.cell(row=4, column=c, value=h)
+        cell.fill = HDR_FILL; cell.alignment = ctr; cell.border = bord
+    for i, d in enumerate(day_list):
+        c1 = ws2.cell(row=4, column=LFIX + 1 + i, value=d.day)
+        c2 = ws2.cell(row=5, column=LFIX + 1 + i, value=d.strftime('%a'))
+        for cell in (c1, c2):
+            cell.fill = HDR_FILL; cell.alignment = ctr; cell.border = bord
+    late_hdrs = ['1st 3 time (band) - slab 1', 'After 3 times (band) - slab 2',
+                 'After band time - slab 3', 'Total Amount']
+    for j, h in enumerate(late_hdrs):
+        col = LFIX + n_days + 1 + j
+        ws2.merge_cells(start_row=4, start_column=col, end_row=5, end_column=col)
+        cell = ws2.cell(row=4, column=col, value=h)
+        cell.fill = SUMM_FILL; cell.alignment = ctrw; cell.border = bord
+    ws2.row_dimensions[4].height = 42
+
+    red = Font(color='FF0000')
+    for sr, er in enumerate(emp_rows, start=1):
+        emp = er['emp']
+        rr = 5 + sr
+        rule = rules.get(emp.employee_type or '')
+        r1, r2, r3, band_end, late_after = _rates(rule)
+        band_n = after_n = 0
+        for c, v in enumerate([sr, emp.full_name, emp.designation or '',
+                               emp.department or ''], start=1):
+            cell = ws2.cell(row=rr, column=c, value=v)
+            cell.border = bord
+        for i, dd in enumerate(er['days']):
+            cell = ws2.cell(row=rr, column=LFIX + 1 + i)
+            cell.border = bord
+            it = dd['in_t']
+            if it and it > late_after:             # late aaya
+                cell.value = it; cell.font = red; cell.alignment = ctr
+                if it <= band_end: band_n += 1
+                else:              after_n += 1
+        aj = min(band_n, 3); ak = max(band_n - 3, 0)
+        cAJ = get_column_letter(LFIX + n_days + 1)
+        cAK = get_column_letter(LFIX + n_days + 2)
+        cAL = get_column_letter(LFIX + n_days + 3)
+        vals = [aj or None, ak or None, after_n or None]
+        for j, v in enumerate(vals):
+            cell = ws2.cell(row=rr, column=LFIX + n_days + 1 + j, value=v)
+            cell.alignment = ctr; cell.border = bord
+        tcell = ws2.cell(row=rr, column=LFIX + n_days + 4,
+            value=f'=N({cAJ}{rr})*{r1}+N({cAK}{rr})*{r2}+N({cAL}{rr})*{r3}')
+        tcell.alignment = ctr; tcell.border = bord
+        tcell.font = Font(bold=True)
+
+    for col, w in zip('ABCD', [6, 20, 16, 13]):
+        ws2.column_dimensions[col].width = w
+    for i in range(n_days):
+        ws2.column_dimensions[get_column_letter(LFIX + 1 + i)].width = 6.5
+    for j in range(4):
+        ws2.column_dimensions[get_column_letter(LFIX + n_days + 1 + j)].width = 13
+    ws2.freeze_panes = 'E6'
+
+    buf = BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+    from flask import send_file
+    return send_file(buf, as_attachment=True,
+        download_name=f'HCP_Attendance_Report_{month_name}_{year}.xlsx',
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
 
 

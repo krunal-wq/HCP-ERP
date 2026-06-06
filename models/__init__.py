@@ -12,6 +12,7 @@ from .employee   import Employee, Contractor, WishLog, SalaryConfig, SalaryCompo
 from .permission import Module, RolePermission, UserGridConfig, UserPermission
 from .approval   import ApprovalRequest, ApprovalLevel
 from .attendance import RawPunchLog, Attendance, HolidayMaster, LateShiftRule, LatePenaltyRule, EarlyComingRule
+from .payroll import SalarySlip
 from .hr_rules import (HRShift, HRLocation, HRLateRule, HRLatePenaltySlab,
                        HREarlyGoingRule, HROvertimeRule, HRLeavePolicy, HRLeaveType,
                        HRLOPRule, HRAbsentRule, HRCompOffRule, HRLeaveApplication)

@@ -92,9 +92,13 @@ class HolidayMaster(db.Model):
 
     id          = db.Column(db.Integer, primary_key=True, autoincrement=True)
     title       = db.Column(db.String(200), nullable=False)
-    holiday_date= db.Column(db.Date, nullable=False, unique=True, index=True)
+    holiday_date= db.Column(db.Date, nullable=False, index=True)
     holiday_type= db.Column(db.String(50), default='National')
     # National / Optional / Restricted / Weekly Off
+    location    = db.Column(db.String(20), nullable=False, default='All', index=True)
+    # All / HO / Plant — kis location par holiday lagta hai
+    __table_args__ = (db.UniqueConstraint('holiday_date', 'location',
+                                          name='uq_holiday_date_location'),)
     description = db.Column(db.String(300))
     is_active   = db.Column(db.Boolean, default=True)
     created_at  = db.Column(db.DateTime, default=datetime.now)

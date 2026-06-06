@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block title %}Salary Processing{% endblock %}
+{% block page_title %}Salary Processing — {{ month_name }} {{ year }}{% endblock %}
+{% block bread %}HR / Salary{% endblock %}
+{% block extra_css %}
+<style>
+.sal-filter { background:#fff;border:1px solid var(--border);border-radius:12px;
+  padding:.9rem 1.1rem;margin-bottom:1rem;display:flex;gap:.7rem;flex-wrap:wrap;align-items:flex-end; }
+.sal-filter label { font-size:.72rem;font-weight:700;color:var(--text3);display:block;margin-bottom:3px; }
+.sal-filter select,.sal-filter input { padding:.4rem .7rem;border:1px solid var(--border);
+  border-radius:8px;font-size:.83rem;font-family:inherit;outline:none;background:#fff; }
+.btn-go { padding:.45rem 1.1rem;background:#2563eb;color:#fff;border:none;border-radius:8px;
+  font-size:.83rem;font-weight:700;cursor:pointer;font-family:inherit; }
+.btn-process { padding:.45rem 1.3rem;background:#16a34a;color:#fff;border:none;border-radius:8px;
+  font-size:.83rem;font-weight:700;cursor:pointer;font-family:inherit; }
+.chip { padding:4px 12px;border-radius:14px;font-size:.74rem;font-weight:700;color:#fff;display:inline-block; }
+.warn-box { background:#fffbeb;border:1px solid #fde68a;border-radius:10px;
+  padding:.7rem 1rem;font-size:.8rem;color:#92400e;margin-bottom:1rem; }
+.sal-tbl-wrap { background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden; }
+.sal-tbl { width:100%;border-collapse:collapse;font-size:.79rem; }
+.sal-tbl thead th { background:#0f172a;color:#fff;padding:8px 10px;font-size:.69rem;
+  font-weight:700;text-transform:uppercase;letter-spacing:.04em;text-align:right;white-space:nowrap; }
+.sal-tbl thead th:nth-child(-n+3) { text-align:left; }
+.sal-tbl td { padding:7px 10px;border-bottom:1px solid #f1f5f9;text-align:right;white-space:nowrap; }
+.sal-tbl td:nth-child(-n+3) { text-align:left; }
+.sal-tbl tbody tr:hover td { background:#fafbff; }
+.lop-bad { color:#dc2626;font-weight:700; }
+.net-cell { font-weight:800;color:#16a34a; }
+.btn-slip { padding:3px 10px;background:#7c3aed;color:#fff;border-radius:6px;
+  font-size:.72rem;font-weight:700;text-decoration:none;display:inline-block; }
+.btn-slip.dis { background:#cbd5e1;pointer-events:none; }
+.done-pill { background:#dcfce7;color:#16a34a;padding:2px 8px;border-radius:10px;
+  font-size:.68rem;font-weight:700; }
+</style>
+{% endblock %}
+
+{% block content %}
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% for cat, m in messages %}
+  <div style="padding:.6rem 1rem;border-radius:8px;margin-bottom:.8rem;font-size:.83rem;font-weight:600;
+       background:{{ '#dcfce7' if cat=='success' else ('#fee2e2' if cat=='error' else '#fef3c7') }};
+       color:{{ '#166534' if cat=='success' else ('#991b1b' if cat=='error' else '#92400e') }};">{{ m }}</div>
+  {% endfor %}
+{% endwith %}
+
+<form method="get" class="sal-filter">
+  <div><label>Year</label>
+    <select name="year">{% for y in years %}<option value="{{ y }}" {{ 'selected' if y==year }}>{{ y }}</option>{% endfor %}</select>
+  </div>
+  <div><label>Month</label>
+    <select name="month">{% for m in range(1,13) %}<option value="{{ m }}" {{ 'selected' if m==month }}>{{ ['','January','February','March','April','May','June','July','August','September','October','November','December'][m] }}</option>{% endfor %}</select>
+  </div>
+  <div><label>Employee Type</label>
+    <select name="emp_type"><option value="">All Types</option>
+      {% for t in emp_types %}<option value="{{ t }}" {{ 'selected' if t==emp_type }}>{{ t }}</option>{% endfor %}
+    </select>
+  </div>
+  <div><label>Search</label>
+    <input type="text" name="q" value="{{ search_q }}" placeholder="Name / Code / Dept">
+  </div>
+  <button class="btn-go" type="submit">🔍 Load</button>
+  <div style="flex:1;"></div>
+  <form method="post" action="/hr/salary/process" style="display:inline;">
+  </form>
+</form>
+
+{% if mp_total > 0 %}
+<div class="warn-box">
+  ⚠️ Is month <strong>{{ mp_total }} MIS-PUNCH entries</strong> hain — policy:
+  <strong>{{ {'absent':'Full LOP','half_day':'Half-day LOP','present':'Paid (no LOP)'}[mp_treat] }}</strong>.
+  Behtar hai pehle <a href="/hr/attendance/late-absent?type=mispunch" style="color:#92400e;text-decoration:underline;">regularize</a> karo, fir process.
+</div>
+{% endif %}
+
+<div style="display:flex;gap:.5rem;align-items:center;margin-bottom:.9rem;flex-wrap:wrap;">
+  <span class="chip" style="background:#64748b;">Employees: {{ rows|length }}</span>
+  <span class="chip" style="background:#16a34a;">Processed: {{ processed_count }}</span>
+  <span class="chip" style="background:#f59e0b;">Pending: {{ rows|length - processed_count if rows|length > processed_count else 0 }}</span>
+  <div style="flex:1;"></div>
+  <form method="post" action="/hr/salary/process"
+        onsubmit="return confirm('{{ month_name }} {{ year }} ki salary process/update karein? ({{ rows|length }} employees)');">
+    <input type="hidden" name="year" value="{{ year }}">
+    <input type="hidden" name="month" value="{{ month }}">
+    <input type="hidden" name="emp_type" value="{{ emp_type }}">
+    <input type="hidden" name="q" value="{{ search_q }}">
+    <button class="btn-process" type="submit">⚙️ Process Salary — {{ month_name }} {{ year }}</button>
+  </form>
+</div>
+
+<div class="sal-tbl-wrap"><div style="overflow-x:auto;">
+<table class="sal-tbl">
+  <thead><tr>
+    <th>#</th><th>Employee</th><th>Type</th>
+    <th>P</th><th>HD</th><th>AB</th><th>MP</th><th>WO</th><th>WOP</th><th>HOL</th><th>HLP</th><th>LV</th>
+    <th>Late</th><th>Penalty</th><th>Extra</th>
+    <th>LOP</th><th>Payable</th>
+    <th>Gross (Actual)</th><th>Earned</th><th>Deductions</th><th>Net Pay</th>
+    <th>Slip</th>
+  </tr></thead>
+  <tbody>
+  {% for r in rows %}
+    <tr>
+      <td>{{ loop.index }}</td>
+      <td><strong>{{ r.emp.full_name }}</strong>
+          <div style="font-size:.68rem;color:var(--text3);">{{ r.emp.employee_code or r.emp.employee_id }}</div></td>
+      <td style="font-size:.72rem;">{{ r.emp.employee_type or '—' }}</td>
+      <td>{{ r.c.present }}</td><td>{{ r.c.half }}</td>
+      <td>{{ r.c.absent }}</td><td>{{ r.c.mispunch }}</td>
+      <td>{{ r.c.weekoff }}</td>
+      <td style="{{ 'color:#7c3aed;font-weight:700;' if r.c.wop > 0 }}">{{ r.c.wop }}</td>
+      <td>{{ r.c.holiday }}</td>
+      <td style="{{ 'color:#e11d48;font-weight:700;' if r.c.hlp > 0 }}">{{ r.c.hlp }}</td>
+      <td>{{ '%g'|format(r.c.leave) }}</td>
+      <td class="{{ 'lop-bad' if r.c.late_n > 0 }}">{{ r.c.late_n }}</td>
+      <td class="{{ 'lop-bad' if r.c.late_pen > 0 }}">{{ '{:,.0f}'.format(r.c.late_pen) if r.c.late_pen else '—' }}</td>
+      <td style="color:#16a34a;font-weight:700;">{{ '+{:,.0f}'.format(r.c.extra_pay) if r.c.extra_pay else '—' }}</td>
+      <td class="{{ 'lop-bad' if r.c.lop > 0 }}">{{ '%g'|format(r.c.lop) }}</td>
+      <td>{{ '%g'|format(r.c.payable) }}</td>
+      <td>{{ '{:,.0f}'.format(r.c.total_actual) }}</td>
+      <td>{{ '{:,.0f}'.format(r.c.total_earned) }}</td>
+      <td>{{ '{:,.0f}'.format(r.c.total_ded) }}</td>
+      <td class="net-cell">₹ {{ '{:,.0f}'.format(r.c.net) }}</td>
+      <td>
+        {% if r.slip %}
+          <a class="btn-slip" href="/hr/salary/slip/{{ r.emp.id }}/{{ year }}/{{ month }}">📄 PDF</a>
+          <span class="done-pill">✓</span>
+        {% else %}
+          <span class="btn-slip dis">📄 PDF</span>
+        {% endif %}
+      </td>
+    </tr>
+  {% else %}
+    <tr><td colspan="22" style="text-align:center;padding:2.5rem;color:var(--text3);">No employees found.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div></div>
+<div style="font-size:.72rem;color:var(--text3);margin-top:.6rem;">
+  Formula: Payable = Month Days − LOP &nbsp;|&nbsp; LOP = Absent + Half&nbsp;Day×0.5 + MIS-PUNCH ({{ mp_treat }}) &nbsp;|&nbsp;
+  Earned = Actual × Payable/Month&nbsp;Days &nbsp;|&nbsp; Extra = (Gross/MonthDays) × (WOP + HLP) &nbsp;|&nbsp; Net = Earned + Extra − (PF + ESIC + PT + TDS + Late Penalty)
+</div>
+{% endblock %}

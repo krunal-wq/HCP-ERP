@@ -89,6 +89,14 @@
           </select>
         </div>
         <div class="fg">
+          <label>Location</label>
+          <select name="location">
+            <option value="All">🌐 All Locations</option>
+            <option value="HO">🏢 HO (Head Office)</option>
+            <option value="Plant">🏭 Plant</option>
+          </select>
+        </div>
+        <div class="fg">
           <label>Description</label>
           <textarea name="description" rows="2" placeholder="Optional note..."></textarea>
         </div>
@@ -119,6 +127,7 @@
           <th>Day</th>
           <th>Holiday</th>
           <th>Type</th>
+          <th>Location</th>
           <th>Action</th>
         </tr>
       </thead>
@@ -144,6 +153,12 @@
             </span>
           </td>
           <td>
+            {% set loc = h.location or 'All' %}
+            <span class="type-pill" style="background:{{ '#e0e7ff' if loc=='HO' else ('#fef3c7' if loc=='Plant' else '#dcfce7') }};color:{{ '#3730a3' if loc=='HO' else ('#92400e' if loc=='Plant' else '#166534') }};">
+              {{ '🏢 HO' if loc=='HO' else ('🏭 Plant' if loc=='Plant' else '🌐 All') }}
+            </span>
+          </td>
+          <td>
             <form method="post" action="/hr/attendance/holidays/{{ h.id }}/delete"
                   onsubmit="return confirm('Delete {{ h.title }}?')" style="display:inline;">
               <button type="submit" style="background:none;border:none;color:#dc2626;cursor:pointer;font-size:.74rem;font-weight:600;">
@@ -154,7 +169,7 @@
         </tr>
         {% else %}
         <tr>
-          <td colspan="6" style="text-align:center;padding:2.5rem;color:var(--text3);">
+          <td colspan="7" style="text-align:center;padding:2.5rem;color:var(--text3);">
             <div style="font-size:1.8rem;margin-bottom:.4rem;">📅</div>
             {{ year }} ke liye koi holidays nahi add hui
           </td>

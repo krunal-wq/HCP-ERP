@@ -107,7 +107,7 @@
             {% set _mod = 'npd' %}
         {% elif _pg in ('cat_master','uom_master','hsn_master','masters') %}
             {% set _mod = 'masters' %}
-        {% elif _pg in ('hr_emp_dashboard','hr_employees','hr_contractors','hierarchy','salary_config','hr_attendance','att_sync','att_daily','att_monthly','att_manual','att_late','att_holidays','my_attendance','hr_leave_apply','hr_leave_balance','hr_leave_list','hr_my_leave','hr_masters','late_rules','hr_shifts','hr_locations_master','hr_late_rules','hr_early_rules','hr_ot_rules','hr_leave_policy','hr_lop_rules','hr_absent_rules','hr_compoff_rules','hr_dept_master','hr_desig_master','hr_shift_master','hr_emptype_master','hr_loc_master','hr_nationality_master','hr_grade_master') %}
+        {% elif _pg in ('hr_emp_dashboard','hr_employees','hr_contractors','hierarchy','salary_config','hr_salary','hr_attendance','att_sync','att_daily','att_monthly','att_manual','att_late','att_holidays','my_attendance','hr_leave_apply','hr_leave_balance','hr_leave_list','hr_my_leave','hr_masters','late_rules','hr_shifts','hr_locations_master','hr_late_rules','hr_early_rules','hr_ot_rules','hr_leave_policy','hr_lop_rules','hr_absent_rules','hr_compoff_rules','hr_dept_master','hr_desig_master','hr_shift_master','hr_emptype_master','hr_loc_master','hr_nationality_master','hr_grade_master') %}
             {% set _mod = 'hr' %}
         {% elif _pg in ('approvals','permissions','audit_logs','users','admin_profile','user_mgmt','user_permissions','approval_config','profile') %}
             {% set _mod = 'admin' %}
@@ -791,6 +791,15 @@
                 <span class="nav-ic"><i class="bi bi-stars"></i></span><span class="nav-txt">Holidays</span>
             </a>
             {% endif %}
+        </div>
+        {% endif %}
+
+        {% if role in ('admin','hr','manager') %}
+        <div class="sb-sec">
+            <div class="sb-sec-lbl">Payroll</div>
+            <a class="nav-a {% if _pg == 'hr_salary' %}active{% endif %}" href="/hr/salary">
+                <span class="nav-ic"><i class="bi bi-cash-stack"></i></span><span class="nav-txt">Salary Processing</span>
+            </a>
         </div>
         {% endif %}
         {% if get_sub_perm('hr', 'leave_apply') or get_sub_perm('hr', 'leave_list') or get_sub_perm('hr', 'leave_balance') %}

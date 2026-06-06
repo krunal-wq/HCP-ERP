@@ -71,6 +71,9 @@
 .lg-MP   { background:#fef9c3; color:#ca8a04; }
 .lg-WO   { background:#e2e8f0; color:#475569; }
 .lg-WOP  { background:#ede9fe; color:#7c3aed; }
+.lg-HOL  { background:#ffedd5; color:#ea580c; }
+.lg-LV   { background:#cffafe; color:#0891b2; }
+.lg-HLP  { background:#ffe4e6; color:#e11d48; }
 .legend-text { font-size:.78rem; color:var(--text2); margin-left:.3rem; }
 
 /* ── Per-employee section ── */
@@ -103,6 +106,9 @@
 .sm-MP   { background:#fef9c3; color:#ca8a04; }
 .sm-WO   { background:#e2e8f0; color:#475569; }
 .sm-WOP  { background:#ede9fe; color:#7c3aed; }
+.sm-HOL  { background:#ffedd5; color:#ea580c; }
+.sm-LV   { background:#cffafe; color:#0891b2; }
+.sm-HLP  { background:#ffe4e6; color:#e11d48; }
 
 .day-tbl { width:100%; border-collapse:collapse; font-size:.82rem; }
 .day-tbl thead th {
@@ -121,6 +127,9 @@
 .row-MP  { background:#fefce8; }
 .row-WO  { background:#f8fafc; color:var(--text3); }
 .row-WOP { background:#f5f3ff; }
+.row-HOL { background:#fff7ed; }
+.row-LV  { background:#ecfeff; }
+.row-HLP { background:#fff1f2; }
 
 .day-date {
   font-size:.82rem; font-weight:600; color:var(--text);
@@ -138,6 +147,10 @@
 .cs-MP  { background:#ca8a04; }
 .cs-WO  { background:#64748b; }
 .cs-WOP { background:#7c3aed; }
+.cs-HOL { background:#ea580c; }
+.cs-LV  { background:#0891b2; }
+.cs-HLP { background:#e11d48; }
+.day-note { font-size:.72rem; color:var(--text3); font-style:italic; margin-left:.4rem; }
 </style>
 {% endblock %}
 
@@ -181,7 +194,7 @@
       <a class="btn-nav" href="?year={{ next_year }}&month={{ next_month }}{% if emp_type %}&emp_type={{ emp_type }}{% endif %}{% if search_q %}&q={{ search_q }}{% endif %}" title="Next month">›</a>
     </div>
     <div>
-      <a class="btn-excel" href="#" onclick="alert('Excel export — TODO');return false;">📥 Excel</a>
+      <a class="btn-excel" href="/hr/attendance/monthly/export?year={{ year }}&month={{ month }}&emp_type={{ emp_type|urlencode }}&q={{ search_q|urlencode }}">📥 Excel</a>
     </div>
   </form>
 </div>
@@ -200,6 +213,9 @@
   <span class="lg lg-MP">MP <span class="legend-text">— MIS-PUNCH</span></span>
   <span class="lg lg-WO">WO <span class="legend-text">— Week Off</span></span>
   <span class="lg lg-WOP">WOP <span class="legend-text">— Working on Off Day</span></span>
+  <span class="lg lg-HOL">HOL <span class="legend-text">— Holiday</span></span>
+  <span class="lg lg-LV">LV <span class="legend-text">— On Leave</span></span>
+  <span class="lg lg-HLP">HLP <span class="legend-text">— Holiday Present</span></span>
 </div>
 
 {% if emp_rows %}
@@ -220,6 +236,9 @@
         <span class="sm-chip sm-MP">MP: {{ er.cnt.MP }}</span>
         <span class="sm-chip sm-WO">WO: {{ er.cnt.WO }}</span>
         <span class="sm-chip sm-WOP">WOP: {{ er.cnt.WOP }}</span>
+        <span class="sm-chip sm-HOL">HOL: {{ er.cnt.HOL }}</span>
+        <span class="sm-chip sm-LV">LV: {{ er.cnt.LV }}</span>
+        <span class="sm-chip sm-HLP">HLP: {{ er.cnt.HLP }}</span>
       </div>
     </div>
     <div style="overflow-x:auto;">
@@ -237,7 +256,7 @@
           {% for d in er.days %}
           {% set wd = d.date.strftime('%a') %}
           <tr class="row-{{ d.code }}">
-            <td><span class="day-date">{{ d.date.strftime('%d-%b-%Y') }} <span class="wd">({{ wd }})</span></span></td>
+            <td><span class="day-date">{{ d.date.strftime('%d-%b-%Y') }} <span class="wd">({{ wd }})</span></span>{% if d.note %}<span class="day-note">🎉 {{ d.note }}</span>{% endif %}</td>
             <td>{{ d.in_t or '' }}</td>
             <td>{{ d.out_t or '' }}</td>
             <td>{{ '%.2f'|format(d.tot) }}</td>
