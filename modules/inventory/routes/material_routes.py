@@ -7,7 +7,7 @@ from flask import Blueprint, render_template, request, jsonify, abort
 from flask_login import login_required, current_user
 from models import db, Material, MaterialType, MaterialGroup, ItemCategory, UOMMaster
 from models.client import ClientBrand
-from core.permissions import get_perm, get_sub_perm
+from core.permissions import get_perm, get_sub_perm, can_view_material_type
 
 material_bp = Blueprint('material', __name__, url_prefix='/material')
 
@@ -30,6 +30,31 @@ _TYPE_PERM_MAP = {
     'TG':  'type_tg',
 }
 
+# Abbreviation → dedicated Procurement module (Permissions Management screen).
+# RM/PM/FG ka apna top-level module hota hai; isse view rights bhi mil sakte hain.
+_TYPE_MOD_MAP = {
+    'RM': 'purchase_rm',
+    'PM': 'purchase_pm',
+    'FG': 'purchase_fg',
+}
+
+def _can_view_item(abbr):
+    """View permission for the Item Master page.
+
+    RM/PM/FG → STRICTLY apne dedicated Procurement module (purchase_rm/pm/fg)
+    se hi gate hota hai — taaki har category alag se control ho aur bina
+    permission direct URL access (e.g. ?item_type=PM) block rahe. Baaki types
+    (SFG/CON/TG) / no item_type → generic 'material' module. Admin/Manager →
+    always allowed.
+    """
+    if _role() in ('admin', 'manager'):
+        return True
+    # RM/PM/FG â†’ shared category helper (purchase_rm/pm/fg). Baaki (generic
+    # /material, SFG/CON/TG) â†’ generic 'material' module.
+    if (abbr or '').upper() in _TYPE_MOD_MAP:
+        return can_view_material_type(abbr)
+    return _can('view')
+
 def _allowed_types(types):
     """Filter types list based on user's type-level sub-permissions.
     Admin / Manager → sab types (case-insensitive, whitespace-tolerant).
@@ -43,6 +68,13 @@ def _allowed_types(types):
     filtered = []
     for t in types:
         abbr = (t.abbreviation or '').upper()
+        # Dedicated Procurement module grant (purchase_rm/pm/fg) bhi type allow karta hai
+        proc_mod = _TYPE_MOD_MAP.get(abbr)
+        if proc_mod:
+            p = get_perm(proc_mod)
+            if p and getattr(p, 'can_view', False):
+                filtered.append(t)
+                continue
         key  = _TYPE_PERM_MAP.get(abbr)
         if key is None:
             # Unknown type abbreviation → allow by default
@@ -55,14 +87,16 @@ def _allowed_types(types):
 @material_bp.route('')
 @login_required
 def index():
-    if not _can('view'): abort(403)
+    # ── Auto Item Type: URL se item_type=RM/PM/FG ─────────────────────────
+    # Jab /material?item_type=RM se aaye to auto-filter + type selector hide.
+    # View permission category-specific hoti hai (purchase_rm/pm/fg) warna
+    # generic 'material' module. Isse direct URL access bina permission ke block.
+    auto_type_abbr = request.args.get('item_type', '').strip().upper()
+    if not _can_view_item(auto_type_abbr): abort(403)
     types  = _allowed_types(MaterialType.query.order_by(MaterialType.sort_order, MaterialType.type_name).all())
     groups = MaterialGroup.query.order_by(MaterialGroup.group_name).all()
     categories = ItemCategory.query.filter_by(is_active=True).order_by(ItemCategory.category_name).all()
 
-    # ── Auto Item Type: URL se item_type=RM/PM/FG ─────────────────────────
-    # Jab /material?item_type=RM se aaye to auto-filter + type selector hide
-    auto_type_abbr = request.args.get('item_type', '').strip().upper()
     auto_type = None
     if auto_type_abbr:
         auto_type = next(
@@ -246,7 +280,12 @@ def api_debug_image(item_id):
 @material_bp.route('/masters')
 @login_required
 def masters():
-    if not _can('view'): abort(403)
+    # Item Masters config = Procurement (shared settings) module ka part.
+    # Admin/Manager bypass; warna procurement ya legacy material grant chahiye.
+    if _role() not in ('admin', 'manager'):
+        _pp = get_perm('procurement')
+        if not (_pp and _pp.can_view) and not _can('view'):
+            abort(403)
     return render_template('material/masters.html',
         active_page='material', role=_role(),
         user_name=getattr(current_user, 'full_name', '') or _cu(),
@@ -417,11 +456,17 @@ def api_list():
 
     tid = request.args.get('type_id')
     gid = request.args.get('group_id')
+    category = request.args.get('category','').strip()
     search = request.args.get('search','').strip()
     active = request.args.get('active','1')
     if tid: q = q.filter(Material.material_type_id == int(tid))
     if gid: q = q.filter(Material.group_id == int(gid))
-    if active == '1': q = q.filter(Material.is_active == True)
+    if category: q = q.filter(Material.category == category)
+    # Status filter: '1' = Active only, 'inactive' = Inactive only, '0'/'all' = both
+    if active == '1':
+        q = q.filter(Material.is_active == True)
+    elif active == 'inactive':
+        q = q.filter(Material.is_active == False)
     q = q.filter(db.or_(Material.is_deleted == False, Material.is_deleted == None))
     if search:
         like = f'%{search}%'

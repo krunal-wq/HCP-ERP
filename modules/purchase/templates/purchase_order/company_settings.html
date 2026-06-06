@@ -1,48 +1,66 @@
 {% extends 'base.html' %}
-{% block title %}Company Settings — HCP ERP{% endblock %}
+{% block title %}Company Settings - HCP ERP{% endblock %}
 {% block page_title %}Company Settings (Purchase Orders){% endblock %}
 {% block bread %}Procurement / Purchase Order / Company Settings{% endblock %}
 
 {% block extra_css %}
 <style>
-.cs-card { background:#fff; border:1.5px solid #e2e8f0; border-radius:12px; margin-bottom:18px; overflow:hidden; }
-.cs-hdr { display:flex; align-items:center; gap:10px; padding:13px 18px; background:#f8fafc; border-bottom:1px solid #f1f5f9; }
-.cs-hdr h2 { font-size:13.5px; font-weight:700; color:#1e293b; margin:0; }
+.cs-card { background:#fff; border:1px solid #e2e8f0; border-radius:16px; margin-bottom:18px;
+    overflow:hidden; box-shadow:0 1px 3px rgba(15,23,42,.05), 0 4px 16px rgba(15,23,42,.04); }
+.cs-hdr { display:flex; align-items:center; gap:11px; padding:14px 18px; background:#fff;
+    border-bottom:1.5px solid #e2e8f0; }
+.cs-hdr .ic { width:28px; height:28px; border-radius:8px; display:inline-flex; align-items:center;
+    justify-content:center; flex:0 0 28px; background:#dbeafe; color:#1d4ed8; }
+.cs-hdr h2 { font-size:13.5px; font-weight:800; color:#0f172a; margin:0; letter-spacing:-.01em; }
 .cs-body { padding:20px; }
 .cs-grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
 .cs-grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; }
 .cs-fld { display:flex; flex-direction:column; gap:5px; margin-bottom:14px; }
-.cs-label { font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:.05em; }
+.cs-label { font-size:10.5px; font-weight:800; color:#94a3b8; text-transform:uppercase;
+    letter-spacing:.06em; }
 .cs-label .req { color:#ef4444; }
 .cs-input, .cs-textarea {
-    width:100%; padding:9px 12px; border:1.5px solid #e2e8f0; border-radius:8px;
-    font-size:13px; font-family:inherit; color:#1e293b; background:#fff;
-    box-sizing:border-box; outline:none; transition:border-color .15s;
+    width:100%; padding:9px 12px; border:1.5px solid #e2e8f0; border-radius:10px;
+    font-size:13px; font-family:inherit; color:#0f172a; background:#fff;
+    box-sizing:border-box; outline:none; transition:border-color .15s, box-shadow .15s;
 }
-.cs-input:focus, .cs-textarea:focus { border-color:#2563eb; box-shadow:0 0 0 3px rgba(37,99,235,.1); }
+.cs-input:focus, .cs-textarea:focus { border-color:#93c5fd; box-shadow:0 0 0 3px rgba(37,99,235,.1); }
+.cs-input::placeholder, .cs-textarea::placeholder { color:#94a3b8; }
 .cs-textarea { resize:vertical; min-height:72px; }
 .cs-mono { font-family:'JetBrains Mono', monospace; font-weight:700; }
 .cs-hint { font-size:10.5px; color:#94a3b8; margin-top:2px; }
 
 .cs-footer { position:sticky; bottom:0; background:#fff; border-top:1.5px solid #e2e8f0;
     padding:14px 22px; display:flex; align-items:center; justify-content:space-between;
-    z-index:10; margin:0 -16px; }
-.cs-btn { padding:9px 18px; border-radius:8px; font-size:13px; font-weight:700;
-    cursor:pointer; font-family:inherit; border:1.5px solid; transition:all .15s; text-decoration:none; }
-.cs-btn.primary { background:#2563eb; color:#fff; border-color:#2563eb; }
-.cs-btn.primary:hover { background:#1d4ed8; }
-.cs-btn.outline { background:#fff; color:#475569; border-color:#e2e8f0; }
-.cs-btn.outline:hover { border-color:#94a3b8; color:#1e293b; }
+    z-index:10; margin:0 -16px; box-shadow:0 -4px 16px rgba(15,23,42,.04); }
+.cs-btn { display:inline-flex; align-items:center; gap:7px; padding:10px 20px;
+    border-radius:99px; font-size:13px; font-weight:700; cursor:pointer; font-family:inherit;
+    border:1.5px solid; transition:all .15s; text-decoration:none; }
+.cs-btn.primary { background:linear-gradient(180deg,#3b82f6,#1d4ed8); color:#fff;
+    border-color:transparent;
+    box-shadow:0 2px 8px rgba(37,99,235,.3), inset 0 1px 0 rgba(255,255,255,.2); }
+.cs-btn.primary:hover { transform:translateY(-1px);
+    box-shadow:0 4px 14px rgba(37,99,235,.4), inset 0 1px 0 rgba(255,255,255,.2); }
+.cs-btn.outline { background:#fff; color:#64748b; border-color:#e2e8f0; }
+.cs-btn.outline:hover { background:#eff6ff; border-color:#93c5fd; color:#1d4ed8; }
 
-@media (max-width:900px){ .cs-grid-2, .cs-grid-3 { grid-template-columns:1fr; } }
+@media (max-width:900px){
+  .cs-grid-2, .cs-grid-3 { grid-template-columns:1fr; }
+  .cs-card { border-radius:12px; }
+}
 </style>
 {% endblock %}
 
 {% block content %}
-<form method="post" action="{{ url_for('purchase_order.save_company_settings') }}" style="max-width:1000px;margin:0 auto;padding:0 16px 80px;">
+<form method="post" action="{{ url_for('purchase_order.save_company_settings') }}" style="margin:0 auto;padding:0 16px 80px;">
 
   <div class="cs-card">
-    <div class="cs-hdr"><span style="font-size:16px;">🏢</span><h2>Company Identification</h2></div>
+    <div class="cs-hdr">
+      <span class="ic">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></svg>
+      </span>
+      <h2>Company Identification</h2>
+    </div>
     <div class="cs-body">
       <div class="cs-grid-2">
         <div class="cs-fld">
@@ -78,7 +96,12 @@
   </div>
 
   <div class="cs-card">
-    <div class="cs-hdr"><span style="font-size:16px;">📍</span><h2>Addresses</h2></div>
+    <div class="cs-hdr">
+      <span class="ic">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg>
+      </span>
+      <h2>Addresses</h2>
+    </div>
     <div class="cs-body">
       <div class="cs-fld">
         <label class="cs-label">Invoice / Bill Address <span class="req">*</span></label>
@@ -94,7 +117,12 @@
   </div>
 
   <div class="cs-card">
-    <div class="cs-hdr"><span style="font-size:16px;">📞</span><h2>Contact</h2></div>
+    <div class="cs-hdr">
+      <span class="ic">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384"/></svg>
+      </span>
+      <h2>Contact</h2>
+    </div>
     <div class="cs-body">
       <div class="cs-grid-3">
         <div class="cs-fld">
@@ -114,7 +142,12 @@
   </div>
 
   <div class="cs-card">
-    <div class="cs-hdr"><span style="font-size:16px;">📜</span><h2>PO Document Footer</h2></div>
+    <div class="cs-hdr">
+      <span class="ic">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      </span>
+      <h2>PO Document Footer</h2>
+    </div>
     <div class="cs-body">
       <div class="cs-fld">
         <label class="cs-label">Declaration Text</label>
@@ -132,11 +165,14 @@
   <div class="cs-footer">
     <div style="font-size:11.5px;color:#94a3b8;">
       Last updated:
-      <b style="color:#475569;">{{ company.updated_at.strftime('%d-%b-%Y %H:%M') if company and company.updated_at else '—' }}</b>
+      <b style="color:#475569;">{{ company.updated_at.strftime('%d-%b-%Y %H:%M') if company and company.updated_at else '-' }}</b>
     </div>
     <div style="display:flex;gap:8px;">
       <a href="{{ url_for('purchase_order.index') }}" class="cs-btn outline">Cancel</a>
-      <button type="submit" class="cs-btn primary">💾 Save Settings</button>
+      <button type="submit" class="cs-btn primary">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/></svg>
+        Save Settings
+      </button>
     </div>
   </div>
 </form>

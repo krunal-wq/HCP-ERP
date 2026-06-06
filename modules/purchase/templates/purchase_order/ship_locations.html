@@ -1,59 +1,81 @@
 {% extends "base.html" %}
-{% block title %}Ship Locations Master — HCP ERP{% endblock %}
+{% block title %}Ship Locations Master - HCP ERP{% endblock %}
 {% block page_title %}Ship Locations{% endblock %}
 {% block bread %}Procurement / Purchase Order / Ship Locations Master{% endblock %}
 
 {% block extra_css %}
 <style>
-.sl-wrap{ background:#fff; border-radius:12px; padding:0; margin-bottom:30px;
-          border:1px solid #e2e8f0; box-shadow:0 1px 3px rgba(0,0,0,.04); }
-.sl-hdr{ display:flex; align-items:center; justify-content:space-between;
-         padding:18px 24px; border-bottom:1px solid #e2e8f0; background:#f8fafc;
-         border-radius:12px 12px 0 0; }
-.sl-hdr h2{ margin:0; font-size:17px; font-weight:800; color:#0f172a; }
+.sl-wrap{ background:#fff; border-radius:16px; padding:0; margin-bottom:30px;
+          border:1px solid #e2e8f0;
+          box-shadow:0 1px 3px rgba(15,23,42,.05), 0 4px 16px rgba(15,23,42,.04); }
+.sl-hdr{ display:flex; align-items:center; justify-content:space-between; gap:12px;
+         padding:18px 24px; border-bottom:1.5px solid #e2e8f0; background:#f8fafc;
+         border-radius:16px 16px 0 0; flex-wrap:wrap; }
+.sl-hdr h2{ margin:0; font-size:17px; font-weight:800; color:#0f172a;
+            letter-spacing:-.01em; display:inline-flex; align-items:center; gap:9px; }
+.sl-hdr h2 svg{ color:#1d4ed8; flex:0 0 auto; }
 .sl-hdr .desc{ font-size:12.5px; color:#64748b; margin-top:3px; }
 .sl-body{ padding:18px 22px; }
 
+/* ============ TABLE ============ */
 .sl-table{ width:100%; border-collapse:collapse; font-size:13px; }
 .sl-table thead th{
-    background:#f1f5f9; color:#475569; font-size:11px; font-weight:700;
-    text-transform:uppercase; letter-spacing:.04em; padding:10px 8px;
-    text-align:left; border-bottom:2px solid #cbd5e1; }
-.sl-table tbody td{ padding:8px 6px; border-bottom:1px solid #e2e8f0; vertical-align:top; }
-.sl-table tbody tr:hover{ background:#fafbfd; }
+    background:#fff; color:#94a3b8; font-size:10.5px; font-weight:800;
+    text-transform:uppercase; letter-spacing:.06em; padding:10px 8px;
+    text-align:left; border-bottom:2px solid #e2e8f0; white-space:nowrap; }
+.sl-table tbody td{ padding:9px 6px; border-bottom:1px solid #f1f5f9; vertical-align:top; }
+.sl-table tbody tr{ transition:background .12s; }
+.sl-table tbody tr:hover{ background:#f8fafc; }
+.sl-table tbody tr:last-child td{ border-bottom:none; }
 
 .sl-table .cell-input, .sl-table .cell-textarea{
-    width:100%; padding:7px 9px; border:1px solid #e2e8f0; border-radius:5px;
-    font-size:13px; background:#fff; outline:none; font-family:inherit; }
-.sl-table .cell-input:focus, .sl-table .cell-textarea:focus{ border-color:#2563eb; }
+    width:100%; padding:8px 10px; border:1.5px solid #e2e8f0; border-radius:9px;
+    font-size:13px; background:#fff; outline:none; font-family:inherit; color:#0f172a;
+    transition:border-color .15s, box-shadow .15s; }
+.sl-table .cell-input:focus, .sl-table .cell-textarea:focus{
+    border-color:#93c5fd; box-shadow:0 0 0 3px rgba(37,99,235,.1); }
+.sl-table .cell-input::placeholder, .sl-table .cell-textarea::placeholder{ color:#94a3b8; }
 .sl-table .cell-textarea{ min-height:60px; resize:vertical; }
 .sl-table .ck-cell{ text-align:center; }
-.sl-table .ck-cell input{ width:18px; height:18px; cursor:pointer; }
+.sl-table .ck-cell input{ width:17px; height:17px; cursor:pointer; accent-color:#2563eb; }
 
-.sl-row-del{ background:#fee2e2; color:#dc2626; border:0;
-             width:28px; height:28px; border-radius:5px; cursor:pointer; font-size:16px; }
-.sl-row-del:hover{ background:#fecaca; }
+.sl-row-del{ background:#fef2f2; color:#dc2626; border:1px solid #fecaca;
+             width:28px; height:28px; border-radius:8px; cursor:pointer; font-size:15px;
+             line-height:1; transition:all .12s; }
+.sl-row-del:hover{ background:#fee2e2; border-color:#fca5a5; transform:translateY(-1px); }
 
-.sl-add-row{ display:inline-flex; align-items:center; gap:6px; margin-top:12px;
-             background:#eff6ff; color:#2563eb; border:1px dashed #93c5fd;
-             padding:8px 18px; border-radius:6px; font-size:13px; font-weight:600;
-             cursor:pointer; }
-.sl-add-row:hover{ background:#dbeafe; }
+.sl-add-row{ display:inline-flex; align-items:center; gap:7px; margin-top:14px;
+             background:#eff6ff; color:#1d4ed8; border:1.5px dashed #93c5fd;
+             padding:9px 18px; border-radius:99px; font-size:13px; font-weight:700;
+             cursor:pointer; font-family:inherit; transition:all .15s; }
+.sl-add-row:hover{ background:#dbeafe; border-color:#60a5fa; transform:translateY(-1px); }
 
+/* ============ FOOTER BUTTONS ============ */
 .sl-footer{ display:flex; justify-content:flex-end; gap:10px; padding:14px 22px;
-            border-top:1px solid #e2e8f0; background:#f8fafc;
-            border-radius:0 0 12px 12px; }
-.sl-btn{ padding:9px 20px; border-radius:6px; font-size:13px; font-weight:700;
-         cursor:pointer; border:0; transition:all .15s; }
-.sl-btn-primary{ background:#1e40af; color:#fff; }
-.sl-btn-primary:hover{ background:#1e3a8a; }
-.sl-btn-outline{ background:#fff; color:#475569; border:1px solid #d1d5db; }
-.sl-btn-outline:hover{ background:#f8fafc; }
+            border-top:1.5px solid #e2e8f0; background:#f8fafc;
+            border-radius:0 0 16px 16px; }
+.sl-btn{ display:inline-flex; align-items:center; gap:7px; padding:10px 20px;
+         border-radius:99px; font-size:13px; font-weight:700; cursor:pointer;
+         border:0; transition:all .15s; font-family:inherit; text-decoration:none; }
+.sl-btn-primary{ background:linear-gradient(180deg,#3b82f6,#1d4ed8); color:#fff;
+    box-shadow:0 2px 8px rgba(37,99,235,.3), inset 0 1px 0 rgba(255,255,255,.2); }
+.sl-btn-primary:hover{ transform:translateY(-1px);
+    box-shadow:0 4px 14px rgba(37,99,235,.4), inset 0 1px 0 rgba(255,255,255,.2); }
+.sl-btn-outline{ background:#fff; color:#64748b; border:1.5px solid #e2e8f0; }
+.sl-btn-outline:hover{ background:#eff6ff; border-color:#93c5fd; color:#1d4ed8; }
 
-.sl-help{ margin:10px 0 14px; padding:10px 14px; background:#fffbeb;
-          border:1px solid #fde68a; border-radius:6px;
-          color:#78350f; font-size:12.5px; }
+/* ============ HELP BOX ============ */
+.sl-help{ display:flex; gap:10px; align-items:flex-start;
+          margin:6px 0 16px; padding:11px 14px; background:#fffbeb;
+          border:1px solid #fde68a; border-radius:12px;
+          color:#78350f; font-size:12.5px; line-height:1.5; }
+.sl-help svg{ flex:0 0 auto; color:#d97706; margin-top:1px; }
 .sl-help b{ color:#92400e; }
+
+@media (max-width:768px){
+  .sl-wrap{ border-radius:12px; }
+  .sl-body{ padding:14px; overflow-x:auto; }
+}
 </style>
 {% endblock %}
 
@@ -61,17 +83,24 @@
 <div class="sl-wrap">
   <div class="sl-hdr">
     <div>
-      <h2>📦 Ship Locations Master</h2>
+      <h2>
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+        Ship Locations Master
+      </h2>
       <div class="desc">Manage destination addresses available in Purchase Order's "Ship Location" dropdown</div>
     </div>
-    <a class="sl-btn sl-btn-outline" href="{{ url_for('purchase_order.index') }}">← Back to POs</a>
+    <a class="sl-btn sl-btn-outline" href="{{ url_for('purchase_order.index') }}">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+      Back to POs
+    </a>
   </div>
 
   <div class="sl-body">
     <div class="sl-help">
-      ⓘ <b>How it works:</b> Add multiple shipping destinations (factory, godowns, head office).
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+      <span><b>How it works:</b> Add multiple shipping destinations (factory, godowns, head office).
       The first row marked as <b>Default</b> will auto-populate on new POs. Inactive rows are hidden
-      from the PO dropdown but kept for history.
+      from the PO dropdown but kept for history.</span>
     </div>
 
     <table class="sl-table" id="slTable">
@@ -98,7 +127,10 @@
 
   <div class="sl-footer">
     <a href="{{ url_for('purchase_order.index') }}" class="sl-btn sl-btn-outline">Cancel</a>
-    <button type="button" class="sl-btn sl-btn-primary" onclick="slSave()">💾 Save All Locations</button>
+    <button type="button" class="sl-btn sl-btn-primary" onclick="slSave()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/></svg>
+      Save All Locations
+    </button>
   </div>
 </div>
 {% endblock %}
@@ -114,26 +146,27 @@ function slAddRow(d){
   const tr = document.createElement('tr');
   tr.dataset.idx = i;
   tr.innerHTML = `
-    <td style="color:#94a3b8;font-size:11px;text-align:center;">${i+1}</td>
+    <td style="color:#94a3b8;font-size:11px;text-align:center;padding-top:16px;">${i+1}</td>
     <td><input class="cell-input cell-name"  value="${escapeAttr(d.name||'')}" placeholder="e.g. Bavla Factory"></td>
     <td><textarea class="cell-textarea cell-addr" placeholder="Full address...">${escapeHtml(d.address||'')}</textarea></td>
     <td><input class="cell-input cell-city"  value="${escapeAttr(d.city||'')}"></td>
     <td><input class="cell-input cell-state" value="${escapeAttr(d.state||'Gujarat')}"></td>
     <td><input class="cell-input cell-stcode" value="${escapeAttr(d.state_code||'24')}" maxlength="3" style="text-align:center;"></td>
     <td><input class="cell-input cell-pin"   value="${escapeAttr(d.pincode||'')}"></td>
-    <td><input class="cell-input cell-gstin" value="${escapeAttr(d.gstin||'')}" style="font-family:monospace;font-size:11.5px;"></td>
+    <td><input class="cell-input cell-gstin" value="${escapeAttr(d.gstin||'')}" style="font-family:'JetBrains Mono',monospace;font-size:11.5px;"></td>
     <td>
       <input class="cell-input cell-cp" value="${escapeAttr(d.contact_person||'')}" placeholder="Contact" style="margin-bottom:4px;">
       <input class="cell-input cell-ph" value="${escapeAttr(d.phone||'')}" placeholder="Phone" style="font-size:11.5px;">
     </td>
-    <td class="ck-cell"><input type="radio" name="slDefault" class="cell-default" ${d.is_default ? 'checked' : ''}></td>
-    <td class="ck-cell"><input type="checkbox" class="cell-active" ${(d.is_active !== false) ? 'checked' : ''}></td>
-    <td><button type="button" class="sl-row-del" title="Remove" onclick="slDelRow(${i})">×</button></td>
+    <td class="ck-cell" style="padding-top:16px;"><input type="radio" name="slDefault" class="cell-default" ${d.is_default ? 'checked' : ''}></td>
+    <td class="ck-cell" style="padding-top:16px;"><input type="checkbox" class="cell-active" ${(d.is_active !== false) ? 'checked' : ''}></td>
+    <td style="padding-top:12px;"><button type="button" class="sl-row-del" title="Remove" onclick="slDelRow(${i})">&times;</button></td>
   `;
   document.getElementById('slBody').appendChild(tr);
 }
 
 function slDelRow(i){
+  if (!confirm('Are you sure you want to delete this location?')) return;
   const tr = document.querySelector(`#slBody tr[data-idx="${i}"]`);
   if (tr) tr.remove();
 }
@@ -149,7 +182,7 @@ function slSave(){
     const name = tr.querySelector('.cell-name').value.trim();
     const addr = tr.querySelector('.cell-addr').value.trim();
     if (!name && !addr) return;          // skip blank rows entirely
-    if (!name || !addr){                  // partial → flag invalid
+    if (!name || !addr){                  // partial -> flag invalid
       tr.querySelector(name ? '.cell-addr' : '.cell-name').style.borderColor = '#dc2626';
       hasInvalid = true;
       return;
@@ -184,7 +217,7 @@ function slSave(){
     .then(r => r.json())
     .then(d => {
       if (d.success){
-        alert(`✓ Saved ${d.saved} location(s) successfully.`);
+        alert(`Saved ${d.saved} location(s) successfully.`);
         location.reload();
       } else {
         alert('Save failed: ' + (d.error || 'unknown error'));
@@ -193,7 +226,7 @@ function slSave(){
     .catch(e => alert('Save error: ' + e.message));
 }
 
-// Init — load existing rows or one blank row
+// Init - load existing rows or one blank row
 if (EXISTING.length){
   EXISTING.forEach(d => slAddRow(d));
 } else {

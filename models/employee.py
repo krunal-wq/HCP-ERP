@@ -365,6 +365,7 @@ class SalaryConfig(db.Model):
         'hcp_medical_fixed':       '1200',    # Medical fixed amount (high range)
         'hcp_pt_threshold':        '12000',   # Gross >= this â†’ PT applies
         'hcp_pt_amount':           '200',     # PT amount when applicable
+        'hcp_pf_fixed':            '1200',    # PF fixed deduction (UAN walon ke liye)
         'hcp_pf_emp_pct':          '12',      # PF Employee %
         'hcp_pf_er_pct':           '13',      # PF Employer % (incl admin + EDLI)
         'hcp_esic_emp_pct':        '0.75',    # ESIC Employee %
@@ -603,5 +604,4 @@ class StateMaster(db.Model):
     )
 
     def __repr__(self): return f'<StateMaster {self.name} ({self.short_name})>'
-
 

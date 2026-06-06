@@ -1,67 +1,85 @@
 {% extends 'base.html' %}
 {% block title %}{{ page_title }}{% endblock %}
-{% block page_title %}🔬 {{ page_title }}{% endblock %}
+{% block page_title %}{{ page_title }}{% endblock %}
 {% block bread %}QC / {{ page_title }}{% endblock %}
 
 {% block extra_css %}
 <!-- DataTables (CDN) -->
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
 <style>
-.qc-wrap { max-width: 1400px; margin: 0 auto; padding: 0 12px 40px; }
+.qc-wrap {  margin: 0 auto; padding: 0 12px 40px; }
 
+/* ============ FILTERS CARD ============ */
 .qc-filters {
-  background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;
-  padding: 14px 16px; margin-bottom: 16px;
+  background: #fff; border: 1px solid #e2e8f0; border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(15,23,42,.05), 0 4px 16px rgba(15,23,42,.04);
+  padding: 16px 18px; margin-bottom: 16px;
   display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 10px 14px; align-items: end;
+  gap: 12px 14px; align-items: end;
 }
 .qc-filter label {
-  display: block; font-size: 11px; font-weight: 700; color: #475569;
-  text-transform: uppercase; letter-spacing: .04em; margin-bottom: 4px;
+  display: block; font-size: 10.5px; font-weight: 800; color: #94a3b8;
+  text-transform: uppercase; letter-spacing: .06em; margin-bottom: 5px;
 }
-.qc-filter input, .qc-filter select {
-  width: 100%; padding: 8px 10px; font-size: 13px;
-  border: 1.5px solid #cbd5e1; border-radius: 6px; background: #fff;
-  font-family: inherit; color: #0f172a;
+.qc-filter input, .qc-filter select, .qc-filter .fp-wrap input.fi {
+  width: 100%; padding: 9px 12px; font-size: 13px;
+  border: 1.5px solid #e2e8f0; border-radius: 10px; background: #fff;
+  font-family: inherit; color: #0f172a; outline: 0;
+  transition: border-color .15s, box-shadow .15s;
 }
-.qc-filter input:focus, .qc-filter select:focus {
-  outline: 0; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,.12);
+.qc-filter select {
+  padding-right: 30px; appearance: none; -webkit-appearance: none;
+  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 10px center;
+  cursor: pointer; font-weight: 600; color: #475569;
 }
-.qc-filter-btns { display: flex; gap: 6px; }
+.qc-filter input:focus, .qc-filter select:focus, .qc-filter .fp-wrap input.fi:focus {
+  border-color: #93c5fd; box-shadow: 0 0 0 3px rgba(37,99,235,.1);
+}
+.qc-filter input::placeholder { color: #94a3b8; }
+.qc-filter-btns { display: flex; gap: 8px; }
 .qc-filter-btns button {
-  padding: 8px 14px; border-radius: 6px; font-size: 12px; font-weight: 700;
-  cursor: pointer; border: 1.5px solid;
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 9px 16px; border-radius: 99px; font-size: 12.5px; font-weight: 700;
+  cursor: pointer; border: 1.5px solid; font-family: inherit;
+  transition: all .15s;
 }
-.qc-filter-btns .apply { background: #2563eb; color: #fff; border-color: #2563eb; }
-.qc-filter-btns .apply:hover { background: #1d4ed8; }
-.qc-filter-btns .clear { background: #fff; color: #475569; border-color: #cbd5e1; }
-.qc-filter-btns .clear:hover { background: #f8fafc; }
+.qc-filter-btns .apply {
+  background: linear-gradient(180deg,#3b82f6,#1d4ed8); color: #fff; border-color: transparent;
+  box-shadow: 0 2px 8px rgba(37,99,235,.3), inset 0 1px 0 rgba(255,255,255,.2);
+}
+.qc-filter-btns .apply:hover { transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(37,99,235,.4), inset 0 1px 0 rgba(255,255,255,.2); }
+.qc-filter-btns .clear { background: #fff; color: #64748b; border-color: #e2e8f0; }
+.qc-filter-btns .clear:hover { background: #eff6ff; border-color: #93c5fd; color: #1d4ed8; }
 
+/* ============ TABLE CARD ============ */
 .qc-card {
-  background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;
-  padding: 14px 16px;
+  background: #fff; border: 1px solid #e2e8f0; border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(15,23,42,.05), 0 4px 16px rgba(15,23,42,.04);
+  padding: 16px 18px;
 }
 .qc-card-head {
   display: flex; justify-content: space-between; align-items: center;
-  margin-bottom: 12px; flex-wrap: wrap; gap: 8px;
+  margin-bottom: 14px; flex-wrap: wrap; gap: 8px;
 }
-.qc-card-head h3 { margin: 0; font-size: 15px; font-weight: 700; color: #0f172a; }
+.qc-card-head h3 { margin: 0; font-size: 15px; font-weight: 800; color: #0f172a;
+  letter-spacing: -.01em; }
 .qc-card-head .count {
-  background: #eff6ff; color: #1d4ed8;
-  padding: 3px 10px; border-radius: 11px;
+  background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe;
+  padding: 4px 12px; border-radius: 99px;
   font-size: 11px; font-weight: 700;
 }
 
-/* DataTable visual tweaks */
+/* ============ DATATABLE PREMIUM TWEAKS ============ */
 table.dataTable {
   border-collapse: collapse !important;
   width: 100% !important;
 }
 table.dataTable thead th {
-  background: #f8fafc; font-size: 11px; font-weight: 700;
-  color: #475569; text-transform: uppercase; letter-spacing: .04em;
-  border-bottom: 2px solid #cbd5e1 !important;
-  padding: 10px 12px !important;
+  background: #fff; font-size: 10.5px; font-weight: 800;
+  color: #94a3b8; text-transform: uppercase; letter-spacing: .06em;
+  border-bottom: 2px solid #e2e8f0 !important;
+  padding: 11px 12px !important; white-space: nowrap;
 }
 table.dataTable tbody td {
   font-size: 12.5px; color: #334155;
@@ -69,12 +87,54 @@ table.dataTable tbody td {
   border-bottom: 1px solid #f1f5f9 !important;
   vertical-align: middle !important;
 }
+table.dataTable tbody tr { transition: background .12s; }
 table.dataTable tbody tr:hover { background: #f8fafc; }
-.trs-code { font-family: 'Consolas', monospace; font-size: 12px; color: #0f172a; font-weight: 600; }
+.trs-code { font-family: 'JetBrains Mono', 'Consolas', monospace; font-size: 12px;
+  color: #1d4ed8; font-weight: 600; }
 
+/* DataTables controls (search / length / info / pagination) */
+.dataTables_wrapper .dataTables_filter input {
+  padding: 8px 14px; border: 1.5px solid #e2e8f0; border-radius: 99px;
+  font-size: 12.5px; font-family: inherit; outline: 0; margin-left: 8px;
+  transition: border-color .15s, box-shadow .15s;
+}
+.dataTables_wrapper .dataTables_filter input:focus {
+  border-color: #93c5fd; box-shadow: 0 0 0 3px rgba(37,99,235,.1);
+}
+.dataTables_wrapper .dataTables_length select {
+  padding: 6px 26px 6px 12px; border: 1.5px solid #e2e8f0; border-radius: 99px;
+  font-size: 12px; font-family: inherit; outline: 0; cursor: pointer;
+  appearance: none; -webkit-appearance: none;
+  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 9px center;
+}
+.dataTables_wrapper .dataTables_filter label,
+.dataTables_wrapper .dataTables_length label {
+  font-size: 12px; font-weight: 600; color: #64748b;
+}
+.dataTables_wrapper .dataTables_info { font-size: 11.5px; color: #64748b; padding-top: 14px !important; }
+.dataTables_wrapper .dataTables_paginate { padding-top: 10px !important; }
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+  padding: 5px 12px !important; margin-left: 4px;
+  border: 1.5px solid #e2e8f0 !important; border-radius: 99px !important;
+  background: #fff !important; font-size: 12px; font-weight: 700;
+  color: #475569 !important;
+}
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+  border-color: #93c5fd !important; color: #1d4ed8 !important; background: #eff6ff !important;
+}
+.dataTables_wrapper .dataTables_paginate .paginate_button.current,
+.dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+  background: linear-gradient(180deg,#3b82f6,#1d4ed8) !important;
+  border-color: transparent !important; color: #fff !important;
+}
+.dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
+  opacity: .4; pointer-events: none;
+}
+
+/* ============ STATUS PILLS ============ */
 .pill {
-  display: inline-block; padding: 3px 10px; border-radius: 11px;
-  font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em;
+  display: inline-block; padding: 3px 10px; border-radius: 99px;
+  font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em;
 }
 .pill.pending  { background: #fef3c7; color: #b45309; }
 .pill.testing  { background: #dbeafe; color: #1e40af; }
@@ -82,24 +142,33 @@ table.dataTable tbody tr:hover { background: #f8fafc; }
 .pill.rejected { background: #fee2e2; color: #b91c1c; }
 .pill.hold     { background: #f1f5f9; color: #475569; }
 
-.row-actions { display: flex; gap: 5px; }
+/* ============ ROW ACTIONS (tinted squares) ============ */
+.row-actions { display: flex; gap: 6px; justify-content: flex-end; }
 .row-actions a, .row-actions button {
   width: 30px; height: 30px; padding: 0;
-  border: 1px solid #e2e8f0; border-radius: 6px;
-  background: #fff; cursor: pointer; text-decoration: none;
+  border: 1px solid #e2e8f0; border-radius: 8px;
+  background: #f8fafc; cursor: pointer; text-decoration: none;
   display: inline-flex; align-items: center; justify-content: center;
-  font-size: 14px; line-height: 1; color: #475569;
+  line-height: 1; color: #64748b;
   transition: all .12s;
 }
-.row-actions a:hover, .row-actions button:hover {
-  background: #f1f5f9; border-color: #94a3b8; color: #1e293b;
-}
+.row-actions a:hover, .row-actions button:hover { transform: translateY(-1px); }
+.row-actions .review { background: #eff6ff; border-color: #bfdbfe; color: #1d4ed8; }
+.row-actions .review:hover { background: #dbeafe; border-color: #93c5fd; }
+.row-actions .view   { background: #f5f3ff; border-color: #ddd6fe; color: #6d28d9; }
+.row-actions .view:hover { background: #ede9fe; border-color: #c4b5fd; }
+.row-actions .print  { background: #f0fdf4; border-color: #bbf7d0; color: #15803d; }
+.row-actions .print:hover { background: #dcfce7; border-color: #86efac; }
 .row-actions .approve { color: #16a34a; }
 .row-actions .approve:hover { background: #dcfce7; }
 .row-actions .reject { color: #dc2626; }
 .row-actions .reject:hover { background: #fee2e2; }
 
 .empty-cell { color: #94a3b8; }
+
+@media (max-width: 768px) {
+  .qc-filters, .qc-card { border-radius: 12px; padding: 14px; }
+}
 </style>
 {% endblock %}
 
@@ -118,7 +187,7 @@ table.dataTable tbody tr:hover { background: #f8fafc; }
     </div>
     <div class="qc-filter">
       <label>{{ 'Vendor' if grn_type == 'RM' else 'Supplier' }}</label>
-      <input type="text" id="f_vendor" placeholder="Search…">
+      <input type="text" id="f_vendor" placeholder="Search...">
     </div>
     <div class="qc-filter">
       <label>Item</label>
@@ -131,14 +200,17 @@ table.dataTable tbody tr:hover { background: #f8fafc; }
     <div class="qc-filter">
       <label>QC Status</label>
       <select id="f_qc_status">
-        <option value="">— All —</option>
+        <option value="">All</option>
         {% for s in qc_statuses %}
           <option value="{{ s }}">{{ s }}</option>
         {% endfor %}
       </select>
     </div>
     <div class="qc-filter qc-filter-btns">
-      <button class="apply" id="btnApply">🔍 Apply</button>
+      <button class="apply" id="btnApply">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        Apply
+      </button>
       <button class="clear" id="btnClear">Clear</button>
     </div>
   </div>
@@ -184,6 +256,10 @@ table.dataTable tbody tr:hover { background: #f8fafc; }
 
   let dt = null;
 
+  const IC_REVIEW = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2v6a2 2 0 0 0 .245.96l5.51 10.08A2 2 0 0 1 18 22H6a2 2 0 0 1-1.755-2.96l5.51-10.08A2 2 0 0 0 10 8V2"/><path d="M6.453 15h11.094"/><path d="M8.5 2h7"/></svg>';
+  const IC_VIEW   = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>';
+  const IC_PRINT  = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>';
+
   function pill(status) {
     const s = (status || 'Pending').toLowerCase();
     let cls = 'pending';
@@ -196,14 +272,14 @@ table.dataTable tbody tr:hover { background: #f8fafc; }
 
   function rowActions(r) {
     let html = '<div class="row-actions">';
-    html += `<a href="${r.review_url}" title="QC Review / Approve-Reject" style="font-weight:700;color:#2563eb;">🔬</a>`;
-    html += `<a href="${r.view_url}" title="View certificate">📄</a>`;
-    html += `<a href="${r.view_url}" title="Print" onclick="setTimeout(()=>window.open(this.href,'_blank'),50);return true;">🖨️</a>`;
+    html += `<a href="${r.review_url}" class="review" title="QC Review / Approve-Reject">${IC_REVIEW}</a>`;
+    html += `<a href="${r.view_url}" class="view" title="View certificate">${IC_VIEW}</a>`;
+    html += `<a href="${r.view_url}" class="print" title="Print" onclick="setTimeout(()=>window.open(this.href,'_blank'),50);return true;">${IC_PRINT}</a>`;
     html += '</div>';
     return html;
   }
 
-  function safe(v) { return v ? v : '<span class="empty-cell">—</span>'; }
+  function safe(v) { return v ? v : '<span class="empty-cell">-</span>'; }
 
   function buildParams() {
     const p = new URLSearchParams({ type: GRN_TYPE });
@@ -264,8 +340,12 @@ table.dataTable tbody tr:hover { background: #f8fafc; }
 
   document.getElementById('btnApply').addEventListener('click', loadData);
   document.getElementById('btnClear').addEventListener('click', function(){
-    ['f_date_from','f_date_to','f_vendor','f_item','f_grn_no','f_qc_status']
+    ['f_vendor','f_item','f_grn_no','f_qc_status']
       .forEach(id => document.getElementById(id).value = '');
+    ['f_date_from','f_date_to'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el._flatpickr) el._flatpickr.clear(); else el.value = '';
+    });
     loadData();
   });
 
@@ -276,7 +356,7 @@ table.dataTable tbody tr:hover { background: #f8fafc; }
     });
   });
 
-  // ── Prefill filters from URL (dashboard card clicks) ──
+  // -- Prefill filters from URL (dashboard card clicks) --
   (function(){
     const qs = new URLSearchParams(location.search);
     if (qs.get('qc_status'))  document.getElementById('f_qc_status').value = qs.get('qc_status');
@@ -286,7 +366,7 @@ table.dataTable tbody tr:hover { background: #f8fafc; }
 
   loadData();
 
-  // ── Approve / Reject — Phase 3 wired to real backend ──
+  // -- Approve / Reject - Phase 3 wired to real backend --
   function postJSON(url, body){
     return fetch(url, {
       method: 'POST',

@@ -12,9 +12,29 @@ from models.trs import (
     QC_STATUS_REJECTED, QC_STATUS_HOLD,
 )
 from models.grn import GrnMaster, GrnItem, GrnBatchStock, GrnStockLedger
+from core.permissions import get_perm
 
 
 qc_bp = Blueprint('qc', __name__, url_prefix='/qc')
+
+
+@qc_bp.before_request
+def _require_qc_access():
+    """Guard every QC route (pages + APIs) behind the 'qc' module permission.
+
+    Prevents direct URL access without permission. Unauthenticated users are
+    left to each route's @login_required (auth redirect); authenticated users
+    without QC view rights get a 403. Admin → always allowed (get_perm full).
+    """
+    if not current_user.is_authenticated:
+        return  # @login_required on the route handles the login redirect
+    p = get_perm('qc')
+    if not (p and p.can_view):
+        return render_template(
+            'errors/403.html',
+            module_name='qc',
+            message='You do not have permission to access Quality Control.'
+        ), 403
 
 
 def _username():

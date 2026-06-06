@@ -504,8 +504,6 @@ button { -webkit-tap-highlight-color: transparent; }
               ('reminder','Reminder'),('personal_notes','Personal Notes'),
               ('whatsapp','WhatsApp'),('sample_order','Sample Order'),
               ('quotation','Quotation'),('send_npd','Send NPD'),
-              ('quot_view','Quot: View Listing'),('pdf_download','Quot: Download PDF'),
-              ('send_email','Quot: Send Email'),('status_change','Quot: Status Change'),
               ('create_npd','NPD Project Create'),('create_epd','EPD Project Create'),
               ('attachments','Attachments'),
               ('restore','Restore'),('permanent_delete','Permanent Delete'),
@@ -901,113 +899,155 @@ button { -webkit-tap-highlight-color: transparent; }
     </div>
 
     {# ═══════════════════════════════════════
-       Procurement — Item Master
+       Raw Material  (independent top-level module: purchase_rm)
+       — apna can_view/add/edit/delete + Formulation sub-feature.
+       PM/FG se completely independent.
     ═══════════════════════════════════════ #}
-    {% set _mat = modules|selectattr('name','eq','material')|first %}
+       {% set _rm = modules|selectattr('name','eq','purchase_rm')|first %}
+    {% set _form = modules|selectattr('name','eq','formulation')|first %}
     <div class="mg">
-      <div class="mg-hdr" onclick="tog(this,'g-material')">
-        <span class="mg-arrow" id="a-g-material"><i data-lucide="chevron-right" class="lucide-ic"></i></span><span class="mg-ic"><i data-lucide="boxes" class="lucide-ic"></i></span>
-        <span class="mg-nm">Procurement — Item Master</span>
-        {% if _mat %}<button class="ea" data-uid="{{ uid }}" data-mid="{{ _mat.id }}" onclick="mAll(event,this,true)">Enable All</button><button class="da" data-uid="{{ uid }}" data-mid="{{ _mat.id }}" onclick="mAll(event,this,false)">Disable All</button>{% endif %}
+      <div class="mg-hdr" onclick="tog(this,'g-rawmat')">
+        <span class="mg-arrow" id="a-g-rawmat"><i data-lucide="chevron-right" class="lucide-ic"></i></span><span class="mg-ic"><i data-lucide="droplet" class="lucide-ic"></i></span>
+        <span class="mg-nm">Raw Material</span>
+        {% if _rm %}<button class="ea" data-uid="{{ uid }}" data-mid="{{ _rm.id }}" onclick="mAll(event,this,true)">Enable All</button><button class="da" data-uid="{{ uid }}" data-mid="{{ _rm.id }}" onclick="mAll(event,this,false)">Disable All</button>{% endif %}
       </div>
-      <div class="mg-body" id="g-material">
-        {% if _mat %}
-        {{ prow('material','Item Master',uid) }}
-        <div style="margin:10px 0 2px;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;">Item Types Tab</div>
-        {{ chips('material',[
-          ('tab_types',   'View Tab'),
-          ('type_add',    'Add'),
-          ('type_edit',   'Edit'),
-          ('type_delete', 'Delete')
-        ], uid) }}
-        <div style="margin:10px 0 2px;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;">Item Groups Tab</div>
-        {{ chips('material',[
-          ('tab_groups',  'View Tab'),
-          ('group_add',   'Add'),
-          ('group_edit',  'Edit'),
-          ('group_delete','Delete')
-        ], uid) }}
-        <div style="margin:10px 0 2px;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;">Categories Tab</div>
-        {{ chips('material',[
-          ('tab_categories','View Tab'),
-          ('trash_items',   'Items Trash'),
-          ('trash_types',   'Types Trash'),
-          ('trash_groups',  'Groups Trash'),
-          ('trash_cats',    'Categories Trash'),
-          ('cat_add',       'Add'),
-          ('cat_edit',      'Edit'),
-          ('cat_delete',    'Delete')
-        ], uid) }}
-        <div style="margin:10px 0 2px;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;">Item Types Allowed</div>
-        {{ chips('material',[
-          ('type_rm',  'RM — Raw Material'),
-          ('type_pm',  'PM — Packing Material'),
-          ('type_fg',  'FG — Finished Goods'),
-          ('type_sfg', 'SFG — Semi-Finished'),
-          ('type_con', 'CON — Consumable'),
-          ('type_tg',  'TG — Trading Goods')
-        ], uid) }}
-        {% else %}
-        <p style="font-size:.75rem;color:var(--text3);padding:6px 0;"><i data-lucide="triangle-alert" class="lucide-ic" style="color:#d97706;"></i> Module DB mein nahi hai — fix_material_module.py run karo.</p>
-        {% endif %}
+      <div class="mg-body" id="g-rawmat">
+
+        {# Raw Material main #}
+        <div class="sm">
+          <div class="sm-hdr" onclick="tog(this,'s-rm-main')"><span class="sm-arrow" id="a-s-rm-main"><i data-lucide="chevron-right" class="lucide-ic"></i></span><span class="sm-nm"><i data-lucide="droplet" class="lucide-ic"></i> Raw Material</span>
+            {% if _rm %}<button class="ea" data-uid="{{ uid }}" data-mid="{{ _rm.id }}" onclick="mAll(event,this,true)">Enable All</button><button class="da" data-uid="{{ uid }}" data-mid="{{ _rm.id }}" onclick="mAll(event,this,false)">Disable All</button>{% endif %}
+          </div>
+          <div class="sm-body" id="s-rm-main">
+            {% if _rm %}
+            {{ prow('purchase_rm','Raw Material (Item Master, Supplier, PO, GRN, Stock)',uid) }}
+            {% else %}
+            <p style="font-size:.75rem;color:var(--text3);padding:6px 0;"><i data-lucide="triangle-alert" class="lucide-ic" style="color:#d97706;"></i> Module DB mein nahi hai - /seed-modules run karo.</p>
+            {% endif %}
+          </div>
+        </div>
+
+        {# Formulation #}
+        <div class="sm">
+          <div class="sm-hdr" onclick="tog(this,'s-rm-form')"><span class="sm-arrow" id="a-s-rm-form"><i data-lucide="chevron-right" class="lucide-ic"></i></span><span class="sm-nm"><i data-lucide="flask-round" class="lucide-ic"></i> Formulation</span>
+            {% if _form %}<button class="ea" data-uid="{{ uid }}" data-mid="{{ _form.id }}" onclick="mAll(event,this,true)">Enable All</button><button class="da" data-uid="{{ uid }}" data-mid="{{ _form.id }}" onclick="mAll(event,this,false)">Disable All</button>{% endif %}
+          </div>
+          <div class="sm-body" id="s-rm-form">
+            {% if _form %}
+            {{ prow('formulation','Formulation',uid) }}
+            {% else %}
+            <p style="font-size:.75rem;color:var(--text3);padding:6px 0;"><i data-lucide="triangle-alert" class="lucide-ic" style="color:#d97706;"></i> Module DB mein nahi hai - /seed-modules run karo.</p>
+            {% endif %}
+          </div>
+        </div>
+
       </div>
     </div>
-
     {# ═══════════════════════════════════════
-       Packing
+       Packing Material  (independent top-level module: purchase_pm)
+       — apna can_view/add/edit/delete + Packing BOM sub-feature.
     ═══════════════════════════════════════ #}
+     {% set _pm = modules|selectattr('name','eq','purchase_pm')|first %}
+    {% set _pbom = modules|selectattr('name','eq','packing_bom')|first %}
     {% set _pk = modules|selectattr('name','eq','packing')|first %}
     <div class="mg">
-      <div class="mg-hdr" onclick="tog(this,'g-packing')">
-        <span class="mg-arrow" id="a-g-packing"><i data-lucide="chevron-right" class="lucide-ic"></i></span><span class="mg-ic"><i data-lucide="package-open" class="lucide-ic"></i></span>
+      <div class="mg-hdr" onclick="tog(this,'g-packmat')">
+        <span class="mg-arrow" id="a-g-packmat"><i data-lucide="chevron-right" class="lucide-ic"></i></span><span class="mg-ic"><i data-lucide="archive" class="lucide-ic"></i></span>
         <span class="mg-nm">Packing</span>
-        {% if _pk %}<button class="ea" data-uid="{{ uid }}" data-mid="{{ _pk.id }}" onclick="mAll(event,this,true)">Enable All</button><button class="da" data-uid="{{ uid }}" data-mid="{{ _pk.id }}" onclick="mAll(event,this,false)">Disable All</button>{% endif %}
+        {% if _pm %}<button class="ea" data-uid="{{ uid }}" data-mid="{{ _pm.id }}" onclick="mAll(event,this,true)">Enable All</button><button class="da" data-uid="{{ uid }}" data-mid="{{ _pm.id }}" onclick="mAll(event,this,false)">Disable All</button>{% endif %}
       </div>
-      <div class="mg-body" id="g-packing">
-        {% if _pk %}
-        {{ prow('packing','Sample Receipt Log',uid) }}
-        {{ chips('packing',[
-          ('new_entry','New Entry'),
-          ('export','Export CSV'),
-          ('import','Import CSV'),
-          ('print','Print'),
-          ('columns','Columns'),
-          ('whatsapp','WhatsApp'),
-          ('filter','Filter'),
-          ('delete','Delete'),
-          ('inline_edit','Inline Edit')
-        ], uid) }}
-        {% else %}
-        <p style="font-size:.75rem;color:var(--text3);padding:6px 0;"><i data-lucide="triangle-alert" class="lucide-ic" style="color:#d97706;"></i> Module DB mein nahi hai — fix_packing_module.py run karo.</p>
-        {% endif %}
+      <div class="mg-body" id="g-packmat">
+
+        {# Packing Material main #}
+        <div class="sm">
+          <div class="sm-hdr" onclick="tog(this,'s-pm-main')"><span class="sm-arrow" id="a-s-pm-main"><i data-lucide="chevron-right" class="lucide-ic"></i></span><span class="sm-nm"><i data-lucide="archive" class="lucide-ic"></i> Packing Material</span>
+            {% if _pm %}<button class="ea" data-uid="{{ uid }}" data-mid="{{ _pm.id }}" onclick="mAll(event,this,true)">Enable All</button><button class="da" data-uid="{{ uid }}" data-mid="{{ _pm.id }}" onclick="mAll(event,this,false)">Disable All</button>{% endif %}
+          </div>
+          <div class="sm-body" id="s-pm-main">
+            {% if _pm %}
+            {{ prow('purchase_pm','Packing Material (Item Master, Supplier, PO, GRN, Stock)',uid) }}
+            {% else %}
+            <p style="font-size:.75rem;color:var(--text3);padding:6px 0;"><i data-lucide="triangle-alert" class="lucide-ic" style="color:#d97706;"></i> Module DB mein nahi hai - /seed-modules run karo.</p>
+            {% endif %}
+          </div>
+        </div>
+
+        {# Packing BOM #}
+        <div class="sm">
+          <div class="sm-hdr" onclick="tog(this,'s-pm-bom')"><span class="sm-arrow" id="a-s-pm-bom"><i data-lucide="chevron-right" class="lucide-ic"></i></span><span class="sm-nm"><i data-lucide="layers" class="lucide-ic"></i> Packing BOM</span>
+            {% if _pbom %}<button class="ea" data-uid="{{ uid }}" data-mid="{{ _pbom.id }}" onclick="mAll(event,this,true)">Enable All</button><button class="da" data-uid="{{ uid }}" data-mid="{{ _pbom.id }}" onclick="mAll(event,this,false)">Disable All</button>{% endif %}
+          </div>
+          <div class="sm-body" id="s-pm-bom">
+            {% if _pbom %}
+            {{ prow('packing_bom','Packing BOM',uid) }}
+            {% else %}
+            <p style="font-size:.75rem;color:var(--text3);padding:6px 0;"><i data-lucide="triangle-alert" class="lucide-ic" style="color:#d97706;"></i> Module DB mein nahi hai - /seed-modules run karo.</p>
+            {% endif %}
+          </div>
+        </div>
+
+        {# Packing - Sample Receipt Log (pehle alag group tha, ab yahan) #}
+        <div class="sm">
+          <div class="sm-hdr" onclick="tog(this,'s-pm-packing')"><span class="sm-arrow" id="a-s-pm-packing"><i data-lucide="chevron-right" class="lucide-ic"></i></span><span class="sm-nm"><i data-lucide="package-open" class="lucide-ic"></i> Packing (Sample Receipt Log)</span>
+            {% if _pk %}<button class="ea" data-uid="{{ uid }}" data-mid="{{ _pk.id }}" onclick="mAll(event,this,true)">Enable All</button><button class="da" data-uid="{{ uid }}" data-mid="{{ _pk.id }}" onclick="mAll(event,this,false)">Disable All</button>{% endif %}
+          </div>
+          <div class="sm-body" id="s-pm-packing">
+            {% if _pk %}
+            {{ prow('packing','Sample Receipt Log',uid) }}
+            {{ chips('packing',[
+              ('new_entry','New Entry'),
+              ('export','Export CSV'),
+              ('import','Import CSV'),
+              ('print','Print'),
+              ('columns','Columns'),
+              ('whatsapp','WhatsApp'),
+              ('filter','Filter'),
+              ('delete','Delete'),
+              ('inline_edit','Inline Edit')
+            ], uid) }}
+            {% else %}
+            <p style="font-size:.75rem;color:var(--text3);padding:6px 0;"><i data-lucide="triangle-alert" class="lucide-ic" style="color:#d97706;"></i> Module DB mein nahi hai - fix_packing_module.py run karo.</p>
+            {% endif %}
+          </div>
+        </div>
+
       </div>
     </div>
+    {# ═══════════════════════════════════════
+       Finished Goods  (independent top-level module: purchase_fg)
+    ═══════════════════════════════════════ #}
+    {% set _fg = modules|selectattr('name','eq','purchase_fg')|first %}
+    <div class="mg">
+      <div class="mg-hdr" onclick="tog(this,'g-fg')">
+        <span class="mg-arrow" id="a-g-fg"><i data-lucide="chevron-right" class="lucide-ic"></i></span><span class="mg-ic"><i data-lucide="check-square" class="lucide-ic"></i></span>
+        <span class="mg-nm">Finished Goods</span>
+        {% if _fg %}<button class="ea" data-uid="{{ uid }}" data-mid="{{ _fg.id }}" onclick="mAll(event,this,true)">Enable All</button><button class="da" data-uid="{{ uid }}" data-mid="{{ _fg.id }}" onclick="mAll(event,this,false)">Disable All</button>{% endif %}
+      </div>
+      <div class="mg-body" id="g-fg">
+        {{ prow('purchase_fg','Finished Goods (Item Master, Stock)',uid) }}
+      </div>
+    </div>
+
+
 
     {# ═══════════════════════════════════════
-       Raw Material Sample (top-level — same level as Packing)
+       Quality Control (QC)
     ═══════════════════════════════════════ #}
-    {% set _rms = modules|selectattr('name','eq','raw_material_sample')|first %}
+    {% set _qc = modules|selectattr('name','eq','qc')|first %}
     <div class="mg">
-      <div class="mg-hdr" onclick="tog(this,'g-rms')">
-        <span class="mg-arrow" id="a-g-rms"><i data-lucide="chevron-right" class="lucide-ic"></i></span><span class="mg-ic"><i data-lucide="droplets" class="lucide-ic"></i></span>
-        <span class="mg-nm">Raw Material Sample</span>
-        {% if _rms %}<button class="ea" data-uid="{{ uid }}" data-mid="{{ _rms.id }}" onclick="mAll(event,this,true)">Enable All</button><button class="da" data-uid="{{ uid }}" data-mid="{{ _rms.id }}" onclick="mAll(event,this,false)">Disable All</button>{% endif %}
+      <div class="mg-hdr" onclick="tog(this,'g-qc')">
+        <span class="mg-arrow" id="a-g-qc"><i data-lucide="chevron-right" class="lucide-ic"></i></span><span class="mg-ic"><i data-lucide="clipboard-check" class="lucide-ic"></i></span>
+        <span class="mg-nm">Quality Control</span>
+        {% if _qc %}<button class="ea" data-uid="{{ uid }}" data-mid="{{ _qc.id }}" onclick="mAll(event,this,true)">Enable All</button><button class="da" data-uid="{{ uid }}" data-mid="{{ _qc.id }}" onclick="mAll(event,this,false)">Disable All</button>{% endif %}
       </div>
-      <div class="mg-body" id="g-rms">
-        {% if _rms %}
-        {{ prow('raw_material_sample','Raw Material Sample',uid) }}
-        {{ chips('raw_material_sample',[
-          ('finalize_supplier','Finalise Supplier'),
-          ('mark_dispatched','Mark Dispatched'),
-          ('mark_received','Mark Received'),
-          ('cancel_request','Cancel Request')
-        ], uid) }}
+      <div class="mg-body" id="g-qc">
+        {% if _qc %}
+        {{ prow('qc','QC Department',uid) }}
         {% else %}
-        <p style="font-size:.75rem;color:var(--text3);padding:6px 0;"><i data-lucide="triangle-alert" class="lucide-ic" style="color:#d97706;"></i> Module DB mein nahi hai — add_raw_material_sample_module.py run karo.</p>
+        <p style="font-size:.75rem;color:var(--text3);padding:6px 0;"><i data-lucide="triangle-alert" class="lucide-ic" style="color:#d97706;"></i> Module DB mein nahi hai — /seed-modules run karo.</p>
         {% endif %}
       </div>
     </div>
-
     {# ═══════════════════════════════════════
        Masters
     ═══════════════════════════════════════ #}

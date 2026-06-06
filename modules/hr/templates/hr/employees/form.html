@@ -759,7 +759,7 @@ select.fi.field-error + .select2-container--default .select2-selection--single,
             </div>
             <div class="fg">
                 <label class="fl">UAN Number<span class="req-star" id="kycUanStar" style="display:none;">*</span></label>
-                <input type="text" name="uan_number" id="kycUan" class="fi" maxlength="12" value="{{ employee.uan_number if employee else '' }}" placeholder="PF UAN (12 digits)">
+                <input type="text" name="uan_number" id="kycUan" class="fi" maxlength="12" oninput="if(typeof hcpAutoFromGross==='function')hcpAutoFromGross()" value="{{ employee.uan_number if employee else '' }}" placeholder="PF UAN (12 digits)">
                 <div class="field-err-msg" id="err_kyc_uan">UAN Number is required when PF Applicable is Yes.</div>
             </div>
             <div class="fg">
@@ -807,13 +807,14 @@ select.fi.field-error + .select2-container--default .select2-selection--single,
             <div class="fg"><label class="fl">Aadhaar linked to PAN?</label><select name="aadhaar_pan_linked" class="fi"><option value="no" {{ 'selected' if not employee or not employee.aadhaar_pan_linked }}>No</option><option value="yes" {{ 'selected' if employee and employee.aadhaar_pan_linked }}>Yes</option></select></div>
             <div class="fg">
                 <label class="fl">Tax Regime</label>
-                <select name="tax_regime" class="fi sd">
+                <select name="tax_regime" id="taxRegimeSelect" class="fi sd" onchange="hcpAutoTds()">
                     {% for r in ['New','Old'] %}<option value="{{ r }}" {{ 'selected' if employee and employee.tax_regime==r else ('selected' if not employee and r=='New' else '') }}>{{ r }} Regime</option>{% endfor %}
                 </select>
             </div>
-            <div class="fg"><label class="fl">Previous Employer Income ₹</label><input type="number" step="1" min="0" name="prev_employer_income" class="fi" value="{{ employee.prev_employer_income|int if employee and employee.prev_employer_income else '' }}" placeholder="Annual income"></div>
-            <div class="fg"><label class="fl">Monthly TDS ₹</label><input type="number" step="1" min="0" name="monthly_tds" class="fi" value="{{ employee.monthly_tds|int if employee and employee.monthly_tds else '' }}" placeholder="TDS / month"></div>
+            <div class="fg"><label class="fl">Previous Employer Income ₹</label><input type="number" step="1" min="0" name="prev_employer_income" id="prevEmpIncome" class="fi" oninput="hcpAutoTds()" value="{{ employee.prev_employer_income|int if employee and employee.prev_employer_income else '' }}" placeholder="Annual income"></div>
+            <div class="fg"><label class="fl">Monthly TDS ₹</label><input type="number" step="1" min="0" name="monthly_tds" id="monthlyTdsInput" class="fi" value="{{ employee.monthly_tds|int if employee and employee.monthly_tds else '' }}" placeholder="TDS / month"></div>
         </div>
+        <div id="tdsCalcInfo" style="display:none;background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:9px;padding:.6rem .9rem;font-size:.8rem;color:#1e40af;margin:-.3rem 0 .9rem;line-height:1.55;"></div>
 
         <div class="sec-hdr">⚖️ Statutory Compliance</div>
         <div class="fgrid-3">
@@ -941,7 +942,7 @@ select.fi.field-error + .select2-container--default .select2-selection--single,
         <div class="fgrid-3" style="margin-bottom:.75rem;">
             <div class="fg" style="background:#fef3c7;border:1.5px solid #fcd34d;border-radius:8px;padding:.4rem .6rem;">
                 <label class="fl" style="color:#92400e;">💵 Gross Salary (Monthly) ₹ *</label>
-                <input type="number" id="salGrossInput" class="fi" step="500" min="0" value="{{ employee.salary_gross|int if employee and employee.salary_gross else '' }}" placeholder="e.g. 30000" oninput="hcpAutoFromGross()" style="font-weight:700;font-size:1rem;">
+                <input type="number" name="salary_gross" id="salGrossInput" class="fi" step="500" min="0" value="{{ employee.salary_gross|int if employee and employee.salary_gross else '' }}" placeholder="e.g. 30000" oninput="hcpAutoFromGross()" style="font-weight:700;font-size:1rem;">
                 <span style="font-size:.68rem;color:#92400e;margin-top:2px;">Drives all calculations</span>
             </div>
             <div class="fg"><label class="fl">CTC (Monthly) ₹ <span style="font-size:.65rem;color:var(--text3);">(auto)</span></label><input type="number" name="salary_ctc" id="salCtc" class="fi" step="1000" value="{{ employee.salary_ctc|int if employee and employee.salary_ctc else '' }}" placeholder="auto-calculated" readonly style="background:#f8fafc;font-weight:700;"></div>
@@ -949,16 +950,16 @@ select.fi.field-error + .select2-container--default .select2-selection--single,
             <div class="fg"><label class="fl">Effective Date</label><input type="date" name="salary_effective_date" class="fi" value="{{ employee.salary_effective_date.strftime('%Y-%m-%d') if employee and employee.salary_effective_date else '' }}"></div>
         </div>
         <div class="sec-hdr">➕ Earnings (Monthly)</div>
-        <div class="sal-row"><label>Basic Salary</label><input type="number" name="salary_basic" id="salBasic" class="fi" step="100" value="{{ employee.salary_basic|int if employee and employee.salary_basic else '' }}" oninput="recalcNet()" placeholder="0"></div>
+        <div class="sal-row"><label>Basic + DA</label><input type="number" name="salary_basic" id="salBasic" class="fi" step="100" value="{{ employee.salary_basic|int if employee and employee.salary_basic else '' }}" oninput="recalcNet()" placeholder="0"></div>
         <div class="sal-row"><label>HRA (House Rent)</label><input type="number" name="salary_hra" id="salHra" class="fi" step="100" value="{{ employee.salary_hra|int if employee and employee.salary_hra else '' }}" oninput="recalcNet()" placeholder="0"></div>
-        <div class="sal-row"><label>DA (Dearness Allow.)</label><input type="number" name="salary_da" id="salDa" class="fi" step="100" value="{{ employee.salary_da|int if employee and employee.salary_da else '' }}" oninput="recalcNet()" placeholder="0"></div>
+        <input type="hidden" name="salary_da" id="salDa" value="0">
         <div class="sal-row"><label>Transport Allow.</label><input type="number" name="salary_ta" id="salTa" class="fi" step="100" value="{{ employee.salary_ta|int if employee and employee.salary_ta else '' }}" oninput="recalcNet()" placeholder="0"></div>
         <div class="sal-row"><label>Conveyance</label><input type="number" name="salary_conveyance" id="salConv" class="fi" step="100" value="{{ employee.salary_conveyance|int if employee and employee.salary_conveyance else '' }}" oninput="recalcNet()" placeholder="0"></div>
         <div class="sal-row"><label>Medical Allow.</label><input type="number" name="salary_medical_allow" id="salMed" class="fi" step="100" value="{{ employee.salary_medical_allow|int if employee and employee.salary_medical_allow else '' }}" oninput="recalcNet()" placeholder="0"></div>
         <div class="sal-row"><label>Special Allow.</label><input type="number" name="salary_special_allow" id="salSpecial" class="fi" step="100" value="{{ employee.salary_special_allow|int if employee and employee.salary_special_allow else '' }}" oninput="recalcNet()" placeholder="0"></div>
         <div class="sal-row"><label>Bonus (Monthly)</label><input type="number" name="salary_bonus" id="salBonus" class="fi" step="100" value="{{ employee.salary_bonus|int if employee and employee.salary_bonus else '' }}" oninput="recalcNet()" placeholder="0"></div>
         <div class="sal-row"><label>Incentive</label><input type="number" name="salary_incentive" id="salIncent" class="fi" step="100" value="{{ employee.salary_incentive|int if employee and employee.salary_incentive else '' }}" oninput="recalcNet()" placeholder="0"></div>
-        <div class="sal-row" style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:8px;padding:.35rem .6rem;margin:.3rem 0;"><label style="font-weight:700;color:#15803d;">Gross Salary (Auto)</label><input type="number" name="salary_gross" id="salGross" class="fi" step="100" value="{{ employee.salary_gross|int if employee and employee.salary_gross else '' }}" placeholder="auto-calculated" readonly style="background:#ecfdf5;font-weight:700;color:#15803d;"></div>
+        <div class="sal-row" style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:8px;padding:.35rem .6rem;margin:.3rem 0;"><label style="font-weight:700;color:#15803d;">Gross Salary (Auto)</label><input type="number" id="salGross" class="fi" step="100" value="{{ employee.salary_gross|int if employee and employee.salary_gross else '' }}" placeholder="auto-calculated" readonly style="background:#ecfdf5;font-weight:700;color:#15803d;"></div>
         <div class="sec-hdr">➖ Deductions (Monthly)</div>
         <div class="sal-row"><label>PF Employee (12%)</label><input type="number" name="salary_pf_employee" id="salPfEmp" class="fi" step="10" value="{{ employee.salary_pf_employee|int if employee and employee.salary_pf_employee else '' }}" oninput="recalcNet()" placeholder="0"></div>
         <div class="sal-row"><label>PF Employer (12%)</label><input type="number" name="salary_pf_employer" id="salPfEr" class="fi" step="10" value="{{ employee.salary_pf_employer|int if employee and employee.salary_pf_employer else '' }}" placeholder="0"></div>
@@ -1557,6 +1558,7 @@ function onPfApplicableChange(){
 
 // When ESIC Applicable changes → toggle required marker on ESIC Number + Nominee fields
 function onEsicApplicableChange(){
+    if (typeof hcpAutoFromGross === 'function') hcpAutoFromGross();
     var esic = document.getElementById('kycEsicApp');
     if (!esic) return;
     var on = (esic.value === 'yes');
@@ -2466,6 +2468,7 @@ function _hcpDefaultCfg(){
         hcp_high_gross_thresh: 30000,
         hcp_esic_limit: 21000,
         hcp_low_basic_fixed: 15000,
+        hcp_pf_fixed: 1200,
         hcp_high_basic_pct: 50,
         hcp_hra_pct_of_basic: 40,
         hcp_conv_pct_of_basic: 30,
@@ -2523,6 +2526,52 @@ function hcpAutoFromGross(forceRefresh) {
     }, forceRefresh);
 }
 
+// ── TDS: Income Tax slabs (FY 2025-26) ──────────────────────────
+function _taxFromSlabs(income, regime) {
+    var slabs = (String(regime).toLowerCase() === 'old')
+        ? [[250000, 0], [500000, 0.05], [1000000, 0.20], [Infinity, 0.30]]
+        : [[400000, 0], [800000, 0.05], [1200000, 0.10], [1600000, 0.15],
+           [2000000, 0.20], [2400000, 0.25], [Infinity, 0.30]];
+    var tax = 0, prev = 0;
+    for (var i = 0; i < slabs.length; i++) {
+        var upper = slabs[i][0], rate = slabs[i][1];
+        if (income > prev) tax += (Math.min(income, upper) - prev) * rate;
+        prev = upper;
+        if (income <= upper) break;
+    }
+    return Math.round(tax);
+}
+
+// Annual = 12 mahine gross + 13th month bonus (1 gross) + previous employer income
+function hcpAutoTds() {
+    var gross = parseFloat((document.getElementById('salGrossInput')||{}).value) || 0;
+    var info  = document.getElementById('tdsCalcInfo');
+    var empType = ((document.getElementById('empTypeSelect') || {}).value || '').toUpperCase();
+    if (gross <= 0 || empType.indexOf('CONTRACTOR') !== -1) {
+        if (info) info.style.display = 'none';
+        return;
+    }
+    var regime  = (document.getElementById('taxRegimeSelect')||{}).value || 'New';
+    var prevInc = parseFloat((document.getElementById('prevEmpIncome')||{}).value) || 0;
+    var annualGross = Math.round(gross * 13) + prevInc;   // 12 + bonus (13th month)
+    var annualTax   = _taxFromSlabs(annualGross, regime);
+    var monthlyTds  = Math.floor(annualTax / 12);
+    var marchTds    = annualTax - (monthlyTds * 11);      // March settlement
+
+    var mt = document.getElementById('monthlyTdsInput'); if (mt) mt.value = monthlyTds;
+    var st = document.getElementById('salTds');          if (st) st.value = monthlyTds;
+
+    if (info) {
+        info.style.display = 'block';
+        info.innerHTML = '\ud83d\udcca <b>Annual Gross Earning</b> (12 + 13th month bonus' + (prevInc>0?' + prev. employer':'') + '): \u20b9' + annualGross.toLocaleString('en-IN')
+            + ' &nbsp;|&nbsp; <b>Annual Tax (' + regime + ' Regime)</b>: \u20b9' + annualTax.toLocaleString('en-IN')
+            + '<br>\u2702\ufe0f <b>Monthly TDS (Apr\u2013Feb)</b>: \u20b9' + monthlyTds.toLocaleString('en-IN')
+            + ' &nbsp;|&nbsp; <b>March Settlement TDS</b>: \u20b9' + marchTds.toLocaleString('en-IN')
+            + ' <small>(annual tax \u2212 11 mahine ka kata hua)</small>';
+    }
+    if (typeof recalcNet === 'function') recalcNet();
+}
+
 function _hcpDoCalc(cfg) {
     var gross = parseFloat(document.getElementById('salGrossInput').value) || 0;
     if (gross <= 0) {
@@ -2563,40 +2612,43 @@ function _hcpDoCalc(cfg) {
         other = Math.max(0, gross - (basic + hra + conv + med));
         esicEmp = 0;
         esicEr  = 0;
-    } else if (info.isPlant) {
-        // ── Plant — Gross < threshold ──
-        basic = cfg.hcp_low_basic_fixed;
-        hra   = Math.round(basic * HRA_PCT);
-        conv  = Math.round(basic * CONV_PCT);
-        med   = 0;
-        other = Math.max(0, gross - (basic + hra + conv + med));
-        esicEmp = 0;   // factory — ESIC never applicable
-        esicEr  = 0;
     } else {
-        // ── HO — Gross < threshold ──
-        basic = cfg.hcp_low_basic_fixed;
-        var curHra = parseFloat((document.getElementById('salHra')||{}).value) || 0;
-        hra   = curHra > 0 ? curHra : Math.round(basic * HRA_PCT);
-        conv  = parseFloat((document.getElementById('salConv')||{}).value) || 0;
-        med   = parseFloat((document.getElementById('salMed') ||{}).value) || 0;
-        other = Math.max(0, gross - (basic + hra + conv + med));
-        if (gross <= cfg.hcp_esic_limit) {
-            esicEmp = Math.round(gross * cfg.hcp_esic_emp_pct) / 100;
-            esicEr  = Math.round(gross * cfg.hcp_esic_er_pct)  / 100;
-        } else {
-            esicEmp = 0;
-            esicEr  = 0;
-        }
+        // ── Gross < threshold — Excel waterfall (reference sheet) ──
+        // Basic 15000 tak, phir HRA (40% of Basic) tak, phir Conv (30%) tak,
+        // phir Medical 1200 (sirf agar pura 1200 bach raha ho), baaki Other.
+        basic = Math.min(gross, cfg.hcp_low_basic_fixed);
+        var rem = gross - basic;
+        hra  = Math.min(rem, Math.round(basic * HRA_PCT));  rem -= hra;
+        conv = Math.min(rem, Math.round(basic * CONV_PCT)); rem -= conv;
+        med  = (rem >= cfg.hcp_medical_fixed) ? cfg.hcp_medical_fixed : 0; rem -= med;
+        other = Math.max(0, rem);
+        esicEmp = 0; esicEr = 0;
     }
 
-    pfEmp = Math.round(basic * cfg.hcp_pf_emp_pct / 100);
-    pfEr  = Math.round(basic * cfg.hcp_pf_er_pct  / 100);
+    // ── ESIC: sirf "ESIC Applicable = Yes" wale employees ka (limit ke andar) ──
+    var esicSel = document.getElementById('kycEsicApp');
+    var esicYes = !!(esicSel && esicSel.value === 'yes');
+    if (esicYes && gross <= cfg.hcp_esic_limit) {
+        esicEmp = Math.round(gross * cfg.hcp_esic_emp_pct) / 100;
+        esicEr  = Math.round(gross * cfg.hcp_esic_er_pct)  / 100;
+    } else {
+        esicEmp = 0;
+        esicEr  = 0;
+    }
+
+    // ── PF: fixed amount, sirf UAN number wale employees ka ──
+    var uanEl  = document.getElementById('kycUan');
+    var hasUan = !!(uanEl && uanEl.value.trim());
+    var pfFixed = (cfg.hcp_pf_fixed !== undefined ? cfg.hcp_pf_fixed : 1200);
+    pfEmp = hasUan ? pfFixed : 0;
+    pfEr  = hasUan ? pfFixed : 0;
     pt    = gross >= cfg.hcp_pt_threshold ? cfg.hcp_pt_amount : 0;
     bonus = Math.round(gross * cfg.hcp_bonus_pct / 100);
 
     _hcpSetField('salBasic',    basic);
     _hcpSetField('salHra',      hra);
     _hcpSetField('salConv',     conv);
+    _hcpSetField('salDa',       0);   // DA HCP rules me use nahi hota — stale value clear
     _hcpSetField('salTa',       0);
     _hcpSetField('salMed',      med);
     _hcpSetField('salSpecial',  other);
@@ -2609,6 +2661,7 @@ function _hcpDoCalc(cfg) {
     _hcpSetField('salPt',       pt);
     _hcpSetField('salGross',    gross);
 
+    hcpAutoTds();
     var tds = parseFloat((document.getElementById('salTds')||{}).value) || 0;
     var deductions = pfEmp + esicEmp + pt + tds;
     var net = Math.round(gross - deductions);
@@ -2880,11 +2933,11 @@ function _inp(name){
     var e=document.querySelector('[name="'+name+'"]');
     if(!e) return '';
     // If flatpickr instance attached, get YYYY-MM-DD directly
-																		   
+
     if(e._flatpickr && e._flatpickr.selectedDates[0]){
         var d=e._flatpickr.selectedDates[0];
         return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-								  
+
     }
     return e.value;
 }
@@ -3219,6 +3272,24 @@ document.addEventListener('DOMContentLoaded',function(){
 
     // Initial pass
     $(function(){ initSelect2(); });
+
+    // Backup binding: select2 ke through change ho tab bhi salary recalc pakka chale
+    // Edit mode: page load pe gross saved ho toh pura structure recalc + display
+    $(function(){
+        var gIn = document.getElementById('salGrossInput');
+        if (gIn && parseFloat(gIn.value) > 0 && typeof hcpAutoFromGross === 'function') {
+            hcpAutoFromGross();
+        }
+    });
+
+    $(function(){
+        $(document).on('change', '#kycEsicApp', function(){
+            if (typeof onEsicApplicableChange === 'function') onEsicApplicableChange();
+        });
+        $(document).on('change', '#taxRegimeSelect', function(){
+            if (typeof hcpAutoTds === 'function') hcpAutoTds();
+        });
+    });
 
     // Expose for any future dynamic add (e.g. cloned rows)
     window.initEmployeeFormSelect2 = initSelect2;

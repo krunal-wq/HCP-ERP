@@ -753,6 +753,9 @@ def emp_add():
             paid_leave_balance    = _dec_add(request.form.get('paid_leave_balance')) or 0,
             created_by      = current_user.id,
         )
+        # HCP rules: gross se structure + TDS server-side bhi calculate (JS fail-safe)
+        _apply_hcp_structure(e)
+
         db.session.add(e)
         db.session.flush()
 
@@ -946,6 +949,9 @@ def emp_edit(id):
         e.salary_mode          = request.form.get('salary_mode','').strip()
         e.salary_effective_date= _parse_date(request.form.get('salary_effective_date'))
         e.pay_grade            = request.form.get('pay_grade','').strip()
+
+        # HCP rules: gross se structure + TDS server-side bhi calculate (JS fail-safe)
+        _apply_hcp_structure(e)
 
         # Education
         e.highest_qualification= request.form.get('highest_qualification','').strip()
@@ -2101,6 +2107,105 @@ def contractor_restore(id):
 
 
 
+# ═══ HCP Salary Auto-Structure (server-side — import ke liye, form JS ka mirror) ═══
+def _tax_from_slabs_py(income, regime='New'):
+    """Income tax slabs FY 2025-26 (form.html ke _taxFromSlabs ka mirror)."""
+    if str(regime).strip().lower() == 'old':
+        slabs = [(250000, 0), (500000, .05), (1000000, .20), (float('inf'), .30)]
+    else:
+        slabs = [(400000, 0), (800000, .05), (1200000, .10), (1600000, .15),
+                 (2000000, .20), (2400000, .25), (float('inf'), .30)]
+    tax, prev = 0.0, 0.0
+    for upper, rate in slabs:
+        if income > prev:
+            tax += (min(income, upper) - prev) * rate
+        prev = upper
+        if income <= upper:
+            break
+    return round(tax)
+
+
+def _apply_hcp_structure(e):
+    """Employee pe auto salary structure + TDS apply karo (Excel waterfall + fixed PF + slab TDS).
+    Returns True agar apply hua. Contractor / gross missing / hcp disabled -> False."""
+    try:
+        gross = float(e.salary_gross or 0)
+    except (TypeError, ValueError):
+        return False
+    etype = (e.employee_type or '').upper()
+    if gross <= 0 or 'CONTRACTOR' in etype:
+        return False
+    cfg = SalaryConfig.get_config()
+    if cfg.get('hcp_enabled', 1) != 1:
+        return False
+
+    hra_pct  = cfg['hcp_hra_pct_of_basic'] / 100
+    conv_pct = cfg['hcp_conv_pct_of_basic'] / 100
+    med_fix  = cfg['hcp_medical_fixed']
+
+    if gross >= cfg['hcp_high_gross_thresh']:
+        basic = round(gross * cfg['hcp_high_basic_pct'] / 100)
+        hra   = round(basic * hra_pct)
+        conv  = round(basic * conv_pct)
+        med   = med_fix
+        other = max(0, gross - (basic + hra + conv + med))
+        esic_emp = esic_er = 0
+    else:
+        # Excel waterfall: Basic 15000 tak -> HRA -> Conv -> Medical 1200 (pura bache toh) -> Other
+        basic = min(gross, cfg['hcp_low_basic_fixed'])
+        rem   = gross - basic
+        hra   = min(rem, round(basic * hra_pct));  rem -= hra
+        conv  = min(rem, round(basic * conv_pct)); rem -= conv
+        med   = med_fix if rem >= med_fix else 0;  rem -= med
+        other = max(0, rem)
+        esic_emp = esic_er = 0
+
+    # ESIC: sirf "ESIC Applicable = Yes" wale employees ka (limit ke andar)
+    if bool(e.esic_applicable) and gross <= cfg['hcp_esic_limit']:
+        esic_emp = round(gross * cfg['hcp_esic_emp_pct']) / 100
+        esic_er  = round(gross * cfg['hcp_esic_er_pct'])  / 100
+    else:
+        esic_emp = esic_er = 0
+
+    # PF: fixed — sirf UAN wale
+    has_uan  = bool((e.uan_number or '').strip())
+    pf_fixed = cfg.get('hcp_pf_fixed', 1200)
+    pf_emp = pf_fixed if has_uan else 0
+    pf_er  = pf_fixed if has_uan else 0
+
+    pt      = cfg['hcp_pt_amount'] if gross >= cfg['hcp_pt_threshold'] else 0
+    bonus_m = round(gross * cfg['hcp_bonus_pct'] / 100)   # 13th month accrual (8.33%)
+
+    # TDS: annual = 12 + 13th month bonus + prev employer income
+    try:
+        prev_inc = float(e.prev_employer_income or 0)
+    except (TypeError, ValueError):
+        prev_inc = 0
+    annual_gross = round(gross * 13) + prev_inc
+    annual_tax   = _tax_from_slabs_py(annual_gross, e.tax_regime or 'New')
+    tds_m        = annual_tax // 12
+
+    e.salary_basic          = basic
+    e.salary_hra            = hra
+    e.salary_da             = 0
+    e.salary_ta             = 0
+    e.salary_conveyance     = conv
+    e.salary_medical_allow  = med
+    e.salary_special_allow  = other
+    e.salary_pf_employee    = pf_emp
+    e.salary_pf_employer    = pf_er
+    e.salary_esic_employee  = round(esic_emp)
+    e.salary_esic_employer  = round(esic_er)
+    e.salary_professional_tax = pt
+    e.salary_tds            = tds_m
+    e.monthly_tds           = tds_m
+    e.salary_net            = round(gross - (pf_emp + esic_emp + pt + tds_m))
+    e.salary_ctc            = round(gross + pf_er + esic_er + bonus_m)
+    return True
+
+
+
+
 # ─────────────────────────────────────────────
 # EMPLOYEE IMPORT ROUTES
 # ─────────────────────────────────────────────
@@ -2423,6 +2528,9 @@ def emp_import():
                         gr = _dec(_gv(sl,'Gross','salary_gross'))
                         if gr is not None: e.salary_gross = gr
 
+                        # HCP rules: gross se pura structure + TDS auto-calculate
+                        _apply_hcp_structure(e)
+
                         skipped += 1
                         errors.append(f'Row {i}: Code "{emp_code}" updated \u2705')
 
@@ -2562,6 +2670,9 @@ def emp_import():
                     if e.status not in valid_statuses:
                         e.status = 'active'
 
+                    # HCP rules: gross se pura structure + TDS auto-calculate
+                    _apply_hcp_structure(e)
+
                     db.session.add(e)
                     db.session.flush()
 
@@ -2680,6 +2791,14 @@ def emp_import_template():
         ["EMP0001","Krunal Chandi","Indian","Hindu","123456789012","ABCDE1234F","100123456789","1234567890123456","A1234567","31-12-2030","GJ01 2024 123","31-12-2030","Ramesh Chandi","Father","9876500000","123 MG Road Ahmedabad","Yes","PF/GJ/12345/67890","Yes","No","","Yes","Priya Chandi","Spouse","Spouse + 1 child","ESIC Ahmedabad","Yes","New","","","","Pending","Yes","No","No","Yes"]
     )
 
+    # Tax Regime dropdown (New/Old) — KYC sheet, column AB (Tax Regime = 28th column)
+    from openpyxl.worksheet.datavalidation import DataValidation
+    _dv_regime = DataValidation(type="list", formula1='"New,Old"', allow_blank=True)
+    _dv_regime.error = "Sirf New ya Old select karein"
+    _dv_regime.errorTitle = "Invalid Tax Regime"
+    ws3.add_data_validation(_dv_regime)
+    _dv_regime.add("AB3:AB500")
+
     # ── Sheet 4: Bank ──
     ws4 = wb.create_sheet("4 - Bank Details")
     build_tpl(ws4, "065F46",
@@ -2692,7 +2811,7 @@ def emp_import_template():
     ws5 = wb.create_sheet("5 - Salary")
     build_tpl(ws5, "B45309",
         ["Code","Full Name","CTC Monthly","Basic","HRA","DA","TA","Conveyance","Medical","Special","Bonus","Incentive","Gross","PF Emp","PF Er","ESIC Emp","ESIC Er","Prof Tax","TDS","Net Salary","Mode","Effective Date"],
-        ["Match Sheet1 Code","For reference","Monthly CTC in ₹","Monthly basic","Monthly HRA","Monthly DA","Transport","Conveyance","Medical allow","Special allow","Monthly bonus","Monthly incentive","Monthly gross","PF deduction","PF employer","ESIC employee","ESIC employer","Prof. tax","TDS monthly","Net take-home","Cash/Bank Transfer/Cheque","DD-MM-YYYY"],
+        ["Match Sheet1 Code","For reference","Monthly CTC in ₹","Monthly basic","Monthly HRA","Monthly DA","Transport","Conveyance","Medical allow","Special allow","Monthly bonus","Monthly incentive","Monthly gross — ye do, baki components (Basic/HRA/PF/TDS) AUTO-calculate honge","PF deduction (auto: UAN ho toh fixed)","PF employer","ESIC employee","ESIC employer","Prof. tax","TDS monthly (auto: slabs + 13-month gross)","Net take-home (auto)","Cash/Bank Transfer/Cheque","DD-MM-YYYY"],
         ["EMP0001","Krunal Chandi","480000","16000","8000","1600","1600","800","1250","0","0","0","28250","1920","1920","0","0","200","0","26130","Bank Transfer","01-01-2022"]
     )
 
@@ -3301,7 +3420,7 @@ def salary_config_save():
             'hcp_enabled', 'hcp_high_gross_thresh', 'hcp_esic_limit',
             'hcp_low_basic_fixed', 'hcp_high_basic_pct', 'hcp_hra_pct_of_basic',
             'hcp_conv_pct_of_basic', 'hcp_medical_fixed', 'hcp_pt_threshold',
-            'hcp_pt_amount', 'hcp_pf_emp_pct', 'hcp_pf_er_pct',
+            'hcp_pt_amount', 'hcp_pf_emp_pct', 'hcp_pf_er_pct', 'hcp_pf_fixed',
             'hcp_esic_emp_pct', 'hcp_esic_er_pct', 'hcp_bonus_pct',
         }
         clean = {k: v for k, v in data.items() if k in allowed_keys}

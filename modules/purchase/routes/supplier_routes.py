@@ -5,6 +5,7 @@ from models.supplier import Supplier
 from models.employee import StateMaster, CountryMaster
 from sqlalchemy import or_
 from datetime import datetime
+from core.permissions import can_view_material_type
 
 supplier_bp = Blueprint('supplier', __name__, url_prefix='/supplier')
 
@@ -26,6 +27,9 @@ def index():
     sup_type = request.args.get('supplier_type', '').strip().upper()  # RM or PM only
     if sup_type == 'FG':
         abort(404)  # FG ke liye supplier nahi hai
+    # Direct URL access guard â€” RM supplier â†’ purchase_rm, PM supplier â†’ purchase_pm
+    if not can_view_material_type(sup_type):
+        abort(403)
     return render_template('supplier/index.html',
         active_page='supplier',
         role=_role(),

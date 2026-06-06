@@ -322,6 +322,36 @@ def get_sub_perm(module_name, key):
         return False
 
 
+# â”€â”€ Material-category (RM/PM/FG) view permission â€” shared, reusable â”€â”€â”€â”€â”€â”€â”€â”€
+# Raw Material / Packing Material / Finished Goods pages (item master, supplier,
+# PO, GRN, stock) ek hi type-param se identify hote hain. Har category ka apna
+# top-level module hai (purchase_rm/pm/fg). COR/SLV packing ke under aate hain.
+# Ye helper sabhi routes (material, supplier, purchase-order, grn) me reuse hota
+# hai taaki duplicate permission logic na ho.
+_MATERIAL_TYPE_MODULE = {
+    'RM':  'purchase_rm',
+    'PM':  'purchase_pm',
+    'COR': 'purchase_pm',
+    'SLV': 'purchase_pm',
+    'FG':  'purchase_fg',
+}
+
+
+def can_view_material_type(abbr):
+    """True agar current user given material-category (RM/PM/COR/SLV/FG) dekh
+    sakta hai. Admin/Manager â†’ always True. Unknown/empty abbr â†’ procurement
+    module fallback (shared settings)."""
+    role = (getattr(current_user, 'role', '') or '').strip().lower()
+    if role in ('admin', 'manager'):
+        return True
+    mod = _MATERIAL_TYPE_MODULE.get((abbr or '').upper())
+    if not mod:
+        p = get_perm('procurement')
+        return bool(p and getattr(p, 'can_view', False))
+    p = get_perm(mod)
+    return bool(p and getattr(p, 'can_view', False))
+
+
 def _full_perm(module_name=None):
     class FullPerm:
         can_view = can_add = can_edit = can_delete = can_export = can_import = True
@@ -549,6 +579,7 @@ DEFAULT_MODULES = [
     {'name':'crm_clients',  'label':'Clients',        'icon':'ðŸ‘¥', 'url_prefix':'/crm/clients','sort_order':4, 'parent':'crm'},
     {'name':'crm_leaderboard','label':'Leaderboard',  'icon':'ðŸ†','url_prefix':'/crm/leaderboard','sort_order':7,'parent':'crm'},
     {'name':'crm_quot_products','label':'Quotation Products','icon':'ðŸ“¦','url_prefix':'/crm/quot-products','sort_order':8,'parent':'crm'},
+    {'name':'qc',           'label':'Quality Control','icon':'ðŸ§ª','url_prefix':'/qc/dashboard',   'sort_order':12},
     {'name':'rd',           'label':'R&D',          'icon':'ðŸ”¬','url_prefix':'/rd',              'sort_order':13},
     {'name':'raw_material_sample','label':'Raw Material Sample','icon':'ðŸ§´','url_prefix':'/raw-material-sample','sort_order':18},
     {'name':'npd',          'label':'NPD',          'icon':'ðŸ§ª','url_prefix':'/npd',             'sort_order':14},
@@ -557,13 +588,13 @@ DEFAULT_MODULES = [
     {'name':'epd',          'label':'EPD',          'icon':'EPD','url_prefix':'/npd/epd-projects','sort_order':16},
     {'name':'packing',      'label':'Packing',        'icon':'ðŸ“¦', 'url_prefix':'/packing',   'sort_order':17},
     # â”€â”€ Procurement module hierarchy â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    {'name':'procurement',  'label':'Procurement',    'icon':'ðŸ›’', 'url_prefix':'',           'sort_order':19},
+    {'name':'procurement',  'label':'Procurement',    'icon':'ðŸ›’', 'url_prefix':'/material/masters', 'sort_order':24},
     {'name':'purchase',     'label':'Purchase',       'icon':'ðŸ›ï¸', 'url_prefix':'',           'sort_order':20, 'parent':'procurement'},
-    {'name':'purchase_rm',  'label':'Raw Material',   'icon':'ðŸ§ª', 'url_prefix':'/material?item_type=RM', 'sort_order':21, 'parent':'purchase'},
-    {'name':'purchase_pm',  'label':'Packing Material','icon':'ðŸ“¦','url_prefix':'/material?item_type=PM', 'sort_order':22, 'parent':'purchase'},
-    {'name':'purchase_fg',  'label':'Finish Goods',   'icon':'âœ…', 'url_prefix':'/material?item_type=FG', 'sort_order':23, 'parent':'purchase'},
-    {'name':'formulation',  'label':'Formulation',    'icon':'ðŸ§ª', 'url_prefix':'/formulation',           'sort_order':24, 'parent':'purchase'},
-    {'name':'packing_bom',  'label':'Packing BOM',    'icon':'ðŸ“¦', 'url_prefix':'/packing-bom',           'sort_order':25, 'parent':'purchase'},
+    {'name':'purchase_rm',  'label':'Raw Material',   'icon':'ðŸ§ª', 'url_prefix':'/material?item_type=RM', 'sort_order':19},
+    {'name':'purchase_pm',  'label':'Packing Material','icon':'ðŸ“¦','url_prefix':'/material?item_type=PM', 'sort_order':21},
+    {'name':'purchase_fg',  'label':'Finished Goods', 'icon':'âœ…', 'url_prefix':'/material?item_type=FG', 'sort_order':23},
+    {'name':'formulation',  'label':'Formulation',    'icon':'ðŸ§ª', 'url_prefix':'/formulation',           'sort_order':20, 'parent':'purchase_rm'},
+    {'name':'packing_bom',  'label':'Packing BOM',    'icon':'ðŸ“¦', 'url_prefix':'/packing-bom',           'sort_order':22, 'parent':'purchase_pm'},
     {'name':'hr',           'label':'HR',             'icon':'ðŸ‘”', 'url_prefix':'/hr',        'sort_order':5},
     {'name':'hr_employees', 'label':'Employees',      'icon':'ðŸªª', 'url_prefix':'/hr/employees','sort_order':6,'parent':'hr'},
     {'name':'hr_contractors','label':'Contractors',   'icon':'ðŸ¤', 'url_prefix':'/hr/contractors','sort_order':7,'parent':'hr'},
@@ -620,6 +651,38 @@ def seed_permissions():
             db.session.add(existing)
             db.session.flush()
         mod_map[m['name']] = existing.id
+
+    # â”€â”€ Reconcile structure on EXISTING rows â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    # seed sirf naye modules create karta hai; purane rows ka parent/label
+    # update nahi hota. RM/PM/FG ko top-level banane ke liye (independent
+    # permissions) aur formulation/packing_bom ko unke neeche le jaane ke
+    # liye yahan idempotently reconcile karte hain.
+    _reparent = {
+        'purchase_rm':  None,
+        'purchase_pm':  None,
+        'purchase_fg':  None,
+        'formulation':  'purchase_rm',
+        'packing_bom':  'purchase_pm',
+        'procurement':  None,
+    }
+    for name, parent_name in _reparent.items():
+        mod = Module.query.filter_by(name=name).first()
+        if not mod:
+            continue
+        target_pid = None
+        if parent_name:
+            pmod = Module.query.filter_by(name=parent_name).first()
+            target_pid = pmod.id if pmod else None
+        if mod.parent_id != target_pid:
+            mod.parent_id = target_pid
+    # Finished Goods label normalize (old 'Finish Goods' â†’ 'Finished Goods')
+    _fg = Module.query.filter_by(name='purchase_fg').first()
+    if _fg and _fg.label != 'Finished Goods':
+        _fg.label = 'Finished Goods'
+    # Procurement landing point set (shared settings page)
+    _proc = Module.query.filter_by(name='procurement').first()
+    if _proc and (_proc.url_prefix or '') != '/material/masters':
+        _proc.url_prefix = '/material/masters'
 
     # NOTE: Role-based permission seeding removed. System is now user-only.
     # Admin gets default full rights in code (no DB row needed).

@@ -837,7 +837,7 @@ function recalcNet(){
 var _hcpCfg = null;
 function _hcpDefaultCfg(){
     return { hcp_enabled:1, hcp_high_gross_thresh:30000, hcp_esic_limit:21000,
-        hcp_low_basic_fixed:15000, hcp_high_basic_pct:50, hcp_hra_pct_of_basic:40,
+        hcp_low_basic_fixed:15000, hcp_pf_fixed:1200, hcp_high_basic_pct:50, hcp_hra_pct_of_basic:40,
         hcp_conv_pct_of_basic:30, hcp_medical_fixed:1200, hcp_pt_threshold:12000,
         hcp_pt_amount:200, hcp_pf_emp_pct:12, hcp_pf_er_pct:13,
         hcp_esic_emp_pct:0.75, hcp_esic_er_pct:3.25, hcp_bonus_pct:8.33 };
@@ -909,33 +909,36 @@ function _hcpDoCalc(cfg) {
         med = cfg.hcp_medical_fixed;
         other = Math.max(0, gross - (basic + hra + conv + med));
         esicEmp = 0; esicEr = 0;
-    } else if (info.isPlant) {
-        basic = cfg.hcp_low_basic_fixed;
-        hra = Math.round(basic * HRA_PCT);
-        conv = Math.round(basic * CONV_PCT);
-        med = 0;
-        other = Math.max(0, gross - (basic + hra + conv + med));
-        esicEmp = 0; esicEr = 0;
     } else {
-        basic = cfg.hcp_low_basic_fixed;
-        var curHra = parseFloat((document.getElementById('salHra')||{}).value) || 0;
-        hra = curHra > 0 ? curHra : Math.round(basic * HRA_PCT);
-        conv = parseFloat((document.getElementById('salConv')||{}).value) || 0;
-        med = parseFloat((document.getElementById('salMed') ||{}).value) || 0;
-        other = Math.max(0, gross - (basic + hra + conv + med));
-        if (gross <= cfg.hcp_esic_limit) {
-            esicEmp = Math.round(gross * cfg.hcp_esic_emp_pct) / 100;
-            esicEr  = Math.round(gross * cfg.hcp_esic_er_pct)  / 100;
-        } else { esicEmp = 0; esicEr = 0; }
+        // ── Gross < threshold — Excel waterfall (reference sheet) ──
+        basic = Math.min(gross, cfg.hcp_low_basic_fixed);
+        var rem = gross - basic;
+        hra  = Math.min(rem, Math.round(basic * HRA_PCT));  rem -= hra;
+        conv = Math.min(rem, Math.round(basic * CONV_PCT)); rem -= conv;
+        med  = (rem >= cfg.hcp_medical_fixed) ? cfg.hcp_medical_fixed : 0; rem -= med;
+        other = Math.max(0, rem);
+        esicEmp = 0; esicEr = 0;
     }
 
-    pfEmp = Math.round(basic * cfg.hcp_pf_emp_pct / 100);
-    pfEr  = Math.round(basic * cfg.hcp_pf_er_pct  / 100);
+    // ESIC: sirf "ESIC Applicable = Yes" wale employees ka (limit ke andar)
+    var esicSel = document.getElementById('kycEsicApp');
+    var esicYes = !!(esicSel && esicSel.value === 'yes');
+    if (esicYes && gross <= cfg.hcp_esic_limit) {
+        esicEmp = Math.round(gross * cfg.hcp_esic_emp_pct) / 100;
+        esicEr  = Math.round(gross * cfg.hcp_esic_er_pct)  / 100;
+    } else { esicEmp = 0; esicEr = 0; }
+
+    // PF: fixed — sirf UAN number wale employees ka
+    var uanEl  = document.getElementById('kycUan');
+    var hasUan = !!(uanEl && uanEl.value.trim());
+    var pfFixed = (cfg.hcp_pf_fixed !== undefined ? cfg.hcp_pf_fixed : 1200);
+    pfEmp = hasUan ? pfFixed : 0;
+    pfEr  = hasUan ? pfFixed : 0;
     pt    = gross >= cfg.hcp_pt_threshold ? cfg.hcp_pt_amount : 0;
     bonus = Math.round(gross * cfg.hcp_bonus_pct / 100);
 
     _hcpSetField('salBasic', basic); _hcpSetField('salHra', hra);
-    _hcpSetField('salConv', conv);   _hcpSetField('salTa', 0);
+    _hcpSetField('salConv', conv);   _hcpSetField('salTa', 0);   _hcpSetField('salDa', 0);
     _hcpSetField('salMed', med);     _hcpSetField('salSpecial', other);
     _hcpSetField('salBonus', 0);     _hcpSetField('salIncent', 0);
     _hcpSetField('salPfEmp', pfEmp); _hcpSetField('salPfEr', pfEr);

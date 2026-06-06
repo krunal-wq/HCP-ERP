@@ -71,6 +71,13 @@ def _can(action):
     return False
 
 
+def _can_view_type(abbr):
+    """Direct-URL access guard for a material category (RM/PM/COR/SLV).
+    RM â†’ purchase_rm, PM/COR/SLV â†’ purchase_pm. Shared helper reuse."""
+    from core.permissions import can_view_material_type
+    return can_view_material_type(abbr)
+
+
 def _striptags(s):
     """Strip HTML tags from a string (for plain-text storage)."""
     if not s:
@@ -474,6 +481,8 @@ def index():
         abort(403)
 
     grn_type = (request.args.get('grn_type', '') or '').upper().strip()
+    if not _can_view_type(grn_type):
+        abort(403)
     return render_template(
         'grn/index.html',
         active_page  = 'grn',
@@ -1669,6 +1678,8 @@ def quarantine_page():
     """RM Quarantine listing page."""
     if not _can('view'):
         abort(403)
+    if not _can_view_type('RM'):   # quarantine is RM-only
+        abort(403)
     return render_template('grn/quarantine.html', active_page='grn')
 
 
@@ -1792,6 +1803,8 @@ def stock_page():
     """Current Stock (batch-wise) listing page."""
     if not _can('view'):
         abort(403)
+    if not _can_view_type(_stock_type()):
+        abort(403)
     return render_template('grn/stock.html', active_page='grn', mat_type=_stock_type())
 
 
@@ -1800,6 +1813,8 @@ def stock_page():
 def stock_ledger_page():
     """Stock Movement Ledger page."""
     if not _can('view'):
+        abort(403)
+    if not _can_view_type(_stock_type()):
         abort(403)
     return render_template('grn/stock_ledger.html', active_page='grn', mat_type=_stock_type())
 
@@ -1957,6 +1972,8 @@ def api_stock_ledger():
 def stock_by_grn_page():
     """Stock attributed to each GRN â€” one row per (GRN Ã— item Ã— location)."""
     if not _can('view'):
+        abort(403)
+    if not _can_view_type(_stock_type()):
         abort(403)
     return render_template('grn/stock_by_grn.html', active_page='grn', mat_type=_stock_type())
 

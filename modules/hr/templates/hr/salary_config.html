@@ -123,18 +123,20 @@
     <!-- Category + Gross input -->
     <div style="display:flex;gap:.75rem;flex-wrap:wrap;align-items:center;margin-bottom:.85rem;">
       <div style="display:flex;align-items:center;gap:.4rem;">
-        <label style="font-size:.78rem;opacity:.85;">Category:</label>
-        <select id="prevCategory" onchange="updatePreview()" style="padding:.32rem .6rem;border:1.5px solid rgba(255,255,255,.3);border-radius:7px;background:rgba(255,255,255,.12);color:#fff;font-size:.82rem;font-weight:600;">
-          <option value="HCP OFFICE" style="color:#000;">🏢 HO — Office</option>
-          <option value="HCP FACTORY STAFF" style="color:#000;">🏭 Plant — Factory Staff</option>
-          <option value="HCP WORKER" style="color:#000;">🏭 Plant — Worker</option>
-          <option value="WFH" style="color:#000;">🏢 HO — WFH</option>
-          <option value="HCP CONTRACTOR" style="color:#000;">🚫 Contractor (N/A)</option>
-        </select>
-      </div>
-      <div style="display:flex;align-items:center;gap:.4rem;">
         <label style="font-size:.78rem;opacity:.85;">Gross (Monthly) ₹</label>
         <input type="number" id="prevGross" value="30000" step="500" oninput="updatePreview()" style="width:120px;padding:.32rem .6rem;border:1.5px solid rgba(255,255,255,.3);border-radius:7px;background:rgba(255,255,255,.12);color:#fff;font-size:.88rem;font-weight:700;text-align:right;">
+      </div>
+      <div style="display:flex;align-items:center;gap:.4rem;">
+        <label style="font-size:.78rem;opacity:.85;display:flex;align-items:center;gap:.35rem;cursor:pointer;">
+          <input type="checkbox" id="pv_has_uan" checked onchange="updatePreview()" style="width:15px;height:15px;accent-color:#fff;cursor:pointer;">
+          UAN hai (PF lagega)
+        </label>
+      </div>
+      <div style="display:flex;align-items:center;gap:.4rem;">
+        <label style="font-size:.78rem;opacity:.85;display:flex;align-items:center;gap:.35rem;cursor:pointer;">
+          <input type="checkbox" id="pv_esic_yes" onchange="updatePreview()" style="width:15px;height:15px;accent-color:#fff;cursor:pointer;">
+          ESIC Applicable
+        </label>
       </div>
       <span id="prevCategoryLabel" style="background:rgba(255,255,255,.18);padding:3px 10px;border-radius:99px;font-size:.72rem;font-weight:700;"></span>
     </div>
@@ -196,16 +198,18 @@
         <span style="color:#1d4ed8;font-weight:600;">Applies to Employee form & Profile page</span>
       </div>
       <label style="display:flex;align-items:center;gap:6px;font-size:.78rem;font-weight:600;cursor:pointer;">
-        <input type="checkbox" id="cfg_hcp_enabled" {{ 'checked' if cfg.hcp_enabled == 1 }} onchange="markChanged(this)" style="accent-color:#2563eb;width:15px;height:15px;">
+        <input type="checkbox" id="cfg_hcp_enabled" {{ 'checked' if cfg.hcp_enabled == 1 }} onchange="markChanged(this);updatePreview()" style="accent-color:#2563eb;width:15px;height:15px;">
         Enable HCP Rules
       </label>
     </div>
     <div style="padding:.75rem 1.2rem;background:#fffbeb;border-bottom:1px solid #fcd34d;font-size:.77rem;color:#92400e;">
-      ⚠️ <b>3 Categories auto-detect</b> from Employee Type + Gross:
+      ⚠️ <b>Rules</b> — HCP CONTRACTOR ke siva sab employees pe lagu:
       <br>
-      • <b>Plant</b> (HCP FACTORY STAFF / HCP WORKER): ESIC <u>not applicable</u>, even below 21K
+      • <b>PF</b>: UAN number ho toh PF Fixed amount katega, warna 0
       <br>
-      • <b>HO</b> (HCP OFFICE / WFH): ESIC applicable if Gross ≤ ESIC limit
+      • <b>ESIC</b>: sirf "ESIC Applicable = Yes" wale employees ka (Gross ≤ ESIC limit)
+      <br>
+      • <b>TDS</b>: Income tax slabs (New/Old regime) × 13-month gross (bonus included)
       <br>
       • <b>High vs Low Gross</b> split: above threshold → % formula, below → fixed Basic
     </div>
@@ -215,28 +219,28 @@
       <div class="sc-field">
         <label>High Gross Threshold <small>Gross ≥ this → Basic = % of Gross (else fixed)</small></label>
         <div class="sc-inp-wrap">
-          <input type="number" class="sc-inp" style="width:105px" id="cfg_hcp_high_gross_thresh" value="{{ cfg.hcp_high_gross_thresh|int if cfg.hcp_high_gross_thresh else 30000 }}" min="0" step="1000" oninput="markChanged(this)">
+          <input type="number" class="sc-inp" style="width:105px" id="cfg_hcp_high_gross_thresh" value="{{ cfg.hcp_high_gross_thresh|int if cfg.hcp_high_gross_thresh else 30000 }}" min="0" step="1000" oninput="markChanged(this);updatePreview()">
           <span class="sc-unit">₹</span>
         </div>
       </div>
       <div class="sc-field">
         <label>ESIC Limit (HO only) <small>Gross ≤ this → ESIC applies in HO (Plant = never)</small></label>
         <div class="sc-inp-wrap">
-          <input type="number" class="sc-inp" style="width:105px" id="cfg_hcp_esic_limit" value="{{ cfg.hcp_esic_limit|int if cfg.hcp_esic_limit else 21000 }}" min="0" step="500" oninput="markChanged(this)">
+          <input type="number" class="sc-inp" style="width:105px" id="cfg_hcp_esic_limit" value="{{ cfg.hcp_esic_limit|int if cfg.hcp_esic_limit else 21000 }}" min="0" step="500" oninput="markChanged(this);updatePreview()">
           <span class="sc-unit">₹</span>
         </div>
       </div>
       <div class="sc-field">
         <label>Low-Gross Fixed Basic <small>Basic+DA amount when Gross &lt; threshold</small></label>
         <div class="sc-inp-wrap">
-          <input type="number" class="sc-inp" style="width:105px" id="cfg_hcp_low_basic_fixed" value="{{ cfg.hcp_low_basic_fixed|int if cfg.hcp_low_basic_fixed else 15000 }}" min="0" step="500" oninput="markChanged(this)">
+          <input type="number" class="sc-inp" style="width:105px" id="cfg_hcp_low_basic_fixed" value="{{ cfg.hcp_low_basic_fixed|int if cfg.hcp_low_basic_fixed else 15000 }}" min="0" step="500" oninput="markChanged(this);updatePreview()">
           <span class="sc-unit">₹</span>
         </div>
       </div>
       <div class="sc-field">
         <label>High-Gross Basic % <small>Basic = this % of Gross (when Gross ≥ threshold)</small></label>
         <div class="sc-inp-wrap">
-          <input type="number" class="sc-inp" id="cfg_hcp_high_basic_pct" value="{{ cfg.hcp_high_basic_pct if cfg.hcp_high_basic_pct else 50 }}" min="0" max="100" step="0.5" oninput="markChanged(this)">
+          <input type="number" class="sc-inp" id="cfg_hcp_high_basic_pct" value="{{ cfg.hcp_high_basic_pct if cfg.hcp_high_basic_pct else 50 }}" min="0" max="100" step="0.5" oninput="markChanged(this);updatePreview()">
           <span class="sc-unit">%</span>
         </div>
       </div>
@@ -245,28 +249,28 @@
       <div class="sc-field">
         <label>HRA % <small>% of Basic+DA</small></label>
         <div class="sc-inp-wrap">
-          <input type="number" class="sc-inp" id="cfg_hcp_hra_pct_of_basic" value="{{ cfg.hcp_hra_pct_of_basic if cfg.hcp_hra_pct_of_basic else 40 }}" min="0" max="100" step="0.5" oninput="markChanged(this)">
+          <input type="number" class="sc-inp" id="cfg_hcp_hra_pct_of_basic" value="{{ cfg.hcp_hra_pct_of_basic if cfg.hcp_hra_pct_of_basic else 40 }}" min="0" max="100" step="0.5" oninput="markChanged(this);updatePreview()">
           <span class="sc-unit">%</span>
         </div>
       </div>
       <div class="sc-field">
         <label>Conveyance % <small>% of Basic+DA (high-gross branch)</small></label>
         <div class="sc-inp-wrap">
-          <input type="number" class="sc-inp" id="cfg_hcp_conv_pct_of_basic" value="{{ cfg.hcp_conv_pct_of_basic if cfg.hcp_conv_pct_of_basic else 30 }}" min="0" max="100" step="0.5" oninput="markChanged(this)">
+          <input type="number" class="sc-inp" id="cfg_hcp_conv_pct_of_basic" value="{{ cfg.hcp_conv_pct_of_basic if cfg.hcp_conv_pct_of_basic else 30 }}" min="0" max="100" step="0.5" oninput="markChanged(this);updatePreview()">
           <span class="sc-unit">%</span>
         </div>
       </div>
       <div class="sc-field">
         <label>Medical Fixed <small>Fixed amount for Medical Allow (high-gross)</small></label>
         <div class="sc-inp-wrap">
-          <input type="number" class="sc-inp" id="cfg_hcp_medical_fixed" value="{{ cfg.hcp_medical_fixed|int if cfg.hcp_medical_fixed else 1200 }}" min="0" step="50" oninput="markChanged(this)">
+          <input type="number" class="sc-inp" id="cfg_hcp_medical_fixed" value="{{ cfg.hcp_medical_fixed|int if cfg.hcp_medical_fixed else 1200 }}" min="0" step="50" oninput="markChanged(this);updatePreview()">
           <span class="sc-unit">₹</span>
         </div>
       </div>
       <div class="sc-field">
         <label>Bonus % <small>% of Gross (employer contribution)</small></label>
         <div class="sc-inp-wrap">
-          <input type="number" class="sc-inp" id="cfg_hcp_bonus_pct" value="{{ cfg.hcp_bonus_pct if cfg.hcp_bonus_pct else 8.33 }}" min="0" max="100" step="0.01" oninput="markChanged(this)">
+          <input type="number" class="sc-inp" id="cfg_hcp_bonus_pct" value="{{ cfg.hcp_bonus_pct if cfg.hcp_bonus_pct else 8.33 }}" min="0" max="100" step="0.01" oninput="markChanged(this);updatePreview()">
           <span class="sc-unit">%</span>
         </div>
       </div>
@@ -275,42 +279,49 @@
       <div class="sc-field">
         <label>PT Threshold <small>Gross ≥ this → PT applies</small></label>
         <div class="sc-inp-wrap">
-          <input type="number" class="sc-inp" style="width:105px" id="cfg_hcp_pt_threshold" value="{{ cfg.hcp_pt_threshold|int if cfg.hcp_pt_threshold else 12000 }}" min="0" step="500" oninput="markChanged(this)">
+          <input type="number" class="sc-inp" style="width:105px" id="cfg_hcp_pt_threshold" value="{{ cfg.hcp_pt_threshold|int if cfg.hcp_pt_threshold else 12000 }}" min="0" step="500" oninput="markChanged(this);updatePreview()">
           <span class="sc-unit">₹</span>
         </div>
       </div>
       <div class="sc-field">
         <label>PT Amount <small>Fixed PT when applicable</small></label>
         <div class="sc-inp-wrap">
-          <input type="number" class="sc-inp" id="cfg_hcp_pt_amount" value="{{ cfg.hcp_pt_amount|int if cfg.hcp_pt_amount else 200 }}" min="0" step="10" oninput="markChanged(this)">
+          <input type="number" class="sc-inp" id="cfg_hcp_pt_amount" value="{{ cfg.hcp_pt_amount|int if cfg.hcp_pt_amount else 200 }}" min="0" step="10" oninput="markChanged(this);updatePreview()">
+          <span class="sc-unit">₹</span>
+        </div>
+      </div>
+      <div class="sc-field">
+        <label>PF Fixed (UAN walon ke liye) <small>UAN number ho toh itna PF katega, warna 0</small></label>
+        <div class="sc-inp-wrap">
+          <input type="number" class="sc-inp" id="cfg_hcp_pf_fixed" value="{{ cfg.hcp_pf_fixed|int if cfg.hcp_pf_fixed else 1200 }}" min="0" step="50" oninput="markChanged(this);updatePreview()">
           <span class="sc-unit">₹</span>
         </div>
       </div>
       <div class="sc-field">
         <label>PF Employee % <small>% of Basic+DA</small></label>
         <div class="sc-inp-wrap">
-          <input type="number" class="sc-inp" id="cfg_hcp_pf_emp_pct" value="{{ cfg.hcp_pf_emp_pct if cfg.hcp_pf_emp_pct else 12 }}" min="0" max="100" step="0.1" oninput="markChanged(this)">
+          <input type="number" class="sc-inp" id="cfg_hcp_pf_emp_pct" value="{{ cfg.hcp_pf_emp_pct if cfg.hcp_pf_emp_pct else 12 }}" min="0" max="100" step="0.1" oninput="markChanged(this);updatePreview()">
           <span class="sc-unit">%</span>
         </div>
       </div>
       <div class="sc-field">
         <label>PF Employer % <small>% of Basic+DA (incl. admin &amp; EDLI ≈ 13%)</small></label>
         <div class="sc-inp-wrap">
-          <input type="number" class="sc-inp" id="cfg_hcp_pf_er_pct" value="{{ cfg.hcp_pf_er_pct if cfg.hcp_pf_er_pct else 13 }}" min="0" max="100" step="0.1" oninput="markChanged(this)">
+          <input type="number" class="sc-inp" id="cfg_hcp_pf_er_pct" value="{{ cfg.hcp_pf_er_pct if cfg.hcp_pf_er_pct else 13 }}" min="0" max="100" step="0.1" oninput="markChanged(this);updatePreview()">
           <span class="sc-unit">%</span>
         </div>
       </div>
       <div class="sc-field">
         <label>ESIC Employee % <small>% of Gross (HO, if Gross ≤ ESIC limit)</small></label>
         <div class="sc-inp-wrap">
-          <input type="number" class="sc-inp" id="cfg_hcp_esic_emp_pct" value="{{ cfg.hcp_esic_emp_pct if cfg.hcp_esic_emp_pct else 0.75 }}" min="0" max="100" step="0.01" oninput="markChanged(this)">
+          <input type="number" class="sc-inp" id="cfg_hcp_esic_emp_pct" value="{{ cfg.hcp_esic_emp_pct if cfg.hcp_esic_emp_pct else 0.75 }}" min="0" max="100" step="0.01" oninput="markChanged(this);updatePreview()">
           <span class="sc-unit">%</span>
         </div>
       </div>
       <div class="sc-field">
         <label>ESIC Employer % <small>% of Gross (HO, if Gross ≤ ESIC limit)</small></label>
         <div class="sc-inp-wrap">
-          <input type="number" class="sc-inp" id="cfg_hcp_esic_er_pct" value="{{ cfg.hcp_esic_er_pct if cfg.hcp_esic_er_pct else 3.25 }}" min="0" max="100" step="0.01" oninput="markChanged(this)">
+          <input type="number" class="sc-inp" id="cfg_hcp_esic_er_pct" value="{{ cfg.hcp_esic_er_pct if cfg.hcp_esic_er_pct else 3.25 }}" min="0" max="100" step="0.01" oninput="markChanged(this);updatePreview()">
           <span class="sc-unit">%</span>
         </div>
       </div>
@@ -594,6 +605,7 @@ function updatePreview(){
     hcp_medical_fixed:       _n('cfg_hcp_medical_fixed',       1200),
     hcp_pt_threshold:        _n('cfg_hcp_pt_threshold',        12000),
     hcp_pt_amount:           _n('cfg_hcp_pt_amount',           200),
+    hcp_pf_fixed:            _n('cfg_hcp_pf_fixed',            1200),
     hcp_pf_emp_pct:          _n('cfg_hcp_pf_emp_pct',          12),
     hcp_pf_er_pct:           _n('cfg_hcp_pf_er_pct',           13),
     hcp_esic_emp_pct:        _n('cfg_hcp_esic_emp_pct',        0.75),
@@ -601,7 +613,6 @@ function updatePreview(){
     hcp_bonus_pct:           _n('cfg_hcp_bonus_pct',           8.33)
   };
 
-  var empType = document.getElementById('prevCategory').value || 'HCP OFFICE';
   var gross   = parseFloat(document.getElementById('prevGross').value) || 0;
   var catLbl  = document.getElementById('prevCategoryLabel');
 
@@ -621,25 +632,9 @@ function updatePreview(){
     return;
   }
 
-  // Categorize
-  var t = empType.toUpperCase();
-  var isContractor = (t.indexOf('CONTRACTOR') !== -1);
-  if (isContractor) {
-    catLbl.textContent = '🚫 Contractor — N/A';
-    catLbl.style.background = 'rgba(251,191,36,.3)';
-    ['pv_basic','pv_hra','pv_conv','pv_med','pv_other','pv_gross',
-     'pv_pf_emp','pv_esic_emp','pv_pt','pv_net',
-     'pv_pf_er','pv_esic_er','pv_bonus','pv_ctc_total'].forEach(function(id){
-       var e=document.getElementById(id); if(e) e.textContent='—';
-     });
-    return;
-  }
-  var isPlant  = (t.indexOf('FACTORY') !== -1) || (t.indexOf('WORKER') !== -1);
-  var isOffice = (t.indexOf('OFFICE') !== -1) || (t.indexOf('HO') === 0) || (t.indexOf('WFH') !== -1);
-  if (!isPlant && !isOffice) isOffice = true;
+  // Gross range label (HCP CONTRACTOR is screen pe nahi — uska calculation nahi hota)
   var highGross = gross >= cfg.hcp_high_gross_thresh;
-  var cat = (isPlant ? 'Plant' : 'HO') + ' — ' + (highGross ? '≥' : '<') + (cfg.hcp_high_gross_thresh/1000|0) + 'K';
-  catLbl.textContent = '🏭 ' + cat;
+  catLbl.textContent = 'Gross ' + (highGross ? '≥' : '<') + ' ' + (cfg.hcp_high_gross_thresh/1000|0) + 'K — ' + (highGross ? '% formula' : 'waterfall');
   catLbl.style.background = 'rgba(255,255,255,.22)';
 
   // Calculate
@@ -652,26 +647,31 @@ function updatePreview(){
     med   = cfg.hcp_medical_fixed;
     other = Math.max(0, gross - (basic + hra + conv + med));
     esicEmp = 0; esicEr = 0;
-  } else if (isPlant) {
-    basic = cfg.hcp_low_basic_fixed;
-    hra   = Math.round(basic * cfg.hcp_hra_pct_of_basic / 100);
-    conv  = Math.round(basic * cfg.hcp_conv_pct_of_basic / 100);
-    med   = 0;
-    other = Math.max(0, gross - (basic + hra + conv + med));
-    esicEmp = 0; esicEr = 0;
   } else {
-    basic = cfg.hcp_low_basic_fixed;
-    hra   = Math.round(basic * cfg.hcp_hra_pct_of_basic / 100);
-    conv  = 0; med = 0;
-    other = Math.max(0, gross - (basic + hra + conv + med));
-    if (gross <= cfg.hcp_esic_limit) {
-      esicEmp = Math.round(gross * cfg.hcp_esic_emp_pct) / 100;
-      esicEr  = Math.round(gross * cfg.hcp_esic_er_pct)  / 100;
-    } else { esicEmp = 0; esicEr = 0; }
+    // ── Gross < threshold — Excel waterfall (reference sheet) ──
+    basic = Math.min(gross, cfg.hcp_low_basic_fixed);
+    var rem = gross - basic;
+    hra  = Math.min(rem, Math.round(basic * cfg.hcp_hra_pct_of_basic / 100));  rem -= hra;
+    conv = Math.min(rem, Math.round(basic * cfg.hcp_conv_pct_of_basic / 100)); rem -= conv;
+    med  = (rem >= cfg.hcp_medical_fixed) ? cfg.hcp_medical_fixed : 0; rem -= med;
+    other = Math.max(0, rem);
+    esicEmp = 0; esicEr = 0;
   }
 
-  pfEmp = Math.round(basic * cfg.hcp_pf_emp_pct / 100);
-  pfEr  = Math.round(basic * cfg.hcp_pf_er_pct  / 100);
+  // ESIC: sirf "ESIC Applicable = Yes" wale (preview checkbox se simulate)
+  var esicChk = document.getElementById('pv_esic_yes');
+  var esicYes = !!(esicChk && esicChk.checked);
+  if (esicYes && gross <= cfg.hcp_esic_limit) {
+    esicEmp = Math.round(gross * cfg.hcp_esic_emp_pct) / 100;
+    esicEr  = Math.round(gross * cfg.hcp_esic_er_pct)  / 100;
+  } else { esicEmp = 0; esicEr = 0; }
+
+  // PF: fixed amount — sirf UAN wale employees (preview checkbox se simulate)
+  var hasUanEl = document.getElementById('pv_has_uan');
+  var hasUan   = hasUanEl ? hasUanEl.checked : true;
+  var pfFixed  = (cfg.hcp_pf_fixed !== undefined ? cfg.hcp_pf_fixed : 1200);
+  pfEmp = hasUan ? pfFixed : 0;
+  pfEr  = hasUan ? pfFixed : 0;
   pt    = gross >= cfg.hcp_pt_threshold ? cfg.hcp_pt_amount : 0;
   bonus = Math.round(gross * cfg.hcp_bonus_pct / 100);
   var deductions = pfEmp + esicEmp + pt;

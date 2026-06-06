@@ -687,7 +687,7 @@ def project_view(pid):
     note              = NPDNote.query.filter_by(project_id=pid).first()
     active_tab        = request.args.get('tab', 'overview')
 
-    from permissions import get_sub_perm as _gsp
+    from core.permissions import get_sub_perm as _gsp
     npd_sub = {
         'inline_edit'         : _gsp('npd_projects', 'inline_edit'),
         'print'               : _gsp('npd_projects', 'print'),
@@ -1891,7 +1891,7 @@ def packing_row_delete(pid, pmid):
 @npd.route('/<int:pid>/close-project', methods=['POST'])
 @login_required
 def close_project(pid):
-    from permissions import get_sub_perm
+    from core.permissions import get_sub_perm
     if not (get_sub_perm('npd', 'close_project') or (current_user.role == 'admin')):
         return jsonify(success=False, error='Permission denied'), 403
 
@@ -2872,11 +2872,11 @@ def npd_projects():
     users    = get_users()
     perm = get_perm('npd_projects')
     from models.master import NPDStatus
-    from permissions import get_grid_columns
+    from core.permissions import get_grid_columns
     from datetime import datetime as _dt
     npd_statuses = NPDStatus.query.filter_by(is_active=True).order_by(NPDStatus.sort_order).all()
     grid_cols = get_grid_columns('npd_projects', NPD_COLS_DEFAULT, list(NPD_COLS_ALL.keys()))
-    from permissions import get_sub_perm as _gsp_npd
+    from core.permissions import get_sub_perm as _gsp_npd
     npd_sub = {
         'inline_edit'         : _gsp_npd('npd_projects', 'inline_edit'),
         'print'               : _gsp_npd('npd_projects', 'print'),
@@ -3346,7 +3346,7 @@ def download_npd_form(pid):
 @npd.route('/npd-projects/grid-config', methods=['POST'])
 @login_required
 def npd_grid_config():
-    from permissions import save_grid_columns
+    from core.permissions import save_grid_columns
     data = request.get_json()
     cols = data.get('cols', [])
     valid = [c for c in cols if c in NPD_COLS_ALL]
