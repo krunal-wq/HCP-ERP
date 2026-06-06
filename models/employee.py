@@ -605,4 +605,3 @@ class StateMaster(db.Model):
 
     def __repr__(self): return f'<StateMaster {self.name} ({self.short_name})>'
 
-

@@ -1,28 +1,105 @@
 {% extends "base.html" %}
-{% block title %}Item Masters — Purchase{% endblock %}
+{% block title %}Item Masters - Purchase{% endblock %}
 {% block page_title %}Item Masters{% endblock %}
 {% block bread %}Purchase / Masters & Settings{% endblock %}
 
 {% block extra_css %}
 <style>
-.im-tabs       { display:flex; gap:4px; margin-bottom:16px; background:#f1f5f9; padding:4px; border-radius:10px; width:fit-content; }
-.im-tab        { padding:7px 18px; border-radius:7px; border:none; background:none; font-size:13px; font-weight:600; cursor:pointer; color:var(--text2); transition:all .15s; font-family:inherit; }
-.im-tab.active { background:#fff; color:#2563eb; box-shadow:0 1px 4px rgba(0,0,0,.1); }
-.type-badge    { display:inline-block; padding:2px 9px; border-radius:12px; font-size:11px; font-weight:700; }
-.im-chip       { display:inline-flex; align-items:center; gap:6px; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:700; background:var(--white); border:1px solid var(--border); color:var(--text2); }
-.im-chip .val  { font-size:14px; font-weight:800; color:var(--blue,#2563eb); }
+/* ============ TABS (segmented) ============ */
+.im-tabs       { display:flex; gap:4px; margin-bottom:16px; background:#f1f5f9; padding:4px;
+    border-radius:99px; width:fit-content; border:1px solid #e2e8f0; }
+.im-tab        { display:inline-flex; align-items:center; gap:7px; padding:8px 18px;
+    border-radius:99px; border:none; background:none; font-size:13px; font-weight:700;
+    cursor:pointer; color:var(--text2); transition:all .15s; font-family:inherit; }
+.im-tab:hover  { color:#1d4ed8; }
+.im-tab.active { background:#fff; color:#1d4ed8;
+    box-shadow:0 1px 3px rgba(15,23,42,.08), 0 2px 8px rgba(15,23,42,.06); }
+.im-tab svg    { flex:0 0 auto; }
+
+/* ============ CARD + TOOLBAR ============ */
+.grid-card { background:#fff; border:1px solid #e2e8f0; border-radius:16px;
+    box-shadow:0 1px 3px rgba(15,23,42,.05), 0 4px 16px rgba(15,23,42,.04); overflow:hidden; }
+.grid-toolbar { display:flex; align-items:center; gap:10px; padding:14px 16px;
+    border-bottom:1.5px solid #e2e8f0; background:#fff; flex-wrap:wrap; }
+.grid-toolbar-right { margin-left:auto; display:flex; align-items:center; gap:10px; }
+
+.btn-add-new { display:inline-flex; align-items:center; gap:7px; padding:9px 16px;
+    border-radius:99px; border:none; cursor:pointer; font-size:12.5px; font-weight:700;
+    color:#fff; font-family:inherit; background:linear-gradient(180deg,#3b82f6,#1d4ed8);
+    box-shadow:0 2px 8px rgba(37,99,235,.3), inset 0 1px 0 rgba(255,255,255,.2);
+    transition:transform .15s, box-shadow .15s; }
+.btn-add-new:hover { transform:translateY(-1px);
+    box-shadow:0 4px 14px rgba(37,99,235,.4), inset 0 1px 0 rgba(255,255,255,.2); }
+
+.btn-grid-action { display:inline-flex; align-items:center; gap:6px; padding:9px 16px;
+    border-radius:99px; border:1.5px solid #e2e8f0; background:#fff; cursor:pointer;
+    font-size:12.5px; font-weight:700; color:#64748b; font-family:inherit; transition:all .15s; }
+.btn-grid-action:hover { border-color:#93c5fd; background:#eff6ff; color:#1d4ed8; }
+
+.im-chip       { display:inline-flex; align-items:center; gap:6px; padding:6px 14px;
+    border-radius:99px; font-size:12px; font-weight:700; background:#fff;
+    border:1.5px solid #e2e8f0; color:var(--text2); }
+.im-chip .val  { font-size:14px; font-weight:800; color:#1d4ed8; }
+
+/* ============ TABLE ============ */
+.tbl-wrap { overflow-x:auto; }
+.tbl-wrap table { width:100%; border-collapse:collapse; font-size:12.5px; }
+.tbl-wrap thead th { background:#fff; color:#94a3b8; font-size:10.5px; font-weight:800;
+    text-transform:uppercase; letter-spacing:.06em; padding:11px 12px; text-align:left;
+    border-bottom:2px solid #e2e8f0; white-space:nowrap; }
+.tbl-wrap tbody td { padding:10px 12px; border-bottom:1px solid #f1f5f9; vertical-align:middle;
+    color:#334155; }
+.tbl-wrap tbody tr { transition:background .12s; }
+.tbl-wrap tbody tr:hover td { background:#f8fafc; }
+.tbl-wrap tbody tr:last-child td { border-bottom:none; }
+
+.type-badge    { display:inline-block; padding:3px 11px; border-radius:99px;
+    font-size:11px; font-weight:700; }
+
+.st-pill { display:inline-flex; align-items:center; gap:6px; padding:3px 11px;
+    border-radius:99px; font-size:10.5px; font-weight:700; }
+.st-pill::before { content:''; width:6px; height:6px; border-radius:99px; }
+.st-pill.on  { background:#dcfce7; color:#166534; }
+.st-pill.on::before  { background:#16a34a; }
+.st-pill.off { background:#f1f5f9; color:#64748b; }
+.st-pill.off::before { background:#94a3b8; }
+
+/* ============ ROW ACTIONS ============ */
+.row-actions { display:flex; gap:6px; }
+.ra-btn { width:28px; height:28px; padding:0; border:1px solid #bfdbfe; border-radius:8px;
+    background:#eff6ff; color:#1d4ed8; cursor:pointer; display:inline-flex;
+    align-items:center; justify-content:center; transition:all .12s; }
+.ra-btn svg { width:13px; height:13px; }
+.ra-btn:hover { background:#dbeafe; border-color:#93c5fd; transform:translateY(-1px); }
+.ra-btn.danger { background:#fef2f2; color:#dc2626; border-color:#fecaca; }
+.ra-btn.danger:hover { background:#fee2e2; border-color:#fca5a5; }
+
+/* ============ COLOR SWATCHES ============ */
 .color-row     { display:flex; gap:6px; flex-wrap:wrap; margin-top:6px; }
-.color-sw      { width:28px; height:28px; border-radius:50%; cursor:pointer; border:3px solid transparent; transition:all .15s; }
+.color-sw      { width:28px; height:28px; border-radius:99px; cursor:pointer;
+    border:3px solid transparent; transition:all .15s; }
 .color-sw.sel  { border-color:var(--text); transform:scale(1.15); }
-.im-overlay    { display:none; position:fixed; inset:0; background:rgba(2,6,23,.72); backdrop-filter:blur(2px); z-index:500; justify-content:center; align-items:flex-start; padding:28px 16px; overflow-y:auto; }
+
+/* ============ MODALS ============ */
+.im-overlay    { display:none; position:fixed; inset:0; background:rgba(2,6,23,.72);
+    backdrop-filter:blur(2px); z-index:500; justify-content:center; align-items:flex-start;
+    padding:28px 16px; overflow-y:auto; }
 .im-overlay.open { display:flex; }
-.im-modal      { background:var(--white); border:1px solid var(--border); border-radius:14px; width:500px; max-width:96vw; max-height:calc(100vh - 56px); display:flex; flex-direction:column; box-shadow:0 32px 80px rgba(0,0,0,.3); animation:imIn .2s cubic-bezier(.16,1,.3,1); }
+.im-modal      { background:#fff; border:1px solid #e2e8f0; border-radius:16px; width:500px;
+    max-width:96vw; max-height:calc(100vh - 56px); display:flex; flex-direction:column;
+    box-shadow:0 32px 80px rgba(15,23,42,.3); animation:imIn .2s cubic-bezier(.16,1,.3,1); }
 @keyframes imIn { from{transform:translateY(-18px) scale(.98);opacity:0} to{transform:translateY(0);opacity:1} }
-.im-mhdr       { display:flex; align-items:center; justify-content:space-between; padding:16px 22px 12px; border-bottom:1px solid var(--border); border-radius:14px 14px 0 0; flex-shrink:0; }
-.im-mhdr h3    { font-size:15px; font-weight:700; color:var(--text); margin:0; }
+.im-mhdr       { display:flex; align-items:center; justify-content:space-between;
+    padding:16px 22px 12px; border-bottom:1.5px solid #e2e8f0; border-radius:16px 16px 0 0;
+    flex-shrink:0; }
+.im-mhdr h3    { font-size:15px; font-weight:800; color:#0f172a; margin:0; letter-spacing:-.01em; }
 .im-mbody      { padding:20px 22px 10px; overflow-y:auto; flex:1; }
-.im-mfoot      { display:flex; justify-content:flex-end; gap:9px; padding:12px 22px; border-top:1px solid var(--border); background:var(--bg); border-radius:0 0 14px 14px; flex-shrink:0; }
-.im-mclose     { width:30px; height:30px; border-radius:7px; border:1px solid var(--border); background:var(--bg); cursor:pointer; font-size:14px; display:flex; align-items:center; justify-content:center; color:var(--text2); transition:all .15s; }
+.im-mfoot      { display:flex; justify-content:flex-end; gap:9px; padding:12px 22px;
+    border-top:1.5px solid #e2e8f0; background:#f8fafc; border-radius:0 0 16px 16px;
+    flex-shrink:0; }
+.im-mclose     { width:30px; height:30px; border-radius:99px; border:1px solid #e2e8f0;
+    background:#f8fafc; cursor:pointer; font-size:15px; line-height:1; display:flex;
+    align-items:center; justify-content:center; color:var(--text2); transition:all .15s; }
 .im-mclose:hover { background:#ef4444; color:#fff; border-color:#ef4444; }
 .im-grid-2     { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
 </style>
@@ -32,19 +109,28 @@
 
 <!-- Tabs -->
 <div class="im-tabs">
-  <button class="im-tab active" onclick="imTab('types',this)">🏷️ Item Types</button>
-  <button class="im-tab" onclick="imTab('groups',this)">📂 Item Groups</button>
-  <button class="im-tab" onclick="imTab('categories',this)">🗂️ Categories</button>
+  <button class="im-tab active" onclick="imTab('types',this)">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/></svg>
+    Item Types
+  </button>
+  <button class="im-tab" onclick="imTab('groups',this)">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>
+    Item Groups
+  </button>
+  <button class="im-tab" onclick="imTab('categories',this)">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    Categories
+  </button>
 </div>
 
-<!-- ═══ TYPES TAB ═══ -->
+<!-- ==== TYPES TAB ==== -->
 <div id="tab-types">
 <div class="grid-card">
   <div class="grid-toolbar">
     <button class="btn-add-new" onclick="imOpenType()">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> New Type
     </button>
-    <button class="btn-grid-action" id="typeBulkDelBtn" onclick="typeBulkDelete()" style="display:none;background:#fee2e2;color:#dc2626;border-color:#fca5a5;font-weight:700;">🗑 Delete Selected</button>
+    <button class="btn-grid-action" id="typeBulkDelBtn" onclick="typeBulkDelete()" style="display:none;background:#fee2e2;color:#dc2626;border-color:#fca5a5;font-weight:700;">Delete Selected</button>
     <div class="grid-toolbar-right">
       <span class="im-chip">Total: <span class="val" id="typeTotal">0</span></span>
     </div>
@@ -57,20 +143,20 @@
         <th>Type Name</th><th>Abbr.</th><th>Color</th><th>SKU Size</th><th>Sort</th><th>Status</th>
         <th style="width:80px;text-align:right;">Actions</th>
       </tr></thead>
-      <tbody id="typeTbody"><tr><td colspan="8" style="text-align:center;padding:40px;color:#94a3b8;">Loading…</td></tr></tbody>
+      <tbody id="typeTbody"><tr><td colspan="9" style="text-align:center;padding:40px;color:#94a3b8;">Loading...</td></tr></tbody>
     </table>
   </div>
 </div>
 </div>
 
-<!-- ═══ GROUPS TAB ═══ -->
+<!-- ==== GROUPS TAB ==== -->
 <div id="tab-groups" style="display:none">
 <div class="grid-card">
   <div class="grid-toolbar">
     <button class="btn-add-new" onclick="imOpenGroup()">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> New Group
     </button>
-    <button class="btn-grid-action" id="grpBulkDelBtn" onclick="grpBulkDelete()" style="display:none;background:#fee2e2;color:#dc2626;border-color:#fca5a5;font-weight:700;">🗑 Delete Selected</button>
+    <button class="btn-grid-action" id="grpBulkDelBtn" onclick="grpBulkDelete()" style="display:none;background:#fee2e2;color:#dc2626;border-color:#fca5a5;font-weight:700;">Delete Selected</button>
     <div class="grid-toolbar-right">
       <span class="im-chip">Total: <span class="val" id="grpTotal">0</span></span>
     </div>
@@ -83,20 +169,20 @@
         <th>Group Name</th><th>Parent Group</th><th>Description</th>
         <th style="width:80px;text-align:right;">Actions</th>
       </tr></thead>
-      <tbody id="grpTbody"><tr><td colspan="5" style="text-align:center;padding:40px;color:#94a3b8;">Loading…</td></tr></tbody>
+      <tbody id="grpTbody"><tr><td colspan="6" style="text-align:center;padding:40px;color:#94a3b8;">Loading...</td></tr></tbody>
     </table>
   </div>
 </div>
 </div>
 
-<!-- ═══ CATEGORIES TAB ═══ -->
+<!-- ==== CATEGORIES TAB ==== -->
 <div id="tab-categories" style="display:none">
 <div class="grid-card">
   <div class="grid-toolbar">
     <button class="btn-add-new" onclick="imOpenCategory()">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> New Category
     </button>
-    <button class="btn-grid-action" id="catBulkDelBtn" onclick="catBulkDelete()" style="display:none;background:#fee2e2;color:#dc2626;border-color:#fca5a5;font-weight:700;">🗑 Delete Selected</button>
+    <button class="btn-grid-action" id="catBulkDelBtn" onclick="catBulkDelete()" style="display:none;background:#fee2e2;color:#dc2626;border-color:#fca5a5;font-weight:700;">Delete Selected</button>
     <div class="grid-toolbar-right">
       <span class="im-chip">Total: <span class="val" id="catTotal">0</span></span>
     </div>
@@ -109,18 +195,18 @@
         <th>Category Name</th><th>Description</th><th>Status</th>
         <th style="width:80px;text-align:right;">Actions</th>
       </tr></thead>
-      <tbody id="catTbody"><tr><td colspan="5" style="text-align:center;padding:40px;color:#94a3b8;">Loading…</td></tr></tbody>
+      <tbody id="catTbody"><tr><td colspan="6" style="text-align:center;padding:40px;color:#94a3b8;">Loading...</td></tr></tbody>
     </table>
   </div>
 </div>
 </div>
 
-<!-- ═══ TYPE MODAL ═══ -->
+<!-- ==== TYPE MODAL ==== -->
 <div class="im-overlay" id="imTypeOverlay" onclick="if(event.target===this)imCloseType()">
   <div class="im-modal">
     <div class="im-mhdr">
-      <h3 id="imTypeTitle">➕ New Item Type</h3>
-      <button class="im-mclose" onclick="imCloseType()">✕</button>
+      <h3 id="imTypeTitle">New Item Type</h3>
+      <button class="im-mclose" onclick="imCloseType()">&times;</button>
     </div>
     <div class="im-mbody">
       <div class="im-grid-2">
@@ -137,7 +223,7 @@
       <div class="fg" style="margin-top:12px">
         <label class="fl">Color</label>
         <div style="display:flex;align-items:center;gap:10px;margin-top:6px">
-          <input type="color" id="tColor" value="#6366f1" style="width:40px;height:36px;border-radius:7px;border:1px solid var(--border);cursor:pointer;padding:2px;">
+          <input type="color" id="tColor" value="#6366f1" style="width:40px;height:36px;border-radius:8px;border:1px solid var(--border);cursor:pointer;padding:2px;">
           <div class="color-row" id="colorSwatches"></div>
         </div>
       </div>
@@ -153,12 +239,12 @@
   </div>
 </div>
 
-<!-- ═══ GROUP MODAL ═══ -->
+<!-- ==== GROUP MODAL ==== -->
 <div class="im-overlay" id="imGrpOverlay" onclick="if(event.target===this)imCloseGroup()">
   <div class="im-modal">
     <div class="im-mhdr">
-      <h3 id="imGrpTitle">➕ New Item Group</h3>
-      <button class="im-mclose" onclick="imCloseGroup()">✕</button>
+      <h3 id="imGrpTitle">New Item Group</h3>
+      <button class="im-mclose" onclick="imCloseGroup()">&times;</button>
     </div>
     <div class="im-mbody">
       <div class="fg"><label class="fl">Group Name <span style="color:var(--red)">*</span></label><input type="text" class="fi" id="gName" placeholder="e.g. FRAGRANCES"></div>
@@ -175,12 +261,12 @@
   </div>
 </div>
 
-<!-- ═══ CATEGORY MODAL ═══ -->
+<!-- ==== CATEGORY MODAL ==== -->
 <div class="im-overlay" id="imCatOverlay" onclick="if(event.target===this)imCloseCategory()">
   <div class="im-modal">
     <div class="im-mhdr">
-      <h3 id="imCatTitle">➕ New Category</h3>
-      <button class="im-mclose" onclick="imCloseCategory()">✕</button>
+      <h3 id="imCatTitle">New Category</h3>
+      <button class="im-mclose" onclick="imCloseCategory()">&times;</button>
     </div>
     <div class="im-mbody">
       <div class="fg"><label class="fl">Category Name <span style="color:var(--red)">*</span></label><input type="text" class="fi" id="catName" placeholder="e.g. Active Ingredients"></div>
@@ -215,14 +301,14 @@ const PRESET_COLORS=['#6366f1','#2563eb','#0891b2','#059669','#16a34a','#ca8a04'
 
 function esc(s){ if(!s)return''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-/* ══ TABS ══ */
+/* == TABS == */
 function imTab(tab, btn){
   document.querySelectorAll('.im-tab').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   ['types','groups','categories'].forEach(t=>{ document.getElementById('tab-'+t).style.display = t===tab?'':'none'; });
 }
 
-/* ══ TYPES ══ */
+/* == TYPES == */
 async function imLoadTypes(){
   const res=await fetch(`${IM}/types`); const data=await res.json();
   imTypes=data.rows||[]; document.getElementById('typeTotal').textContent=imTypes.length; renderTypesTable();
@@ -235,11 +321,11 @@ function renderTypesTable(){
       <td onclick="event.stopPropagation()" style="padding:0 8px;"><input type="checkbox" class="type-chk" value="${t.id}" onclick="typeUpdateDeleteBtn()" style="width:15px;height:15px;cursor:pointer;accent-color:#2563eb;"></td>
       <td style="color:#94a3b8;font-size:11px;font-weight:600">${i+1}</td>
       <td><span class="type-badge" style="background:${t.color}18;color:${t.color}">${esc(t.type_name)}</span></td>
-      <td style="font-family:monospace;font-weight:700">${esc(t.abbreviation)}</td>
-      <td><span style="display:inline-block;width:20px;height:20px;border-radius:50%;background:${t.color};vertical-align:middle"></span></td>
-      <td>${t.has_sku?'<span style="color:#16a34a;font-weight:700">✓ Yes</span>':'—'}</td>
+      <td style="font-family:'JetBrains Mono',monospace;font-weight:700">${esc(t.abbreviation)}</td>
+      <td><span style="display:inline-block;width:20px;height:20px;border-radius:99px;background:${t.color};vertical-align:middle"></span></td>
+      <td>${t.has_sku?'<span style="color:#16a34a;font-weight:700">Yes</span>':'<span style="color:#cbd5e1">-</span>'}</td>
       <td style="color:var(--text3)">${t.sort_order}</td>
-      <td>${t.is_active?'<span style="color:#16a34a;font-weight:700">Active</span>':'<span style="color:#94a3b8">Inactive</span>'}</td>
+      <td>${t.is_active?'<span class="st-pill on">Active</span>':'<span class="st-pill off">Inactive</span>'}</td>
       <td onclick="event.stopPropagation()"><div class="row-actions" style="justify-content:flex-end">
         ${TYPE_CAN_EDIT?`<button class="ra-btn" onclick="imOpenType(${t.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg></button>`:''}
         ${TYPE_CAN_DELETE?`<button class="ra-btn danger" onclick="imDelType(${t.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></button>`:''}
@@ -249,7 +335,7 @@ function renderTypesTable(){
 }
 function imOpenType(id=null){
   imTypeEditId=id;
-  document.getElementById('imTypeTitle').textContent=id?'✏️ Edit Item Type':'➕ New Item Type';
+  document.getElementById('imTypeTitle').textContent=id?'Edit Item Type':'New Item Type';
   const t=id?imTypes.find(x=>x.id===id):null;
   document.getElementById('tName').value=t?.type_name||''; document.getElementById('tAbbr').value=t?.abbreviation||'';
   document.getElementById('tSort').value=t?.sort_order||0; document.getElementById('tDesc').value=t?.description||'';
@@ -272,16 +358,16 @@ async function imSaveType(){
     sort_order:+document.getElementById('tSort').value||0,is_active:document.getElementById('tActive').checked,has_sku:document.getElementById('tHasSku').checked};
   const res=await fetch(`${IM}/types/save`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
   const data=await res.json();
-  if(data.status==='ok'){ imCloseType(); await imLoadTypes(); showToast('Saved ✓','success'); } else showToast(data.message||'Save failed','danger');
+  if(data.status==='ok'){ imCloseType(); await imLoadTypes(); showToast('Saved','success'); } else showToast(data.message||'Save failed','danger');
 }
 async function imDelType(id){
   if(!confirm('Delete this type?')) return;
   const res=await fetch(`${IM}/types/delete`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})});
   const data=await res.json();
-  if(data.status==='ok'){ await imLoadTypes(); showToast('Deleted ✓','success'); } else showToast(data.message,'danger');
+  if(data.status==='ok'){ await imLoadTypes(); showToast('Deleted','success'); } else showToast(data.message,'danger');
 }
 function typeToggleAll(cb){ document.querySelectorAll('.type-chk').forEach(c=>c.checked=cb.checked); typeUpdateDeleteBtn(); }
-function typeUpdateDeleteBtn(){ const n=document.querySelectorAll('.type-chk:checked').length; document.getElementById('typeBulkDelBtn').style.display=n?'':'none'; if(n) document.getElementById('typeBulkDelBtn').textContent=`🗑 Delete (${n})`; }
+function typeUpdateDeleteBtn(){ const n=document.querySelectorAll('.type-chk:checked').length; document.getElementById('typeBulkDelBtn').style.display=n?'':'none'; if(n) document.getElementById('typeBulkDelBtn').textContent=`Delete (${n})`; }
 async function typeBulkDelete(){
   const ids=[...document.querySelectorAll('.type-chk:checked')].map(c=>+c.value);
   if(!ids.length||!confirm(`Delete ${ids.length} types?`)) return;
@@ -289,7 +375,7 @@ async function typeBulkDelete(){
   await imLoadTypes(); showToast(`${ids.length} types deleted`,'success');
 }
 
-/* ══ GROUPS ══ */
+/* == GROUPS == */
 async function imLoadGroups(){
   const res=await fetch(`${IM}/groups`); const data=await res.json();
   imGroups=data.rows||[]; document.getElementById('grpTotal').textContent=imGroups.length; renderGroupsTable();
@@ -303,7 +389,7 @@ function renderGroupsTable(){
     <tr ${GRP_CAN_EDIT?`ondblclick="imOpenGroup(${g.id})"`:''} style="cursor:pointer">
       <td onclick="event.stopPropagation()" style="padding:0 8px;"><input type="checkbox" class="grp-chk" value="${g.id}" onclick="grpUpdateDeleteBtn()" style="width:15px;height:15px;cursor:pointer;accent-color:#2563eb;"></td>
       <td style="color:#94a3b8;font-size:11px;font-weight:600">${i+1}</td>
-      <td style="font-weight:${g.parent_id?'600':'800'}">${g.parent_id?'└ ':''}${esc(g.group_name)}</td>
+      <td style="font-weight:${g.parent_id?'600':'800'}">${g.parent_id?'&#8627; ':''}${esc(g.group_name)}</td>
       <td style="font-size:12px;color:var(--text2)">${g.parent_id?esc(byId[g.parent_id]?.group_name||''):''}</td>
       <td style="font-size:12px;color:var(--text3)">${esc(g.description||'')}</td>
       <td onclick="event.stopPropagation()"><div class="row-actions" style="justify-content:flex-end">
@@ -315,7 +401,7 @@ function renderGroupsTable(){
 }
 function imOpenGroup(id=null){
   imGrpEditId=id;
-  document.getElementById('imGrpTitle').textContent=id?'✏️ Edit Group':'➕ New Item Group';
+  document.getElementById('imGrpTitle').textContent=id?'Edit Group':'New Item Group';
   const g=id?imGroups.find(x=>x.id===id):null;
   document.getElementById('gName').value=g?.group_name||''; document.getElementById('gDesc').value=g?.description||'';
   const sel=document.getElementById('gParent');
@@ -331,16 +417,16 @@ async function imSaveGroup(){
   const payload={id:imGrpEditId,group_name:name,parent_id:+document.getElementById('gParent').value||null,description:document.getElementById('gDesc').value.trim()};
   const res=await fetch(`${IM}/groups/save`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
   const data=await res.json();
-  if(data.status==='ok'){ imCloseGroup(); await imLoadGroups(); showToast('Saved ✓','success'); } else showToast(data.message||'Save failed','danger');
+  if(data.status==='ok'){ imCloseGroup(); await imLoadGroups(); showToast('Saved','success'); } else showToast(data.message||'Save failed','danger');
 }
 async function imDelGroup(id){
   if(!confirm('Delete this group?')) return;
   const res=await fetch(`${IM}/groups/delete`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})});
   const data=await res.json();
-  if(data.status==='ok'){ await imLoadGroups(); showToast('Deleted ✓','success'); } else showToast(data.message,'danger');
+  if(data.status==='ok'){ await imLoadGroups(); showToast('Deleted','success'); } else showToast(data.message,'danger');
 }
 function grpToggleAll(cb){ document.querySelectorAll('.grp-chk').forEach(c=>c.checked=cb.checked); grpUpdateDeleteBtn(); }
-function grpUpdateDeleteBtn(){ const n=document.querySelectorAll('.grp-chk:checked').length; document.getElementById('grpBulkDelBtn').style.display=n?'':'none'; if(n) document.getElementById('grpBulkDelBtn').textContent=`🗑 Delete (${n})`; }
+function grpUpdateDeleteBtn(){ const n=document.querySelectorAll('.grp-chk:checked').length; document.getElementById('grpBulkDelBtn').style.display=n?'':'none'; if(n) document.getElementById('grpBulkDelBtn').textContent=`Delete (${n})`; }
 async function grpBulkDelete(){
   const ids=[...document.querySelectorAll('.grp-chk:checked')].map(c=>+c.value);
   if(!ids.length||!confirm(`Delete ${ids.length} groups?`)) return;
@@ -348,7 +434,7 @@ async function grpBulkDelete(){
   await imLoadGroups(); showToast(`${ids.length} groups deleted`,'success');
 }
 
-/* ══ CATEGORIES ══ */
+/* == CATEGORIES == */
 async function imLoadCategories(){
   const res=await fetch(`${IM}/categories`); const data=await res.json();
   imCategories=data.rows||[]; document.getElementById('catTotal').textContent=imCategories.length; renderCatTable();
@@ -362,7 +448,7 @@ function renderCatTable(){
       <td style="color:#94a3b8;font-size:11px;font-weight:600">${i+1}</td>
       <td style="font-weight:700">${esc(cat.category_name)}</td>
       <td style="font-size:12px;color:var(--text2)">${esc(cat.description||'')}</td>
-      <td>${cat.is_active?'<span style="color:#16a34a;font-weight:700">Active</span>':'<span style="color:#94a3b8">Inactive</span>'}</td>
+      <td>${cat.is_active?'<span class="st-pill on">Active</span>':'<span class="st-pill off">Inactive</span>'}</td>
       <td onclick="event.stopPropagation()"><div class="row-actions" style="justify-content:flex-end">
         ${CAT_CAN_EDIT?`<button class="ra-btn" onclick="imOpenCategory(${cat.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg></button>`:''}
         ${CAT_CAN_DELETE?`<button class="ra-btn danger" onclick="imDelCategory(${cat.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></button>`:''}
@@ -372,7 +458,7 @@ function renderCatTable(){
 }
 function imOpenCategory(id=null){
   imCatEditId=id;
-  document.getElementById('imCatTitle').textContent=id?'✏️ Edit Category':'➕ New Category';
+  document.getElementById('imCatTitle').textContent=id?'Edit Category':'New Category';
   const cat=id?imCategories.find(x=>x.id===id):null;
   document.getElementById('catName').value=cat?.category_name||''; document.getElementById('catDesc').value=cat?.description||'';
   document.getElementById('catActive').checked=cat?cat.is_active:true;
@@ -386,16 +472,16 @@ async function imSaveCategory(){
   const payload={id:imCatEditId,category_name:name,description:document.getElementById('catDesc').value.trim(),is_active:document.getElementById('catActive').checked};
   const res=await fetch(`${IM}/categories/save`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
   const data=await res.json();
-  if(data.status==='ok'){ imCloseCategory(); await imLoadCategories(); showToast('Saved ✓','success'); } else showToast(data.message||'Save failed','danger');
+  if(data.status==='ok'){ imCloseCategory(); await imLoadCategories(); showToast('Saved','success'); } else showToast(data.message||'Save failed','danger');
 }
 async function imDelCategory(id){
   if(!confirm('Delete this category?')) return;
   const res=await fetch(`${IM}/categories/delete`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})});
   const data=await res.json();
-  if(data.status==='ok'){ await imLoadCategories(); showToast('Deleted ✓','success'); } else showToast(data.message,'danger');
+  if(data.status==='ok'){ await imLoadCategories(); showToast('Deleted','success'); } else showToast(data.message,'danger');
 }
 function catToggleAll(cb){ document.querySelectorAll('.cat-chk').forEach(c=>c.checked=cb.checked); catUpdateDeleteBtn(); }
-function catUpdateDeleteBtn(){ const n=document.querySelectorAll('.cat-chk:checked').length; document.getElementById('catBulkDelBtn').style.display=n?'':'none'; if(n) document.getElementById('catBulkDelBtn').textContent=`🗑 Delete (${n})`; }
+function catUpdateDeleteBtn(){ const n=document.querySelectorAll('.cat-chk:checked').length; document.getElementById('catBulkDelBtn').style.display=n?'':'none'; if(n) document.getElementById('catBulkDelBtn').textContent=`Delete (${n})`; }
 async function catBulkDelete(){
   const ids=[...document.querySelectorAll('.cat-chk:checked')].map(c=>+c.value);
   if(!ids.length||!confirm(`Delete ${ids.length} categories?`)) return;

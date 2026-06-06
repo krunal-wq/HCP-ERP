@@ -163,7 +163,12 @@
     {% set role = current_user.role if current_user.is_authenticated else '' %}
     {% set p_crm      = (get_perm('crm') and get_perm('crm').can_view and get_module_active('crm')) %}
     {% set p_packing  = (get_perm('packing') and get_perm('packing').can_view and get_module_active('packing')) %}
-    {% set p_purchase = (role == 'admin' or (get_perm('material') and get_perm('material').can_view) or (get_perm('procurement') and get_perm('procurement').can_view)) %}
+    {# Procurement cards — each category gated by its own module permission #}
+    {% set p_rm       = (role == 'admin' or (get_perm('purchase_rm') and get_perm('purchase_rm').can_view)) %}
+    {% set p_pm       = (role == 'admin' or (get_perm('purchase_pm') and get_perm('purchase_pm').can_view)) %}
+    {% set p_fg       = (role == 'admin' or (get_perm('purchase_fg') and get_perm('purchase_fg').can_view)) %}
+    {% set p_proc     = (role == 'admin' or (get_perm('procurement') and get_perm('procurement').can_view)) %}
+    {% set p_purchase = (p_rm or p_pm or p_fg or p_proc) %}
     {% set p_qc       = (role == 'admin' or (get_perm('qc') and get_perm('qc').can_view)) %}
     {% set p_rms      = (role == 'admin' or (get_perm('raw_material_sample') and get_perm('raw_material_sample').can_view)) %}
     {% set p_rd       = (get_perm('rd') and get_perm('rd').can_view) %}
@@ -215,10 +220,11 @@
         <div class="sec-title"><div class="indicator" style="background:#3b82f6;"></div> Operations Hub</div>
         <div class="bento-grid">
           {% if p_packing %}{{ mcard('PACKING', 'Packing Entry', 'Sample receipt log with date, brand, product, batch & MRP details.', '/packing', 'bi-box-seam', '#f97316', '#ffedd5', true) }}{% endif %}
-          {% if p_purchase %}{{ mcard('PROCUREMENT', 'Raw Material', 'RM item master, supplier directory, PO, GRN & live stock ledger.', '/material?item_type=RM', 'bi-droplet-half', '#3b82f6', '#eff6ff') }}{% endif %}
-          {% if p_purchase %}{{ mcard('PROCUREMENT', 'Packing Material', 'PM item master, PO, GRN, Bill of Materials & stock.', '/material?item_type=PM', 'bi-archive', '#8b5cf6', '#f5f3ff') }}{% endif %}
-          {% if p_purchase %}{{ mcard('PROCUREMENT', 'Finish Good', 'Manage FG item master & live finished goods inventory.', '/material?item_type=FG', 'bi-check2-square', '#10b981', '#ecfdf5') }}{% endif %}
-          {% if p_qc %}{{ mcard('QUALITY CONTROL', 'QC Dashboard', 'Review RM & PM TRS, approvals, COA & quality status tracking.', '/qc/', 'bi-clipboard2-check', '#0ea5e9', '#f0f9ff') }}{% endif %}
+          {% if p_rm %}{{ mcard('PROCUREMENT', 'Raw Material', 'RM item master, supplier directory, PO, GRN & live stock ledger.', '/material?item_type=RM', 'bi-droplet-half', '#3b82f6', '#eff6ff') }}{% endif %}
+          {% if p_pm %}{{ mcard('PROCUREMENT', 'Packing Material', 'PM item master, PO, GRN, Bill of Materials & stock.', '/material?item_type=PM', 'bi-archive', '#8b5cf6', '#f5f3ff') }}{% endif %}
+          {% if p_fg %}{{ mcard('PROCUREMENT', 'Finished Goods', 'Manage FG item master & live finished goods inventory.', '/material?item_type=FG', 'bi-check2-square', '#10b981', '#ecfdf5') }}{% endif %}
+          {% if p_proc %}{{ mcard('PROCUREMENT', 'Procurement', 'Shared setup: item masters, ship locations, PO terms & company settings.', '/material/masters', 'bi-sliders2', '#0d9488', '#f0fdfa') }}{% endif %}
+          {% if p_qc %}{{ mcard('QUALITY CONTROL', 'Quality Control(QC)', 'Review RM & PM TRS, approvals, COA & quality status tracking.', '/qc/dashboard', 'bi-clipboard2-check', '#0ea5e9', '#f0f9ff') }}{% endif %}
         </div>
       </div>
       {% endif %}
@@ -252,7 +258,7 @@
         <div class="sec-title"><div class="indicator" style="background:#64748b;"></div> System Settings</div>
         <div class="bento-grid">
           {% if p_masters %}{{ mcard('SETUP', 'Data Masters', 'Configure category, UOM & HSN code master data.', '/masters/category-master', 'bi-sliders2', '#6366f1', '#eef2ff') }}{% endif %}
-          {% if p_admin %}{{ mcard('ADMINISTRATION', 'Security & Admin', 'System approvals, user role permissions & audit logs.', '/approvals', 'bi-shield-lock', '#64748b', '#f8fafc') }}{% endif %}
+          {% if p_admin %}{{ mcard('ADMINISTRATION', 'Security & Admin', 'System approvals, user role permissions & audit logs.', 'admin/acp', 'bi-shield-lock', '#64748b', '#f8fafc') }}{% endif %}
         </div>
       </div>
       {% endif %}

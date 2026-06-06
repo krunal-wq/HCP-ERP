@@ -180,6 +180,7 @@
     <input type="hidden" id="matTypeFilter" value="">
   {% endif %}
   <input type="hidden" id="matGroupFilter" value="">
+  <input type="hidden" id="matCatFilter" value="">
   <input type="hidden" id="matActiveFilter" value="1">
 
   <!-- -- Main Toolbar -- -->
@@ -280,13 +281,13 @@
         </button>
         <div id="colPanel" class="tb-panel" style="display:none;min-width:180px;right:0;">
           <div class="tb-panel-title">Show / Hide Columns</div>
-          <label class="tb-opt"><input type="checkbox" checked onchange="toggleCol('colType',this.checked)"> Type</label>
-          <label class="tb-opt"><input type="checkbox" checked onchange="toggleCol('colGroup',this.checked)"> {% if auto_type_abbr in ['PM','FG'] %}Brand{% elif auto_type_abbr == 'RM' %}Group{% else %}Brand / Group{% endif %}</label>
-          <label class="tb-opt"><input type="checkbox" checked onchange="toggleCol('colUom',this.checked)"> UOM</label>
-          <label class="tb-opt"><input type="checkbox" checked onchange="toggleCol('colMsl',this.checked)"> MSL</label>
-          <label class="tb-opt"><input type="checkbox" checked onchange="toggleCol('colRate',this.checked)"> Last Rate</label>
-          <label class="tb-opt"><input type="checkbox" checked onchange="toggleCol('colHsn',this.checked)"> HSN</label>
-          <label class="tb-opt"><input type="checkbox" checked onchange="toggleCol('colGst',this.checked)"> GST %</label>
+          <label class="tb-opt"><input type="checkbox" data-col="colType" checked onchange="toggleCol('colType',this.checked)"> Type</label>
+          <label class="tb-opt"><input type="checkbox" data-col="colGroup" checked onchange="toggleCol('colGroup',this.checked)"> {% if auto_type_abbr in ['PM','FG'] %}Brand{% elif auto_type_abbr == 'RM' %}Group{% else %}Brand / Group{% endif %}</label>
+          <label class="tb-opt"><input type="checkbox" data-col="colUom" checked onchange="toggleCol('colUom',this.checked)"> UOM</label>
+          <label class="tb-opt"><input type="checkbox" data-col="colMsl" checked onchange="toggleCol('colMsl',this.checked)"> MSL</label>
+          <label class="tb-opt"><input type="checkbox" data-col="colRate" checked onchange="toggleCol('colRate',this.checked)"> Last Rate</label>
+          <label class="tb-opt"><input type="checkbox" data-col="colHsn" checked onchange="toggleCol('colHsn',this.checked)"> HSN</label>
+          <label class="tb-opt"><input type="checkbox" data-col="colGst" checked onchange="toggleCol('colGst',this.checked)"> GST %</label>
         </div>
       </div>
 
@@ -828,10 +829,12 @@ async function imDelCategory(id){
 async function imLoad(){
   const tid   = document.getElementById('matTypeFilter').value;
   const gid   = document.getElementById('matGroupFilter').value;
+  const cat   = (document.getElementById('matCatFilter')||{}).value || '';
   const active= document.getElementById('matActiveFilter').value;
   let url = `${IM}/list?active=${active}`;
   if(tid) url+=`&type_id=${tid}`;
   if(gid) url+=`&group_id=${gid}`;
+  if(cat) url+=`&category=${encodeURIComponent(cat)}`;
   if(imSearchQ) url+=`&search=${encodeURIComponent(imSearchQ)}`;
   const res  = await fetch(url);
   const data = await res.json();
@@ -909,6 +912,7 @@ function imRender(){
   imBuildPgn(total);
   matUpdateDeleteBtn();
   if(document.getElementById('matChkAll')) document.getElementById('matChkAll').checked=false;
+  applyColPrefs();   // re-apply saved column visibility after each render
 }
 
 function imBuildPgn(total){
@@ -1535,8 +1539,10 @@ function setStatusFilter(val){
 function applyFilterPanel(){
   const fpType  = document.getElementById('fp_type');
   const fpGroup = document.getElementById('fp_group');
+  const fpCat   = document.getElementById('fp_cat');
   if(fpType)  document.getElementById('matTypeFilter').value = fpType.value;
   if(fpGroup) document.getElementById('matGroupFilter').value = fpGroup.value;
+  if(fpCat)   document.getElementById('matCatFilter').value = fpCat.value;
   imLoad();
 }
 function clearFilterPanel(){
@@ -1545,7 +1551,7 @@ function clearFilterPanel(){
   const fpCat   = document.getElementById('fp_cat');
   if(fpType)  { fpType.value=''; }
   if(fpGroup) { fpGroup.value=''; document.getElementById('matGroupFilter').value=''; }
-  if(fpCat)   { fpCat.value=''; }
+  if(fpCat)   { fpCat.value=''; document.getElementById('matCatFilter').value=''; }
   const origType='{{ auto_type.id if auto_type else "" }}';
   document.getElementById('matTypeFilter').value = origType;
   imLoad();
@@ -1567,11 +1573,28 @@ function sortRows(rows){
   });
 }
 
-// Columns toggle
+// Columns toggle + persistence (localStorage, keyed per item-type).
+// Persistence + re-apply after every render fixes two issues:
+//   1) column visibility reset on page reload, and
+//   2) reset after the table re-renders (filter/sort rebuild the <td>s).
+const COL_CLASSES = ['colType','colGroup','colUom','colMsl','colRate','colHsn','colGst'];
+const COL_KEY = 'matCols_' + ('{{ auto_type_abbr }}' || 'ALL');
+function _loadColPrefs(){ try{ return JSON.parse(localStorage.getItem(COL_KEY)) || {}; }catch(e){ return {}; } }
 function toggleCol(cls, show){
   // Hide/show both th headers AND td cells
   document.querySelectorAll('th.'+cls+', td.'+cls).forEach(el=>{
     el.style.display = show ? '' : 'none';
+  });
+  const prefs = _loadColPrefs(); prefs[cls] = show;
+  try{ localStorage.setItem(COL_KEY, JSON.stringify(prefs)); }catch(e){}
+}
+function applyColPrefs(){
+  const prefs = _loadColPrefs();
+  COL_CLASSES.forEach(cls=>{
+    const show = prefs[cls] !== false;   // default = visible
+    document.querySelectorAll('th.'+cls+', td.'+cls).forEach(el=>{ el.style.display = show ? '' : 'none'; });
+    const cb = document.querySelector('#colPanel input[data-col="'+cls+'"]');
+    if(cb) cb.checked = show;
   });
 }
 

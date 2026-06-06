@@ -1,6 +1,6 @@
 {% from 'macros/pagination.html' import render_pagination %}
 {% extends "base.html" %}
-{% block title %}Client Master — CRM{% endblock %}
+{% block title %}Client Master - CRM{% endblock %}
 {% block page_title %}Client Master{% endblock %}
 {% block bread %}CRM / Client Master{% endblock %}
 
@@ -30,7 +30,7 @@
   .lucide-ic, .lucide-ic svg { width:1em; height:1em; vertical-align:-0.125em; }
   button { -webkit-tap-highlight-color: transparent; }
 
-  /* ════ Main Card ════ */
+  /* ==== Main Card ==== */
   .grid-card {
     background:var(--cl-card);
     border-radius:var(--cl-r-lg);
@@ -39,7 +39,7 @@
     overflow:hidden;
   }
 
-  /* ════ Header bar (icon + title + search) — Sample Orders style ════ */
+  /* ==== Header bar (icon + title + search) ==== */
   .cl-hdr {
     display:flex; align-items:center; gap:12px; flex-wrap:wrap;
     padding:16px 20px;
@@ -78,7 +78,7 @@
   }
   .grid-search-input::placeholder { color:var(--cl-light); }
 
-  /* ════ Tabs row (pill tabs) + toolbar ════ */
+  /* ==== Tabs row (pill tabs) + toolbar ==== */
   .cl-tabsbar {
     display:flex; align-items:center; flex-wrap:wrap; gap:10px;
     padding:13px 20px;
@@ -151,7 +151,7 @@
     padding:2px 7px; border-radius:999px; margin-left:2px;
   }
 
-  /* ════ Filter panel ════ */
+  /* ==== Filter / Sort panels ==== */
   .fs-panel {
     padding:16px 20px; border-bottom:1px solid var(--cl-border);
     background:var(--cl-bg); overflow:visible;
@@ -208,6 +208,11 @@
   .ms-footer .ms-apply { background:var(--cl-accent); color:#fff; border-color:var(--cl-accent); }
   .ms-footer .ms-apply:hover { background:var(--cl-accent-2); }
 
+  .sort-dir-btn.active {
+    background:var(--cl-soft); color:var(--cl-accent-2); border-color:#93c5fd;
+  }
+  .sort-dir-btn.active .lucide-ic { color:var(--cl-accent-2); }
+
   .fs-chips { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; align-items:center; }
   .fs-chips > span:first-child { font-size:.7rem; color:var(--cl-muted); font-weight:800; text-transform:uppercase; letter-spacing:.05em; }
   .fs-chip {
@@ -221,7 +226,7 @@
   .fs-chip.clear { background:var(--cl-danger-bg); color:var(--cl-danger); border-color:#fecaca; }
   .fs-chip.clear:hover { background:#fee2e2; }
 
-  /* ════ Trash banner ════ */
+  /* ==== Trash banner ==== */
   .trash-banner {
     background:#fffbeb; border-bottom:1px solid #fde68a;
     padding:11px 20px; font-size:.82rem; color:#92400e;
@@ -230,7 +235,7 @@
   .trash-banner a { color:#b45309; font-weight:800; text-decoration:none; margin-left:auto; }
   .trash-banner a:hover { text-decoration:underline; }
 
-  /* ════ Table ════ */
+  /* ==== Table ==== */
   .tbl-wrap { overflow-x:auto; width:100%; }
   #clientsTable { width:100%; border-collapse:collapse; text-align:left; }
   #clientsTable th {
@@ -281,7 +286,7 @@
   .entity-link:hover { color:var(--cl-accent); }
   .row-cb { width:16px; height:16px; accent-color:var(--cl-accent); cursor:pointer; border-radius:4px; }
 
-  /* ════ Inline action icon buttons (Sample Orders style) ════ */
+  /* ==== Inline action icon buttons ==== */
   .act-wrap { display:inline-flex; gap:7px; align-items:center; }
   .act-btn {
     width:30px; height:30px; border-radius:9px;
@@ -297,6 +302,15 @@
   .act-btn.edit:hover { background:#dbeafe; }
   .act-btn.del { background:var(--cl-danger-bg); color:var(--cl-danger); border-color:#fecaca; }
   .act-btn.del:hover { background:#fee2e2; }
+  /* NPD / EPD / Quote actions */
+  .act-btn.npd { background:#ede9fe; color:#7c3aed; border-color:#ddd6fe; }
+  .act-btn.npd:hover { background:#ddd6fe; }
+  .act-btn.epd { background:#cffafe; color:#0891b2; border-color:#a5f3fc; }
+  .act-btn.epd:hover { background:#a5f3fc; }
+  .act-btn.quote { background:#fef3c7; color:#b45309; border-color:#fde68a; }
+  .act-btn.quote:hover { background:#fde68a; }
+  .act-sep { width:1px; height:18px; background:var(--cl-border); flex-shrink:0; }
+
   .btn-restore {
     display:inline-flex; align-items:center; gap:6px;
     height:30px; padding:0 13px; border-radius:999px;
@@ -308,7 +322,7 @@
   .btn-restore:hover { background:#d1fae5; border-color:#6ee7b7; }
   .btn-restore:active { transform:scale(.95); }
 
-  /* ════ Footer / pagination ════ */
+  /* ==== Footer / pagination ==== */
   .grid-footer {
     display:flex; align-items:center; justify-content:space-between;
     flex-wrap:wrap; gap:10px;
@@ -336,7 +350,7 @@
   }
   .pgn-btn:disabled { opacity:.4; cursor:not-allowed; }
 
-  /* ════ Columns panel ════ */
+  /* ==== Columns panel ==== */
   #colPanel {
     position:absolute; top:calc(100% + 8px); right:0; z-index:300;
     background:#fff; border-radius:var(--cl-r-md);
@@ -362,7 +376,7 @@
     font-size:.78rem; font-weight:700; cursor:pointer; font-family:inherit;
   }
 
-  /* ════ Mobile cards ════ */
+  /* ==== Mobile cards ==== */
   .cl-card {
     background:#fff; border-radius:var(--cl-r-md);
     border:1px solid var(--cl-border); margin:12px;
@@ -386,6 +400,7 @@
     padding:10px 16px; background:var(--cl-bg);
     border-top:1px solid var(--cl-border);
     display:flex; justify-content:space-between; align-items:center;
+    flex-wrap:wrap; gap:8px;
   }
 
   .cl-empty { padding:50px 20px; text-align:center; color:var(--cl-light); }
@@ -397,7 +412,7 @@
     background:var(--cl-border); border-radius:99px;
   }
 
-  /* ════ Responsive ════ */
+  /* ==== Responsive ==== */
   @media (min-width:769px) { #clMobileCards { display:none; } }
   @media (max-width:768px) {
     .tbl-wrap, .grid-footer { display:none; }
@@ -410,9 +425,14 @@
   }
 </style>
 {% endblock %}
-
 {% block content %}
 <div class="clp">
+
+{# FIX: default toolbar capability flags to TRUE when route doesn't pass them.
+   Pehle ye undefined hone par Sort/Columns/Filter buttons gayab ho jate the. #}
+{% set can_filter  = can_filter  if can_filter  is defined else true %}
+{% set can_sort    = can_sort    if can_sort    is defined else true %}
+{% set can_columns = can_columns if can_columns is defined else true %}
 
 {% set _fc = [search,city,state,status_f]|select|list|length %}
 {% set _active_n = active_count if active_count is defined else (clients|length if not show_trash else none) %}
@@ -420,7 +440,7 @@
 
 <div class="grid-card">
 
-  {# ── Header bar: icon + title + search (Sample Orders style) ── #}
+  {# -- Header bar: icon + title + search -- #}
   <div class="cl-hdr">
     <div class="hd-ic"><i data-lucide="users" class="lucide-ic"></i></div>
     <h1>Client Master</h1>
@@ -433,12 +453,12 @@
   {% if show_trash %}
   <div class="trash-banner">
     <i data-lucide="trash-2" class="lucide-ic"></i>
-    Showing <strong>{{ clients|length }}</strong> deleted client{{ 's' if clients|length != 1 else '' }} — records can be restored.
-    <a href="{{ url_for('crm.clients') }}">← Back to Clients</a>
+    Showing <strong>{{ clients|length }}</strong> deleted client{{ 's' if clients|length != 1 else '' }} - records can be restored.
+    <a href="{{ url_for('crm.clients') }}">&#8592; Back to Clients</a>
   </div>
   {% endif %}
 
-  {# ── Tabs (pill style with counts) + toolbar ── #}
+  {# -- Tabs (pill style with counts) + toolbar -- #}
   <div class="cl-tabsbar">
     <a href="{{ url_for('crm.clients') }}" class="tab-pill {{ 'selected' if not show_trash }}">
       <i data-lucide="users" class="lucide-ic"></i>Active
@@ -518,11 +538,12 @@
     </div>
   </div>
 
+  {# -- FILTER panel -- #}
   <div id="fsPanelFilter_cl" class="fs-panel" style="display:{% if _fc > 0 %}block{% else %}none{% endif %};">
     <div class="fs-grid">
       <div class="fs-field">
         <label>Keyword</label>
-        <input type="text" class="fs-input" id="cl_search" value="{{ search }}" placeholder="Name, company, email…" oninput="fsDebounce()">
+        <input type="text" class="fs-input" id="cl_search" value="{{ search }}" placeholder="Name, company, email..." oninput="fsDebounce()">
       </div>
 
       <div class="fs-field">
@@ -535,7 +556,7 @@
             <i data-lucide="chevron-down" class="lucide-ic"></i>
           </div>
           <div class="ms-dropdown">
-            <div class="ms-search"><input type="text" placeholder="Search cities…" oninput="msSearch(this,'ms_cl_city')"></div>
+            <div class="ms-search"><input type="text" placeholder="Search cities..." oninput="msSearch(this,'ms_cl_city')"></div>
             <div class="ms-options">
               {% for c in all_cities %}
               <label class="ms-opt">
@@ -564,7 +585,7 @@
             <i data-lucide="chevron-down" class="lucide-ic"></i>
           </div>
           <div class="ms-dropdown">
-            <div class="ms-search"><input type="text" placeholder="Search states…" oninput="msSearch(this,'ms_cl_state')"></div>
+            <div class="ms-search"><input type="text" placeholder="Search states..." oninput="msSearch(this,'ms_cl_state')"></div>
             <div class="ms-options">
               {% for s in all_states %}
               <label class="ms-opt">
@@ -588,18 +609,46 @@
     <div class="fs-chips">
       <span>Filters:</span>
       {% if search %}<span class="fs-chip">Search: {{ search }}<a onclick="chipClear('cl_search')">×</a></span>{% endif %}
-      <a href="{{ url_for('crm.clients') }}" class="fs-chip clear">✕ Clear All</a>
+      <a href="{{ url_for('crm.clients') }}" class="fs-chip clear">× Clear All</a>
     </div>
     {% endif %}
   </div>
 
+  {# -- SORT panel (FIX: ye panel pehle missing tha, isliye Sort button kuch nahi karta tha) -- #}
+  <div id="fsPanelSort_cl" class="fs-panel" style="display:none;">
+    <div class="fs-grid">
+      <div class="fs-field">
+        <label>Sort By</label>
+        <select class="fs-input" id="cl_sort_by_sel" onchange="fsSortBy(this.value)">
+          <option value="created_at">Created Date</option>
+          <option value="contact_name">Contact Name</option>
+          <option value="company_name">Company</option>
+          <option value="code">Client Code</option>
+          <option value="city">City</option>
+          <option value="state">State</option>
+        </select>
+      </div>
+      <div class="fs-field">
+        <label>Direction</label>
+        <div style="display:flex;gap:8px;">
+          <button type="button" class="btn-grid-action sort-dir-btn" id="cl_sortDirAsc" onclick="fsSetDir('asc')">
+            <i data-lucide="arrow-up-narrow-wide" class="lucide-ic"></i>Ascending (A-Z / Oldest)
+          </button>
+          <button type="button" class="btn-grid-action sort-dir-btn" id="cl_sortDirDesc" onclick="fsSetDir('desc')">
+            <i data-lucide="arrow-down-wide-narrow" class="lucide-ic"></i>Descending (Z-A / Newest)
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <form id="fsForm_cl" method="GET" style="display:none;">
     <input type="hidden" id="cl_h_search"      name="search"      value="{{ search }}">
-    <input type="hidden" id="cl_h_city"         name="city"        value="{{ city }}">
-    <input type="hidden" id="cl_h_state"        name="state"       value="{{ state }}">
-    <input type="hidden" id="cl_h_status_f"     name="status_f"    value="{{ status_f }}">
-    <input type="hidden" id="cl_h_sort_by"      name="sort_by"     value="{{ sort_by }}">
-    <input type="hidden" id="cl_h_sort_dir"     name="sort_dir"    value="{{ sort_dir }}">
+    <input type="hidden" id="cl_h_city"        name="city"        value="{{ city }}">
+    <input type="hidden" id="cl_h_state"       name="state"       value="{{ state }}">
+    <input type="hidden" id="cl_h_status_f"    name="status_f"    value="{{ status_f }}">
+    <input type="hidden" id="cl_h_sort_by"     name="sort_by"     value="{{ sort_by }}">
+    <input type="hidden" id="cl_h_sort_dir"    name="sort_dir"    value="{{ sort_dir }}">
   </form>
 
   <div class="cl-cards" id="clMobileCards">
@@ -619,19 +668,23 @@
       </div>
       <div class="cl-card-body">
          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-          <div class="cl-card-field"><label>Mobile</label><span>{{ c.mobile or '—' }}</span></div>
-          <div class="cl-card-field"><label>City</label><span>{{ c.city or '—' }}</span></div>
-          <div class="cl-card-field" style="grid-column:span 2;"><label>Email</label><span style="word-break:break-all;">{{ c.email or '—' }}</span></div>
+          <div class="cl-card-field"><label>Mobile</label><span>{{ c.mobile or '-' }}</span></div>
+          <div class="cl-card-field"><label>City</label><span>{{ c.city or '-' }}</span></div>
+          <div class="cl-card-field" style="grid-column:span 2;"><label>Email</label><span style="word-break:break-all;">{{ c.email or '-' }}</span></div>
         </div>
       </div>
       <div class="cl-card-footer">
-        <span style="font-size:.72rem;color:var(--cl-light);font-weight:650;">{{ c.created_at.strftime('%d %b %Y') if c.created_at else '—' }}</span>
+        <span style="font-size:.72rem;color:var(--cl-light);font-weight:650;">{{ c.created_at.strftime('%d %b %Y') if c.created_at else '-' }}</span>
         <div class="act-wrap">
           {% if show_trash %}
           <form method="POST" action="{{ url_for('crm.client_restore', id=c.id) }}" onsubmit="return confirm('Restore {{ c.contact_name }}?')" style="display:inline;">
             <button type="submit" class="btn-restore" title="Restore"><i data-lucide="rotate-ccw" class="lucide-ic"></i>Restore</button>
           </form>
           {% else %}
+          {% if sub_perms.create_npd %}<button type="button" class="act-btn npd" title="Create NPD Project" onclick="clientAction('create_npd', {{ c.id }}, this)"><i data-lucide="flask-conical" class="lucide-ic"></i></button>{% endif %}
+          {% if sub_perms.create_epd %}{% if sub_perms.create_epd %}<button type="button" class="act-btn epd" title="Create EPD Project" onclick="clientAction('create_epd', {{ c.id }}, this)"><i data-lucide="package" class="lucide-ic"></i></button>{% endif %}{% endif %}
+          {% if sub_perms.npd_quote %}<button type="button" class="act-btn quote" title="Send NPD Quote" onclick="clientAction('npd_quote', {{ c.id }}, this)"><i data-lucide="send" class="lucide-ic"></i></button>{% endif %}
+          {% if sub_perms.create_npd or sub_perms.create_epd or sub_perms.npd_quote %}<span class="act-sep"></span>{% endif %}
           {% if perm and perm.can_view %}
           <a href="{{ url_for('crm.client_view', id=c.id) }}" class="act-btn view" title="View"><i data-lucide="eye" class="lucide-ic"></i></a>
           {% endif %}
@@ -664,7 +717,7 @@
             </div>
           </th>
           {% endfor %}
-          <th style="width:130px; text-align:right;">Actions</th>
+          <th style="width:230px; text-align:right;">Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -677,29 +730,29 @@
           {% if col == 'code' %}
           <td><code>{{ c.code }}</code></td>
           {% elif col == 'created_at' %}
-          <td style="color:var(--cl-muted);">{{ c.created_at.strftime('%d %b %Y') if c.created_at else '—' }}</td>
+          <td style="color:var(--cl-muted);">{{ c.created_at.strftime('%d %b %Y') if c.created_at else '-' }}</td>
           {% elif col == 'contact_name' %}
           <td>
             {% if perm and perm.can_view %}<a href="{{ url_for('crm.client_view', id=c.id) }}" class="entity-link">{{ c.contact_name }}</a>{% else %}<span style="font-weight:650;">{{ c.contact_name }}</span>{% endif %}
           </td>
           {% elif col == 'company_name' %}
-          <td style="color:var(--cl-muted); font-weight:500;">{{ c.company_name or '—' }}</td>
+          <td style="color:var(--cl-muted); font-weight:500;">{{ c.company_name or '-' }}</td>
           {% elif col == 'mobile' %}
-          <td>{{ c.mobile or '—' }}</td>
+          <td>{{ c.mobile or '-' }}</td>
           {% elif col == 'email' %}
-          <td style="color:var(--cl-muted);">{{ c.email or '—' }}</td>
+          <td style="color:var(--cl-muted);">{{ c.email or '-' }}</td>
           {% elif col == 'city' %}
-          <td>{{ c.city or '—' }}</td>
+          <td>{{ c.city or '-' }}</td>
           {% elif col == 'state' %}
-          <td>{{ c.state or '—' }}</td>
+          <td>{{ c.state or '-' }}</td>
           {% elif col == 'gstin' %}
-          <td style="font-family:monospace; color:var(--cl-muted);">{{ c.gstin or '—' }}</td>
+          <td style="font-family:monospace; color:var(--cl-muted);">{{ c.gstin or '-' }}</td>
           {% elif col == 'website' %}
-          <td>{% if c.website %}<a href="{{ c.website }}" target="_blank" style="color:var(--cl-accent);text-decoration:none;">{{ c.website|truncate(24) }}</a>{% else %}—{% endif %}</td>
+          <td>{% if c.website %}<a href="{{ c.website }}" target="_blank" style="color:var(--cl-accent);text-decoration:none;">{{ c.website|truncate(24) }}</a>{% else %}-{% endif %}</td>
           {% elif col == 'brands' %}
           <td>
             <div style="display:flex;gap:4px;flex-wrap:wrap;">
-            {% for b in c.brands %}<span class="brand-tag">{{ b.brand_name }}</span>{% else %}<span style="color:var(--cl-muted);">—</span>{% endfor %}
+            {% for b in c.brands %}<span class="brand-tag">{{ b.brand_name }}</span>{% else %}<span style="color:var(--cl-muted);">-</span>{% endfor %}
             </div>
           </td>
           {% elif col == 'status' %}
@@ -720,6 +773,10 @@
                 <button type="submit" class="btn-restore" title="Restore Client"><i data-lucide="rotate-ccw" class="lucide-ic"></i>Restore</button>
               </form>
               {% else %}
+              {% if sub_perms.create_npd %}<button type="button" class="act-btn npd" title="Create NPD Project" onclick="clientAction('create_npd', {{ c.id }}, this)"><i data-lucide="flask-conical" class="lucide-ic"></i></button>{% endif %}
+              {% if sub_perms.create_epd %}{% if sub_perms.create_epd %}<button type="button" class="act-btn epd" title="Create EPD Project" onclick="clientAction('create_epd', {{ c.id }}, this)"><i data-lucide="package" class="lucide-ic"></i></button>{% endif %}{% endif %}
+              {% if sub_perms.npd_quote %}<button type="button" class="act-btn quote" title="Send NPD Quote" onclick="clientAction('npd_quote', {{ c.id }}, this)"><i data-lucide="send" class="lucide-ic"></i></button>{% endif %}
+              {% if sub_perms.create_npd or sub_perms.create_epd or sub_perms.npd_quote %}<span class="act-sep"></span>{% endif %}
               {% if perm and perm.can_view %}
               <a href="{{ url_for('crm.client_view', id=c.id) }}" class="act-btn view" title="View Client"><i data-lucide="eye" class="lucide-ic"></i></a>
               {% endif %}
@@ -749,7 +806,7 @@
 
   <div class="grid-footer">
     <div style="font-weight:550;">
-      Show <select id="rowCountSel" onchange="changeRowCount(this.value)"><option value="10">10</option><option value="25" selected>25</option><option value="50">50</option></select> rows &nbsp;·&nbsp; <span id="rowInfo"></span>
+      Show <select id="rowCountSel" onchange="changeRowCount(this.value)"><option value="10">10</option><option value="25" selected>25</option><option value="50">50</option></select> rows &nbsp;|&nbsp; <span id="rowInfo"></span>
     </div>
     <div id="gridPgn" style="display:flex; gap:5px;"></div>
   </div>
@@ -758,13 +815,49 @@
 </div>
 
 <script>
-// ── Pagination ──────────────────────────────────────────────────
+// ================================================================
+// NPD / EPD ACTION URLS - apne actual routes ke hisaab se yahan
+// sirf ye 3 lines adjust karo. {id} client id se replace hota hai.
+// ================================================================
+var NPD_ACTION_URLS = {
+  create_npd: '/npd/npd-projects?client_id={id}&action=create',
+  create_epd: '/npd/epd-projects?client_id={id}&action=create',
+  npd_quote:  '/crm/clients/{id}/send-npd-quote'
+};
+function clientAction(kind, id, btn){
+  var u = NPD_ACTION_URLS[kind];
+  if(!u){ alert('Action URL configured nahi hai: ' + kind); return; }
+  window.location.href = u.replace('{id}', id);
+}
+
+// ================================================================
+// EXPORT - FIX: doExport() pehle define hi nahi tha, isliye
+// Export button click pe kuch nahi hota tha. Current filters ke
+// saath export route open karta hai. Route alag ho to URL badlo.
+// ================================================================
+function doExport(){
+  var params = new URLSearchParams();
+  var ids = { search:'cl_search', city:'cl_city', state:'cl_state' };
+  Object.keys(ids).forEach(function(k){
+    var el = document.getElementById(ids[k]);
+    if(el && el.value && el.value.trim()) params.set(k, el.value.trim());
+  });
+  var sb = document.getElementById('cl_h_sort_by');
+  var sd = document.getElementById('cl_h_sort_dir');
+  if(sb && sb.value) params.set('sort_by', sb.value);
+  if(sd && sd.value) params.set('sort_dir', sd.value);
+  {% if show_trash %}params.set('trash','1');{% endif %}
+  window.open('/crm/clients/export' + (params.toString() ? '?' + params.toString() : ''), '_blank');
+}
+
+// -- Pagination --------------------------------------------------
 var _allRows, _page=1, _pageSize=25;
 document.addEventListener('DOMContentLoaded', function(){
   _allRows = Array.from(document.querySelectorAll('#clientsTable tbody tr.client-row'));
   _allRows.forEach(function(r){ r.style.display='table-row'; });
   renderPage();
   initMsLabels();
+  initSortUI();
 });
 function renderPage(){
   var visible=_allRows.filter(function(r){return r.style.display!=='none'&&!r.classList.contains('search-hidden');});
@@ -772,27 +865,27 @@ function renderPage(){
   _page=Math.min(_page,pages);
   visible.forEach(function(r,i){ r.style.display=(i>=(_page-1)*_pageSize&&i<_page*_pageSize)?'table-row':'none'; });
   var start=Math.min((_page-1)*_pageSize+1,total), end=Math.min(_page*_pageSize,total);
-  document.getElementById('rowInfo').textContent=total?'Showing '+start+'–'+end+' of '+total:'No records';
+  document.getElementById('rowInfo').textContent=total?'Showing '+start+'-'+end+' of '+total:'No records';
   var pgn=document.getElementById('gridPgn'); pgn.innerHTML='';
   if(pages<=1)return;
   function addBtn(label,pg,active,disabled){var b=document.createElement('button');b.className='pgn-btn'+(active?' active':'');b.disabled=disabled;b.textContent=label;if(!disabled&&!active)b.onclick=function(){_page=pg;renderPage();};pgn.appendChild(b);}
-  addBtn('‹',_page-1,false,_page===1);
+  addBtn('<',_page-1,false,_page===1);
   var s2=Math.max(1,_page-2),e2=Math.min(pages,_page+2);
-  if(s2>1){addBtn('1',1,false,false);if(s2>2){var sp=document.createElement('span');sp.textContent='…';sp.style.cssText='padding:0 4px;color:var(--cl-light);font-size:12px;align-self:center;';pgn.appendChild(sp);}}
+  if(s2>1){addBtn('1',1,false,false);if(s2>2){var sp=document.createElement('span');sp.textContent='...';sp.style.cssText='padding:0 4px;color:var(--cl-light);font-size:12px;align-self:center;';pgn.appendChild(sp);}}
   for(var p=s2;p<=e2;p++)addBtn(p,p,p===_page,false);
-  if(e2<pages){if(e2<pages-1){var sp2=document.createElement('span');sp2.textContent='…';sp2.style.cssText='padding:0 4px;color:var(--cl-light);font-size:12px;align-self:center;';pgn.appendChild(sp2);}addBtn(pages,pages,false,false);}
-  addBtn('›',_page+1,false,_page===pages);
+  if(e2<pages){if(e2<pages-1){var sp2=document.createElement('span');sp2.textContent='...';sp2.style.cssText='padding:0 4px;color:var(--cl-light);font-size:12px;align-self:center;';pgn.appendChild(sp2);}addBtn(pages,pages,false,false);}
+  addBtn('>',_page+1,false,_page===pages);
 }
 function changeRowCount(v){ _pageSize=parseInt(v); _page=1; renderPage(); }
 
-// ── Global instant search ───────────────────────────────────────
+// -- Global instant search --------------------------------------
 function gridGlobalSearch(q){
   var lq=q.toLowerCase();
   _allRows.forEach(function(r){var m=!lq||r.dataset.search.includes(lq);r.classList.toggle('search-hidden',!m);r.style.display=m?'table-row':'none';});
   _page=1; renderPage();
 }
 
-// ── Column sort ─────────────────────────────────────────────────
+// -- Column sort (header click - client side) --------------------
 var _sortDir={};
 function colSort(th,col){
   var asc=_sortDir[col]!==true; _sortDir[col]=asc;
@@ -805,7 +898,7 @@ function colSort(th,col){
 }
 function _colIndex(th){ return Array.from(th.parentNode.children).indexOf(th); }
 
-// ── Bulk actions ────────────────────────────────────────────────
+// -- Bulk actions ------------------------------------------------
 function toggleAll(cb){ document.querySelectorAll('.row-check-item').forEach(function(c){c.checked=cb.checked;}); updateBulkBtn(); }
 function updateBulkBtn(){ var n=document.querySelectorAll('.row-check-item:checked').length; var btn=document.getElementById('bulkDeleteBtn'); if(btn){ btn.style.display=n>0?'inline-flex':'none'; } }
 function bulkDelete(){
@@ -830,7 +923,7 @@ function bulkDelete(){
   });
 }
 
-// ── Filter/Sort panel toggle ────────────────────────────────────
+// -- Filter/Sort panel toggle ------------------------------------
 function toggleFsTab(tab){
   var fp=document.getElementById('fsPanelFilter_cl'), sp=document.getElementById('fsPanelSort_cl');
   var fb=document.getElementById('fsTabFilter'), sb=document.getElementById('fsTabSort');
@@ -849,26 +942,49 @@ function toggleFsTab(tab){
   }
 }
 
-// ── Filter submit ───────────────────────────────────────────────
+// -- Filter / Sort submit ----------------------------------------
+// FIX: map pehle galat IDs (cl_sort_by, cl_status_f) padh raha tha
+// jo page pe exist hi nahi karte the - isliye sort kabhi apply
+// nahi hota tha. Ab hidden form fields (cl_h_*) use hote hain.
 var _fsTimer=null;
 function fsDebounce(){ clearTimeout(_fsTimer); _fsTimer=setTimeout(fsSubmit,400); }
 function fsSubmit(){
   var params=new URLSearchParams();
-  var map={search:'cl_search',city:'cl_city',state:'cl_state',status_f:'cl_status_f',sort_by:'cl_sort_by',sort_dir:'cl_h_sort_dir'};
+  var map={search:'cl_search',city:'cl_city',state:'cl_state',status_f:'cl_h_status_f',sort_by:'cl_h_sort_by',sort_dir:'cl_h_sort_dir'};
   Object.keys(map).forEach(function(k){
     var el=document.getElementById(map[k]);
     if(el&&el.value&&el.value.trim()) params.set(k,el.value.trim());
   });
+  {% if show_trash %}params.set('trash','1');{% endif %}
   window.location.href=window.location.pathname+(params.toString()?'?'+params.toString():'');
 }
-function fsSetDir(dir){
-  document.getElementById('cl_h_sort_dir').value=dir;
-  document.querySelectorAll('.sort-dir-btn').forEach(function(b){b.classList.remove('active');});
-  document.getElementById('cl_sortDir'+dir.charAt(0).toUpperCase()+dir.slice(1)).classList.add('active');
+function fsSortBy(v){
+  var h=document.getElementById('cl_h_sort_by');
+  if(h) h.value=v;
   fsSubmit();
 }
+function fsSetDir(dir){
+  var h=document.getElementById('cl_h_sort_dir');
+  if(h) h.value=dir;
+  document.querySelectorAll('.sort-dir-btn').forEach(function(b){b.classList.remove('active');});
+  var btn=document.getElementById('cl_sortDir'+dir.charAt(0).toUpperCase()+dir.slice(1));
+  if(btn) btn.classList.add('active');
+  fsSubmit();
+}
+// Current sort state ko UI mein reflect karo (page load pe)
+function initSortUI(){
+  var curBy='{{ sort_by or "created_at" }}';
+  var curDir='{{ sort_dir or "desc" }}';
+  var sel=document.getElementById('cl_sort_by_sel');
+  if(sel){
+    var has=Array.from(sel.options).some(function(o){return o.value===curBy;});
+    if(has) sel.value=curBy;
+  }
+  var btn=document.getElementById('cl_sortDir'+(curDir==='asc'?'Asc':'Desc'));
+  if(btn) btn.classList.add('active');
+}
 
-// ── Multi-select helpers ────────────────────────────────────────
+// -- Multi-select helpers ----------------------------------------
 function toggleMs(wrapId){
   var all=document.querySelectorAll('.ms-wrap.open');
   all.forEach(function(w){if(w.id!==wrapId)w.classList.remove('open');});
@@ -921,7 +1037,7 @@ function initMsLabels(){
   var cfg=[
     ['ms_cl_city','cl_city','All Cities'],
     ['ms_cl_state','cl_state','All States'],
-    ['ms_cl_sf','cl_status_f','All Status']
+    ['ms_cl_sf','cl_h_status_f','All Status']
   ];
   cfg.forEach(function(item){
     var val=document.getElementById(item[1])?document.getElementById(item[1]).value:'';
@@ -940,7 +1056,7 @@ function initMsLabels(){
   });
 }
 
-// ── Column panel ────────────────────────────────────────────────
+// -- Column panel ------------------------------------------------
 function toggleColPanel(e){
   e.stopPropagation();
   var p=document.getElementById('colPanel');
@@ -951,7 +1067,7 @@ document.addEventListener('click',function(e){
   if(p&&p.style.display!=='none'&&!p.contains(e.target)&&!e.target.closest('[onclick*="toggleColPanel"]'))
     p.style.display='none';
 });
-function colChanged(){} // just enable Apply button feedback if needed
+function colChanged(){}
 function saveClientCols(){
   var cols=Array.from(document.querySelectorAll('#colPanel input[type=checkbox]:checked')).map(function(c){return c.value;});
   if(!cols.length){alert('Select at least 1 column.');return;}
@@ -962,7 +1078,7 @@ function saveClientCols(){
   }).then(function(r){return r.json();}).then(function(d){if(d.success)location.reload();});
 }
 
-// ── Lucide icons render ──
+// -- Lucide icons render --
 (function(){
   function drawIcons(){ if(window.lucide && window.lucide.createIcons) window.lucide.createIcons({attrs:{'stroke-width':1.9}}); }
   if(window.lucide){ drawIcons(); }

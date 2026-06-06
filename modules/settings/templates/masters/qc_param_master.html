@@ -5,34 +5,119 @@
 
 {% block extra_css %}
 <style>
+.qcp-intro { margin:0 0 1rem; color:var(--text2); font-size:0.86rem; }
+
 .qcp-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:1.1rem; }
-.qcp-col .card-hdr { display:flex; align-items:center; justify-content:space-between; }
+
+/* ============ CATEGORY CARD ============ */
+.qcp-col.card { border-radius:16px; border:1px solid #e2e8f0;
+    box-shadow:0 1px 3px rgba(15,23,42,.05), 0 4px 16px rgba(15,23,42,.04); overflow:hidden; }
+.qcp-col .card-hdr { display:flex; align-items:center; justify-content:space-between;
+    padding:14px 16px; border-bottom:1.5px solid #e2e8f0; background:#fff; }
+.qcp-col .card-title { font-size:14px; font-weight:800; color:#0f172a; letter-spacing:-.01em; }
+.qcp-count { background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe;
+    padding:3px 11px; border-radius:99px; font-size:0.72rem; font-weight:700; }
+
+/* ============ ADD FORM ============ */
+.qcp-add { padding:.85rem 1rem; background:#f8fafc; border-bottom:1.5px solid #e2e8f0; }
+.qcp-add form { display:flex; gap:.55rem; align-items:center; }
+.qcp-add input[type="text"] { flex:1; font-size:0.84rem; padding:9px 14px;
+    border:1.5px solid #e2e8f0; border-radius:99px; background:#fff; outline:none;
+    font-family:inherit; color:#0f172a; transition:border-color .15s, box-shadow .15s; }
+.qcp-add input[type="text"]:focus { border-color:#93c5fd; box-shadow:0 0 0 3px rgba(37,99,235,.1); }
+.qcp-add input[type="text"]::placeholder { color:#94a3b8; }
+.qcp-add button[type="submit"] { font-size:0.8rem; font-weight:700; padding:9px 16px;
+    border:none; border-radius:99px; cursor:pointer; color:#fff; white-space:nowrap;
+    background:linear-gradient(180deg,#3b82f6,#1d4ed8); font-family:inherit;
+    box-shadow:0 2px 8px rgba(37,99,235,.3), inset 0 1px 0 rgba(255,255,255,.2);
+    transition:transform .15s, box-shadow .15s; }
+.qcp-add button[type="submit"]:hover { transform:translateY(-1px);
+    box-shadow:0 4px 14px rgba(37,99,235,.4), inset 0 1px 0 rgba(255,255,255,.2); }
+
+/* ============ TABLE ============ */
 .m-table { width:100%; border-collapse:collapse; }
-.m-table th { background:#f1f5f9; padding:9px 12px; text-align:left; font-size:0.76rem; font-weight:700; color:#374151; border-bottom:2px solid #e2e8f0; white-space:nowrap; }
-.m-table td { padding:8px 12px; font-size:0.84rem; color:var(--text); border-bottom:1px solid #f1f5f9; vertical-align:middle; }
-.m-table tr:hover td { background:#f8fafc; }
-.badge-active   { background:#dcfce7; color:#166534; padding:2px 9px; border-radius:100px; font-size:0.72rem; font-weight:700; }
-.badge-inactive { background:#f1f5f9; color:#64748b; padding:2px 9px; border-radius:100px; font-size:0.72rem; font-weight:700; }
-.qcp-add { padding:.85rem 1rem; background:#f8fafc; border-bottom:1px solid #e5e7eb; }
-.qcp-add form { display:flex; gap:.55rem; align-items:flex-end; }
-.qcp-add input { font-size:0.84rem; flex:1; }
-.qcp-count { background:#eff6ff; color:#1d4ed8; padding:2px 9px; border-radius:11px; font-size:0.72rem; font-weight:700; }
-.qcp-btn-edit { background:#eff6ff; color:#1d4ed8; border:none; padding:4px 9px; border-radius:6px; font-size:0.74rem; font-weight:600; cursor:pointer; }
-.qcp-btn-del  { background:#fef2f2; color:#dc2626; border:none; padding:4px 9px; border-radius:6px; font-size:0.74rem; font-weight:600; cursor:pointer; margin-left:3px; }
+.m-table th { background:#fff; padding:10px 14px; text-align:left; font-size:10.5px;
+    font-weight:800; color:#94a3b8; text-transform:uppercase; letter-spacing:.06em;
+    border-bottom:2px solid #e2e8f0; white-space:nowrap; }
+.m-table td { padding:9px 14px; font-size:0.84rem; color:var(--text);
+    border-bottom:1px solid #f1f5f9; vertical-align:middle; }
+.m-table tbody tr { transition:background .12s; }
+.m-table tbody tr:hover td { background:#f8fafc; }
+.m-table tbody tr:last-child td { border-bottom:none; }
+
+/* ============ STATUS BADGES (dot style) ============ */
+.badge-active, .badge-inactive { display:inline-flex; align-items:center; gap:6px;
+    padding:3px 11px; border-radius:99px; font-size:0.72rem; font-weight:700; }
+.badge-active   { background:#dcfce7; color:#166534; }
+.badge-inactive { background:#f1f5f9; color:#64748b; }
+.badge-active::before, .badge-inactive::before { content:''; width:6px; height:6px;
+    border-radius:99px; }
+.badge-active::before   { background:#16a34a; }
+.badge-inactive::before { background:#94a3b8; }
+
+/* ============ ROW ACTION BUTTONS ============ */
+.qcp-btn-edit, .qcp-btn-del { display:inline-flex; align-items:center; gap:5px;
+    border:1px solid; padding:5px 11px; border-radius:99px; font-size:0.74rem;
+    font-weight:700; cursor:pointer; font-family:inherit; transition:all .12s; }
+.qcp-btn-edit { background:#eff6ff; color:#1d4ed8; border-color:#bfdbfe; }
+.qcp-btn-edit:hover { background:#dbeafe; border-color:#93c5fd; transform:translateY(-1px); }
+.qcp-btn-del  { background:#fef2f2; color:#dc2626; border-color:#fecaca; margin-left:4px;
+    width:30px; height:27px; padding:0; justify-content:center; }
+.qcp-btn-del:hover { background:#fee2e2; border-color:#fca5a5; transform:translateY(-1px); }
+
+.qcp-empty { text-align:center; padding:2.2rem 1rem; color:var(--text3); }
+.qcp-empty .ic { display:flex; justify-content:center; margin-bottom:.5rem; color:#cbd5e1; }
+.qcp-empty .tx { font-weight:600; font-size:0.85rem; }
+
+/* status toggle button reset */
+.qcp-status-btn { background:none; border:none; cursor:pointer; padding:0; }
+
+/* ============ EDIT MODAL ============ */
+.qcp-modal-box { background:#fff; border-radius:16px; width:100%; max-width:420px;
+    box-shadow:0 20px 60px rgba(15,23,42,.25); overflow:hidden; }
+.qcp-modal-head { background:linear-gradient(180deg,#2563eb,#1d4ed8); color:#fff;
+    padding:.9rem 1.25rem; display:flex; align-items:center; justify-content:space-between; }
+.qcp-modal-head .ti { display:inline-flex; align-items:center; gap:8px; font-weight:700; }
+.qcp-modal-close { background:rgba(255,255,255,.18); border:none; color:#fff;
+    width:26px; height:26px; border-radius:99px; cursor:pointer; font-size:14px;
+    line-height:1; transition:background .15s; }
+.qcp-modal-close:hover { background:rgba(255,255,255,.3); }
+.qcp-modal-body { padding:1.25rem; display:flex; flex-direction:column; gap:.85rem; }
+.qcp-modal-body label { font-size:0.78rem; font-weight:800; color:#94a3b8;
+    text-transform:uppercase; letter-spacing:.05em; display:block; margin-bottom:4px; }
+.qcp-modal-body input, .qcp-modal-body select { width:100%; font-size:0.85rem;
+    padding:9px 12px; border:1.5px solid #e2e8f0; border-radius:10px; background:#fff;
+    font-family:inherit; color:#0f172a; outline:none;
+    transition:border-color .15s, box-shadow .15s; }
+.qcp-modal-body input:focus, .qcp-modal-body select:focus {
+    border-color:#93c5fd; box-shadow:0 0 0 3px rgba(37,99,235,.1); }
+.qcp-modal-foot { padding:.9rem 1.25rem; border-top:1.5px solid #e2e8f0;
+    display:flex; justify-content:flex-end; gap:.5rem; background:#f8fafc; }
+.qcp-modal-foot .btn-cancel { font-size:0.83rem; font-weight:700; padding:8px 16px;
+    border-radius:99px; border:1.5px solid #e2e8f0; background:#fff; color:#64748b;
+    cursor:pointer; font-family:inherit; transition:all .15s; }
+.qcp-modal-foot .btn-cancel:hover { border-color:#93c5fd; background:#eff6ff; color:#1d4ed8; }
+.qcp-modal-foot .btn-save { font-size:0.83rem; font-weight:700; padding:8px 18px;
+    border-radius:99px; border:none; color:#fff; cursor:pointer; font-family:inherit;
+    background:linear-gradient(180deg,#3b82f6,#1d4ed8);
+    box-shadow:0 2px 8px rgba(37,99,235,.3), inset 0 1px 0 rgba(255,255,255,.2);
+    transition:transform .15s, box-shadow .15s; }
+.qcp-modal-foot .btn-save:hover { transform:translateY(-1px);
+    box-shadow:0 4px 14px rgba(37,99,235,.4), inset 0 1px 0 rgba(255,255,255,.2); }
 </style>
 {% endblock %}
 
 {% block content %}
-<p style="margin:0 0 1rem;color:var(--text2);font-size:0.86rem;">
-  Yeh values TRS form ke <b>Physical State</b>, <b>Appearance</b> aur <b>Odour</b>
-  dropdowns me dikhti hain. Yahaan se add / edit / active-inactive / delete karo.
-</p>
+
+    <p class="qcp-intro">
+        These values are displayed in the <b>Physical State</b>, <b>Appearance</b>, and <b>Odour</b> dropdowns of the TRS form. You can add, edit, activate/deactivate, or delete them here.
+    </p>
 
 <div class="qcp-grid">
   {% for cat, label, icon in cats %}
   <div class="card qcp-col">
     <div class="card-hdr">
-      <div class="card-title">{{ icon }} {{ label }}</div>
+      <div class="card-title">{{ label }}</div>
       <span class="qcp-count">{{ grouped[cat]|length }} value(s)</span>
     </div>
 
@@ -40,8 +125,8 @@
     <div class="qcp-add">
       <form method="POST" action="{{ url_for('masters.qc_param_add') }}">
         <input type="hidden" name="category" value="{{ cat }}">
-        <input type="text" name="value" class="fi" required placeholder="Add new {{ label|lower }}…">
-        <button type="submit" class="btn-primary" style="font-size:0.82rem;padding:7px 14px;white-space:nowrap;">+ Add</button>
+        <input type="text" name="value" required placeholder="Add new {{ label|lower }}...">
+        <button type="submit">+ Add</button>
       </form>
     </div>
 
@@ -57,18 +142,23 @@
             <td style="color:var(--text3);font-size:0.76rem;">{{ loop.index }}</td>
             <td style="font-weight:600;">{{ item.value }}</td>
             <td>
-              <button onclick="qcpToggle({{ item.id }}, this)" style="background:none;border:none;cursor:pointer;padding:0;">
+              <button class="qcp-status-btn" onclick="qcpToggle({{ item.id }}, this)">
                 <span class="badge-{{ 'active' if item.status else 'inactive' }}">
-                  {{ '✅ Active' if item.status else '⛔ Inactive' }}
+                  {{ 'Active' if item.status else 'Inactive' }}
                 </span>
               </button>
             </td>
             <td style="text-align:right;white-space:nowrap;">
               <button class="qcp-btn-edit"
-                      onclick="qcpEdit({{ item.id }}, '{{ item.value | e }}', {{ '1' if item.status else '0' }})">✏️ Edit</button>
+                      onclick="qcpEdit({{ item.id }}, '{{ item.value | e }}', {{ '1' if item.status else '0' }})">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+                Edit
+              </button>
               <form method="POST" action="{{ url_for('masters.qc_param_delete', id=item.id) }}" style="display:inline;"
                     onsubmit="return confirm('Delete &quot;{{ item.value }}&quot;?')">
-                <button type="submit" class="qcp-btn-del">🗑</button>
+                <button type="submit" class="qcp-btn-del" title="Delete">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                </button>
               </form>
             </td>
           </tr>
@@ -76,9 +166,11 @@
         </tbody>
       </table>
       {% else %}
-      <div style="text-align:center;padding:2rem;color:var(--text3);">
-        <div style="font-size:1.6rem;margin-bottom:.4rem;">{{ icon }}</div>
-        <div style="font-weight:600;font-size:0.85rem;">No values yet</div>
+      <div class="qcp-empty">
+        <div class="ic">
+          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2v6a2 2 0 0 0 .245.96l5.51 10.08A2 2 0 0 1 18 22H6a2 2 0 0 1-1.755-2.96l5.51-10.08A2 2 0 0 0 10 8V2"/><path d="M6.453 15h11.094"/><path d="M8.5 2h7"/></svg>
+        </div>
+        <div class="tx">No values yet</div>
       </div>
       {% endif %}
     </div>
@@ -87,29 +179,32 @@
 </div>
 
 {# Edit Modal #}
-<div id="qcpModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center;">
-  <div style="background:#fff;border-radius:12px;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.2);overflow:hidden;">
-    <div style="background:#1e3a5f;color:#fff;padding:.9rem 1.25rem;display:flex;align-items:center;justify-content:space-between;">
-      <span style="font-weight:700;">✏️ Edit Value</span>
-      <button onclick="document.getElementById('qcpModal').style.display='none'" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:26px;height:26px;border-radius:50%;cursor:pointer;">✕</button>
+<div id="qcpModal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:1000;align-items:center;justify-content:center;padding:16px;">
+  <div class="qcp-modal-box">
+    <div class="qcp-modal-head">
+      <span class="ti">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+        Edit Value
+      </span>
+      <button class="qcp-modal-close" onclick="document.getElementById('qcpModal').style.display='none'">&times;</button>
     </div>
     <form method="POST" id="qcpEditForm" action="">
-      <div style="padding:1.25rem;display:flex;flex-direction:column;gap:.85rem;">
+      <div class="qcp-modal-body">
         <div>
-          <label style="font-size:0.8rem;font-weight:600;color:#374151;display:block;margin-bottom:3px;">Value *</label>
-          <input type="text" name="value" id="qcpEditValue" class="fi" required style="font-size:0.85rem;">
+          <label>Value *</label>
+          <input type="text" name="value" id="qcpEditValue" required>
         </div>
         <div>
-          <label style="font-size:0.8rem;font-weight:600;color:#374151;display:block;margin-bottom:3px;">Status</label>
-          <select name="status" id="qcpEditStatus" class="fi" style="font-size:0.85rem;">
-            <option value="1">✅ Active</option>
-            <option value="0">⛔ Inactive</option>
+          <label>Status</label>
+          <select name="status" id="qcpEditStatus">
+            <option value="1">Active</option>
+            <option value="0">Inactive</option>
           </select>
         </div>
       </div>
-      <div style="padding:.9rem 1.25rem;border-top:1px solid #e5e7eb;display:flex;justify-content:flex-end;gap:.5rem;background:#f9fafb;">
-        <button type="button" onclick="document.getElementById('qcpModal').style.display='none'" class="btn-outline" style="font-size:0.83rem;">Cancel</button>
-        <button type="submit" class="btn-primary" style="font-size:0.83rem;">Save Changes</button>
+      <div class="qcp-modal-foot">
+        <button type="button" class="btn-cancel" onclick="document.getElementById('qcpModal').style.display='none'">Cancel</button>
+        <button type="submit" class="btn-save">Save Changes</button>
       </div>
     </form>
   </div>
@@ -128,8 +223,8 @@ function qcpToggle(id, btn) {
     .then(j => {
       if (!j.success) return;
       const span = btn.querySelector('span');
-      if (j.status) { span.className='badge-active';   span.textContent='✅ Active'; }
-      else          { span.className='badge-inactive'; span.textContent='⛔ Inactive'; }
+      if (j.status) { span.className='badge-active';   span.textContent='Active'; }
+      else          { span.className='badge-inactive'; span.textContent='Inactive'; }
     })
     .catch(() => location.reload());
 }

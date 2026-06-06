@@ -336,6 +336,10 @@ def index():
         abort(403)
 
     po_type = (request.args.get('po_type', '') or '').strip().upper()
+    # Direct URL access guard â€” RM PO â†’ purchase_rm; PM/COR/SLV PO â†’ purchase_pm
+    from core.permissions import can_view_material_type
+    if not can_view_material_type(po_type):
+        abort(403)
     return render_template(
         'purchase_order/index.html',
         active_page='purchase_order',

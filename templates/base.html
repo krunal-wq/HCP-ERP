@@ -31,10 +31,10 @@
     .flatpickr-weekday { color:#2563eb !important; font-weight:700 !important; font-size:.72rem !important; }
     .flatpickr-day { border-radius:8px !important; font-size:.82rem !important; color:var(--text) !important; }
     .flatpickr-day:hover { background:#dbeafe !important; border-color:#dbeafe !important; color:#1d4ed8 !important; }
-    /* "today" is just a hint when NOT selected â€” order matters: place it BEFORE .selected */
+    /* "today" is just a hint when NOT selected - order matters: place it BEFORE .selected */
     .flatpickr-day.today { border-color:#2563eb !important; color:#2563eb !important; font-weight:700 !important; }
     .flatpickr-day.today:hover { background:#2563eb !important; color:#fff !important; }
-    /* Selected ALWAYS wins (white text on solid blue) â€” must come AFTER .today and explicitly cover the today.selected combo */
+    /* Selected ALWAYS wins (white text on solid blue) - must come AFTER .today and explicitly cover the today.selected combo */
     .flatpickr-day.selected,
     .flatpickr-day.selected:hover,
     .flatpickr-day.today.selected,
@@ -50,7 +50,7 @@
     .fp-wrap::after { content:'📅'; position:absolute; right:10px; top:50%; transform:translateY(-50%); pointer-events:none; font-size:14px; line-height:1; }
     .notif-card .lucide-ic, .bp-item .lucide-ic, .bp-cel-item .lucide-ic, .bp-cel-icon .lucide-ic,
     .cel-card .lucide-ic, .cel-footer .lucide-ic, .stale-notif-card .lucide-ic, .nb .lucide-ic,
-    .cel-btn .lucide-ic, .lucide-ic, .lucide-ic svg { width:1em; height:1em; vertical-align:-0.125e}
+    .cel-btn .lucide-ic, .lucide-ic, .lucide-ic svg { width:1em; height:1em; vertical-align:-0.125em}
     </style>
 
     <link rel="stylesheet" href="{{ url_for('static', filename='css/base-reset.css') }}">
@@ -74,7 +74,7 @@
 
 <div class="overlay" id="overlay" onclick="closeSB()"></div>
 
-<!-- â•â• SIDEBAR â•â• -->
+<!-- == SIDEBAR == -->
 <aside class="sidebar" id="sidebar">
     <div class="sb-brand">
         <div class="sb-logo">
@@ -88,14 +88,18 @@
 
     <nav class="sb-nav">
 
-        {# â”€â”€ Determine active module from active_page â”€â”€ #}
+        {# -- Determine active module from active_page -- #}
         {% set _pg = active_page | default('') %}
         {% set _mod = 'dashboard' %}
+        {# Effective material-category from any type query param (RM/PM/COR/SLV/FG) #}
+        {% set _it = (request.args.get('item_type','') or '')|upper %}
+        {% set _styp = (request.args.get('supplier_type','') or request.args.get('po_type','') or request.args.get('grn_type','') or request.args.get('type','') or '')|upper %}
+        {% set _eff = _it or _styp %}
         {% if _pg in ('crm_dashboard','leads','clients','lead_import','client_import','sample_orders','mail_master','contribution_config','leaderboard','quotations','quotation_products') %}
             {% set _mod = 'crm' %}
         {% elif _pg in ('rd_dashboard','rd_projects','rd_executives','rd_performance',
                         'rd_discussion','rd_sample_ready','rd_sample_history','rd_sample_log',
-                        'rd_trials','rd_settings','formulation','raw_material_sample') %}
+                        'rd_trials','rd_settings','raw_material_sample') %}
             {% set _mod = 'rd' %}
         {% elif _pg in ('npd_epd_dashboard','npd_epd_projects') %}
             {% set _mod = 'epd' %}
@@ -111,15 +115,31 @@
             {% set _mod = 'hr' %}
         {% elif _pg in ('approvals','permissions','audit_logs','users','admin_profile','user_mgmt','user_permissions','approval_config','profile') %}
             {% set _mod = 'admin' %}
-        {% elif _pg in ('material','supplier','purchase_order','grn','qr_scan','depreciation_note','qc','qc_param_master') or request.path.startswith('/material') or request.path.startswith('/supplier') or request.path.startswith('/purchase-order') or request.path.startswith('/grn') or request.path.startswith('/qc') or request.path.startswith('/trs') %}
+        {# ── QC context (own module) ── #}
+        {% elif request.path.startswith('/qc') or request.path.startswith('/trs') or _pg in ('qc','qc_param_master') %}
+            {% set _mod = 'qc' %}
+        {# ── Procurement settings context (shared) ── #}
+        {% elif request.path == '/material/masters' or request.path.startswith('/purchase-order/ship-locations') or request.path.startswith('/purchase-order/terms-master') or request.path.startswith('/purchase-order/company-settings') %}
             {% set _mod = 'procurement' %}
+        {# ── Finished Goods context ── #}
+        {% elif _eff == 'FG' %}
+            {% set _mod = 'finished_goods' %}
+        {# ── Packing Material context (PM / Corrugation / Sleeves + Packing BOM) ── #}
+        {% elif _eff in ('PM','COR','SLV') or request.path.startswith('/packing-bom') %}
+            {% set _mod = 'packing_material' %}
+        {# ── Raw Material context (RM + Formulation + Quarantine) ── #}
+        {% elif _eff == 'RM' or request.path.startswith('/formulation') or request.path == '/grn/quarantine' %}
+            {% set _mod = 'raw_material' %}
+        {# ── Any other material/supplier/PO/GRN page → default to Raw Material ── #}
+        {% elif _pg in ('material','supplier','purchase_order','grn','qr_scan','depreciation_note') or request.path.startswith('/material') or request.path.startswith('/supplier') or request.path.startswith('/purchase-order') or request.path.startswith('/grn') %}
+            {% set _mod = 'raw_material' %}
         {% elif _pg in ('packing',) %}
             {% set _mod = 'packing' %}
         {% endif %}
 
         {% set role = current_user.role if current_user.is_authenticated else '' %}
 
-        {# â•â•â•â• DASHBOARD â€” show all modules overview (Accordion style) â•â•â•â• #}
+        {# ==== DASHBOARD - show all modules overview (Accordion style) ==== #}
         {% if _mod == 'dashboard' %}
         <div class="sb-sec">
             <a class="nav-a {% if _pg == 'dashboard' %}active{% endif %}" href="{{ url_for('dashboard') }}">
@@ -133,7 +153,7 @@
             <button class="sb-acc-hdr" onclick="toggleAccordion(this)">
                 <span class="sb-acc-ic"><i class="bi bi-graph-up-arrow"></i></span>
                 <span class="sb-acc-lbl">CRM</span>
-                <span class="sb-acc-arrow">â–¶</span>
+                <span class="sb-acc-arrow"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span>
             </button>
             <div class="sb-acc-body">
                 <a class="nav-a" href="/crm/dashboard"><span class="nav-ic"><i class="bi bi-speedometer2"></i></span><span class="nav-txt">CRM Dashboard</span></a>
@@ -180,7 +200,7 @@
             <button class="sb-acc-hdr" onclick="toggleAccordion(this)">
                 <span class="sb-acc-ic"><i class="bi bi-box-seam"></i></span>
                 <span class="sb-acc-lbl">Packing</span>
-                <span class="sb-acc-arrow">â–¶</span>
+                <span class="sb-acc-arrow"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span>
             </button>
             <div class="sb-acc-body">
                 <a class="nav-a" href="/packing"><span class="nav-ic"><i class="bi bi-journal-text"></i></span><span class="nav-txt">Sample Receipt Log</span></a>
@@ -190,22 +210,23 @@
 
         {% set _perm_material = get_perm('material') %}
         {% set _perm_procurement = get_perm('procurement') %}
-        {% if role == 'admin' or (_perm_material and _perm_material.can_view) or (_perm_procurement and _perm_procurement.can_view) %}
+        {% set _perm_rm = get_perm('purchase_rm') %}
+        {% set _perm_pm = get_perm('purchase_pm') %}
+        {% set _perm_fg = get_perm('purchase_fg') %}
+        {% set _can_rm = (role == 'admin' or (_perm_rm and _perm_rm.can_view)) %}
+        {% set _can_pm = (role == 'admin' or (_perm_pm and _perm_pm.can_view)) %}
+        {% set _can_fg = (role == 'admin' or (_perm_fg and _perm_fg.can_view)) %}
+        {% set _can_proc = (role == 'admin' or (_perm_procurement and _perm_procurement.can_view)) %}
+        {# Separate top-level accordions â€” Raw Material / Packing Material /
+           Finished Goods / Procurement are INDEPENDENT modules now. #}
+        {% if _can_rm %}
         <div class="sb-sec sb-accordion">
             <button class="sb-acc-hdr" onclick="toggleAccordion(this)">
-                <span class="sb-acc-ic"><i class="bi bi-bag-check"></i></span>
-                <span class="sb-acc-lbl">Purchase</span>
-                <span class="sb-acc-arrow">â–¶</span>
+                <span class="sb-acc-ic"><i class="bi bi-droplet-half"></i></span>
+                <span class="sb-acc-lbl">Raw Material</span>
+                <span class="sb-acc-arrow"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span>
             </button>
             <div class="sb-acc-body">
-
-                <!-- Raw Material -->
-                <button class="nav-group-toggle" onclick="toggleNavGroup(this)">
-                    <span class="nav-ic"><i class="bi bi-droplet-half"></i></span>
-                    <span class="nav-txt">Raw Material</span>
-                    <span class="nav-group-arrow">â–¶</span>
-                </button>
-                <div class="nav-submenu">
                     <a class="nav-a {% if request.args.get('item_type','').upper() == 'RM' %}active{% endif %}" href="/material?item_type=RM">
                         <span class="nav-ic"><i class="bi bi-card-list"></i></span><span class="nav-txt">Item Master</span>
                     </a>
@@ -236,15 +257,19 @@
                         <span class="nav-ic"><i class="bi bi-flask"></i></span><span class="nav-txt">Formulation</span>
                     </a>
                     {% endif %}
-                </div>
+            </div>
+        </div>
+        {% endif %}
 
-                <!-- Packing Material -->
-                <button class="nav-group-toggle" onclick="toggleNavGroup(this)">
-                    <span class="nav-ic"><i class="bi bi-archive"></i></span>
-                    <span class="nav-txt">Packing Material</span>
-                    <span class="nav-group-arrow">â–¶</span>
-                </button>
-                <div class="nav-submenu">
+        {# Packing Material accordion #}
+        {% if _can_pm %}
+        <div class="sb-sec sb-accordion">
+            <button class="sb-acc-hdr" onclick="toggleAccordion(this)">
+                <span class="sb-acc-ic"><i class="bi bi-archive"></i></span>
+                <span class="sb-acc-lbl">Packing Material</span>
+                <span class="sb-acc-arrow"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span>
+            </button>
+            <div class="sb-acc-body">
                     <a class="nav-a {% if request.args.get('item_type','').upper() == 'PM' %}active{% endif %}" href="/material?item_type=PM">
                         <span class="nav-ic"><i class="bi bi-card-list"></i></span><span class="nav-txt">Item Master</span>
                     </a>
@@ -258,39 +283,39 @@
                     </a>
                     {% endif %}
 
-                    <!-- Purchase Order â€” nested dropdown with PM / Corrugation / Sleeves -->
+                    <!-- Purchase Order - nested dropdown with PM / Corrugation / Sleeves -->
                     <button class="nav-group-toggle nav-subgroup-toggle" onclick="toggleNavGroup(this)">
                         <span class="nav-ic"><i class="bi bi-file-earmark-text"></i></span>
                         <span class="nav-txt">Purchase Order</span>
-                        <span class="nav-group-arrow">â–¶</span>
+                        <span class="nav-group-arrow"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span>
                     </button>
                     <div class="nav-submenu nav-subsubmenu">
                         <a class="nav-a {% if request.path.startswith('/purchase-order') and request.args.get('po_type','').upper() == 'PM' %}active{% endif %}" href="/purchase-order?po_type=PM">
-                            <span class="nav-ic">Â·</span><span class="nav-txt">PM Purchase Order</span>
+                            <span class="nav-ic"><i class="bi bi-dot"></i></span><span class="nav-txt">PM Purchase Order</span>
                         </a>
                         <a class="nav-a {% if request.path.startswith('/purchase-order') and request.args.get('po_type','').upper() == 'COR' %}active{% endif %}" href="/purchase-order?po_type=COR">
-                            <span class="nav-ic">Â·</span><span class="nav-txt">Corrugation Purchase Order</span>
+                            <span class="nav-ic"><i class="bi bi-dot"></i></span><span class="nav-txt">Corrugation Purchase Order</span>
                         </a>
                         <a class="nav-a {% if request.path.startswith('/purchase-order') and request.args.get('po_type','').upper() == 'SLV' %}active{% endif %}" href="/purchase-order?po_type=SLV">
-                            <span class="nav-ic">Â·</span><span class="nav-txt">Sleeves Purchase Order</span>
+                            <span class="nav-ic"><i class="bi bi-dot"></i></span><span class="nav-txt">Sleeves Purchase Order</span>
                         </a>
                     </div>
 
-                    <!-- GRN â€” nested dropdown with PM / Corrugation / Sleeves -->
+                    <!-- GRN - nested dropdown with PM / Corrugation / Sleeves -->
                     <button class="nav-group-toggle nav-subgroup-toggle" onclick="toggleNavGroup(this)">
                         <span class="nav-ic"><i class="bi bi-box-arrow-in-down"></i></span>
                         <span class="nav-txt">GRN (Goods Receipt)</span>
-                        <span class="nav-group-arrow">â–¶</span>
+                        <span class="nav-group-arrow"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span>
                     </button>
                     <div class="nav-submenu nav-subsubmenu">
                         <a class="nav-a {% if request.path.startswith('/grn') and request.args.get('grn_type','').upper() == 'PM' %}active{% endif %}" href="/grn?grn_type=PM">
-                            <span class="nav-ic">Â·</span><span class="nav-txt">PM GRN</span>
+                            <span class="nav-ic"><i class="bi bi-dot"></i></span><span class="nav-txt">PM GRN</span>
                         </a>
                         <a class="nav-a {% if request.path.startswith('/grn') and request.args.get('grn_type','').upper() == 'COR' %}active{% endif %}" href="/grn?grn_type=COR">
-                            <span class="nav-ic">Â·</span><span class="nav-txt">Corrugation GRN</span>
+                            <span class="nav-ic"><i class="bi bi-dot"></i></span><span class="nav-txt">Corrugation GRN</span>
                         </a>
                         <a class="nav-a {% if request.path.startswith('/grn') and request.args.get('grn_type','').upper() == 'SLV' %}active{% endif %}" href="/grn?grn_type=SLV">
-                            <span class="nav-ic">Â·</span><span class="nav-txt">Sleeves GRN</span>
+                            <span class="nav-ic"><i class="bi bi-dot"></i></span><span class="nav-txt">Sleeves GRN</span>
                         </a>
                     </div>
 
@@ -304,27 +329,35 @@
                     <a class="nav-a {% if request.path == '/grn/stock-ledger' and request.args.get('type','').lower() != 'rm' %}active{% endif %}" href="/grn/stock-ledger?type=pm">
                         <span class="nav-ic"><i class="bi bi-journals"></i></span><span class="nav-txt">Stock Ledger</span>
                     </a>
-                </div>
+            </div>
+        </div>
+        {% endif %}
 
-                <!-- Finish Goods -->
-                <button class="nav-group-toggle" onclick="toggleNavGroup(this)">
-                    <span class="nav-ic"><i class="bi bi-check2-square"></i></span>
-                    <span class="nav-txt">Finish Goods</span>
-                    <span class="nav-group-arrow">â–¶</span>
-                </button>
-                <div class="nav-submenu">
-                    <a class="nav-a {% if request.args.get('item_type','').upper() == 'FG' %}active{% endif %}" href="/material?item_type=FG">
-                        <span class="nav-ic"><i class="bi bi-card-list"></i></span><span class="nav-txt">Item Master</span>
-                    </a>
-                </div>
+        {# Finished Goods accordion #}
+        {% if _can_fg %}
+        <div class="sb-sec sb-accordion">
+            <button class="sb-acc-hdr" onclick="toggleAccordion(this)">
+                <span class="sb-acc-ic"><i class="bi bi-check2-square"></i></span>
+                <span class="sb-acc-lbl">Finished Goods</span>
+                <span class="sb-acc-arrow"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span>
+            </button>
+            <div class="sb-acc-body">
+                <a class="nav-a {% if request.args.get('item_type','').upper() == 'FG' %}active{% endif %}" href="/material?item_type=FG">
+                    <span class="nav-ic"><i class="bi bi-card-list"></i></span><span class="nav-txt">Item Master</span>
+                </a>
+            </div>
+        </div>
+        {% endif %}
 
-                <!-- Masters & Settings -->
-                <button class="nav-group-toggle" onclick="toggleNavGroup(this)">
-                    <span class="nav-ic"><i class="bi bi-gear"></i></span>
-                    <span class="nav-txt">Masters &amp; Settings</span>
-                    <span class="nav-group-arrow">â–¶</span>
-                </button>
-                <div class="nav-submenu">
+        {# Procurement (shared settings) accordion #}
+        {% if _can_proc %}
+        <div class="sb-sec sb-accordion">
+            <button class="sb-acc-hdr" onclick="toggleAccordion(this)">
+                <span class="sb-acc-ic"><i class="bi bi-cart3"></i></span>
+                <span class="sb-acc-lbl">Procurement</span>
+                <span class="sb-acc-arrow"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span>
+            </button>
+            <div class="sb-acc-body">
                     <a class="nav-a {% if request.path == '/material/masters' %}active{% endif %}" href="/material/masters">
                         <span class="nav-ic"><i class="bi bi-card-list"></i></span><span class="nav-txt">Item Masters</span>
                     </a>
@@ -337,20 +370,18 @@
                     <a class="nav-a {% if request.path == '/purchase-order/company-settings' %}active{% endif %}" href="/purchase-order/company-settings">
                         <span class="nav-ic"><i class="bi bi-building"></i></span><span class="nav-txt">Company Settings</span>
                     </a>
-                </div>
-
             </div>
         </div>
         {% endif %}
 
-        {# â•â•â•â• QC Department (top-level â€” TRS testing lists) â•â•â•â• #}
+        {# ==== QC Department (top-level - TRS testing lists) ==== #}
         {% set _perm_qc = get_perm('qc') %}
         {% if role == 'admin' or (_perm_qc and _perm_qc.can_view) %}
         <div class="sb-sec sb-accordion">
             <button class="sb-acc-hdr" onclick="toggleAccordion(this)">
                 <span class="sb-acc-ic"><i class="bi bi-clipboard2-pulse"></i></span>
                 <span class="sb-acc-lbl">QC Department</span>
-                <span class="sb-acc-arrow">â–¶</span>
+                <span class="sb-acc-arrow"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span>
             </button>
             <div class="sb-acc-body">
                 <a class="nav-a {% if request.path == '/qc/dashboard' %}active{% endif %}" href="/qc/dashboard"><span class="nav-ic"><i class="bi bi-speedometer2"></i></span><span class="nav-txt">QC Dashboard</span></a>
@@ -361,14 +392,14 @@
         </div>
         {% endif %}
 
-        {# â•â•â•â• Raw Material Sample (top-level â€” same level as Packing) â•â•â•â• #}
+        {# ==== Raw Material Sample (top-level - same level as Packing) ==== #}
         {% set _perm_rms = get_perm('raw_material_sample') %}
         {% if role == 'admin' or (_perm_rms and _perm_rms.can_view) %}
         <div class="sb-sec sb-accordion">
             <button class="sb-acc-hdr" onclick="toggleAccordion(this)">
                 <span class="sb-acc-ic"><i class="bi bi-eyedropper"></i></span>
                 <span class="sb-acc-lbl">Raw Material Sample</span>
-                <span class="sb-acc-arrow">â–¶</span>
+                <span class="sb-acc-arrow"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span>
             </button>
             <div class="sb-acc-body">
                 <a class="nav-a {% if _pg == 'raw_material_sample' %}active{% endif %}" href="/raw-material-sample/"><span class="nav-ic"><i class="bi bi-clipboard2-check"></i></span><span class="nav-txt">Sample Requests</span></a>
@@ -382,11 +413,11 @@
             <button class="sb-acc-hdr" onclick="toggleAccordion(this)">
                 <span class="sb-acc-ic"><i class="bi bi-search-heart"></i></span>
                 <span class="sb-acc-lbl">R&amp;D</span>
-                <span class="sb-acc-arrow">â–¶</span>
+                <span class="sb-acc-arrow"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span>
             </button>
             <div class="sb-acc-body">
 
-                {# â”€â”€ R&D Dashboard â”€â”€ #}
+                {# -- R&D Dashboard -- #}
                 <a class="nav-a" href="/rd/dashboard"><span class="nav-ic"><i class="bi bi-speedometer2"></i></span><span class="nav-txt">R&amp;D Dashboard</span></a>
                 <a class="nav-a" href="/rd/projects"><span class="nav-ic"><i class="bi bi-kanban"></i></span><span class="nav-txt">R&amp;D Projects</span></a>
                 <a class="nav-a" href="/rd/trials"><span class="nav-ic"><i class="bi bi-beaker"></i></span><span class="nav-txt">R&amp;D Trials</span></a>
@@ -398,14 +429,14 @@
         </div>
         {% endif %}
 
-        {# â•â•â•â• NPD ACCORDION (sibling â€” not nested in R&D) â•â•â•â• #}
+        {# ==== NPD ACCORDION (sibling - not nested in R&D) ==== #}
         {% set _perm_npd = get_perm('npd') %}
         {% if (_perm_npd and _perm_npd.can_view) or role == 'admin' %}
         <div class="sb-sec sb-accordion">
             <button class="sb-acc-hdr" onclick="toggleAccordion(this)">
                 <span class="sb-acc-ic"><i class="bi bi-lightbulb"></i></span>
                 <span class="sb-acc-lbl">NPD</span>
-                <span class="sb-acc-arrow">â–¶</span>
+                <span class="sb-acc-arrow"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span>
             </button>
             <div class="sb-acc-body">
                 <a class="nav-a" href="/npd/npd-dashboard"><span class="nav-ic"><i class="bi bi-speedometer2"></i></span><span class="nav-txt">NPD Dashboard</span></a>
@@ -415,15 +446,15 @@
                 <a class="nav-a {% if _pg == 'npd_sample_history' %}active{% endif %}" href="/npd/sample-history"><span class="nav-ic"><i class="bi bi-clock-history"></i></span><span class="nav-txt">Sample History</span></a>
                 <a class="nav-a {% if _pg == 'client_dispatch' %}active{% endif %}" href="/client-dispatch/"><span class="nav-ic"><i class="bi bi-truck"></i></span><span class="nav-txt">Client Dispatch</span></a>
 
-                {# â”€â”€ EPD Sub-section â”€â”€ #}
+                {# -- EPD Sub-section -- #}
                 <div class="sb-acc-sub-lbl"><i class="bi bi-box-seam"></i> EPD</div>
                 <a class="nav-a" href="/npd/epd-dashboard"><span class="nav-ic"><i class="bi bi-speedometer2"></i></span><span class="nav-txt">EPD Dashboard</span></a>
                 <a class="nav-a" href="/npd/epd-projects"><span class="nav-ic"><i class="bi bi-kanban"></i></span><span class="nav-txt">EPD Projects</span></a>
 
-                {# â”€â”€ NPD Masters (permission-based) â”€â”€ #}
+                {# -- NPD Masters (permission-based) -- #}
                 {% set _npd_masters_perm3 = get_perm('npd_masters') %}
                 {% if role == 'admin' or (_npd_masters_perm3 and _npd_masters_perm3.can_view) %}
-                <div class="sb-acc-sub-lbl">âš™ï¸ NPD Masters</div>
+                <div class="sb-acc-sub-lbl"><i class="bi bi-gear"></i> NPD Masters</div>
                 <a class="nav-a" href="/npd/milestone-master"><span class="nav-ic"><i class="bi bi-diagram-3"></i></span><span class="nav-txt">Milestone Master</span></a>
                 <a class="nav-a {% if _pg == 'npd_status_master' %}active{% endif %}" href="/masters/npd-status"><span class="nav-ic"><i class="bi bi-toggles"></i></span><span class="nav-txt">NPD Status Master</span></a>
                 <a class="nav-a {% if _pg == 'npd_category_master' %}active{% endif %}" href="/masters/npd-category"><span class="nav-ic"><i class="bi bi-tags"></i></span><span class="nav-txt">NPD Category Master</span></a>
@@ -434,9 +465,9 @@
             </div>
         </div>
         {% endif %}
-        {# â•â•â•â• END NPD ACCORDION â•â•â•â• #}
+        {# ==== END NPD ACCORDION ==== #}
 
-        {# (legacy block below kept temporarily â€” emptied to avoid duplicates) #}
+        {# (legacy block below kept temporarily - emptied to avoid duplicates) #}
         {% if false %}
                 <div class="sb-acc-sub-lbl"><i class="bi bi-droplet-half"></i> NPD</div>
                 <a class="nav-a" href="/npd/npd-dashboard"><span class="nav-ic"><i class="bi bi-speedometer2"></i></span><span class="nav-txt">NPD Dashboard</span></a>
@@ -451,7 +482,7 @@
 
                 {% set _npd_masters_perm2 = get_perm('npd_masters') %}
                 {% if role == 'admin' or (_npd_masters_perm2 and _npd_masters_perm2.can_view) %}
-                <div class="sb-acc-sub-lbl">âš™ï¸ NPD Masters</div>
+                <div class="sb-acc-sub-lbl"><i class="bi bi-gear"></i> NPD Masters</div>
                 <a class="nav-a" href="/npd/milestone-master"><span class="nav-ic"><i class="bi bi-diagram-3"></i></span><span class="nav-txt">Milestone Master</span></a>
                 <a class="nav-a {% if _pg == 'npd_status_master' %}active{% endif %}" href="/masters/npd-status"><span class="nav-ic"><i class="bi bi-toggles"></i></span><span class="nav-txt">NPD Status Master</span></a>
                 <a class="nav-a {% if _pg == 'npd_category_master' %}active{% endif %}" href="/masters/npd-category"><span class="nav-ic"><i class="bi bi-tags"></i></span><span class="nav-txt">NPD Category Master</span></a>
@@ -461,7 +492,7 @@
                 {% endif %}
         {% endif %}{# end legacy #}
 
-        {# Empty placeholder â€” old enclosing R&D body is closed above #}
+        {# Empty placeholder - old enclosing R&D body is closed above #}
         {% if false %}
 
             </div>
@@ -474,7 +505,7 @@
             <button class="sb-acc-hdr" onclick="toggleAccordion(this)">
                 <span class="sb-acc-ic"><i class="bi bi-people"></i></span>
                 <span class="sb-acc-lbl">HR</span>
-                <span class="sb-acc-arrow">â–¶</span>
+                <span class="sb-acc-arrow"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span>
             </button>
             <div class="sb-acc-body">
                 <a class="nav-a" href="/hr/employees/dashboard"><span class="nav-ic"><i class="bi bi-speedometer2"></i></span><span class="nav-txt">Dashboard</span></a>
@@ -496,7 +527,7 @@
             <button class="sb-acc-hdr" onclick="toggleAccordion(this)">
                 <span class="sb-acc-ic"><i class="bi bi-sliders2"></i></span>
                 <span class="sb-acc-lbl">Masters</span>
-                <span class="sb-acc-arrow">â–¶</span>
+                <span class="sb-acc-arrow"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span>
             </button>
             <div class="sb-acc-body">
                 <a class="nav-a" href="/masters/category-master"><span class="nav-ic"><i class="bi bi-tags"></i></span><span class="nav-txt">Category Master</span></a>
@@ -509,13 +540,13 @@
             <button class="sb-acc-hdr" onclick="toggleAccordion(this)">
                 <span class="sb-acc-ic"><i class="bi bi-shield-lock"></i></span>
                 <span class="sb-acc-lbl">Administration</span>
-                <span class="sb-acc-arrow">â–¶</span>
+                <span class="sb-acc-arrow"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span>
             </button>
             <div class="sb-acc-body">
                 <a class="nav-a" href="/approvals"><span class="nav-ic"><i class="bi bi-check2-all"></i></span><span class="nav-txt">Approvals</span></a>
                 <a class="nav-a {% if active_page == 'user_permissions' %}active{% endif %}" href="/admin/user-permissions"><span class="nav-ic"><i class="bi bi-person-lock"></i></span><span class="nav-txt">User Permissions</span></a>
                 <a class="nav-a" href="/admin/audit-logs"><span class="nav-ic"><i class="bi bi-search"></i></span><span class="nav-txt">Audit Logs</span></a>
-                {# Settings group â€” visible if user has CRM Settings access.
+                {# Settings group - visible if user has CRM Settings access.
                    The CRM Settings tile in ACP panel maps to the `crm`
                    module's top-level can_view. Same pattern as Leads /
                    Clients / Sample Orders blocks: parent module can_view
@@ -526,7 +557,7 @@
                    built-in admin override. #}
                 {% set _crm_perm = get_perm('crm') %}
                 {% if _crm_perm and _crm_perm.can_view %}
-                <div class="sb-acc-sub-lbl">âš™ï¸ Settings</div>
+                <div class="sb-acc-sub-lbl"><i class="bi bi-gear"></i> Settings</div>
                 <a class="nav-a {% if _pg == 'mail_master' %}active{% endif %}" href="/mail/master"><span class="nav-ic"><i class="bi bi-envelope"></i></span><span class="nav-txt">Mail Master</span></a>
                 <a class="nav-a {% if _pg == 'contribution_config' %}active{% endif %}" href="/crm/contribution-config"><span class="nav-ic"><i class="bi bi-star"></i></span><span class="nav-txt">Points Config</span></a>
                 <a class="nav-a {% if _pg == 'masters' %}active{% endif %}" href="/masters/"><span class="nav-ic"><i class="bi bi-tags"></i></span><span class="nav-txt">Lead Masters</span></a>
@@ -535,7 +566,7 @@
         </div>
         {% endif %}
 
-        {# â•â•â•â• CRM MODULE â•â•â•â• #}
+        {# ==== CRM MODULE ==== #}
         {% elif _mod == 'crm' %}
         <div class="sb-sec">
             <a class="nav-a nav-back" href="{{ url_for('dashboard') }}">
@@ -583,7 +614,7 @@
             {% endif %}
             {% endif %}
 
-            {# â”€â”€ Leaderboard â”€â”€ #}
+            {# -- Leaderboard -- #}
             {% if get_module_active('crm_leaderboard') %}
             {% set _perm_lb = get_perm('crm_leaderboard') %}
             {% if _perm_lb and _perm_lb.can_view %}
@@ -594,7 +625,7 @@
             {% endif %}
 
             <div class="sb-sec-lbl" style="margin-top:14px;">Data Management</div>
-            {# â”€â”€ Import Group (collapsible) â”€â”€ #}
+            {# -- Import Group (collapsible) -- #}
             {% set _perm_leads_imp = get_perm('crm_leads') %}
             {% set _perm_clients_imp = get_perm('crm_clients') %}
             {% if (_perm_leads_imp and _perm_leads_imp.can_import) or (_perm_clients_imp and _perm_clients_imp.can_import) %}
@@ -602,7 +633,7 @@
             <button class="nav-group-toggle {% if _in_import %}open{% endif %}" onclick="toggleNavGroup(this)">
                 <span class="nav-ic"><i class="bi bi-download"></i></span>
                 <span class="nav-txt">Import</span>
-                <span class="nav-group-arrow">â–¶</span>
+                <span class="nav-group-arrow"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span>
             </button>
             <div class="nav-submenu {% if _in_import %}open{% endif %}">
                 <a class="nav-a {% if _pg == 'lead_import' %}active{% endif %}" href="/crm/leads/import">
@@ -614,16 +645,16 @@
             </div>
             {% endif %}
 
-            {# â”€â”€ Settings Group â€” gated by `crm` module can_view.
+            {# -- Settings Group - gated by `crm` module can_view.
                  Same pattern as other CRM menu items above. Admin
-                 always sees everything via get_perm()'s admin override. â”€â”€ #}
+                 always sees everything via get_perm()'s admin override. -- #}
             {% set _crm_perm = get_perm('crm') %}
             {% if _crm_perm and _crm_perm.can_view %}
             {% set _in_settings = _pg in ('mail_master','contribution_config','masters') %}
             <button class="nav-group-toggle {% if _in_settings %}open{% endif %}" onclick="toggleNavGroup(this)">
                 <span class="nav-ic"><i class="bi bi-gear"></i></span>
                 <span class="nav-txt">Settings</span>
-                <span class="nav-group-arrow">â–¶</span>
+                <span class="nav-group-arrow"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span>
             </button>
             <div class="nav-submenu {% if _in_settings %}open{% endif %}">
                 <a class="nav-a {% if _pg == 'mail_master' %}active{% endif %}" href="/mail/master">
@@ -640,7 +671,7 @@
         </div>
         {% endif %}
 
-        {# â•â•â•â• R&D MODULE â•â•â•â• #}
+        {# ==== R&D MODULE ==== #}
         {% elif _mod in ('rd', 'npd', 'epd') %}
         <div class="sb-sec">
             <a class="nav-a nav-back" href="{{ url_for('dashboard') }}">
@@ -648,7 +679,7 @@
             </a>
         </div>
 
-        {# â”€â”€ R&D Dashboard â”€â”€ #}
+        {# -- R&D Dashboard -- #}
         {% if _mod == 'rd' %}
         <div class="sb-sec">
             <div class="sb-sec-lbl">R&amp;D Management</div>
@@ -660,7 +691,7 @@
         </div>
         {% endif %}
 
-        {# â”€â”€ NPD Section â”€â”€ #}
+        {# -- NPD Section -- #}
         {% if _mod == 'npd' %}
         <div class="sb-sec">
             <div class="sb-sec-lbl" style="color:#7c3aed;"><i class="bi bi-droplet-half"></i> NPD</div>
@@ -685,7 +716,7 @@
         </div>
         {% endif %}
 
-        {# â”€â”€ EPD Section â”€â”€ #}
+        {# -- EPD Section -- #}
         {% if _mod == 'epd' %}
         <div class="sb-sec">
             <div class="sb-sec-lbl" style="color:#059669;"><i class="bi bi-box-seam"></i> EPD</div>
@@ -698,11 +729,11 @@
         </div>
         {% endif %}
 
-        {# â”€â”€ NPD Masters (permission-based) â”€â”€ #}
+        {# -- NPD Masters (permission-based) -- #}
         {% set _npd_masters_perm = get_perm('npd_masters') %}
         {% if _mod == 'npd' and (role == 'admin' or (_npd_masters_perm and _npd_masters_perm.can_view)) %}
         <div class="sb-sec">
-            <div class="sb-sec-lbl">âš™ï¸ NPD Masters</div>
+            <div class="sb-sec-lbl"><i class="bi bi-gear"></i> NPD Masters</div>
             <a class="nav-a {% if _pg == 'npd_milestone_master' %}active{% endif %}" href="/npd/milestone-master">
                 <span class="nav-ic"><i class="bi bi-diagram-3"></i></span><span class="nav-txt">Milestone Master</span>
             </a>
@@ -724,7 +755,7 @@
         </div>
         {% endif %}
 
-        {# â•â•â•â• HR MODULE â•â•â•â• #}
+        {# ==== HR MODULE ==== #}
         {% elif _mod == 'hr' %}
         {% set _perm_hr = get_perm('hr') %}
         {% set _perm_emp = get_perm('hr_employees') %}
@@ -827,11 +858,11 @@
         <div class="sb-sec">
             <div class="sb-sec-lbl">Policies</div>
 
-            {# â”€â”€ Attendance Rules â”€â”€ #}
+            {# -- Attendance Rules -- #}
             <button class="sb-acc-hdr {% if _pg in ('hr_shifts','hr_locations_master','hr_late_rules','hr_early_rules','hr_ot_rules','late_rules') %}open{% endif %}" onclick="toggleAccordion(this)">
                 <span class="sb-acc-ic"><i class="bi bi-clock"></i></span>
                 <span class="sb-acc-lbl">Attendance Rules</span>
-                <span class="sb-acc-arrow">â€º</span>
+                <span class="sb-acc-arrow"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span>
             </button>
             <div class="sb-acc-body {% if _pg in ('hr_shifts','hr_locations_master','hr_late_rules','hr_early_rules','hr_ot_rules','late_rules') %}open{% endif %}">
                 {% if get_sub_perm('hr', 'shift_master') %}
@@ -861,11 +892,11 @@
                 {% endif %}
             </div>
 
-            {# â”€â”€ Leave & LOP Rules â”€â”€ #}
+            {# -- Leave & LOP Rules -- #}
             <button class="sb-acc-hdr {% if _pg in ('hr_leave_policy','hr_lop_rules','hr_absent_rules','hr_compoff_rules') %}open{% endif %}" onclick="toggleAccordion(this)">
                 <span class="sb-acc-ic"><i class="bi bi-calendar2-check"></i></span>
                 <span class="sb-acc-lbl">Leave & LOP Rules</span>
-                <span class="sb-acc-arrow">â€º</span>
+                <span class="sb-acc-arrow"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span>
             </button>
             <div class="sb-acc-body {% if _pg in ('hr_leave_policy','hr_lop_rules','hr_absent_rules','hr_compoff_rules') %}open{% endif %}">
                 {% if get_sub_perm('hr', 'leave_policy') %}
@@ -894,11 +925,11 @@
         <div class="sb-sec">
             <div class="sb-sec-lbl">Masters</div>
 
-            {# â”€â”€ HR Masters Accordion â”€â”€ #}
+            {# -- HR Masters Accordion -- #}
             <button class="sb-acc-hdr {% if _pg in ('hr_masters','hr_dept_master','hr_desig_master','hr_shift_master','hr_emptype_master','hr_loc_master','hr_country_master','hr_state_master','hr_nationality_master','hr_grade_master') %}open{% endif %}" onclick="toggleAccordion(this)">
                 <span class="sb-acc-ic"><i class="bi bi-folder2-open"></i></span>
                 <span class="sb-acc-lbl">HR Masters</span>
-                <span class="sb-acc-arrow">â€º</span>
+                <span class="sb-acc-arrow"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span>
             </button>
             <div class="sb-acc-body {% if _pg in ('hr_masters','hr_dept_master','hr_desig_master','hr_shift_master','hr_emptype_master','hr_loc_master','hr_country_master','hr_state_master','hr_nationality_master','hr_grade_master') %}open{% endif %}">
                 {% if get_sub_perm('hr', 'emp_type') %}
@@ -959,8 +990,8 @@
         {% endif %}
         {% endif %}
 
-        {# â•â•â•â• ADMIN MODULE â•â•â•â• #}
-        {# â•â•â•â• MASTERS MODULE â•â•â•â• #}
+        {# ==== ADMIN MODULE ==== #}
+        {# ==== MASTERS MODULE ==== #}
         {% elif _mod == 'masters' %}
         <div class="sb-sec">
             <a class="nav-a nav-back" href="{{ url_for('dashboard') }}">
@@ -996,6 +1027,154 @@
             </a>
         </div>
 
+        {# ════ RAW MATERIAL — focused context (only RM menus) ════ #}
+        {% elif _mod == 'raw_material' %}
+        <div class="sb-sec">
+            <a class="nav-a nav-back" href="{{ url_for('dashboard') }}">
+                <span class="nav-ic"><i class="bi bi-arrow-left"></i></span><span class="nav-txt">Main Dashboard</span>
+            </a>
+        </div>
+        <div class="sb-sec">
+            <div class="sb-sec-lbl"><i class="bi bi-droplet-half"></i> Raw Material</div>
+            <a class="nav-a {% if request.path.startswith('/material') and _eff == 'RM' %}active{% endif %}" href="/material?item_type=RM">
+                <span class="nav-ic"><i class="bi bi-card-list"></i></span><span class="nav-txt">Item Master</span>
+            </a>
+            <a class="nav-a {% if request.path.startswith('/supplier') and _eff == 'RM' %}active{% endif %}" href="/supplier/?supplier_type=RM">
+                <span class="nav-ic"><i class="bi bi-people"></i></span><span class="nav-txt">Supplier</span>
+            </a>
+            <a class="nav-a {% if request.path.startswith('/purchase-order') and _eff == 'RM' %}active{% endif %}" href="/purchase-order?po_type=RM">
+                <span class="nav-ic"><i class="bi bi-file-earmark-text"></i></span><span class="nav-txt">Purchase Order</span>
+            </a>
+            <a class="nav-a {% if request.path == '/grn' and _eff == 'RM' %}active{% endif %}" href="/grn?grn_type=RM">
+                <span class="nav-ic"><i class="bi bi-box-arrow-in-down"></i></span><span class="nav-txt">GRN (Goods Receipt)</span>
+            </a>
+            <a class="nav-a {% if request.path == '/grn/quarantine' %}active{% endif %}" href="/grn/quarantine">
+                <span class="nav-ic"><i class="bi bi-shield-exclamation"></i></span><span class="nav-txt">RM Quarantine</span>
+            </a>
+            <a class="nav-a {% if request.path == '/grn/stock' and _eff == 'RM' %}active{% endif %}" href="/grn/stock?type=rm">
+                <span class="nav-ic"><i class="bi bi-box-seam"></i></span><span class="nav-txt">Current Stock</span>
+            </a>
+            <a class="nav-a {% if request.path == '/grn/stock-by-grn' and _eff == 'RM' %}active{% endif %}" href="/grn/stock-by-grn?type=rm">
+                <span class="nav-ic"><i class="bi bi-collection"></i></span><span class="nav-txt">Stock by GRN</span>
+            </a>
+            <a class="nav-a {% if request.path == '/grn/stock-ledger' and _eff == 'RM' %}active{% endif %}" href="/grn/stock-ledger?type=rm">
+                <span class="nav-ic"><i class="bi bi-journals"></i></span><span class="nav-txt">Stock Ledger</span>
+            </a>
+            {% set _perm_formulation = get_perm('formulation') %}
+            {% if role == 'admin' or (_perm_formulation and _perm_formulation.can_view) %}
+            <a class="nav-a {% if request.path.startswith('/formulation') %}active{% endif %}" href="/formulation">
+                <span class="nav-ic"><i class="bi bi-flask"></i></span><span class="nav-txt">Formulation</span>
+            </a>
+            {% endif %}
+        </div>
+
+        {# ════ PACKING MATERIAL — focused context (only PM menus) ════ #}
+        {% elif _mod == 'packing_material' %}
+        <div class="sb-sec">
+            <a class="nav-a nav-back" href="{{ url_for('dashboard') }}">
+                <span class="nav-ic"><i class="bi bi-arrow-left"></i></span><span class="nav-txt">Main Dashboard</span>
+            </a>
+        </div>
+        <div class="sb-sec">
+            <div class="sb-sec-lbl"><i class="bi bi-archive"></i> Packing Material</div>
+            <a class="nav-a {% if request.path.startswith('/material') and _eff == 'PM' %}active{% endif %}" href="/material?item_type=PM">
+                <span class="nav-ic"><i class="bi bi-card-list"></i></span><span class="nav-txt">Item Master</span>
+            </a>
+            <a class="nav-a {% if request.path.startswith('/supplier') and _eff == 'PM' %}active{% endif %}" href="/supplier/?supplier_type=PM">
+                <span class="nav-ic"><i class="bi bi-people"></i></span><span class="nav-txt">Supplier</span>
+            </a>
+
+            <!-- Purchase Order - nested dropdown -->
+            <button class="nav-group-toggle nav-subgroup-toggle {% if request.path.startswith('/purchase-order') and _eff in ('PM','COR','SLV') %}open{% endif %}" onclick="toggleNavGroup(this)">
+                <span class="nav-ic"><i class="bi bi-file-earmark-text"></i></span>
+                <span class="nav-txt">Purchase Order</span>
+                <span class="nav-group-arrow"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span>
+            </button>
+            <div class="nav-submenu nav-subsubmenu {% if request.path.startswith('/purchase-order') and _eff in ('PM','COR','SLV') %}open{% endif %}">
+                <a class="nav-a {% if request.path.startswith('/purchase-order') and _eff == 'PM' %}active{% endif %}" href="/purchase-order?po_type=PM">
+                    <span class="nav-ic"><i class="bi bi-dot"></i></span><span class="nav-txt">PM Purchase Order</span>
+                </a>
+                <a class="nav-a {% if request.path.startswith('/purchase-order') and _eff == 'COR' %}active{% endif %}" href="/purchase-order?po_type=COR">
+                    <span class="nav-ic"><i class="bi bi-dot"></i></span><span class="nav-txt">Corrugation Purchase Order</span>
+                </a>
+                <a class="nav-a {% if request.path.startswith('/purchase-order') and _eff == 'SLV' %}active{% endif %}" href="/purchase-order?po_type=SLV">
+                    <span class="nav-ic"><i class="bi bi-dot"></i></span><span class="nav-txt">Sleeves Purchase Order</span>
+                </a>
+            </div>
+
+            <!-- GRN - nested dropdown -->
+            <button class="nav-group-toggle nav-subgroup-toggle {% if request.path.startswith('/grn') and _eff in ('PM','COR','SLV') %}open{% endif %}" onclick="toggleNavGroup(this)">
+                <span class="nav-ic"><i class="bi bi-box-arrow-in-down"></i></span>
+                <span class="nav-txt">GRN (Goods Receipt)</span>
+                <span class="nav-group-arrow"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span>
+            </button>
+            <div class="nav-submenu nav-subsubmenu {% if request.path.startswith('/grn') and _eff in ('PM','COR','SLV') %}open{% endif %}">
+                <a class="nav-a {% if request.path == '/grn' and _eff == 'PM' %}active{% endif %}" href="/grn?grn_type=PM">
+                    <span class="nav-ic"><i class="bi bi-dot"></i></span><span class="nav-txt">PM GRN</span>
+                </a>
+                <a class="nav-a {% if request.path == '/grn' and _eff == 'COR' %}active{% endif %}" href="/grn?grn_type=COR">
+                    <span class="nav-ic"><i class="bi bi-dot"></i></span><span class="nav-txt">Corrugation GRN</span>
+                </a>
+                <a class="nav-a {% if request.path == '/grn' and _eff == 'SLV' %}active{% endif %}" href="/grn?grn_type=SLV">
+                    <span class="nav-ic"><i class="bi bi-dot"></i></span><span class="nav-txt">Sleeves GRN</span>
+                </a>
+            </div>
+
+            <a class="nav-a {% if request.path == '/grn/stock' and _eff != 'RM' %}active{% endif %}" href="/grn/stock?type=pm">
+                <span class="nav-ic"><i class="bi bi-box-seam"></i></span><span class="nav-txt">Current Stock</span>
+            </a>
+            <a class="nav-a {% if request.path == '/grn/stock-by-grn' and _eff != 'RM' %}active{% endif %}" href="/grn/stock-by-grn?type=pm">
+                <span class="nav-ic"><i class="bi bi-collection"></i></span><span class="nav-txt">Stock by GRN</span>
+            </a>
+            <a class="nav-a {% if request.path == '/grn/stock-ledger' and _eff != 'RM' %}active{% endif %}" href="/grn/stock-ledger?type=pm">
+                <span class="nav-ic"><i class="bi bi-journals"></i></span><span class="nav-txt">Stock Ledger</span>
+            </a>
+            {% set _perm_packing_bom = get_perm('packing_bom') %}
+            {% if role == 'admin' or (_perm_packing_bom and _perm_packing_bom.can_view) %}
+            <a class="nav-a {% if request.path.startswith('/packing-bom') %}active{% endif %}" href="/packing-bom">
+                <span class="nav-ic"><i class="bi bi-diagram-3"></i></span><span class="nav-txt">Packing BOM</span>
+            </a>
+            {% endif %}
+        </div>
+
+        {# ════ FINISHED GOODS — focused context (only FG menus) ════ #}
+        {% elif _mod == 'finished_goods' %}
+        <div class="sb-sec">
+            <a class="nav-a nav-back" href="{{ url_for('dashboard') }}">
+                <span class="nav-ic"><i class="bi bi-arrow-left"></i></span><span class="nav-txt">Main Dashboard</span>
+            </a>
+        </div>
+        <div class="sb-sec">
+            <div class="sb-sec-lbl"><i class="bi bi-check2-square"></i> Finished Goods</div>
+            <a class="nav-a {% if request.path.startswith('/material') and _eff == 'FG' %}active{% endif %}" href="/material?item_type=FG">
+                <span class="nav-ic"><i class="bi bi-card-list"></i></span><span class="nav-txt">Item Master</span>
+            </a>
+        </div>
+
+        {# ════ QUALITY CONTROL — focused context (only QC menus) ════ #}
+        {% elif _mod == 'qc' %}
+        <div class="sb-sec">
+            <a class="nav-a nav-back" href="{{ url_for('dashboard') }}">
+                <span class="nav-ic"><i class="bi bi-arrow-left"></i></span><span class="nav-txt">Main Dashboard</span>
+            </a>
+        </div>
+        <div class="sb-sec">
+            <div class="sb-sec-lbl"><i class="bi bi-clipboard2-check"></i> Quality Control</div>
+            <a class="nav-a {% if request.path == '/qc/dashboard' %}active{% endif %}" href="/qc/dashboard">
+                <span class="nav-ic"><i class="bi bi-speedometer2"></i></span><span class="nav-txt">QC Dashboard</span>
+            </a>
+            <a class="nav-a {% if request.path == '/qc/trs/rm' %}active{% endif %}" href="/qc/trs/rm">
+                <span class="nav-ic"><i class="bi bi-droplet-half"></i></span><span class="nav-txt">RM TRS List</span>
+            </a>
+            <a class="nav-a {% if request.path == '/qc/trs/pm' %}active{% endif %}" href="/qc/trs/pm">
+                <span class="nav-ic"><i class="bi bi-archive"></i></span><span class="nav-txt">PM TRS List</span>
+            </a>
+            <a class="nav-a {% if _pg == 'qc_param_master' %}active{% endif %}" href="/masters/qc-params">
+                <span class="nav-ic"><i class="bi bi-sliders"></i></span><span class="nav-txt">QC Parameters</span>
+            </a>
+        </div>
+
+        {# ════ PROCUREMENT — focused context (shared settings only) ════ #}
         {% elif _mod == 'procurement' %}
         <div class="sb-sec">
             <a class="nav-a nav-back" href="{{ url_for('dashboard') }}">
@@ -1003,144 +1182,19 @@
             </a>
         </div>
         <div class="sb-sec">
-            <div class="sb-sec-lbl">Purchase Management</div>
-
-            <!-- Raw Material -->
-            <button class="nav-group-toggle {% if request.args.get('item_type','').upper() == 'RM' or (request.path.startswith('/supplier') and request.args.get('supplier_type','').upper() == 'RM') %}open{% endif %}" onclick="toggleNavGroup(this)">
-                <span class="nav-ic"><i class="bi bi-droplet-half"></i></span>
-                <span class="nav-txt">Raw Material</span>
-                <span class="nav-group-arrow">â–¶</span>
-            </button>
-            <div class="nav-submenu {% if request.args.get('item_type','').upper() == 'RM' or (request.path.startswith('/supplier') and request.args.get('supplier_type','').upper() == 'RM') or (request.path.startswith('/purchase-order') and request.args.get('po_type','').upper() == 'RM') or (request.path.startswith('/grn') and request.args.get('grn_type','').upper() == 'RM') %}open{% endif %}">
-                <a class="nav-a {% if request.args.get('item_type','').upper() == 'RM' %}active{% endif %}" href="/material?item_type=RM">
-                    <span class="nav-ic"><i class="bi bi-card-list"></i></span><span class="nav-txt">Item Master</span>
-                </a>
-                <a class="nav-a {% if request.path.startswith('/supplier') and request.args.get('supplier_type','').upper() == 'RM' %}active{% endif %}" href="/supplier/?supplier_type=RM">
-                    <span class="nav-ic"><i class="bi bi-people"></i></span><span class="nav-txt">Supplier</span>
-                </a>
-                <a class="nav-a {% if request.path.startswith('/purchase-order') and request.args.get('po_type','').upper() == 'RM' %}active{% endif %}" href="/purchase-order?po_type=RM">
-                    <span class="nav-ic"><i class="bi bi-file-earmark-text"></i></span><span class="nav-txt">Purchase Order</span>
-                </a>
-                <a class="nav-a {% if request.path.startswith('/grn') and request.args.get('grn_type','').upper() == 'RM' %}active{% endif %}" href="/grn?grn_type=RM">
-                    <span class="nav-ic"><i class="bi bi-box-arrow-in-down"></i></span><span class="nav-txt">GRN (Goods Receipt)</span>
-                </a>
-            </div>
-
-            <!-- Packing Material -->
-            <button class="nav-group-toggle {% if request.args.get('item_type','').upper() == 'PM' or (request.path.startswith('/supplier') and request.args.get('supplier_type','').upper() == 'PM') or (request.path.startswith('/grn') and request.args.get('grn_type','').upper() in ('PM','COR','SLV')) %}open{% endif %}" onclick="toggleNavGroup(this)">
-                <span class="nav-ic"><i class="bi bi-archive"></i></span>
-                <span class="nav-txt">Packing Material</span>
-                <span class="nav-group-arrow">â–¶</span>
-            </button>
-            <div class="nav-submenu {% if request.args.get('item_type','').upper() == 'PM' or (request.path.startswith('/supplier') and request.args.get('supplier_type','').upper() == 'PM') or (request.path.startswith('/purchase-order') and request.args.get('po_type','').upper() in ('PM','COR','SLV')) or (request.path.startswith('/grn') and request.args.get('grn_type','').upper() in ('PM','COR','SLV')) %}open{% endif %}">
-                <a class="nav-a {% if request.args.get('item_type','').upper() == 'PM' %}active{% endif %}" href="/material?item_type=PM">
-                    <span class="nav-ic"><i class="bi bi-card-list"></i></span><span class="nav-txt">Item Master</span>
-                </a>
-                <a class="nav-a {% if request.path.startswith('/supplier') and request.args.get('supplier_type','').upper() == 'PM' %}active{% endif %}" href="/supplier/?supplier_type=PM">
-                    <span class="nav-ic"><i class="bi bi-people"></i></span><span class="nav-txt">Supplier</span>
-                </a>
-
-                <!-- Purchase Order â€” nested dropdown -->
-                <button class="nav-group-toggle nav-subgroup-toggle {% if request.path.startswith('/purchase-order') and request.args.get('po_type','').upper() in ('PM','COR','SLV') %}open{% endif %}" onclick="toggleNavGroup(this)">
-                    <span class="nav-ic"><i class="bi bi-file-earmark-text"></i></span>
-                    <span class="nav-txt">Purchase Order</span>
-                    <span class="nav-group-arrow">â–¶</span>
-                </button>
-                <div class="nav-submenu nav-subsubmenu {% if request.path.startswith('/purchase-order') and request.args.get('po_type','').upper() in ('PM','COR','SLV') %}open{% endif %}">
-                    <a class="nav-a {% if request.path.startswith('/purchase-order') and request.args.get('po_type','').upper() == 'PM' %}active{% endif %}" href="/purchase-order?po_type=PM">
-                        <span class="nav-ic">Â·</span><span class="nav-txt">PM Purchase Order</span>
-                    </a>
-                    <a class="nav-a {% if request.path.startswith('/purchase-order') and request.args.get('po_type','').upper() == 'COR' %}active{% endif %}" href="/purchase-order?po_type=COR">
-                        <span class="nav-ic">Â·</span><span class="nav-txt">Corrugation Purchase Order</span>
-                    </a>
-                    <a class="nav-a {% if request.path.startswith('/purchase-order') and request.args.get('po_type','').upper() == 'SLV' %}active{% endif %}" href="/purchase-order?po_type=SLV">
-                        <span class="nav-ic">Â·</span><span class="nav-txt">Sleeves Purchase Order</span>
-                    </a>
-                </div>
-
-                <!-- GRN â€” nested dropdown -->
-                <button class="nav-group-toggle nav-subgroup-toggle {% if request.path.startswith('/grn') and request.args.get('grn_type','').upper() in ('PM','COR','SLV') %}open{% endif %}" onclick="toggleNavGroup(this)">
-                    <span class="nav-ic"><i class="bi bi-box-arrow-in-down"></i></span>
-                    <span class="nav-txt">GRN (Goods Receipt)</span>
-                    <span class="nav-group-arrow">â–¶</span>
-                </button>
-                <div class="nav-submenu nav-subsubmenu {% if request.path.startswith('/grn') and request.args.get('grn_type','').upper() in ('PM','COR','SLV') %}open{% endif %}">
-                    <a class="nav-a {% if request.path.startswith('/grn') and request.args.get('grn_type','').upper() == 'PM' %}active{% endif %}" href="/grn?grn_type=PM">
-                        <span class="nav-ic">Â·</span><span class="nav-txt">PM GRN</span>
-                    </a>
-                    <a class="nav-a {% if request.path.startswith('/grn') and request.args.get('grn_type','').upper() == 'COR' %}active{% endif %}" href="/grn?grn_type=COR">
-                        <span class="nav-ic">Â·</span><span class="nav-txt">Corrugation GRN</span>
-                    </a>
-                    <a class="nav-a {% if request.path.startswith('/grn') and request.args.get('grn_type','').upper() == 'SLV' %}active{% endif %}" href="/grn?grn_type=SLV">
-                        <span class="nav-ic">Â·</span><span class="nav-txt">Sleeves GRN</span>
-                    </a>
-                </div>
-
-                <!-- Stock view (populated by non-RM GRN scans) -->
-                <a class="nav-a {% if request.path == '/grn/stock' %}active{% endif %}" href="/grn/stock">
-                    <span class="nav-ic"><i class="bi bi-box-seam"></i></span><span class="nav-txt">Current Stock</span>
-                </a>
-                <a class="nav-a {% if request.path == '/grn/stock-by-grn' %}active{% endif %}" href="/grn/stock-by-grn">
-                    <span class="nav-ic"><i class="bi bi-collection"></i></span><span class="nav-txt">Stock by GRN</span>
-                </a>
-                <a class="nav-a {% if request.path == '/grn/stock-ledger' %}active{% endif %}" href="/grn/stock-ledger">
-                    <span class="nav-ic"><i class="bi bi-journals"></i></span><span class="nav-txt">Stock Ledger</span>
-                </a>
-            </div>
-
-            <!-- Finish Goods -->
-            <button class="nav-group-toggle {% if request.args.get('item_type','').upper() == 'FG' %}open{% endif %}" onclick="toggleNavGroup(this)">
-                <span class="nav-ic"><i class="bi bi-check2-square"></i></span>
-                <span class="nav-txt">Finish Goods</span>
-                <span class="nav-group-arrow">â–¶</span>
-            </button>
-            <div class="nav-submenu {% if request.args.get('item_type','').upper() == 'FG' %}open{% endif %}">
-                <a class="nav-a {% if request.args.get('item_type','').upper() == 'FG' %}active{% endif %}" href="/material?item_type=FG">
-                    <span class="nav-ic"><i class="bi bi-card-list"></i></span><span class="nav-txt">Item Master</span>
-                </a>
-            </div>
-
-            <!-- Quality Control (QC) â€” TRS Lists -->
-            <button class="nav-group-toggle {% if request.path.startswith('/qc') or request.path.startswith('/trs') %}open{% endif %}" onclick="toggleNavGroup(this)">
-                <span class="nav-ic"><i class="bi bi-clipboard2-check"></i></span>
-                <span class="nav-txt">Quality Control</span>
-                <span class="nav-group-arrow">â–¶</span>
-            </button>
-            <div class="nav-submenu {% if request.path.startswith('/qc') or request.path.startswith('/trs') %}open{% endif %}">
-                <a class="nav-a {% if request.path == '/qc/dashboard' %}active{% endif %}" href="/qc/dashboard">
-                    <span class="nav-ic"><i class="bi bi-speedometer2"></i></span><span class="nav-txt">QC Dashboard</span>
-                </a>
-                <a class="nav-a {% if request.path == '/qc/trs/rm' %}active{% endif %}" href="/qc/trs/rm">
-                    <span class="nav-ic"><i class="bi bi-droplet-half"></i></span><span class="nav-txt">RM TRS List</span>
-                </a>
-                <a class="nav-a {% if request.path == '/qc/trs/pm' %}active{% endif %}" href="/qc/trs/pm">
-                    <span class="nav-ic"><i class="bi bi-archive"></i></span><span class="nav-txt">PM TRS List</span>
-                </a>
-                <a class="nav-a {% if _pg == 'qc_param_master' %}active{% endif %}" href="/masters/qc-params">
-                    <span class="nav-ic"><i class="bi bi-sliders"></i></span><span class="nav-txt">QC Parameters</span>
-                </a>
-            </div>
-
-            <!-- Masters & Settings -->
-            <button class="nav-group-toggle {% if request.path == '/material/masters' or request.path.startswith('/purchase-order/ship-locations') or request.path.startswith('/purchase-order/terms-master') or request.path.startswith('/purchase-order/company-settings') %}open{% endif %}" onclick="toggleNavGroup(this)">
-                <span class="nav-ic"><i class="bi bi-gear"></i></span>
-                <span class="nav-txt">Masters &amp; Settings</span>
-                <span class="nav-group-arrow">â–¶</span>
-            </button>
-            <div class="nav-submenu {% if request.path == '/material/masters' or request.path.startswith('/purchase-order/ship-locations') or request.path.startswith('/purchase-order/terms-master') or request.path.startswith('/purchase-order/company-settings') %}open{% endif %}">
-                <a class="nav-a {% if request.path == '/material/masters' %}active{% endif %}" href="/material/masters">
-                    <span class="nav-ic"><i class="bi bi-card-list"></i></span><span class="nav-txt">Item Masters</span>
-                </a>
-                <a class="nav-a {% if request.path == '/purchase-order/ship-locations' %}active{% endif %}" href="/purchase-order/ship-locations">
-                    <span class="nav-ic"><i class="bi bi-truck"></i></span><span class="nav-txt">Ship Locations</span>
-                </a>
-                <a class="nav-a {% if request.path == '/purchase-order/terms-master' %}active{% endif %}" href="/purchase-order/terms-master">
-                    <span class="nav-ic"><i class="bi bi-file-text"></i></span><span class="nav-txt">PO Terms &amp; Delivery</span>
-                </a>
-                <a class="nav-a {% if request.path == '/purchase-order/company-settings' %}active{% endif %}" href="/purchase-order/company-settings">
-                    <span class="nav-ic"><i class="bi bi-building"></i></span><span class="nav-txt">Company Settings</span>
-                </a>
-            </div>
+            <div class="sb-sec-lbl"><i class="bi bi-cart3"></i> Procurement Settings</div>
+            <a class="nav-a {% if request.path == '/material/masters' %}active{% endif %}" href="/material/masters">
+                <span class="nav-ic"><i class="bi bi-card-list"></i></span><span class="nav-txt">Item Masters</span>
+            </a>
+            <a class="nav-a {% if request.path == '/purchase-order/ship-locations' %}active{% endif %}" href="/purchase-order/ship-locations">
+                <span class="nav-ic"><i class="bi bi-truck"></i></span><span class="nav-txt">Ship Locations</span>
+            </a>
+            <a class="nav-a {% if request.path == '/purchase-order/terms-master' %}active{% endif %}" href="/purchase-order/terms-master">
+                <span class="nav-ic"><i class="bi bi-file-text"></i></span><span class="nav-txt">PO Terms &amp; Delivery</span>
+            </a>
+            <a class="nav-a {% if request.path == '/purchase-order/company-settings' %}active{% endif %}" href="/purchase-order/company-settings">
+                <span class="nav-ic"><i class="bi bi-building"></i></span><span class="nav-txt">Company Settings</span>
+            </a>
         </div>
 
         {% elif _mod == 'admin' %}
@@ -1172,7 +1226,7 @@
 
 </aside>
 
-<!-- â•â• TOPBAR â•â• -->
+<!-- == TOPBAR == -->
 <header class="topbar" id="topbar">
     <button class="hbg" onclick="toggleSB()" aria-label="Menu">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -1193,34 +1247,34 @@
     <div class="tb-right">
         <span class="tb-date" id="tdate"></span>
 
-        <button
-            type="button"
-            class="dark-toggle"
-            id="darkModeToggle"
-            onclick="toggleDarkMode()"
-            aria-label="Toggle dark mode"
-            aria-pressed="false"
-            title="Dark mode"
-        >
-            <span class="dark-toggle-track">
-                <span class="dark-toggle-thumb">
-                    <svg class="dark-toggle-icon dark-toggle-moon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 12.8A8.5 8.5 0 1 1 11.2 3 6.6 6.6 0 0 0 21 12.8z"></path>
-                    </svg>
-                    <svg class="dark-toggle-icon dark-toggle-sun" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="4"></circle>
-                        <path d="M12 2v2"></path>
-                        <path d="M12 20v2"></path>
-                        <path d="m4.93 4.93 1.41 1.41"></path>
-                        <path d="m17.66 17.66 1.41 1.41"></path>
-                        <path d="M2 12h2"></path>
-                        <path d="M20 12h2"></path>
-                        <path d="m6.34 17.66-1.41 1.41"></path>
-                        <path d="m19.07 4.93-1.41 1.41"></path>
-                    </svg>
-                </span>
-            </span>
-        </button>
+{#        <button#}
+{#            type="button"#}
+{#            class="dark-toggle"#}
+{#            id="darkModeToggle"#}
+{#            onclick="toggleDarkMode()"#}
+{#            aria-label="Toggle dark mode"#}
+{#            aria-pressed="false"#}
+{#            title="Dark mode"#}
+{#        >#}
+{#            <span class="dark-toggle-track">#}
+{#                <span class="dark-toggle-thumb">#}
+{#                    <svg class="dark-toggle-icon dark-toggle-moon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">#}
+{#                        <path d="M21 12.8A8.5 8.5 0 1 1 11.2 3 6.6 6.6 0 0 0 21 12.8z"></path>#}
+{#                    </svg>#}
+{#                    <svg class="dark-toggle-icon dark-toggle-sun" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">#}
+{#                        <circle cx="12" cy="12" r="4"></circle>#}
+{#                        <path d="M12 2v2"></path>#}
+{#                        <path d="M12 20v2"></path>#}
+{#                        <path d="m4.93 4.93 1.41 1.41"></path>#}
+{#                        <path d="m17.66 17.66 1.41 1.41"></path>#}
+{#                        <path d="M2 12h2"></path>#}
+{#                        <path d="M20 12h2"></path>#}
+{#                        <path d="m6.34 17.66-1.41 1.41"></path>#}
+{#                        <path d="m19.07 4.93-1.41 1.41"></path>#}
+{#                    </svg>#}
+{#                </span>#}
+{#            </span>#}
+{#        </button>#}
 
         <button class="tb-btn" id="bellBtn" onclick="toggleReminderPanel()" title="Reminders">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1292,7 +1346,7 @@
   </div>
 </div>
 
-<!-- â•â• MAIN â•â• -->
+<!-- == MAIN == -->
 <div class="main" id="mainContent">
     <div class="content">
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -1310,7 +1364,7 @@
     </div>
 </div>
 
-<!-- â•â• BOTTOM NAVIGATION â€” Android Style â•â• -->
+<!-- == BOTTOM NAVIGATION - Android Style == -->
 {% set role = current_user.role if current_user.is_authenticated else '' %}
 <nav class="bottom-nav" id="bottomNav" aria-label="Main Navigation">
     <div class="bn-inner">
@@ -1378,7 +1432,7 @@
     </div>
 
     <div class="bp-body" id="bellPanelBody">
-        <div class="bp-empty">Loadingâ€¦</div>
+        <div class="bp-empty">Loading...</div>
     </div>
 </div>
 
@@ -1407,7 +1461,7 @@
         document.getElementById('overlay').classList.remove('open');
         sessionStorage.setItem('sb','0');
     }
-    /* Sidebar closed by default â€” do NOT restore on load */
+    /* Sidebar closed by default - do NOT restore on load */
     window.addEventListener('resize', function() { if(window.innerWidth > 768) closeSB(); });
 
     const SearchDrop = (() => {
@@ -1466,7 +1520,7 @@ function toggleReminderPanel(){_remPanelOpen=!_remPanelOpen;var panel=document.g
 document.addEventListener('click',function(e){if(!_remPanelOpen)return;var panel=document.getElementById('bellPanel');var bell=document.getElementById('bellBtn');if(panel&&bell&&!panel.contains(e.target)&&!bell.contains(e.target)){panel.style.display='none';_remPanelOpen=false;}});
 function _remRenderPanel(){var body=document.getElementById('bellPanelBody');if(!body)return;if(!_remLatest.length){body.innerHTML='<div class="bp-empty"><i class="bi bi-check-circle"></i> No pending reminders</div>';return;}body.innerHTML=_remLatest.map(function(r){var cls=r.overdue?'bp-overdue':(r.mins_left<=2?'bp-soon':'');var lbl=r.overdue?'<span style="color:#dc2626;font-weight:800;">&#9888; Overdue</span>':(r.mins_left<=0?'<span style="color:#dc2626;">&#128308; Due now</span>':'<span style="color:#b45309;">&#9200; '+r.mins_left+' min left</span>');return['<a href="'+r.lead_url+'" class="bp-item '+cls+'" style="display:block;text-decoration:none;color:inherit;">','<div class="bp-title">&#128204; '+_remEsc(r.title)+'</div>','<div class="bp-sub">&#128100; '+_remEsc(r.lead_name)+(r.company?' &mdash; '+_remEsc(r.company):'')+'</div>','<div class="bp-time">'+lbl+' &nbsp;&middot;&nbsp; '+_remEsc(r.remind_at)+'</div>','</a>'].join('');}).join('');}
 function _remUpdateBell(count){var el=document.getElementById('bellCount');if(!el)return;if(count>0){el.style.display='inline-block';el.textContent=count>9?'9+':count;}else{el.style.display='none';}}
-function _remCreateCard(r){var container=document.getElementById('notif-container');if(!container)return;var card=document.createElement('div');var cls=r.overdue?'overdue':(r.mins_left<=2?'soon':'');card.className='notif-card '+cls;card.id='notif_'+r.id;var badge=r.overdue?'âš ï¸ OVERDUE':(r.mins_left<=0?'🔴 NOW':'â° '+r.mins_left+' min');var bCls=r.overdue?'overdue':(r.mins_left<=2?'soon':'');card.innerHTML='<div class="notif-hdr"><span class="notif-badge '+bCls+'">'+badge+'</span><button class="notif-close" onclick="remCloseCard('+r.id+')"><i class="bi bi-x-lg"></i> </button></div><div class="notif-body"><div class="notif-title"><i class="bi bi-pin-angle"></i> '+_remEsc(r.title)+'</div><div class="notif-lead"><i class="bi bi-person"></i> '+_remEsc(r.lead_name)+(r.company?' &mdash; '+_remEsc(r.company):'')+'<span style="color:#94a3b8;"> ('+_remEsc(r.lead_code)+')</span></div><div class="notif-time">ðŸ• '+_remEsc(r.remind_at)+'</div><div class="notif-btns"><button class="nb nb-done" onclick="remMarkDone('+r.id+')"><i class="bi bi-check-circle"></i> Done</button><button class="nb nb-snooze" onclick="remSnooze('+r.id+')"><i class="bi bi-moon-stars"></i> +5 min</button><a class="nb nb-view" href="'+_remEsc(r.lead_url)+'"><i class="bi bi-link-45deg"></i> View</a></div></div>';container.appendChild(card);setTimeout(function(){remCloseCard(r.id);},5*60*1000);}
+function _remCreateCard(r){var container=document.getElementById('notif-container');if(!container)return;var card=document.createElement('div');var cls=r.overdue?'overdue':(r.mins_left<=2?'soon':'');card.className='notif-card '+cls;card.id='notif_'+r.id;var badge=r.overdue?'&#9888; OVERDUE':(r.mins_left<=0?'&#128308; NOW':'&#9200; '+r.mins_left+' min');var bCls=r.overdue?'overdue':(r.mins_left<=2?'soon':'');card.innerHTML='<div class="notif-hdr"><span class="notif-badge '+bCls+'">'+badge+'</span><button class="notif-close" onclick="remCloseCard('+r.id+')"><i class="bi bi-x-lg"></i> </button></div><div class="notif-body"><div class="notif-title"><i class="bi bi-pin-angle"></i> '+_remEsc(r.title)+'</div><div class="notif-lead"><i class="bi bi-person"></i> '+_remEsc(r.lead_name)+(r.company?' &mdash; '+_remEsc(r.company):'')+'<span style="color:#94a3b8;"> ('+_remEsc(r.lead_code)+')</span></div><div class="notif-time">&#128336; '+_remEsc(r.remind_at)+'</div><div class="notif-btns"><button class="nb nb-done" onclick="remMarkDone('+r.id+')"><i class="bi bi-check-circle"></i> Done</button><button class="nb nb-snooze" onclick="remSnooze('+r.id+')"><i class="bi bi-moon-stars"></i> +5 min</button><a class="nb nb-view" href="'+_remEsc(r.lead_url)+'"><i class="bi bi-link-45deg"></i> View</a></div></div>';container.appendChild(card);setTimeout(function(){remCloseCard(r.id);},5*60*1000);}
 function remCloseCard(id){var c=document.getElementById('notif_'+id);if(c){c.classList.add('removing');setTimeout(function(){if(c.parentNode)c.parentNode.removeChild(c);},300);}}
 function remMarkDone(id){fetch('/crm/api/reminder/'+id+'/done',{method:'POST'}).then(function(){remCloseCard(id);_remLatest=_remLatest.filter(function(r){return r.id!==id;});_remUpdateBell(_remLatest.length);if(_remPanelOpen)_remRenderPanel();});}
 function remSnooze(id){fetch('/crm/api/reminder/'+id+'/snooze',{method:'POST'}).then(function(){remCloseCard(id);delete _remShownIds[id];_remLatest=_remLatest.filter(function(r){return r.id!==id;});_remUpdateBell(_remLatest.length);if(_remPanelOpen)_remRenderPanel();});}
@@ -1476,14 +1530,14 @@ var _celStorageKey='cel_dismissed_'+new Date().toISOString().slice(0,10);
 var _celDismissed={};try{_celDismissed=JSON.parse(localStorage.getItem(_celStorageKey)||'{}');}catch(e){}
 function _celSaveDismissed(){try{localStorage.setItem(_celStorageKey,JSON.stringify(_celDismissed));}catch(e){}}
 function _celAvatarColor(id){return _celColors[id%_celColors.length];}
-function _celTypeIcon(type){return type==='birthday'?'🎂':type==='work_anniversary'?'ðŸŽ–ï¸':'ðŸ’';}
-function _celShowCard(item){var key=item.id+'_'+item.type;if(_celShownCard[key]||_celDismissed[key])return;_celShownCard[key]=true;var container=document.getElementById('celContainer');if(!container)return;var col=_celAvatarColor(item.id);var icon=_celTypeIcon(item.type);var isSelf=item.is_self;var avatarHtml=item.photo?'<img class="cel-av-img" src="'+item.photo+'" alt="">':'<div class="cel-av" style="background:'+col+';">'+item.name.substring(0,2).toUpperCase()+'</div>';var msgHtml,footerHtml;if(isSelf){msgHtml='<div class="cel-self-msg"><div style="font-size:1.5rem;margin-bottom:.3rem;">'+icon+'</div>'+_remEsc(item.self_wish)+'</div>';footerHtml='<div class="cel-footer"><button class="cel-btn cel-close" onclick="celDismiss(&quot;'+key+'&quot;)"><i class="bi bi-x-lg"></i> Dismiss</button></div>';}else{var alreadyWished=item.already_wished||_celWishedToday[key];var wishBtnHtml=alreadyWished?'<button class="cel-btn cel-wished-done" disabled><i class="bi bi-check-circle"></i> Wished!</button>':'<button class="cel-btn cel-wish" id="wb_'+key+'" onclick="celSendWish('+item.id+',&quot;'+item.type+'&quot;,&quot;'+key+'&quot;)">ðŸ™ Wish Now</button>';msgHtml='<div class="cel-msg">'+_remEsc(item.wish_template.split('\n')[0])+'</div>';footerHtml='<div class="cel-footer">'+wishBtnHtml+'<button class="cel-btn cel-copy" onclick="celCopyWish(&quot;'+key+'&quot;)"><i class="bi bi-clipboard-data"></i> Copy</button><a href="'+_remEsc(item.view_url)+'" class="cel-btn cel-profile" style="text-decoration:none;"><i class="bi bi-person"></i> Profile</a><button class="cel-btn cel-close" onclick="celDismiss(&quot;'+key+'&quot;)"><i class="bi bi-x-lg"></i> </button></div>';}var card=document.createElement('div');card.className='cel-card'+(isSelf?' cel-self':'');card.id='celcard_'+key;card.innerHTML='<div class="cel-strip '+item.type+'"></div><div class="cel-top">'+avatarHtml+'<div class="cel-info"><div class="cel-name">'+_remEsc(item.name)+' '+icon+(isSelf?' <span style=\"color:#d97706;font-size:.72rem;font-weight:800;\"><i class="bi bi-stars"></i> You!</span>':'')+'</div><div class="cel-type">'+_remEsc(item.type_label)+' &nbsp;Â·&nbsp; '+_remEsc(item.extra)+'</div></div></div>'+msgHtml+footerHtml;container.appendChild(card);if(item.days===0&&!isSelf)_remBrowserNotif(icon+' '+item.name+' â€” '+item.type_label,item.wish_template.substring(0,80),item.view_url);if(item.days===0&&isSelf)_remSpeak('Aapko aaj ki bahut bahut badhai!');setTimeout(function(){celDismiss(key);},isSelf?60000:30000);}
+function _celTypeIcon(type){return type==='birthday'?'🎂':type==='work_anniversary'?'🎖️':'💍';}
+function _celShowCard(item){var key=item.id+'_'+item.type;if(_celShownCard[key]||_celDismissed[key])return;_celShownCard[key]=true;var container=document.getElementById('celContainer');if(!container)return;var col=_celAvatarColor(item.id);var icon=_celTypeIcon(item.type);var isSelf=item.is_self;var avatarHtml=item.photo?'<img class="cel-av-img" src="'+item.photo+'" alt="">':'<div class="cel-av" style="background:'+col+';">'+item.name.substring(0,2).toUpperCase()+'</div>';var msgHtml,footerHtml;if(isSelf){msgHtml='<div class="cel-self-msg"><div style="font-size:1.5rem;margin-bottom:.3rem;">'+icon+'</div>'+_remEsc(item.self_wish)+'</div>';footerHtml='<div class="cel-footer"><button class="cel-btn cel-close" onclick="celDismiss(&quot;'+key+'&quot;)"><i class="bi bi-x-lg"></i> Dismiss</button></div>';}else{var alreadyWished=item.already_wished||_celWishedToday[key];var wishBtnHtml=alreadyWished?'<button class="cel-btn cel-wished-done" disabled><i class="bi bi-check-circle"></i> Wished!</button>':'<button class="cel-btn cel-wish" id="wb_'+key+'" onclick="celSendWish('+item.id+',&quot;'+item.type+'&quot;,&quot;'+key+'&quot;)">&#128591; Wish Now</button>';msgHtml='<div class="cel-msg">'+_remEsc(item.wish_template.split('\n')[0])+'</div>';footerHtml='<div class="cel-footer">'+wishBtnHtml+'<button class="cel-btn cel-copy" onclick="celCopyWish(&quot;'+key+'&quot;)"><i class="bi bi-clipboard-data"></i> Copy</button><a href="'+_remEsc(item.view_url)+'" class="cel-btn cel-profile" style="text-decoration:none;"><i class="bi bi-person"></i> Profile</a><button class="cel-btn cel-close" onclick="celDismiss(&quot;'+key+'&quot;)"><i class="bi bi-x-lg"></i> </button></div>';}var card=document.createElement('div');card.className='cel-card'+(isSelf?' cel-self':'');card.id='celcard_'+key;card.innerHTML='<div class="cel-strip '+item.type+'"></div><div class="cel-top">'+avatarHtml+'<div class="cel-info"><div class="cel-name">'+_remEsc(item.name)+' '+icon+(isSelf?' <span style=\"color:#d97706;font-size:.72rem;font-weight:800;\"><i class="bi bi-stars"></i> You!</span>':'')+'</div><div class="cel-type">'+_remEsc(item.type_label)+' &nbsp;&middot;&nbsp; '+_remEsc(item.extra)+'</div></div></div>'+msgHtml+footerHtml;container.appendChild(card);if(item.days===0&&!isSelf)_remBrowserNotif(icon+' '+item.name+' - '+item.type_label,item.wish_template.substring(0,80),item.view_url);if(item.days===0&&isSelf)_remSpeak('Aapko aaj ki bahut bahut badhai!');setTimeout(function(){celDismiss(key);},isSelf?60000:30000);}
 function celDismiss(key){_celDismissed[key]=true;_celSaveDismissed();var card=document.getElementById('celcard_'+key);if(card){card.classList.add('removing');setTimeout(function(){if(card.parentNode)card.parentNode.removeChild(card);},300);}}
-function celSendWish(empId,wishType,key){var btn=document.getElementById('wb_'+key);if(btn){btn.disabled=true;btn.textContent='â³ Sending...';}var item=_celLatest.find(function(i){return i.id===empId&&i.type===wishType;});var wishText=item?item.wish_template:'';fetch('/hr/api/send-wish',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({emp_id:empId,wish_type:wishType,wish_text:wishText})}).then(function(r){return r.json();}).then(function(d){_celWishedToday[key]=true;if(btn){btn.textContent='✅ Wished!';btn.className='cel-btn cel-wished-done';btn.disabled=true;}if(wishText&&navigator.clipboard)navigator.clipboard.writeText(wishText).catch(function(){});_celToast('✅ Wish sent & copied to clipboard!');}).catch(function(){if(btn){btn.disabled=false;btn.textContent='ðŸ™ Wish Now';}});}
+function celSendWish(empId,wishType,key){var btn=document.getElementById('wb_'+key);if(btn){btn.disabled=true;btn.textContent='Sending...';}var item=_celLatest.find(function(i){return i.id===empId&&i.type===wishType;});var wishText=item?item.wish_template:'';fetch('/hr/api/send-wish',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({emp_id:empId,wish_type:wishType,wish_text:wishText})}).then(function(r){return r.json();}).then(function(d){_celWishedToday[key]=true;if(btn){btn.textContent='✅ Wished!';btn.className='cel-btn cel-wished-done';btn.disabled=true;}if(wishText&&navigator.clipboard)navigator.clipboard.writeText(wishText).catch(function(){});_celToast('✅ Wish sent & copied to clipboard!');}).catch(function(){if(btn){btn.disabled=false;btn.textContent='Wish Now';}});}
 function celCopyWish(key){var item=_celLatest.find(function(i){return(i.id+'_'+i.type)===key;});if(!item)return;var text=item.wish_template;if(navigator.clipboard){navigator.clipboard.writeText(text).then(function(){_celToast('📋 Copied!');});}else{var ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);_celToast('📋 Copied!');}}
 function _celToast(msg){var t=document.createElement('div');t.textContent=msg;t.style.cssText='position:fixed;bottom:calc(var(--bottom-nav-h,64px) + 1rem);left:50%;transform:translateX(-50%);background:#1e3a5f;color:#fff;padding:9px 20px;border-radius:99px;font-size:.8rem;font-weight:700;z-index:99999;box-shadow:0 4px 16px rgba(0,0,0,.15);';document.body.appendChild(t);setTimeout(function(){t.style.opacity='0';t.style.transition='opacity .4s';setTimeout(function(){if(t.parentNode)document.body.removeChild(t);},400);},2000);}
-function _celRenderBellSection(){var body=document.getElementById('bellPanelBody');if(!body||!_celLatest.length)return;var todayItems=_celLatest.filter(function(c){return c.today;});var upcomingItems=_celLatest.filter(function(c){return!c.today;});var html='';if(todayItems.length){html+='<div style="font-size:.68rem;font-weight:800;color:#d97706;text-transform:uppercase;letter-spacing:.06em;padding:.4rem .75rem .2rem;background:#fffbeb;"><i class="bi bi-stars"></i> Today\'s Celebrations ('+todayItems.length+')</div>';todayItems.forEach(function(item){var icon=_celTypeIcon(item.type);var key=item.id+'_'+item.type;var wished=item.already_wished||_celWishedToday[key];var wishPart=item.is_self?'':(wished?'<span style="color:#16a34a;font-size:.7rem;font-weight:700;"><i class="bi bi-check-circle"></i> Wished</span>':'<button onclick="celSendWishBell('+item.id+',&quot;'+item.type+'&quot;,&quot;'+key+'&quot;,this)" style="background:#dbeafe;color:#1d4ed8;border:none;border-radius:6px;font-size:.7rem;font-weight:700;padding:2px 8px;cursor:pointer;">ðŸ™ Wish</button>');html+='<div class="bp-cel-item"><div class="bp-cel-icon">'+icon+'</div><div style="flex:1;min-width:0;"><div class="bp-cel-name">'+_remEsc(item.name)+(item.is_self?' <span style="color:#d97706;">(You!)</span>':'')+'</div><div class="bp-cel-sub">'+_remEsc(item.type_label)+' &nbsp;Â·&nbsp; '+_remEsc(item.extra)+'</div></div>'+wishPart+'</div>';});}if(upcomingItems.length){html+='<div style="font-size:.68rem;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;padding:.4rem .75rem .2rem;background:#f8fafc;"><i class="bi bi-calendar-event"></i> Upcoming (7 days)</div>';upcomingItems.slice(0,6).forEach(function(item){var icon=_celTypeIcon(item.type);html+='<a href="'+item.view_url+'" class="bp-cel-item" style="text-decoration:none;"><div class="bp-cel-icon">'+icon+'</div><div style="flex:1;min-width:0;"><div class="bp-cel-name">'+_remEsc(item.name)+'</div><div class="bp-cel-sub">'+_remEsc(item.type_label)+' &nbsp;Â·&nbsp; '+_remEsc(item.extra)+'</div></div><span class="bp-cel-badge bp-cel-soon">+'+item.days+'d</span></a>';});}var existing=body.innerHTML;var sep='<div style="border-top:2px solid #f1f5f9;margin:.25rem 0;"></div>';if(existing.indexOf('bp-empty')>=0||existing.indexOf('Loading')>=0){body.innerHTML=html;}else{body.innerHTML=html+sep+existing;}}
-function celSendWishBell(empId,wishType,key,btn){btn.disabled=true;btn.textContent='â³';var item=_celLatest.find(function(i){return i.id===empId&&i.type===wishType;});fetch('/hr/api/send-wish',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({emp_id:empId,wish_type:wishType,wish_text:item?item.wish_template:''})}).then(function(r){return r.json();}).then(function(d){_celWishedToday[key]=true;btn.outerHTML='<span style="color:#16a34a;font-size:.7rem;font-weight:700;"><i class="bi bi-check-circle"></i> Wished</span>';if(item&&item.wish_template&&navigator.clipboard)navigator.clipboard.writeText(item.wish_template).catch(function(){});_celToast('✅ Wish sent!');var wb=document.getElementById('wb_'+key);if(wb){wb.textContent='✅ Wished!';wb.className='cel-btn cel-wished-done';wb.disabled=true;}}).catch(function(){btn.disabled=false;btn.textContent='ðŸ™ Wish';});}
+function _celRenderBellSection(){var body=document.getElementById('bellPanelBody');if(!body||!_celLatest.length)return;var todayItems=_celLatest.filter(function(c){return c.today;});var upcomingItems=_celLatest.filter(function(c){return!c.today;});var html='';if(todayItems.length){html+='<div style="font-size:.68rem;font-weight:800;color:#d97706;text-transform:uppercase;letter-spacing:.06em;padding:.4rem .75rem .2rem;background:#fffbeb;"><i class="bi bi-stars"></i> Today\'s Celebrations ('+todayItems.length+')</div>';todayItems.forEach(function(item){var icon=_celTypeIcon(item.type);var key=item.id+'_'+item.type;var wished=item.already_wished||_celWishedToday[key];var wishPart=item.is_self?'':(wished?'<span style="color:#16a34a;font-size:.7rem;font-weight:700;"><i class="bi bi-check-circle"></i> Wished</span>':'<button onclick="celSendWishBell('+item.id+',&quot;'+item.type+'&quot;,&quot;'+key+'&quot;,this)" style="background:#dbeafe;color:#1d4ed8;border:none;border-radius:6px;font-size:.7rem;font-weight:700;padding:2px 8px;cursor:pointer;">&#128591; Wish</button>');html+='<div class="bp-cel-item"><div class="bp-cel-icon">'+icon+'</div><div style="flex:1;min-width:0;"><div class="bp-cel-name">'+_remEsc(item.name)+(item.is_self?' <span style="color:#d97706;">(You!)</span>':'')+'</div><div class="bp-cel-sub">'+_remEsc(item.type_label)+' &nbsp;&middot;&nbsp; '+_remEsc(item.extra)+'</div></div>'+wishPart+'</div>';});}if(upcomingItems.length){html+='<div style="font-size:.68rem;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;padding:.4rem .75rem .2rem;background:#f8fafc;"><i class="bi bi-calendar-event"></i> Upcoming (7 days)</div>';upcomingItems.slice(0,6).forEach(function(item){var icon=_celTypeIcon(item.type);html+='<a href="'+item.view_url+'" class="bp-cel-item" style="text-decoration:none;"><div class="bp-cel-icon">'+icon+'</div><div style="flex:1;min-width:0;"><div class="bp-cel-name">'+_remEsc(item.name)+'</div><div class="bp-cel-sub">'+_remEsc(item.type_label)+' &nbsp;&middot;&nbsp; '+_remEsc(item.extra)+'</div></div><span class="bp-cel-badge bp-cel-soon">+'+item.days+'d</span></a>';});}var existing=body.innerHTML;var sep='<div style="border-top:2px solid #f1f5f9;margin:.25rem 0;"></div>';if(existing.indexOf('bp-empty')>=0||existing.indexOf('Loading')>=0){body.innerHTML=html;}else{body.innerHTML=html+sep+existing;}}
+function celSendWishBell(empId,wishType,key,btn){btn.disabled=true;btn.textContent='...';var item=_celLatest.find(function(i){return i.id===empId&&i.type===wishType;});fetch('/hr/api/send-wish',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({emp_id:empId,wish_type:wishType,wish_text:item?item.wish_template:''})}).then(function(r){return r.json();}).then(function(d){_celWishedToday[key]=true;btn.outerHTML='<span style="color:#16a34a;font-size:.7rem;font-weight:700;"><i class="bi bi-check-circle"></i> Wished</span>';if(item&&item.wish_template&&navigator.clipboard)navigator.clipboard.writeText(item.wish_template).catch(function(){});_celToast('✅ Wish sent!');var wb=document.getElementById('wb_'+key);if(wb){wb.textContent='✅ Wished!';wb.className='cel-btn cel-wished-done';wb.disabled=true;}}).catch(function(){btn.disabled=false;btn.textContent='Wish';});}
 function _celPoll(){fetch('/hr/api/celebrations').then(function(r){return r.json();}).then(function(data){if(!data.celebrations)return;_celLatest=data.celebrations;data.celebrations.forEach(function(item){if(item.already_wished)_celWishedToday[item.id+'_'+item.type]=true;});var totalCount=(_remLatest?_remLatest.length:0)+data.today_count;_remUpdateBell(totalCount);data.celebrations.forEach(function(item){if(item.today)_celShowCard(item);});if(_remPanelOpen)setTimeout(_celRenderBellSection,100);}).catch(function(e){console.warn('[Celebrations]',e);});}
 var _origRenderPanel=_remRenderPanel;_remRenderPanel=function(){_origRenderPanel();setTimeout(_celRenderBellSection,50);};
 document.addEventListener('DOMContentLoaded',function(){setTimeout(_celPoll,3500);setInterval(_celPoll,5*60*1000);});
@@ -1491,7 +1545,7 @@ window._testCelebrations=function(){fetch('/hr/api/celebrations').then(function(
 window._testReminders=function(){fetch('/crm/api/due-reminders').then(function(r){return r.json();}).then(function(d){console.log('[Reminders] Server time (IST):',d.server_time);console.log('[Reminders] Count:',d.reminders?d.reminders.length:0);if(d.reminders)d.reminders.forEach(function(r){console.log('  -',r.lead_code,r.title,'| mins_left:',r.mins_left,'| overdue:',r.overdue);});});};
 document.addEventListener('DOMContentLoaded',function(){setTimeout(_remPoll,2000);setInterval(_remPoll,_remPollInterval);});
 
-// â”€â”€ Stale Leads Notification â”€â”€
+// -- Stale Leads Notification --
 var _staleLatest   = [];
 var _staleActive   = false; // ek card show ho raha hai kya
 var STALE_COOLDOWN = 4 * 60 * 60 * 1000; // 4 hours in ms
@@ -1505,7 +1559,7 @@ function _staleSaveDismissed(obj) {
 }
 
 function _staleDismiss(leadId) {
-    // Record dismiss time â€” 4 hours baad wapas aayega
+    // Record dismiss time - 4 hours baad wapas aayega
     var dismissed = _staleGetDismissed();
     dismissed['stale_' + leadId] = Date.now();
     _staleSaveDismissed(dismissed);
@@ -1555,16 +1609,16 @@ function _staleShowCard(l) {
 
     card.innerHTML =
         '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">' +
-        '<span style="font-size:1.3rem;">âš ï¸</span>' +
+        '<span style="font-size:1.3rem;">&#9888;</span>' +
         '<div style="font-size:0.82rem;font-weight:800;color:#d97706;">Followup Nahi Liya!</div>' +
         '</div>' +
-        '<div style="font-size:0.85rem;font-weight:700;color:#1e293b;">' + _remEsc(l.name) + (l.company ? ' â€” ' + _remEsc(l.company) : '') + '</div>' +
-        '<div style="font-size:0.75rem;color:#64748b;margin-top:2px;">' + l.code + ' Â· <strong style="color:#dc2626;">' + l.age + ' days open</strong></div>' +
+        '<div style="font-size:0.85rem;font-weight:700;color:#1e293b;">' + _remEsc(l.name) + (l.company ? ' - ' + _remEsc(l.company) : '') + '</div>' +
+        '<div style="font-size:0.75rem;color:#64748b;margin-top:2px;">' + l.code + ' &middot; <strong style="color:#dc2626;">' + l.age + ' days open</strong></div>' +
         '<div style="display:flex;gap:6px;margin-top:10px;">' +
         '<a href="' + l.lead_url + '" style="flex:1;text-align:center;background:#f59e0b;color:#fff;padding:6px 10px;border-radius:7px;font-size:0.75rem;font-weight:700;text-decoration:none;"><i class="bi bi-pin-angle"></i> Followup Lo</a>' +
         '<a href="' + l.lead_url + '?tab=reminder" style="flex:1;text-align:center;background:#eff6ff;color:#1e3a5f;padding:6px 10px;border-radius:7px;font-size:0.75rem;font-weight:700;text-decoration:none;"><i class="bi bi-bell"></i> Set Reminder</a>' +
         '</div>' +
-        '<div style="font-size:0.68rem;color:#94a3b8;margin-top:6px;text-align:center;"><i class="bi bi-x-lg"></i> band karo â€” 4 ghante baad wapas aayega</div>';
+        '<div style="font-size:0.68rem;color:#94a3b8;margin-top:6px;text-align:center;"><i class="bi bi-x-lg"></i> band karo - 4 ghante baad wapas aayega</div>';
 
     card.appendChild(closeBtn);
     container.appendChild(card);
@@ -1591,11 +1645,11 @@ function _staleRenderBellSection() {
     var body = document.getElementById('bellPanelBody');
     if (!body || !_staleLatest.length) return;
 
-    var html = '<div style="font-size:.68rem;font-weight:800;color:#d97706;text-transform:uppercase;letter-spacing:.06em;padding:.4rem .75rem .2rem;background:#fffbeb;">âš ï¸ Followup Pending (' + _staleLatest.length + ')</div>';
+    var html = '<div style="font-size:.68rem;font-weight:800;color:#d97706;text-transform:uppercase;letter-spacing:.06em;padding:.4rem .75rem .2rem;background:#fffbeb;">&#9888; Followup Pending (' + _staleLatest.length + ')</div>';
     _staleLatest.forEach(function(l) {
         html += '<a href="' + l.lead_url + '" class="bp-item" style="display:block;text-decoration:none;color:inherit;border-left:3px solid #f59e0b;">' +
-            '<div class="bp-title">âš ï¸ ' + _remEsc(l.name) + (l.company ? ' â€” ' + _remEsc(l.company) : '') + '</div>' +
-            '<div class="bp-sub">' + l.code + ' Â· ' + l.age + ' days old</div>' +
+            '<div class="bp-title">&#9888; ' + _remEsc(l.name) + (l.company ? ' - ' + _remEsc(l.company) : '') + '</div>' +
+            '<div class="bp-sub">' + l.code + ' &middot; ' + l.age + ' days old</div>' +
             '<div class="bp-time"><span style="color:#d97706;font-weight:700;">Followup nahi liya! Created: ' + l.created + '</span></div>' +
             '</a>';
     });
@@ -1610,8 +1664,8 @@ function _staleRenderBellSection() {
 }
 
 // Poll stale leads every 5 minutes, first check after 10 seconds
-// â”€â”€ DISABLED per user request â€” stale-lead auto-popups band kar diye.
-// User-set reminders (_remPoll) chalu rahenge â€” wo intentional hain.
+// -- DISABLED per user request - stale-lead auto-popups band kar diye.
+// User-set reminders (_remPoll) chalu rahenge - wo intentional hain.
 // Agar kabhi wapas chalu karna ho to neeche ke 2 lines uncomment karo.
 // document.addEventListener('DOMContentLoaded', function() {
 //     setTimeout(_stalePoll, 10000);
@@ -1627,11 +1681,11 @@ toggleReminderPanel = function() {
 </script>
 {% endif %}
 <script>if(!window.lucide){var _lz=document.createElement('script');_lz.src='https://unpkg.com/lucide@latest';document.head.appendChild(_lz);}</script>
-<!-- â•â• GLOBAL TOAST â•â• -->
+<!-- == GLOBAL TOAST == -->
 <div id="pgLoadBar"></div>
 <div id="pgSpinner" role="status" aria-live="polite">
   <div class="pgs-ring"></div>
-  <div class="pgs-txt">Loadingâ€¦</div>
+  <div class="pgs-txt">Loading...</div>
 </div>
 <div id="rvOverlay" role="dialog" aria-modal="true">
   <div id="rvBox">
@@ -1640,7 +1694,7 @@ toggleReminderPanel = function() {
       <div><p id="rvTitle">Review & Confirm</p><p id="rvSubtitle">Please review before saving</p></div>
     </div>
     <div id="rvBody">
-      <div id="rvDeleteWarn">âš ï¸ This action is permanent and cannot be undone.</div>
+      <div id="rvDeleteWarn">&#9888; This action is permanent and cannot be undone.</div>
       <div id="rvGrid"></div>
     </div>
     <div id="rvFoot">
@@ -1657,7 +1711,7 @@ toggleReminderPanel = function() {
 function showToast(msg, type, duration){
   type = type || 'success';
   duration = duration || 5000;
-  var icons = {success:'✅', danger:'âŒ', error:'âŒ', warning:'âš ï¸', info:'â„¹ï¸'};
+  var icons = {success:'✅', danger:'&#10060;', error:'&#10060;', warning:'&#9888;', info:'&#8505;'};
   var icon = icons[type] || icons.info;
   var wrap = document.getElementById('gToastWrap');
   var t = document.createElement('div');
@@ -1674,7 +1728,7 @@ function showToast(msg, type, duration){
 </script>
 
 <script>
-// â•â• Global App Search â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// == Global App Search ==========================================
 // Limited to the modules shown on the main dashboard page
 var GS_DATA=[
   {icon:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>',bg:'#f5f3ff',label:'Dashboard',sub:'Home / Main overview',url:'/',tags:['home','main','overview'],section:'Home'},
@@ -1730,7 +1784,7 @@ function gsFilter(q){
   _gsItems=scored.map(function(x){return x.item;});
   _gsSel=-1;
   if(!_gsItems.length){
-    cont.innerHTML='<div class="gs-empty"><div style="font-size:2rem;margin-bottom:.5rem;">ðŸ”</div><p style="font-size:.82rem;font-weight:600;">No results for <em>"'+q+'"</em></p></div>';
+    cont.innerHTML='<div class="gs-empty"><div style="font-size:2rem;margin-bottom:.5rem;">&#128269;</div><p style="font-size:.82rem;font-weight:600;">No results for <em>"'+q+'"</em></p></div>';
     return;
   }
   var html='',lastSec='';
@@ -1767,15 +1821,15 @@ document.addEventListener('keydown',function(e){
   if((e.ctrlKey||e.metaKey)&&e.key==='k'){e.preventDefault();_gsOpen?gsClose():gsOpen();}
   if(e.key==='Escape'&&_gsOpen){e.preventDefault();gsClose();}
 });
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ================================================================
 </script>
 
 
 <script>
-// â•â• Page Loader & Form Submit Protection â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// == Page Loader & Form Submit Protection ========================
 (function(){
 
-  /* â”€â”€â”€ Progress Bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  /* --- Progress Bar ------------------------------------------------------- */
   var _bar = null, _barTimer = null, _barVal = 0;
   function barEl(){ return _bar || (_bar = document.getElementById('pgLoadBar')); }
 
@@ -1797,13 +1851,13 @@ document.addEventListener('keydown',function(e){
     setTimeout(function(){ b.classList.remove('pgl-active'); b.style.width='0%'; }, 450);
   }
 
-  /* â”€â”€â”€ Full Page Spinner â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  /* --- Full Page Spinner -------------------------------------------------- */
   var _spinner = null;
   function spinEl(){ return _spinner || (_spinner = document.getElementById('pgSpinner')); }
-  function spinShow(txt){ var s=spinEl(); if(!s)return; s.querySelector('.pgs-txt').textContent=txt||'Loadingâ€¦'; s.classList.add('pgs-show'); }
+  function spinShow(txt){ var s=spinEl(); if(!s)return; s.querySelector('.pgs-txt').textContent=txt||'Loading...'; s.classList.add('pgs-show'); }
   function spinHide(){ var s=spinEl(); if(s) s.classList.remove('pgs-show'); }
 
-  /* â”€â”€â”€ Page Navigation Loader â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  /* --- Page Navigation Loader --------------------------------------------- */
   // Fire on every <a> click that navigates to a new page
   document.addEventListener('click', function(e){
     var a = e.target.closest('a');
@@ -1813,16 +1867,16 @@ document.addEventListener('keydown',function(e){
     if(a.getAttribute('target') === '_blank') return;
     if(a.getAttribute('download') !== null) return;
     if(a.dataset.noloader) return;
-    // ajax / inline action links â€” skip
+    // ajax / inline action links - skip
     if(a.classList.contains('fs-chip') || a.classList.contains('fs-clear')) return;
     barStart();
   });
 
-  // On actual page load complete â€” hide bar
+  // On actual page load complete - hide bar
   window.addEventListener('pageshow', barDone);
   window.addEventListener('load', barDone);
 
-  /* â”€â”€â”€ Form Submit Protection (double-submit prevention) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  /* --- Form Submit Protection (double-submit prevention) ------------------ */
   var SKIP_CLASSES = ['search-form','no-protect','fs-form','fsForm'];
   var SKIP_ACTIONS = ['inline-edit','grid-config','save-qr','update-status'];
 
@@ -1849,7 +1903,7 @@ document.addEventListener('keydown',function(e){
     btn.disabled = true;
     btn.classList.add('btn-loading');
     var spinner = '<span class="btn-spinner"></span>';
-    btn.innerHTML = spinner + 'Processingâ€¦';
+    btn.innerHTML = spinner + 'Processing...';
   }
 
   function unlockBtn(btn){
@@ -1869,11 +1923,11 @@ document.addEventListener('keydown',function(e){
     form._submitBtn = btn;
   });
 
-  // On form submit â€” double submit protection
+  // On form submit - double submit protection
   document.addEventListener('submit', function(e){
     var form = e.target;
     if(!shouldProtect(form)) return;
-    // _rvApproved means review popup approved it â€” allow through
+    // _rvApproved means review popup approved it - allow through
     if(form._rvApproved) return;
     // Block duplicate submits
     if(form._submitting){
@@ -1904,18 +1958,18 @@ document.addEventListener('keydown',function(e){
   window.PGL = { barStart:barStart, barDone:barDone, spinShow:spinShow, spinHide:spinHide, lockBtn:lockBtn, unlockBtn:unlockBtn };
 
 })();
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ================================================================
 </script>
 
 
 <script>
-// â•â• Review Confirmation System â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// == Review Confirmation System ==================================
 (function(){
 
-  /* â”€â”€â”€ Config: which forms get review popup â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-  // Forms with these IDs â†’ show review
+  /* --- Config: which forms get review popup ------------------------------- */
+  // Forms with these IDs -> show review
   var REVIEW_FORM_IDS = ['leadForm','clientForm','empForm','contractorForm','userForm','editForm'];
-  // Forms matching these action patterns â†’ show review
+  // Forms matching these action patterns -> show review
   var REVIEW_ACTION_PATTERNS = ['/add','/edit','/create','/update','/save','/new'];
   // Forms/actions to ALWAYS skip
   var SKIP_IDS     = ['fsForm_ld','fsForm_cl','fsForm_em','fsForm_ct','loginForm'];
@@ -1923,7 +1977,7 @@ document.addEventListener('keydown',function(e){
                       'bulk-delete','import','bulk','login','reminder','comment','note'];
   var SKIP_CLASSES = ['no-review','fs-form','search-form'];
 
-  /* â”€â”€â”€ Field label map (name attr â†’ human label) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  /* --- Field label map (name attr -> human label) -------------------------- */
   var LABEL_MAP = {
     /* Lead */
     name:'Contact Name', mobile:'Mobile', email:'Email', company:'Company',
@@ -1954,7 +2008,7 @@ document.addEventListener('keydown',function(e){
     icon:'Icon', sort_order:'Sort Order', color:'Color',
   };
 
-  /* â”€â”€â”€ Section grouping â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  /* --- Section grouping ----------------------------------------------------- */
   var SECTION_MAP = {
     /* Lead */
     name:'Contact Info', mobile:'Contact Info', email:'Contact Info',
@@ -1977,14 +2031,14 @@ document.addEventListener('keydown',function(e){
     bank_name:'Bank Details', bank_account_number:'Bank Details', bank_ifsc:'Bank Details',
   };
 
-  /* â”€â”€â”€ Fields to skip in review â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  /* --- Fields to skip in review --------------------------------------------- */
   var SKIP_FIELDS = ['csrf_token','tags','team_members[]','profile_photo',
                      'documents','password','confirm_password','_method'];
 
-  /* â”€â”€â”€ State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  /* --- State ----------------------------------------------------------------- */
   var _pendingForm = null, _pendingBtn = null, _isDelete = false;
 
-  /* â”€â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  /* --- Helpers ----------------------------------------------------------------- */
   function shouldReview(form){
     if(!form) return false;
     if(form.method && form.method.toLowerCase()==='get') return false;
@@ -2033,7 +2087,7 @@ document.addEventListener('keydown',function(e){
     return val;
   }
 
-  /* â”€â”€â”€ Build review rows from form â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  /* --- Build review rows from form --------------------------------------- */
   function buildRows(form){
     var rows=[], sections={};
     var els=form.elements;
@@ -2064,7 +2118,7 @@ document.addEventListener('keydown',function(e){
     return rows;
   }
 
-  /* â”€â”€â”€ Open Review Modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  /* --- Open Review Modal ---------------------------------------------------- */
   function openReview(form, btn, isDelete, itemName){
     _pendingForm=form; _pendingBtn=btn; _isDelete=isDelete;
 
@@ -2081,14 +2135,14 @@ document.addEventListener('keydown',function(e){
     var deleteWarn=document.getElementById('rvDeleteWarn');
 
     if(isDelete){
-      iconWrap.style.background='#fef2f2'; iconEl.textContent='ðŸ—‘ï¸';
+      iconWrap.style.background='#fef2f2'; iconEl.innerHTML='<i class="bi bi-trash"></i>';
       title.textContent='Confirm Delete';
       subtitle.textContent=(itemName?'Delete "'+itemName+'"?':'Delete this record?');
       confirmBtn.className='rv-btn-confirm rv-delete';
       confirmBtn.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>Yes, Delete';
       deleteWarn.style.display='block';
     } else {
-      iconWrap.style.background='#eff6ff'; iconEl.textContent= isEdit ? 'âœï¸' : '➕';
+      iconWrap.style.background='#eff6ff'; iconEl.innerHTML= isEdit ? '<i class="bi bi-pencil"></i>' : '<i class="bi bi-plus-lg"></i>';
       title.textContent= isEdit ? 'Review Changes' : 'Review & Confirm';
       subtitle.textContent='Please review the information before saving';
       confirmBtn.className='rv-btn-confirm rv-save';
@@ -2096,7 +2150,7 @@ document.addEventListener('keydown',function(e){
       deleteWarn.style.display='none';
     }
 
-    // Build rows â€” only FILLED fields, 2-column grid
+    // Build rows - only FILLED fields, 2-column grid
     var container=document.getElementById('rvGrid');
     container.innerHTML='';
     if(!isDelete){
@@ -2149,10 +2203,10 @@ document.addEventListener('keydown',function(e){
     // Close popup first
     document.getElementById('rvOverlay').classList.remove('rv-show');
     _pendingForm=null; _pendingBtn=null; _isDelete=false;
-    // Mark as approved â€” review + PGL listeners will pass through
+    // Mark as approved - review + PGL listeners will pass through
     form._rvApproved = true;
     form._submitting = false;
-    // Fire submit â€” this triggers form's own addEventListener('submit') for validation+AJAX
+    // Fire submit - this triggers form's own addEventListener('submit') for validation+AJAX
     // Review capture listener sees _rvApproved=true and returns immediately
     if(form.requestSubmit){ form.requestSubmit(btn||undefined); }
     else { form.submit(); }
@@ -2162,7 +2216,7 @@ document.addEventListener('keydown',function(e){
   window.rvClose=rvClose;
   window.rvConfirm=rvConfirm;
 
-  /* â”€â”€â”€ Intercept Submit â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  /* --- Intercept Submit ------------------------------------------------------ */
   document.addEventListener('click', function(e){
     var btn=e.target.closest('button[type="submit"],input[type="submit"]');
     if(!btn) return;
@@ -2174,13 +2228,13 @@ document.addEventListener('keydown',function(e){
 
   document.addEventListener('submit', function(e){
     var form=e.target;
-    // Already approved by review popup â€” clear flag and let everything pass through
+    // Already approved by review popup - clear flag and let everything pass through
     if(form._rvApproved){ form._rvApproved=false; return; }
 
     var btn=form._submitBtn||form.querySelector('button[type="submit"]');
     var action=(form.getAttribute('action')||'').toLowerCase();
 
-    // â”€â”€ Delete forms â€” show confirm popup
+    // -- Delete forms - show confirm popup
     var isDelete=action.includes('delete')||action.includes('remove');
     if(isDelete && !form.dataset.noReview){
       e.preventDefault(); e.stopImmediatePropagation();
@@ -2195,7 +2249,7 @@ document.addEventListener('keydown',function(e){
       return false;
     }
 
-    // â”€â”€ Add/Edit forms â€” validate required fields first, then show review popup
+    // -- Add/Edit forms - validate required fields first, then show review popup
     if(!shouldReview(form)) return;
 
     // Validation: onsubmit attr OR naming convention (validateLeadForm, validateAddForm etc.)
@@ -2242,11 +2296,12 @@ document.addEventListener('keydown',function(e){
   document.addEventListener('keydown',function(e){ if(e.key==='Escape') rvClose(); });
 
 })();
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ================================================================
 </script>
 
+
 <script>
-// â”€â”€ Sidebar Collapsible Group Toggle â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// -- Sidebar Collapsible Group Toggle ----------------------------------
 function toggleNavGroup(btn) {
   var submenu = btn.nextElementSibling;
   var isOpen  = btn.classList.contains('open');
@@ -2273,7 +2328,7 @@ function toggleAccordion(btn) {
     body.classList.toggle('open', !isOpen);
 }
 
-// â”€â”€ Sidebar accordion init: runs SYNC (no DOMContentLoaded wait) â”€â”€
+// -- Sidebar accordion init: runs SYNC (no DOMContentLoaded wait) --
 // Body has class="sb-preload" which suppresses ALL sidebar transitions.
 // We set the active accordion's .open class + scroll the active item
 // into view, then drop sb-preload after layout settles so user clicks
@@ -2357,7 +2412,7 @@ function toggleAccordion(btn) {
             }
         } catch (_) { /* defensive */ }
 
-        // After layout settles, drop preload class â€” user clicks now animate
+        // After layout settles, drop preload class - user clicks now animate
         requestAnimationFrame(function() {
             requestAnimationFrame(clearPreload);
         });
@@ -2379,7 +2434,7 @@ function toggleAccordion(btn) {
 {% block extra_js %}{% endblock %}
 
 <script>
-// â•â• THEME SYSTEM â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// == THEME SYSTEM ==========================================
 (function() {
     var saved = localStorage.getItem('hcerp-theme') || 'white';
     applyTheme(saved, false);
@@ -2449,7 +2504,7 @@ document.addEventListener('click', function(e) {
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.js"></script>
 <script>
-// â•â• USER MENU (3-dot dropdown) â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// == USER MENU (3-dot dropdown) ==================================
 function toggleUserMenu(e){
   e.stopPropagation();
   var m = document.getElementById('userMenu');
@@ -2467,7 +2522,7 @@ document.addEventListener('keydown', function(e){
 </script>
 
 <script>
-// â•â• GLOBAL FLATPICKR â€” All date inputs auto-initialized â•â•â•â•â•â•â•â•â•â•
+// == GLOBAL FLATPICKR - All date inputs auto-initialized =========
 (function() {
   var FP_CONFIG = {
     dateFormat: 'Y-m-d',        // Hidden original input: YYYY-MM-DD (matches server-rendered value & backend parser)
@@ -2502,7 +2557,7 @@ document.addEventListener('keydown', function(e){
 
   // Initialize all type=date inputs
   function initFlatpickr() {
-    // â”€â”€ DATE fields â”€â”€
+    // -- DATE fields --
     document.querySelectorAll('input[type="date"]:not(.flatpickr-input):not([data-no-flatpickr])').forEach(function(el) {
       var val  = el.value;
       var name = el.name || '';
@@ -2532,7 +2587,7 @@ document.addEventListener('keydown', function(e){
       el._flatpickr = fpInst;
     });
 
-    // â”€â”€ DATETIME-LOCAL fields â”€â”€
+    // -- DATETIME-LOCAL fields --
     document.querySelectorAll('input[type="datetime-local"]:not(.flatpickr-input):not([data-no-flatpickr])').forEach(function(el) {
       var val = el.value;
       var cfg = {
@@ -2569,13 +2624,14 @@ document.addEventListener('keydown', function(e){
 })();
 </script>
 
+
 <script>
-// â”€â”€ Icon helpers (Lucide) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// -- Icon helpers (Lucide) ----------------------------------------------------
 function _ic(name){ return '<i data-lucide="'+name+'" class="lucide-ic"></i>'; }
 function _drawIcons(){ if(window.lucide && window.lucide.createIcons) window.lucide.createIcons({attrs:{'stroke-width':1.9}}); }
 function _emojify(s){
   s = String(s).replace(/\uFE0F/g,'');
-  var m={'✅':'circle-check','📋':'copy','⚠':'triangle-alert','🔴':'circle-alert','â°':'clock','ðŸ•':'clock','📌':'pin','👤':'user','🎉':'party-popper','ðŸ™':'heart','🔗':'external-link','💤':'alarm-clock','🔔':'bell','📅':'calendar','🎂':'cake','🎖':'medal','ðŸ’':'gem','â³':'loader','✕':'x'};
+  var m={'✅':'circle-check','📋':'copy','⚠':'triangle-alert','🔴':'circle-alert','⏰':'clock','🕐':'clock','📌':'pin','👤':'user','🎉':'party-popper','🙏':'heart','🔗':'external-link','💤':'alarm-clock','🔔':'bell','📅':'calendar','🎂':'cake','🎖':'medal','💍':'gem','⏳':'loader','✕':'x'};
   for(var k in m){ s = s.split(k).join(_ic(m[k])); }
   return s;
 }
@@ -2598,14 +2654,14 @@ var _celStorageKey='cel_dismissed_'+new Date().toISOString().slice(0,10);
 var _celDismissed={};try{_celDismissed=JSON.parse(localStorage.getItem(_celStorageKey)||'{}');}catch(e){}
 function _celSaveDismissed(){try{localStorage.setItem(_celStorageKey,JSON.stringify(_celDismissed));}catch(e){}}
 function _celAvatarColor(id){return _celColors[id%_celColors.length];}
-function _celTypeIcon(type){return type==='birthday'?'🎂':type==='work_anniversary'?'ðŸŽ–ï¸':'ðŸ’';}            /* OS-notification / voice ke liye emoji */
+function _celTypeIcon(type){return type==='birthday'?'🎂':type==='work_anniversary'?'🎖️':'💍';}            /* OS-notification / voice ke liye emoji */
 function _celTypeLucide(type){return type==='birthday'?'cake':type==='work_anniversary'?'medal':'gem';}      /* cards ke liye Lucide naam */
-function _celShowCard(item){var key=item.id+'_'+item.type;if(_celShownCard[key]||_celDismissed[key])return;_celShownCard[key]=true;var container=document.getElementById('celContainer');if(!container)return;var col=_celAvatarColor(item.id);var icon=_celTypeIcon(item.type);var luIcon=_celTypeLucide(item.type);var isSelf=item.is_self;var avatarHtml=item.photo?'<img class="cel-av-img" src="'+item.photo+'" alt="">':'<div class="cel-av" style="background:'+col+';">'+item.name.substring(0,2).toUpperCase()+'</div>';var msgHtml,footerHtml;if(isSelf){msgHtml='<div class="cel-self-msg"><div style="font-size:1.5rem;margin-bottom:.3rem;">'+_ic(luIcon)+'</div>'+_remEsc(item.self_wish)+'</div>';footerHtml='<div class="cel-footer"><button class="cel-btn cel-close" onclick="celDismiss(&quot;'+key+'&quot;)">'+_ic('x')+' Dismiss</button></div>';}else{var alreadyWished=item.already_wished||_celWishedToday[key];var wishBtnHtml=alreadyWished?'<button class="cel-btn cel-wished-done" disabled>'+_ic('circle-check')+' Wished!</button>':'<button class="cel-btn cel-wish" id="wb_'+key+'" onclick="celSendWish('+item.id+',&quot;'+item.type+'&quot;,&quot;'+key+'&quot;)">'+_ic('heart')+' Wish Now</button>';msgHtml='<div class="cel-msg">'+_remEsc(item.wish_template.split('\n')[0])+'</div>';footerHtml='<div class="cel-footer">'+wishBtnHtml+'<button class="cel-btn cel-copy" onclick="celCopyWish(&quot;'+key+'&quot;)">'+_ic('copy')+' Copy</button><a href="'+_remEsc(item.view_url)+'" class="cel-btn cel-profile" style="text-decoration:none;">'+_ic('user')+' Profile</a><button class="cel-btn cel-close" onclick="celDismiss(&quot;'+key+'&quot;)">'+_ic('x')+'</button></div>';}var card=document.createElement('div');card.className='cel-card'+(isSelf?' cel-self':'');card.id='celcard_'+key;card.innerHTML='<div class="cel-strip '+item.type+'"></div><div class="cel-top">'+avatarHtml+'<div class="cel-info"><div class="cel-name">'+_remEsc(item.name)+' '+_ic(luIcon)+(isSelf?' <span style=\"color:#d97706;font-size:.72rem;font-weight:800;\">'+_ic('party-popper')+' You!</span>':'')+'</div><div class="cel-type">'+_remEsc(item.type_label)+' &nbsp;Â·&nbsp; '+_remEsc(item.extra)+'</div></div></div>'+msgHtml+footerHtml;container.appendChild(card);_drawIcons();if(item.days===0&&!isSelf)_remBrowserNotif(icon+' '+item.name+' â€” '+item.type_label,item.wish_template.substring(0,80),item.view_url);if(item.days===0&&isSelf)_remSpeak('Aapko aaj ki bahut bahut badhai!');setTimeout(function(){celDismiss(key);},isSelf?60000:30000);}
+function _celShowCard(item){var key=item.id+'_'+item.type;if(_celShownCard[key]||_celDismissed[key])return;_celShownCard[key]=true;var container=document.getElementById('celContainer');if(!container)return;var col=_celAvatarColor(item.id);var icon=_celTypeIcon(item.type);var luIcon=_celTypeLucide(item.type);var isSelf=item.is_self;var avatarHtml=item.photo?'<img class="cel-av-img" src="'+item.photo+'" alt="">':'<div class="cel-av" style="background:'+col+';">'+item.name.substring(0,2).toUpperCase()+'</div>';var msgHtml,footerHtml;if(isSelf){msgHtml='<div class="cel-self-msg"><div style="font-size:1.5rem;margin-bottom:.3rem;">'+_ic(luIcon)+'</div>'+_remEsc(item.self_wish)+'</div>';footerHtml='<div class="cel-footer"><button class="cel-btn cel-close" onclick="celDismiss(&quot;'+key+'&quot;)">'+_ic('x')+' Dismiss</button></div>';}else{var alreadyWished=item.already_wished||_celWishedToday[key];var wishBtnHtml=alreadyWished?'<button class="cel-btn cel-wished-done" disabled>'+_ic('circle-check')+' Wished!</button>':'<button class="cel-btn cel-wish" id="wb_'+key+'" onclick="celSendWish('+item.id+',&quot;'+item.type+'&quot;,&quot;'+key+'&quot;)">'+_ic('heart')+' Wish Now</button>';msgHtml='<div class="cel-msg">'+_remEsc(item.wish_template.split('\n')[0])+'</div>';footerHtml='<div class="cel-footer">'+wishBtnHtml+'<button class="cel-btn cel-copy" onclick="celCopyWish(&quot;'+key+'&quot;)">'+_ic('copy')+' Copy</button><a href="'+_remEsc(item.view_url)+'" class="cel-btn cel-profile" style="text-decoration:none;">'+_ic('user')+' Profile</a><button class="cel-btn cel-close" onclick="celDismiss(&quot;'+key+'&quot;)">'+_ic('x')+'</button></div>';}var card=document.createElement('div');card.className='cel-card'+(isSelf?' cel-self':'');card.id='celcard_'+key;card.innerHTML='<div class="cel-strip '+item.type+'"></div><div class="cel-top">'+avatarHtml+'<div class="cel-info"><div class="cel-name">'+_remEsc(item.name)+' '+_ic(luIcon)+(isSelf?' <span style=\"color:#d97706;font-size:.72rem;font-weight:800;\">'+_ic('party-popper')+' You!</span>':'')+'</div><div class="cel-type">'+_remEsc(item.type_label)+' &nbsp;&middot;&nbsp; '+_remEsc(item.extra)+'</div></div></div>'+msgHtml+footerHtml;container.appendChild(card);_drawIcons();if(item.days===0&&!isSelf)_remBrowserNotif(icon+' '+item.name+' - '+item.type_label,item.wish_template.substring(0,80),item.view_url);if(item.days===0&&isSelf)_remSpeak('Aapko aaj ki bahut bahut badhai!');setTimeout(function(){celDismiss(key);},isSelf?60000:30000);}
 function celDismiss(key){_celDismissed[key]=true;_celSaveDismissed();var card=document.getElementById('celcard_'+key);if(card){card.classList.add('removing');setTimeout(function(){if(card.parentNode)card.parentNode.removeChild(card);},300);}}
 function celSendWish(empId,wishType,key){var btn=document.getElementById('wb_'+key);if(btn){btn.disabled=true;btn.innerHTML=_ic('loader')+' Sending...';_drawIcons();}var item=_celLatest.find(function(i){return i.id===empId&&i.type===wishType;});var wishText=item?item.wish_template:'';fetch('/hr/api/send-wish',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({emp_id:empId,wish_type:wishType,wish_text:wishText})}).then(function(r){return r.json();}).then(function(d){_celWishedToday[key]=true;if(btn){btn.innerHTML=_ic('circle-check')+' Wished!';btn.className='cel-btn cel-wished-done';btn.disabled=true;_drawIcons();}if(wishText&&navigator.clipboard)navigator.clipboard.writeText(wishText).catch(function(){});_celToast('✅ Wish sent & copied to clipboard!');}).catch(function(){if(btn){btn.disabled=false;btn.innerHTML=_ic('heart')+' Wish Now';_drawIcons();}});}
 function celCopyWish(key){var item=_celLatest.find(function(i){return(i.id+'_'+i.type)===key;});if(!item)return;var text=item.wish_template;if(navigator.clipboard){navigator.clipboard.writeText(text).then(function(){_celToast('📋 Copied!');});}else{var ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);_celToast('📋 Copied!');}}
 function _celToast(msg){var t=document.createElement('div');t.innerHTML=_emojify(msg);t.style.cssText='position:fixed;bottom:calc(var(--bottom-nav-h,64px) + 1rem);left:50%;transform:translateX(-50%);background:#1e3a5f;color:#fff;padding:9px 20px;border-radius:99px;font-size:.8rem;font-weight:700;z-index:99999;box-shadow:0 4px 16px rgba(0,0,0,.15);display:flex;align-items:center;gap:6px;';document.body.appendChild(t);_drawIcons();setTimeout(function(){t.style.opacity='0';t.style.transition='opacity .4s';setTimeout(function(){if(t.parentNode)document.body.removeChild(t);},400);},2000);}
-function _celRenderBellSection(){var body=document.getElementById('bellPanelBody');if(!body||!_celLatest.length)return;var todayItems=_celLatest.filter(function(c){return c.today;});var upcomingItems=_celLatest.filter(function(c){return!c.today;});var html='';if(todayItems.length){html+='<div style="font-size:.68rem;font-weight:800;color:#d97706;text-transform:uppercase;letter-spacing:.06em;padding:.4rem .75rem .2rem;background:#fffbeb;">'+_ic('party-popper')+' Today\'s Celebrations ('+todayItems.length+')</div>';todayItems.forEach(function(item){var icon=_ic(_celTypeLucide(item.type));var key=item.id+'_'+item.type;var wished=item.already_wished||_celWishedToday[key];var wishPart=item.is_self?'':(wished?'<span style="color:#16a34a;font-size:.7rem;font-weight:700;">'+_ic('circle-check')+' Wished</span>':'<button onclick="celSendWishBell('+item.id+',&quot;'+item.type+'&quot;,&quot;'+key+'&quot;,this)" style="background:#dbeafe;color:#1d4ed8;border:none;border-radius:6px;font-size:.7rem;font-weight:700;padding:2px 8px;cursor:pointer;">'+_ic('heart')+' Wish</button>');html+='<div class="bp-cel-item"><div class="bp-cel-icon">'+icon+'</div><div style="flex:1;min-width:0;"><div class="bp-cel-name">'+_remEsc(item.name)+(item.is_self?' <span style="color:#d97706;">(You!)</span>':'')+'</div><div class="bp-cel-sub">'+_remEsc(item.type_label)+' &nbsp;Â·&nbsp; '+_remEsc(item.extra)+'</div></div>'+wishPart+'</div>';});}if(upcomingItems.length){html+='<div style="font-size:.68rem;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;padding:.4rem .75rem .2rem;background:#f8fafc;">'+_ic('calendar')+' Upcoming (7 days)</div>';upcomingItems.slice(0,6).forEach(function(item){var icon=_ic(_celTypeLucide(item.type));html+='<a href="'+item.view_url+'" class="bp-cel-item" style="text-decoration:none;"><div class="bp-cel-icon">'+icon+'</div><div style="flex:1;min-width:0;"><div class="bp-cel-name">'+_remEsc(item.name)+'</div><div class="bp-cel-sub">'+_remEsc(item.type_label)+' &nbsp;Â·&nbsp; '+_remEsc(item.extra)+'</div></div><span class="bp-cel-badge bp-cel-soon">+'+item.days+'d</span></a>';});}var existing=body.innerHTML;var sep='<div style="border-top:2px solid #f1f5f9;margin:.25rem 0;"></div>';if(existing.indexOf('bp-empty')>=0||existing.indexOf('Loading')>=0){body.innerHTML=html;}else{body.innerHTML=html+sep+existing;}_drawIcons();}
+function _celRenderBellSection(){var body=document.getElementById('bellPanelBody');if(!body||!_celLatest.length)return;var todayItems=_celLatest.filter(function(c){return c.today;});var upcomingItems=_celLatest.filter(function(c){return!c.today;});var html='';if(todayItems.length){html+='<div style="font-size:.68rem;font-weight:800;color:#d97706;text-transform:uppercase;letter-spacing:.06em;padding:.4rem .75rem .2rem;background:#fffbeb;">'+_ic('party-popper')+' Today\'s Celebrations ('+todayItems.length+')</div>';todayItems.forEach(function(item){var icon=_ic(_celTypeLucide(item.type));var key=item.id+'_'+item.type;var wished=item.already_wished||_celWishedToday[key];var wishPart=item.is_self?'':(wished?'<span style="color:#16a34a;font-size:.7rem;font-weight:700;">'+_ic('circle-check')+' Wished</span>':'<button onclick="celSendWishBell('+item.id+',&quot;'+item.type+'&quot;,&quot;'+key+'&quot;,this)" style="background:#dbeafe;color:#1d4ed8;border:none;border-radius:6px;font-size:.7rem;font-weight:700;padding:2px 8px;cursor:pointer;">'+_ic('heart')+' Wish</button>');html+='<div class="bp-cel-item"><div class="bp-cel-icon">'+icon+'</div><div style="flex:1;min-width:0;"><div class="bp-cel-name">'+_remEsc(item.name)+(item.is_self?' <span style="color:#d97706;">(You!)</span>':'')+'</div><div class="bp-cel-sub">'+_remEsc(item.type_label)+' &nbsp;&middot;&nbsp; '+_remEsc(item.extra)+'</div></div>'+wishPart+'</div>';});}if(upcomingItems.length){html+='<div style="font-size:.68rem;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;padding:.4rem .75rem .2rem;background:#f8fafc;">'+_ic('calendar')+' Upcoming (7 days)</div>';upcomingItems.slice(0,6).forEach(function(item){var icon=_ic(_celTypeLucide(item.type));html+='<a href="'+item.view_url+'" class="bp-cel-item" style="text-decoration:none;"><div class="bp-cel-icon">'+icon+'</div><div style="flex:1;min-width:0;"><div class="bp-cel-name">'+_remEsc(item.name)+'</div><div class="bp-cel-sub">'+_remEsc(item.type_label)+' &nbsp;&middot;&nbsp; '+_remEsc(item.extra)+'</div></div><span class="bp-cel-badge bp-cel-soon">+'+item.days+'d</span></a>';});}var existing=body.innerHTML;var sep='<div style="border-top:2px solid #f1f5f9;margin:.25rem 0;"></div>';if(existing.indexOf('bp-empty')>=0||existing.indexOf('Loading')>=0){body.innerHTML=html;}else{body.innerHTML=html+sep+existing;}_drawIcons();}
 function celSendWishBell(empId,wishType,key,btn){btn.disabled=true;btn.innerHTML=_ic('loader');_drawIcons();var item=_celLatest.find(function(i){return i.id===empId&&i.type===wishType;});fetch('/hr/api/send-wish',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({emp_id:empId,wish_type:wishType,wish_text:item?item.wish_template:''})}).then(function(r){return r.json();}).then(function(d){_celWishedToday[key]=true;btn.outerHTML='<span style="color:#16a34a;font-size:.7rem;font-weight:700;">'+_ic('circle-check')+' Wished</span>';if(item&&item.wish_template&&navigator.clipboard)navigator.clipboard.writeText(item.wish_template).catch(function(){});_celToast('✅ Wish sent!');var wb=document.getElementById('wb_'+key);if(wb){wb.innerHTML=_ic('circle-check')+' Wished!';wb.className='cel-btn cel-wished-done';wb.disabled=true;}_drawIcons();}).catch(function(){btn.disabled=false;btn.innerHTML=_ic('heart')+' Wish';_drawIcons();});}
 function _celPoll(){fetch('/hr/api/celebrations').then(function(r){return r.json();}).then(function(data){if(!data.celebrations)return;_celLatest=data.celebrations;data.celebrations.forEach(function(item){if(item.already_wished)_celWishedToday[item.id+'_'+item.type]=true;});var totalCount=(_remLatest?_remLatest.length:0)+data.today_count;_remUpdateBell(totalCount);data.celebrations.forEach(function(item){if(item.today)_celShowCard(item);});if(_remPanelOpen)setTimeout(_celRenderBellSection,100);}).catch(function(e){console.warn('[Celebrations]',e);});}
 var _origRenderPanel=_remRenderPanel;_remRenderPanel=function(){_origRenderPanel();setTimeout(_celRenderBellSection,50);};
@@ -2614,7 +2670,7 @@ window._testCelebrations=function(){fetch('/hr/api/celebrations').then(function(
 window._testReminders=function(){fetch('/crm/api/due-reminders').then(function(r){return r.json();}).then(function(d){console.log('[Reminders] Server time (IST):',d.server_time);console.log('[Reminders] Count:',d.reminders?d.reminders.length:0);if(d.reminders)d.reminders.forEach(function(r){console.log('  -',r.lead_code,r.title,'| mins_left:',r.mins_left,'| overdue:',r.overdue);});});};
 document.addEventListener('DOMContentLoaded',function(){setTimeout(_remPoll,2000);setInterval(_remPoll,_remPollInterval);});
 
-// â”€â”€ Stale Leads Notification â”€â”€
+// -- Stale Leads Notification --
 var _staleLatest   = [];
 var _staleActive   = false; // ek card show ho raha hai kya
 var STALE_COOLDOWN = 4 * 60 * 60 * 1000; // 4 hours in ms
@@ -2628,7 +2684,7 @@ function _staleSaveDismissed(obj) {
 }
 
 function _staleDismiss(leadId) {
-    // Record dismiss time â€” 4 hours baad wapas aayega
+    // Record dismiss time - 4 hours baad wapas aayega
     var dismissed = _staleGetDismissed();
     dismissed['stale_' + leadId] = Date.now();
     _staleSaveDismissed(dismissed);
@@ -2681,13 +2737,13 @@ function _staleShowCard(l) {
         '<span style="font-size:1.3rem;color:#d97706;">' + _ic('triangle-alert') + '</span>' +
         '<div style="font-size:0.82rem;font-weight:800;color:#d97706;">Followup Nahi Liya!</div>' +
         '</div>' +
-        '<div style="font-size:0.85rem;font-weight:700;color:#1e293b;">' + _remEsc(l.name) + (l.company ? ' â€” ' + _remEsc(l.company) : '') + '</div>' +
-        '<div style="font-size:0.75rem;color:#64748b;margin-top:2px;">' + l.code + ' Â· <strong style="color:#dc2626;">' + l.age + ' days open</strong></div>' +
+        '<div style="font-size:0.85rem;font-weight:700;color:#1e293b;">' + _remEsc(l.name) + (l.company ? ' - ' + _remEsc(l.company) : '') + '</div>' +
+        '<div style="font-size:0.75rem;color:#64748b;margin-top:2px;">' + l.code + ' &middot; <strong style="color:#dc2626;">' + l.age + ' days open</strong></div>' +
         '<div style="display:flex;gap:6px;margin-top:10px;">' +
         '<a href="' + l.lead_url + '" style="flex:1;text-align:center;background:#f59e0b;color:#fff;padding:6px 10px;border-radius:7px;font-size:0.75rem;font-weight:700;text-decoration:none;">' + _ic('pin') + ' Followup Lo</a>' +
         '<a href="' + l.lead_url + '?tab=reminder" style="flex:1;text-align:center;background:#eff6ff;color:#1e3a5f;padding:6px 10px;border-radius:7px;font-size:0.75rem;font-weight:700;text-decoration:none;">' + _ic('bell') + ' Set Reminder</a>' +
         '</div>' +
-        '<div style="font-size:0.68rem;color:#94a3b8;margin-top:6px;text-align:center;">' + _ic('x') + ' band karo â€” 4 ghante baad wapas aayega</div>';
+        '<div style="font-size:0.68rem;color:#94a3b8;margin-top:6px;text-align:center;">' + _ic('x') + ' band karo - 4 ghante baad wapas aayega</div>';
 
     card.appendChild(closeBtn);
     container.appendChild(card);
@@ -2718,8 +2774,8 @@ function _staleRenderBellSection() {
     var html = '<div style="font-size:.68rem;font-weight:800;color:#d97706;text-transform:uppercase;letter-spacing:.06em;padding:.4rem .75rem .2rem;background:#fffbeb;">' + _ic('triangle-alert') + ' Followup Pending (' + _staleLatest.length + ')</div>';
     _staleLatest.forEach(function(l) {
         html += '<a href="' + l.lead_url + '" class="bp-item" style="display:block;text-decoration:none;color:inherit;border-left:3px solid #f59e0b;">' +
-            '<div class="bp-title">' + _ic('triangle-alert') + ' ' + _remEsc(l.name) + (l.company ? ' â€” ' + _remEsc(l.company) : '') + '</div>' +
-            '<div class="bp-sub">' + l.code + ' Â· ' + l.age + ' days old</div>' +
+            '<div class="bp-title">' + _ic('triangle-alert') + ' ' + _remEsc(l.name) + (l.company ? ' - ' + _remEsc(l.company) : '') + '</div>' +
+            '<div class="bp-sub">' + l.code + ' &middot; ' + l.age + ' days old</div>' +
             '<div class="bp-time"><span style="color:#d97706;font-weight:700;">Followup nahi liya! Created: ' + l.created + '</span></div>' +
             '</a>';
     });
@@ -2735,8 +2791,8 @@ function _staleRenderBellSection() {
 }
 
 // Poll stale leads every 5 minutes, first check after 10 seconds
-// â”€â”€ DISABLED per user request â€” stale-lead auto-popups band kar diye.
-// User-set reminders (_remPoll) chalu rahenge â€” wo intentional hain.
+// -- DISABLED per user request - stale-lead auto-popups band kar diye.
+// User-set reminders (_remPoll) chalu rahenge - wo intentional hain.
 // Agar kabhi wapas chalu karna ho to neeche ke 2 lines uncomment karo.
 // document.addEventListener('DOMContentLoaded', function() {
 //     setTimeout(_stalePoll, 10000);

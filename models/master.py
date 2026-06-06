@@ -75,9 +75,9 @@ class ProductRange(db.Model):
     def __repr__(self): return f'<ProductRange {self.name}>'
 
 
-# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
 # Category Master
-# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
 class CategoryMaster(db.Model):
     __tablename__ = 'category_masters'
     id          = db.Column(db.Integer, primary_key=True)
@@ -91,9 +91,9 @@ class CategoryMaster(db.Model):
     def __repr__(self): return f'<CategoryMaster {self.name}>'
 
 
-# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
 # UOM Master
-# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
 class UOMMaster(db.Model):
     __tablename__ = 'uom_masters'
     id          = db.Column(db.Integer, primary_key=True)
@@ -108,9 +108,9 @@ class UOMMaster(db.Model):
     def __repr__(self): return f'<UOMMaster {self.code}>'
 
 
-# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
 # HSN Code Master
-# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
 class HSNCode(db.Model):
     __tablename__ = 'hsn_codes'
     id          = db.Column(db.Integer, primary_key=True)
@@ -146,12 +146,7 @@ class MilestoneStatus(db.Model):
     def __repr__(self): return f'<MilestoneStatus {self.name}>'
 
 
-# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-# QC Parameter Option Master
-#   One table for the TRS dropdowns:
-#   Physical State, Appearance, Odour
-#   category = 'physical_state' | 'appearance' | 'odour'
-# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
 class QCParamOption(db.Model):
     __tablename__ = 'qc_param_options'
     id          = db.Column(db.Integer, primary_key=True)

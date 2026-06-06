@@ -5,22 +5,137 @@
 
 {% block extra_css %}
 <style>
+/* ============ PAGE HEADER ============ */
+.rd-page-hdr { margin-bottom:12px; }
+.rd-title-row { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+.rd-title { font-size:1.05rem; font-weight:800; color:#0f172a; letter-spacing:-.01em;
+    display:inline-flex; align-items:center; gap:8px; }
+.rd-title svg { color:#7c3aed; }
+.rd-mgr-badge { background:#fef3c7; color:#92400e; padding:3px 11px; border-radius:99px;
+    font-weight:700; font-size:.72rem; border:1px solid #fde68a; }
+
+/* ============ TOOLBAR ============ */
+.rd-toolbar { display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+    padding:12px 14px; background:#fff; border:1px solid #e2e8f0;
+    border-radius:16px 16px 0 0; border-bottom:1.5px solid #e2e8f0;
+    box-shadow:0 1px 3px rgba(15,23,42,.05); position:relative; z-index:1; }
+
+#rdTabGroup { display:inline-flex; gap:4px; background:#f1f5f9; padding:4px;
+    border-radius:99px; border:1px solid #e2e8f0; }
+.rd-tab { display:inline-flex; align-items:center; gap:6px; padding:.38rem .95rem;
+    font-size:.8rem; font-weight:700; border:none; cursor:pointer; border-radius:99px;
+    background:transparent; color:var(--text2); font-family:inherit; transition:all .15s; }
+.rd-tab .dot { width:7px; height:7px; border-radius:99px; flex:0 0 auto; }
+.dot-red { background:#ef4444; } .dot-green { background:#16a34a; } .dot-grey { background:#6b7280; }
+.rd-tab .cnt { padding:1px 7px; border-radius:99px; font-size:.7rem; font-weight:800; }
+
+.rd-search { display:inline-flex; align-items:center; gap:7px; border:1.5px solid #e2e8f0;
+    border-radius:99px; padding:.42rem .9rem; background:#fff; width:220px; flex-shrink:0;
+    transition:border-color .15s, box-shadow .15s; }
+.rd-search:focus-within { border-color:#93c5fd; box-shadow:0 0 0 3px rgba(37,99,235,.1); }
+.rd-search input { border:none; outline:none; font-size:.82rem; color:var(--text);
+    background:transparent; width:100%; min-width:0; font-family:inherit; }
+.rd-search input::placeholder { color:#94a3b8; }
+
+/* ============ TABLE CARD ============ */
+.rd-tbl-card { background:#fff; border:1px solid #e2e8f0; border-top:none;
+    border-radius:0 0 16px 16px; overflow:hidden;
+    box-shadow:0 1px 3px rgba(15,23,42,.05), 0 4px 16px rgba(15,23,42,.04); }
+.rd-tbl { width:100%; border-collapse:collapse; font-size:13px; }
+.rd-tbl thead th { background:#fff; padding:11px 14px; font-size:10.5px; font-weight:800;
+    color:#94a3b8; text-transform:uppercase; letter-spacing:.06em;
+    border-bottom:2px solid #e2e8f0; text-align:left; white-space:nowrap; }
+.rd-tbl thead th.num-col { width:36px; }
+.rd-tbl thead th.act-col { text-align:right; }
+.rd-tbl tbody td { padding:12px 14px; border-bottom:1px solid #f1f5f9; vertical-align:middle; }
+.rd-tbl tbody tr:last-child td { border-bottom:none; }
+.rd-tbl .idx { color:#94a3b8; font-size:11px; font-weight:600; }
+.rd-tbl .pcode { color:#7c3aed; font-weight:700; font-family:'JetBrains Mono',monospace;
+    font-size:.8rem; text-decoration:none; }
+.rd-tbl .pcode:hover { text-decoration:underline; }
+.rd-tbl .pcode-plain { font-weight:700; font-family:'JetBrains Mono',monospace; font-size:.8rem; }
+.rd-tbl .pname { font-weight:600; max-width:180px; overflow:hidden; text-overflow:ellipsis;
+    white-space:nowrap; color:#0f172a; }
+.rd-tbl .pclient { color:var(--text2); font-size:.82rem; }
+.rd-tbl .page-d { color:var(--text3); font-size:.82rem; }
+
+.st-badge { padding:2px 10px; border-radius:99px; font-size:.71rem; font-weight:700;
+    white-space:nowrap; display:inline-block; }
+
+/* ============ ACTION BUTTONS ============ */
+.rd-btn { display:inline-flex; align-items:center; gap:5px; padding:6px 13px;
+    border-radius:99px; font-size:.75rem; font-weight:700; cursor:pointer;
+    font-family:inherit; transition:all .15s; text-decoration:none; }
+.rd-btn-assign { background:linear-gradient(180deg,#8b5cf6,#6d28d9); color:#fff; border:none;
+    box-shadow:0 2px 8px rgba(124,58,237,.3), inset 0 1px 0 rgba(255,255,255,.2); }
+.rd-btn-assign:hover { transform:translateY(-1px);
+    box-shadow:0 4px 14px rgba(124,58,237,.4), inset 0 1px 0 rgba(255,255,255,.2); }
+.rd-btn-reassign { background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; }
+.rd-btn-reassign:hover { background:#dbeafe; border-color:#93c5fd; transform:translateY(-1px); }
+.rd-btn-log { background:#f0fdf4; color:#15803d; border:1px solid #bbf7d0; margin-left:4px; }
+.rd-btn-log:hover { background:#dcfce7; border-color:#86efac; transform:translateY(-1px); }
+
+.rd-empty { padding:3rem; text-align:center; color:var(--text3); }
+.rd-empty .ic { display:flex; justify-content:center; margin-bottom:.6rem; color:#cbd5e1; }
+.rd-empty .tx { font-weight:700; }
+
+/* ============ MEMBER PILLS ============ */
+.assignee-row{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px;}
+.assignee-pill{display:inline-flex;align-items:center;gap:5px;background:var(--blue-lt);border:1px solid var(--blue-border);border-radius:99px;padding:2px 10px;font-size:.72rem;font-weight:600;color:var(--blue);}
+.assignee-pill .av{width:18px;height:18px;border-radius:99px;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.55rem;font-weight:800;flex-shrink:0;}
+
+/* ============ MODALS ============ */
+.modal-ov{display:none;position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:9999;align-items:center;justify-content:center;backdrop-filter:blur(3px);}
+.modal-ov.open{display:flex;}
+.modal-box{background:var(--white);border-radius:16px;width:520px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(15,23,42,.2);border:1px solid var(--border);}
+.modal-hdr{padding:1rem 1.4rem;border-bottom:1.5px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;}
+.modal-hdr .mh-title { font-weight:800; font-size:1rem; display:inline-flex; align-items:center; gap:8px; color:#0f172a; }
+.modal-hdr .mh-title svg { color:#7c3aed; flex:0 0 auto; }
+.modal-close { background:#f8fafc; border:1px solid #e2e8f0; width:28px; height:28px;
+    border-radius:99px; font-size:15px; line-height:1; cursor:pointer; color:var(--text3);
+    transition:all .15s; }
+.modal-close:hover { background:#ef4444; border-color:#ef4444; color:#fff; }
+.modal-body{padding:1.25rem 1.4rem;}
+.modal-foot{padding:.85rem 1.4rem;border-top:1.5px solid #e2e8f0;display:flex;justify-content:flex-end;gap:.5rem;background:#f8fafc;border-radius:0 0 16px 16px;}
+.modal-foot .btn-grid-action { padding:9px 16px; border-radius:99px; border:1.5px solid #e2e8f0;
+    background:#fff; color:#64748b; font-size:.82rem; font-weight:700; cursor:pointer;
+    font-family:inherit; transition:all .15s; }
+.modal-foot .btn-grid-action:hover { background:#eff6ff; border-color:#93c5fd; color:#1d4ed8; }
+.modal-foot .btn-add-new { padding:9px 18px; border-radius:99px; border:none; color:#fff;
+    font-size:.82rem; font-weight:700; cursor:pointer; font-family:inherit;
+    background:linear-gradient(180deg,#8b5cf6,#6d28d9);
+    box-shadow:0 2px 8px rgba(124,58,237,.3), inset 0 1px 0 rgba(255,255,255,.2);
+    transition:transform .15s, box-shadow .15s; }
+.modal-foot .btn-add-new:hover { transform:translateY(-1px);
+    box-shadow:0 4px 14px rgba(124,58,237,.4), inset 0 1px 0 rgba(255,255,255,.2); }
+
+.user-check-card{display:flex;align-items:center;gap:.65rem;border:1.5px solid var(--border);border-radius:12px;cursor:pointer;transition:.12s;margin-bottom:.4rem;}
+.user-check-card:hover{border-color:var(--blue-border);background:var(--blue-lt);}
+.user-check-card.selected{border-color:var(--blue);background:var(--blue-lt);}
+.u-av{width:36px;height:36px;border-radius:10px;background:var(--blue-lt);color:var(--blue);display:flex;align-items:center;justify-content:center;font-size:.78rem;font-weight:800;flex-shrink:0;}
+.check-ic{width:20px;height:20px;border-radius:99px;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.7rem;margin-left:auto;flex-shrink:0;transition:.12s;}
+.user-check-card.selected .check-ic{background:var(--blue);border-color:var(--blue);color:#fff;}
+.proj-info-bar{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:.65rem .85rem;margin-bottom:1rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;}
+
+/* ============ TRIAL MODAL ============ */
+.trial-modal-ov{display:none;position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:9999;align-items:center;justify-content:center;backdrop-filter:blur(3px);}
+.trial-modal-ov.open{display:flex;}
+.trial-modal-box{background:var(--white);border-radius:16px;width:780px;max-width:96vw;max-height:92vh;overflow-y:auto;box-shadow:0 20px 60px rgba(15,23,42,.2);border:1px solid var(--border);}
+.t-modal-hdr{padding:1.1rem 1.4rem;border-bottom:1.5px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;}
+.t-modal-body{padding:1.4rem;}
+.tfg{display:flex;flex-direction:column;gap:.3rem;margin-bottom:.85rem;}
+.tfg label{font-size:.74rem;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;}
+.tfg input,.tfg select,.tfg textarea{padding:.5rem .8rem;border:1.5px solid #e2e8f0;border-radius:10px;font-size:.85rem;color:var(--text);background:var(--white);font-family:inherit;width:100%;outline:none;box-sizing:border-box;transition:border-color .15s, box-shadow .15s;}
+.tfg input:focus,.tfg select:focus,.tfg textarea:focus{border-color:#93c5fd;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
+.tgr2{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;}
+
+/* ============ LEGACY (hidden kanban - JS isko use karta hai) ============ */
 .proj-layout{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;align-items:start;}
 @media(max-width:1100px){.proj-layout{grid-template-columns:1fr 1fr;}}
 @media(max-width:700px){.proj-layout{grid-template-columns:1fr;}}
 .tag-closed{background:#f1f5f9;color:#475569;}
-.trial-modal-ov{display:none;position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:9999;align-items:center;justify-content:center;backdrop-filter:blur(3px);}
-.trial-modal-ov.open{display:flex;}
-.trial-modal-box{background:var(--white);border-radius:var(--r-xl);width:780px;max-width:96vw;max-height:92vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2);border:1px solid var(--border);}
-.t-modal-hdr{padding:1.1rem 1.4rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
-.t-modal-body{padding:1.4rem;}
-.tfg{display:flex;flex-direction:column;gap:.3rem;margin-bottom:.85rem;}
-.tfg label{font-size:.78rem;font-weight:700;color:var(--text2);}
-.tfg input,.tfg select,.tfg textarea{padding:.45rem .75rem;border:1px solid var(--border);border-radius:var(--r-sm);font-size:.85rem;color:var(--text);background:var(--white);font-family:inherit;width:100%;outline:none;box-sizing:border-box;}
-.tfg input:focus,.tfg select:focus,.tfg textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-lt);}
-.tgr2{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;}
 .panel-hdr{padding:.75rem 1rem;border-bottom:1px solid var(--border);background:var(--bg);display:flex;align-items:center;justify-content:space-between;}
-.panel-count{font-size:.68rem;font-weight:800;padding:2px 8px;border-radius:100px;}
+.panel-count{font-size:.68rem;font-weight:800;padding:2px 8px;border-radius:99px;}
 .proj-item{padding:.75rem 1rem;border-bottom:1px solid var(--border);transition:.1s;}
 .proj-item:last-child{border-bottom:none;}
 .proj-item.clickable{cursor:pointer;}
@@ -29,22 +144,6 @@
 .proj-tag{display:inline-flex;padding:1px 6px;border-radius:4px;font-size:.65rem;font-weight:700;text-transform:uppercase;}
 .tag-npd{background:var(--purple-lt);color:var(--purple);}
 .tag-epd{background:#d1fae5;color:#065f46;}
-.assignee-row{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px;}
-.assignee-pill{display:inline-flex;align-items:center;gap:5px;background:var(--blue-lt);border:1px solid var(--blue-border);border-radius:100px;padding:2px 10px;font-size:.72rem;font-weight:600;color:var(--blue);}
-.assignee-pill .av{width:18px;height:18px;border-radius:50%;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.55rem;font-weight:800;flex-shrink:0;}
-.modal-ov{display:none;position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:9999;align-items:center;justify-content:center;backdrop-filter:blur(3px);}
-.modal-ov.open{display:flex;}
-.modal-box{background:var(--white);border-radius:var(--r-xl);width:520px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.18);border:1px solid var(--border);}
-.modal-hdr{padding:1rem 1.4rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
-.modal-body{padding:1.25rem 1.4rem;}
-.modal-foot{padding:.85rem 1.4rem;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:.5rem;}
-.user-check-card{display:flex;align-items:center;gap:.65rem;padding:.65rem .85rem;border:1.5px solid var(--border);border-radius:var(--r-md);cursor:pointer;transition:.12s;margin-bottom:.4rem;}
-.user-check-card:hover{border-color:var(--blue-border);background:var(--blue-lt);}
-.user-check-card.selected{border-color:var(--blue);background:var(--blue-lt);}
-.u-av{width:36px;height:36px;border-radius:10px;background:var(--blue-lt);color:var(--blue);display:flex;align-items:center;justify-content:center;font-size:.78rem;font-weight:800;flex-shrink:0;}
-.check-ic{width:20px;height:20px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.7rem;margin-left:auto;flex-shrink:0;transition:.12s;}
-.user-check-card.selected .check-ic{background:var(--blue);border-color:var(--blue);color:#fff;}
-.proj-info-bar{background:var(--bg);border:1px solid var(--border);border-radius:var(--r-md);padding:.65rem .85rem;margin-bottom:1rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;}
 .empty-panel{text-align:center;padding:2.5rem 1rem;color:var(--text3);}
 </style>
 {% endblock %}
@@ -55,11 +154,14 @@
 
 <div class="rd-page-hdr">
     <div class="rd-title-row">
-        <div style="font-size:1.1rem;font-weight:800;">⬡ R&D Projects</div>
+        <div class="rd-title">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18h8"/><path d="M3 22h18"/><path d="M14 22a7 7 0 1 0 0-14h-1"/><path d="M9 14h2"/><path d="M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2Z"/><path d="M12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3"/></svg>
+            R&amp;D Projects
+        </div>
         <div style="font-size:.77rem;color:var(--text3);">
             {% if is_rd_manager %}
-            <span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:4px;font-weight:700;font-size:.72rem;">👔 R&D Manager View</span>
-            — Assign R&D team to projects
+            <span class="rd-mgr-badge">R&amp;D Manager View</span>
+            - Assign R&amp;D team to projects
             {% else %}
             My assigned projects
             {% endif %}
@@ -68,75 +170,70 @@
 
 </div>
 
-{# ── Toolbar ── #}
-<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 14px;border-bottom:1px solid var(--border);background:#fff;">
+{# -- Toolbar -- #}
+<div class="rd-toolbar">
 
   {# Tabs #}
-  <div style="display:inline-flex;border:1.5px solid var(--border);border-radius:8px;overflow:hidden;background:#f8fafc;" id="rdTabGroup">
+  <div id="rdTabGroup">
     {% if rd_sub and rd_sub.unalloted_npd %}
-    <button onclick="rdSwitchTab('unallotted')" id="tab-unallotted" data-rdtab="1"
-      style="display:inline-flex;align-items:center;gap:5px;padding:.32rem .85rem;font-size:.8rem;font-weight:700;border:none;cursor:pointer;border-right:1px solid var(--border);background:#f8fafc;color:var(--text2);font-family:inherit;">
-      🔴 Unalloted NPD
-      <span style="background:rgba(255,255,255,.3);color:#fff;padding:1px 6px;border-radius:100px;font-size:.7rem;font-weight:800;">{{ unallotted|length }}</span>
+    <button onclick="rdSwitchTab('unallotted')" id="tab-unallotted" data-rdtab="1" class="rd-tab">
+      <span class="dot dot-red"></span> Unalloted NPD
+      <span class="cnt" style="background:rgba(255,255,255,.3);color:#fff;">{{ unallotted|length }}</span>
     </button>
     {% endif %}
     {% if rd_sub and rd_sub.alloted_npd %}
-    <button onclick="rdSwitchTab('allotted')" id="tab-allotted" data-rdtab="1"
-      style="display:inline-flex;align-items:center;gap:5px;padding:.32rem .85rem;font-size:.8rem;font-weight:700;border:none;cursor:pointer;border-right:1px solid var(--border);background:#fff;color:var(--text2);font-family:inherit;">
-      🟢 Alloted NPD
-      <span style="background:#dcfce7;color:#16a34a;padding:1px 6px;border-radius:100px;font-size:.7rem;font-weight:800;" id="allot-tab-count">{{ allotted|length }}</span>
+    <button onclick="rdSwitchTab('allotted')" id="tab-allotted" data-rdtab="1" class="rd-tab">
+      <span class="dot dot-green"></span> Alloted NPD
+      <span class="cnt" style="background:#dcfce7;color:#16a34a;" id="allot-tab-count">{{ allotted|length }}</span>
     </button>
     {% endif %}
     {% if rd_sub and rd_sub.closed_npd %}
-    <button onclick="rdSwitchTab('closed')" id="tab-closed" data-rdtab="1"
-      style="display:inline-flex;align-items:center;gap:5px;padding:.32rem .85rem;font-size:.8rem;font-weight:700;border:none;cursor:pointer;background:#fff;color:var(--text2);font-family:inherit;">
-      ⚫ Closed NPD
-      <span style="background:#f1f5f9;color:#6b7280;padding:1px 6px;border-radius:100px;font-size:.7rem;font-weight:800;">{{ closed|length }}</span>
+    <button onclick="rdSwitchTab('closed')" id="tab-closed" data-rdtab="1" class="rd-tab">
+      <span class="dot dot-grey"></span> Closed NPD
+      <span class="cnt" style="background:#f1f5f9;color:#6b7280;">{{ closed|length }}</span>
     </button>
     {% endif %}
   </div>
 
   {# Global Search #}
-  <div style="display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);border-radius:7px;padding:.35rem .7rem;background:#fff;width:200px;flex-shrink:0;">
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-    <input type="text" id="rdSearchInput" placeholder="Global Search..." oninput="rdSearch(this.value)"
-      style="border:none;outline:none;font-size:.82rem;color:var(--text);background:transparent;width:100%;min-width:0;font-family:inherit;">
+  <div class="rd-search">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="text" id="rdSearchInput" placeholder="Global Search..." oninput="rdSearch(this.value)">
   </div>
 
 
 </div>
 
-{# ── Tables ── #}
-<div style="background:#fff;">
+{# -- Tables -- #}
+<div class="rd-tbl-card">
 
   {# TABLE: Unalloted #}
   {% if rd_sub and rd_sub.unalloted_npd %}
   <div id="tbl-unallotted" style="display:none;">
     <div style="overflow-x:auto;">
-    <table style="width:100%;border-collapse:collapse;font-size:13px;">
+    <table class="rd-tbl">
       <thead>
-        <tr style="background:#f8fafc;">
-          <th style="padding:10px 14px;font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap;width:36px;">#</th>
-          <th style="padding:10px 14px;font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap;">Project No</th>
-          
-          <th style="padding:10px 14px;font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap;">Product Name</th>
-          <th style="padding:10px 14px;font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap;">Client</th>
-          <th style="padding:10px 14px;font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap;">Status</th>
-          <th style="padding:10px 14px;font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap;">Duration</th>
-          <th style="padding:10px 14px;font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);text-align:right;white-space:nowrap;">Action</th>
+        <tr>
+          <th class="num-col">#</th>
+          <th>Project No</th>
+          <th>Product Name</th>
+          <th>Client</th>
+          <th>Status</th>
+          <th>Duration</th>
+          <th class="act-col">Action</th>
         </tr>
       </thead>
       <tbody id="unallotted-tbody">
         {% if unallotted %}
         {% for p in unallotted %}
-        <tr class="rd-row" data-search="{{ (p.product_name~' '~p.code~' '~(p.client_company or p.client_name or '')).lower() }}" data-type="{{ p.project_type }}" style="border-bottom:1px solid #f1f5f9;" onmouseover="this.style.background='#faf5ff'" onmouseout="this.style.background=''">
-          <td style="padding:12px 14px;color:#94a3b8;font-size:11px;font-weight:600;">{{ loop.index }}</td>
-          <td style="padding:12px 14px;">{% if perm and perm.can_view %}<a href="/npd/projects/{{ p.id }}" style="color:#7c3aed;font-weight:700;font-family:monospace;font-size:.82rem;text-decoration:none;">{{ p.code }}</a>{% else %}<span style="font-weight:700;font-family:monospace;font-size:.82rem;">{{ p.code }}</span>{% endif %}</td>
-          <td style="padding:12px 14px;font-weight:600;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ p.product_name }}</td>
-          <td style="padding:12px 14px;color:var(--text2);font-size:.82rem;">{{ p.client_company or p.client_name or '—' }}</td>
-          <td style="padding:12px 14px;"><span style="background:{{ p.status_color }}18;color:{{ p.status_color }};border:1px solid {{ p.status_color }}44;padding:2px 9px;border-radius:100px;font-size:.71rem;font-weight:700;white-space:nowrap;">{{ p.status_label }}</span></td>
-          <td style="padding:12px 14px;color:var(--text3);font-size:.82rem;">{{ p.project_age }}d</td>
-          <td style="padding:12px 14px;text-align:right;">
+        <tr class="rd-row" data-search="{{ (p.product_name~' '~p.code~' '~(p.client_company or p.client_name or '')).lower() }}" data-type="{{ p.project_type }}" onmouseover="this.style.background='#faf5ff'" onmouseout="this.style.background=''">
+          <td class="idx">{{ loop.index }}</td>
+          <td>{% if perm and perm.can_view %}<a href="/npd/projects/{{ p.id }}" class="pcode">{{ p.code }}</a>{% else %}<span class="pcode-plain">{{ p.code }}</span>{% endif %}</td>
+          <td class="pname">{{ p.product_name }}</td>
+          <td class="pclient">{{ p.client_company or p.client_name or '-' }}</td>
+          <td><span class="st-badge" style="background:{{ p.status_color }}18;color:{{ p.status_color }};border:1px solid {{ p.status_color }}44;">{{ p.status_label }}</span></td>
+          <td class="page-d">{{ p.project_age }}d</td>
+          <td style="text-align:right;">
                         {% if rd_sub and rd_sub.assign %}
                         <button
               data-pid="{{ p.id }}"
@@ -147,17 +244,18 @@
               data-color="{{ p.status_color }}"
               data-status="{{ p.status_label }}"
               onclick="rdOpenAssign(this)"
-              style="display:inline-flex;align-items:center;gap:4px;padding:5px 12px;background:#7c3aed;color:#fff;border:none;border-radius:6px;font-size:.75rem;font-weight:700;cursor:pointer;font-family:inherit;">
-              👥 Assign
+              class="rd-btn rd-btn-assign">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+              Assign
             </button>
                         {% endif %}
           </td>
         </tr>
         {% endfor %}
         {% else %}
-        <tr><td colspan="8" style="padding:3rem;text-align:center;color:var(--text3);">
-          <div style="font-size:2rem;margin-bottom:.5rem;">✅</div>
-          <div style="font-weight:700;">All projects assigned</div>
+        <tr><td colspan="8" class="rd-empty">
+          <div class="ic"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+          <div class="tx">All projects assigned</div>
         </td></tr>
         {% endif %}
       </tbody>
@@ -170,38 +268,37 @@
   {% if rd_sub and rd_sub.alloted_npd %}
   <div id="tbl-allotted" style="display:none;">
     <div style="overflow-x:auto;">
-    <table style="width:100%;border-collapse:collapse;font-size:13px;">
+    <table class="rd-tbl">
       <thead>
-        <tr style="background:#f8fafc;">
-          <th style="padding:10px 14px;font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);text-align:left;width:36px;">#</th>
-          <th style="padding:10px 14px;font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);text-align:left;">Project No</th>
-          
-          <th style="padding:10px 14px;font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);text-align:left;">Product Name</th>
-          <th style="padding:10px 14px;font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);text-align:left;">Client</th>
-          <th style="padding:10px 14px;font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);text-align:left;">Assigned To</th>
-          <th style="padding:10px 14px;font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);text-align:left;">Status</th>
-          <th style="padding:10px 14px;font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);text-align:left;">Duration</th>
-          <th style="padding:10px 14px;font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);text-align:right;">Action</th>
+        <tr>
+          <th class="num-col">#</th>
+          <th>Project No</th>
+          <th>Product Name</th>
+          <th>Client</th>
+          <th>Assigned To</th>
+          <th>Status</th>
+          <th>Duration</th>
+          <th class="act-col">Action</th>
         </tr>
       </thead>
       <tbody>
         {% if allotted %}
         {% for p in allotted %}
         {# Visibility filtering already done at the route level in
-           rd_routes.projects() — the `allotted` list passed in here
+           rd_routes.projects() - the `allotted` list passed in here
            is already restricted to projects the current user can see.
            DO NOT add `p.rd_user.id != current_user.id` checks here:
            that legacy field only holds ONE user_id, so a multi-user
            project assigned to user A and user B via RDSubAssignment
            would only show for user A (whoever is the legacy assigned_rd)
-           and silently hide for user B — which is the bug the route's
+           and silently hide for user B - which is the bug the route's
            `_user_is_assigned()` helper already solved correctly. #}
-        <tr class="rd-row" data-search="{{ (p.product_name~' '~p.code~' '~(p.client_company or p.client_name or '')).lower() }}" data-type="{{ p.project_type }}" style="border-bottom:1px solid #f1f5f9;" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">
-          <td style="padding:12px 14px;color:#94a3b8;font-size:11px;font-weight:600;">{{ loop.index }}</td>
-          <td style="padding:12px 14px;">{% if perm and perm.can_view %}<a href="/npd/projects/{{ p.id }}" style="color:#7c3aed;font-weight:700;font-family:monospace;font-size:.82rem;text-decoration:none;">{{ p.code }}</a>{% else %}<span style="font-weight:700;font-family:monospace;font-size:.82rem;">{{ p.code }}</span>{% endif %}</td>
-          <td style="padding:12px 14px;font-weight:600;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ p.product_name }}</td>
-          <td style="padding:12px 14px;color:var(--text2);font-size:.82rem;">{{ p.client_company or p.client_name or '—' }}</td>
-          <td style="padding:12px 14px;" id="members-{{ p.id }}">
+        <tr class="rd-row" data-search="{{ (p.product_name~' '~p.code~' '~(p.client_company or p.client_name or '')).lower() }}" data-type="{{ p.project_type }}" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''">
+          <td class="idx">{{ loop.index }}</td>
+          <td>{% if perm and perm.can_view %}<a href="/npd/projects/{{ p.id }}" class="pcode">{{ p.code }}</a>{% else %}<span class="pcode-plain">{{ p.code }}</span>{% endif %}</td>
+          <td class="pname">{{ p.product_name }}</td>
+          <td class="pclient">{{ p.client_company or p.client_name or '-' }}</td>
+          <td id="members-{{ p.id }}">
             {% set members = project_members.get(p.id, []) if project_members else [] %}
             {# Fallback for legacy rows that still have assigned_rd_members but no RDSubAssignment #}
             {% if not members %}
@@ -228,18 +325,18 @@
               {% for m in members %}
                 {% set nparts = m.name.split() %}
                 {% set ini = (nparts[0][0] + nparts[-1][0]).upper() if nparts|length > 1 else (m.name[:2]).upper() %}
-                <span title="{{ m.name }}{% if m.variant_code %} — {{ m.variant_code }}{% endif %}"
-                      style="display:inline-flex;align-items:center;gap:4px;background:var(--blue-lt);border:1px solid var(--blue-border);border-radius:100px;padding:2px 8px;font-size:.7rem;font-weight:600;color:var(--blue);">
-                  <span style="width:16px;height:16px;border-radius:50%;background:var(--blue);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:.5rem;font-weight:800;">{{ ini }}</span>
+                <span title="{{ m.name }}{% if m.variant_code %} - {{ m.variant_code }}{% endif %}"
+                      style="display:inline-flex;align-items:center;gap:4px;background:var(--blue-lt);border:1px solid var(--blue-border);border-radius:99px;padding:2px 8px;font-size:.7rem;font-weight:600;color:var(--blue);">
+                  <span style="width:16px;height:16px;border-radius:99px;background:var(--blue);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:.5rem;font-weight:800;">{{ ini }}</span>
                   {{ m.name }}{% if m.variant_code %} <span style="color:#7c3aed;font-weight:700;">({{ m.variant_code }})</span>{% endif %}
                 </span>
               {% endfor %}
               </div>
-            {% else %}—{% endif %}
+            {% else %}-{% endif %}
           </td>
-          <td style="padding:12px 14px;"><span style="background:{{ p.status_color }}18;color:{{ p.status_color }};border:1px solid {{ p.status_color }}44;padding:2px 9px;border-radius:100px;font-size:.71rem;font-weight:700;white-space:nowrap;">{{ p.status_label }}</span></td>
-          <td style="padding:12px 14px;color:var(--text3);font-size:.82rem;">{{ p.project_age }}d</td>
-          <td style="padding:12px 14px;text-align:right;">
+          <td><span class="st-badge" style="background:{{ p.status_color }}18;color:{{ p.status_color }};border:1px solid {{ p.status_color }}44;">{{ p.status_label }}</span></td>
+          <td class="page-d">{{ p.project_age }}d</td>
+          <td style="text-align:right;white-space:nowrap;">
                                 {% if is_rd_manager %}
                                 <button
                       data-pid="{{ p.id }}"
@@ -250,21 +347,23 @@
                       data-color="{{ p.status_color }}"
                       data-status="{{ p.status_label }}"
                       onclick="rdOpenAssign(this)"
-                      style="display:inline-flex;align-items:center;gap:4px;padding:5px 10px;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;border-radius:6px;font-size:.75rem;font-weight:700;cursor:pointer;font-family:inherit;">
-                      ✏️ Reassign
+                      class="rd-btn rd-btn-reassign">
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+                      Reassign
                     </button>
                     {% endif %}
                     <button onclick="openRdLog({{ p.id }},'{{ p.product_name|replace("'","") }}','{{ p.code }}')"
-                      style="display:inline-flex;align-items:center;gap:4px;padding:5px 10px;background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;border-radius:6px;font-size:.75rem;font-weight:700;cursor:pointer;font-family:inherit;margin-left:4px;">
-                      📋 Log
+                      class="rd-btn rd-btn-log">
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6h4"/><path d="M2 12h4"/><path d="M2 18h4"/><path d="M10 6h12"/><path d="M10 12h12"/><path d="M10 18h12"/></svg>
+                      Log
                     </button>
           </td>
         </tr>
         {% endfor %}
         {% else %}
-        <tr><td colspan="9" style="padding:3rem;text-align:center;color:var(--text3);">
-          <div style="font-size:2rem;margin-bottom:.5rem;">📋</div>
-          <div style="font-weight:700;">No allotted projects yet</div>
+        <tr><td colspan="9" class="rd-empty">
+          <div class="ic"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M8 11h8"/><path d="M8 16h5"/></svg></div>
+          <div class="tx">No allotted projects yet</div>
         </td></tr>
         {% endif %}
       </tbody>
@@ -277,28 +376,27 @@
   {% if rd_sub and rd_sub.closed_npd %}
   <div id="tbl-closed" style="display:none;">
     <div style="overflow-x:auto;">
-    <table style="width:100%;border-collapse:collapse;font-size:13px;">
+    <table class="rd-tbl">
       <thead>
-        <tr style="background:#f8fafc;">
-          <th style="padding:10px 14px;font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);text-align:left;width:36px;">#</th>
-          <th style="padding:10px 14px;font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);text-align:left;">Project No</th>
-          
-          <th style="padding:10px 14px;font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);text-align:left;">Product Name</th>
-          <th style="padding:10px 14px;font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);text-align:left;">Client</th>
-          <th style="padding:10px 14px;font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);text-align:left;">Assigned To</th>
-          <th style="padding:10px 14px;font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);text-align:left;">Status</th>
-          <th style="padding:10px 14px;font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);text-align:left;">Duration</th>
+        <tr>
+          <th class="num-col">#</th>
+          <th>Project No</th>
+          <th>Product Name</th>
+          <th>Client</th>
+          <th>Assigned To</th>
+          <th>Status</th>
+          <th>Duration</th>
         </tr>
       </thead>
       <tbody>
         {% if closed %}
         {% for p in closed %}
-        <tr class="rd-row" data-search="{{ (p.product_name~' '~p.code~' '~(p.client_company or p.client_name or '')).lower() }}" data-type="{{ p.project_type }}" style="border-bottom:1px solid #f1f5f9;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''">
-          <td style="padding:12px 14px;color:#94a3b8;font-size:11px;font-weight:600;">{{ loop.index }}</td>
-          <td style="padding:12px 14px;">{% if perm and perm.can_view %}<a href="/npd/projects/{{ p.id }}" style="color:#7c3aed;font-weight:700;font-family:monospace;font-size:.82rem;text-decoration:none;">{{ p.code }}</a>{% else %}<span style="font-weight:700;font-family:monospace;font-size:.82rem;">{{ p.code }}</span>{% endif %}</td>
-          <td style="padding:12px 14px;font-weight:600;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ p.product_name }}</td>
-          <td style="padding:12px 14px;color:var(--text2);font-size:.82rem;">{{ p.client_company or p.client_name or '—' }}</td>
-          <td style="padding:12px 14px;">
+        <tr class="rd-row" data-search="{{ (p.product_name~' '~p.code~' '~(p.client_company or p.client_name or '')).lower() }}" data-type="{{ p.project_type }}" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''">
+          <td class="idx">{{ loop.index }}</td>
+          <td>{% if perm and perm.can_view %}<a href="/npd/projects/{{ p.id }}" class="pcode">{{ p.code }}</a>{% else %}<span class="pcode-plain">{{ p.code }}</span>{% endif %}</td>
+          <td class="pname">{{ p.product_name }}</td>
+          <td class="pclient">{{ p.client_company or p.client_name or '-' }}</td>
+          <td>
             {% set members = project_members.get(p.id, []) if project_members else [] %}
             {% if not members and p.rd_user %}
               {% set members = [{'name': p.rd_user.full_name, 'variant_code': '', 'status': ''}] %}
@@ -309,22 +407,22 @@
                 {% set nparts = m.name.split() %}
                 {% set ini = (nparts[0][0] + nparts[-1][0]).upper() if nparts|length > 1 else (m.name[:2]).upper() %}
                 <span title="{{ m.name }}"
-                      style="display:inline-flex;align-items:center;gap:5px;background:#f1f5f9;border:1px solid #cbd5e1;border-radius:100px;padding:2px 10px;font-size:.72rem;font-weight:600;color:#475569;">
-                  <span style="width:18px;height:18px;border-radius:50%;background:#6b7280;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:.55rem;font-weight:800;">{{ ini }}</span>
+                      style="display:inline-flex;align-items:center;gap:5px;background:#f1f5f9;border:1px solid #cbd5e1;border-radius:99px;padding:2px 10px;font-size:.72rem;font-weight:600;color:#475569;">
+                  <span style="width:18px;height:18px;border-radius:99px;background:#6b7280;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:.55rem;font-weight:800;">{{ ini }}</span>
                   {{ m.name }}
                 </span>
               {% endfor %}
               </div>
-            {% else %}—{% endif %}
+            {% else %}-{% endif %}
           </td>
-          <td style="padding:12px 14px;"><span style="background:{{ p.status_color }}18;color:{{ p.status_color }};border:1px solid {{ p.status_color }}44;padding:2px 9px;border-radius:100px;font-size:.71rem;font-weight:700;white-space:nowrap;">{{ p.status_label }}</span></td>
-          <td style="padding:12px 14px;color:var(--text3);font-size:.82rem;">{{ p.project_age }}d</td>
+          <td><span class="st-badge" style="background:{{ p.status_color }}18;color:{{ p.status_color }};border:1px solid {{ p.status_color }}44;">{{ p.status_label }}</span></td>
+          <td class="page-d">{{ p.project_age }}d</td>
         </tr>
         {% endfor %}
         {% else %}
-        <tr><td colspan="8" style="padding:3rem;text-align:center;color:var(--text3);">
-          <div style="font-size:2rem;margin-bottom:.5rem;">🏁</div>
-          <div style="font-weight:700;">No closed projects</div>
+        <tr><td colspan="8" class="rd-empty">
+          <div class="ic"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg></div>
+          <div class="tx">No closed projects</div>
           <div style="font-size:.78rem;margin-top:2px;">Completed projects will appear here</div>
         </td></tr>
         {% endif %}
@@ -346,9 +444,11 @@ function rdSwitchTab(tab) {
     if(t===tab){
       btn.style.background = '#7c3aed';
       btn.style.color = '#fff';
+      btn.style.boxShadow = '0 1px 4px rgba(124,58,237,.35)';
     } else {
-      btn.style.background = '#fff';
+      btn.style.background = 'transparent';
       btn.style.color = 'var(--text2)';
+      btn.style.boxShadow = 'none';
     }
   });
 }
@@ -375,14 +475,14 @@ function rdOpenAssign(btn) {
 
 </script>
 
-<!-- OLD KANBAN REMOVED -->
+<!-- OLD KANBAN REMOVED (hidden - assign-flow JS abhi bhi in elements ko update karta hai) -->
 <div style="display:none;">
 
     <!-- LEFT: Unallotted -->
     <div class="card">
         <div class="panel-hdr">
             <div style="display:flex;align-items:center;gap:.5rem;">
-                <div style="width:8px;height:8px;border-radius:50%;background:var(--red);"></div>
+                <div style="width:8px;height:8px;border-radius:99px;background:var(--red);"></div>
                 <div>
                 <div style="font-size:.88rem;font-weight:700;">Unallotted Projects</div>
                 <div style="font-size:.65rem;color:var(--text3);">No R&D executive assigned</div>
@@ -402,17 +502,16 @@ function rdOpenAssign(btn) {
             <div style="font-weight:700;font-size:.86rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ p.product_name }}">{{ p.product_name }}</div>
             <div style="font-size:.7rem;color:var(--text3);font-family:var(--font-mono);margin-bottom:2px;">{{ p.code }}</div>
             {% if p.client_company or p.client_name %}
-            <div style="font-size:.75rem;color:var(--text2);">👤 {{ p.client_company or p.client_name }}</div>
+            <div style="font-size:.75rem;color:var(--text2);">{{ p.client_company or p.client_name }}</div>
             {% endif %}
             <div style="margin-top:5px;display:flex;align-items:center;gap:.4rem;">
-                <span style="background:{{ p.status_color }}18;color:{{ p.status_color }};border:1px solid {{ p.status_color }}44;padding:1px 7px;border-radius:100px;font-size:.68rem;font-weight:700;">{{ p.status_label }}</span>
-                <span style="font-size:.68rem;color:var(--blue);font-weight:600;margin-left:auto;">Click to assign →</span>
+                <span style="background:{{ p.status_color }}18;color:{{ p.status_color }};border:1px solid {{ p.status_color }}44;padding:1px 7px;border-radius:99px;font-size:.68rem;font-weight:700;">{{ p.status_label }}</span>
+                <span style="font-size:.68rem;color:var(--blue);font-weight:600;margin-left:auto;">Click to assign &rarr;</span>
             </div>
         </div>
         {% endfor %}
         {% else %}
         <div class="empty-panel" id="unallotted-empty">
-            <div style="font-size:1.8rem;margin-bottom:.3rem;">✅</div>
             <div style="font-weight:700;font-size:.88rem;">All projects assigned</div>
         </div>
         {% endif %}
@@ -423,7 +522,7 @@ function rdOpenAssign(btn) {
     <div class="card">
         <div class="panel-hdr">
             <div style="display:flex;align-items:center;gap:.5rem;">
-                <div style="width:8px;height:8px;border-radius:50%;background:var(--green);"></div>
+                <div style="width:8px;height:8px;border-radius:99px;background:var(--green);"></div>
                 <div>
                 <div style="font-size:.88rem;font-weight:700;">Allotted Projects</div>
                 <div style="font-size:.65rem;color:var(--text3);">{% if is_rd_manager %}All R&D assigned projects{% else %}Your assigned projects{% endif %}</div>
@@ -436,7 +535,7 @@ function rdOpenAssign(btn) {
         {% for p in allotted %}
         {# Same as the table view above: route already filters by user.
            Don't re-filter here on `p.rd_user.id` (legacy single-user
-           field) — that hides multi-user projects from non-primary
+           field) - that hides multi-user projects from non-primary
            assignees. #}
         <div class="proj-item" id="allot-{{ p.id }}" style="cursor:pointer;" onmouseover="this.style.background='var(--blue-lt)'" onmouseout="this.style.background=''" ondblclick="window.location.href='/rd/trials?project_id={{ p.id }}'">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;">
@@ -453,8 +552,8 @@ function rdOpenAssign(btn) {
                       data-color="{{ p.status_color }}"
                       data-status="{{ p.status_label }}"
                       onclick="rdOpenAssign(this)"
-                      style="display:inline-flex;align-items:center;gap:4px;padding:5px 10px;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;border-radius:6px;font-size:.75rem;font-weight:700;cursor:pointer;font-family:inherit;">
-                      ✏️ Reassign
+                      class="rd-btn rd-btn-reassign">
+                      Reassign
                     </button>
                     {% endif %}
                 </div>
@@ -477,25 +576,24 @@ function rdOpenAssign(btn) {
                 {% endif %}
             </div>
             <div style="margin-top:5px;">
-                <span style="background:{{ p.status_color }}18;color:{{ p.status_color }};border:1px solid {{ p.status_color }}44;padding:1px 7px;border-radius:100px;font-size:.68rem;font-weight:700;">{{ p.status_label }}</span>
+                <span style="background:{{ p.status_color }}18;color:{{ p.status_color }};border:1px solid {{ p.status_color }}44;padding:1px 7px;border-radius:99px;font-size:.68rem;font-weight:700;">{{ p.status_label }}</span>
             </div>
         </div>
         {% endfor %}
         {% else %}
         <div class="empty-panel" id="allotted-empty">
-            <div style="font-size:1.8rem;margin-bottom:.3rem;">📋</div>
             <div style="font-weight:700;font-size:.88rem;">No allotted projects yet</div>
             <div style="font-size:.78rem;margin-top:2px;">Assign R&D team from left panel</div>
         </div>
         {% endif %}
         </div>
     </div>
-	
+
 	<!-- COLUMN 3: Closed / Done -->
     <div class="card">
         <div class="panel-hdr">
             <div style="display:flex;align-items:center;gap:.5rem;">
-                <div style="width:8px;height:8px;border-radius:50%;background:#6b7280;"></div>
+                <div style="width:8px;height:8px;border-radius:99px;background:#6b7280;"></div>
                 <div>
                 <div style="font-size:.88rem;font-weight:700;">Closed / Done</div>
                 <div style="font-size:.65rem;color:var(--text3);">Project completed or closed</div>
@@ -514,7 +612,7 @@ function rdOpenAssign(btn) {
             <div style="font-weight:700;font-size:.86rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ p.product_name }}">{{ p.product_name }}</div>
             <div style="font-size:.7rem;color:var(--text3);font-family:var(--font-mono);margin-bottom:2px;">{{ p.code }}</div>
             {% if p.client_company or p.client_name %}
-            <div style="font-size:.75rem;color:var(--text2);">👤 {{ p.client_company or p.client_name }}</div>
+            <div style="font-size:.75rem;color:var(--text2);">{{ p.client_company or p.client_name }}</div>
             {% endif %}
             {% if p.rd_user %}
             <div class="assignee-row" style="margin-top:4px;">
@@ -523,13 +621,12 @@ function rdOpenAssign(btn) {
             </div>
             {% endif %}
             <div style="margin-top:5px;">
-                <span style="background:{{ p.status_color }}18;color:{{ p.status_color }};border:1px solid {{ p.status_color }}44;padding:1px 7px;border-radius:100px;font-size:.68rem;font-weight:700;">{{ p.status_label }}</span>
+                <span style="background:{{ p.status_color }}18;color:{{ p.status_color }};border:1px solid {{ p.status_color }}44;padding:1px 7px;border-radius:99px;font-size:.68rem;font-weight:700;">{{ p.status_label }}</span>
             </div>
         </div>
         {% endfor %}
         {% else %}
         <div class="empty-panel" id="closed-empty">
-            <div style="font-size:1.8rem;margin-bottom:.3rem;">🏁</div>
             <div style="font-weight:700;font-size:.88rem;">No closed projects</div>
             <div style="font-size:.78rem;margin-top:2px;">Completed projects will appear here</div>
         </div>
@@ -538,25 +635,28 @@ function rdOpenAssign(btn) {
     </div>
 </div>
 
-    
+
 
 
 <!-- Assign Modal -->
 <div class="modal-ov" id="assign-modal">
     <div class="modal-box">
         <div class="modal-hdr">
-            <div style="font-weight:800;font-size:1rem;">👥 Assign R&D Team</div>
-            <button onclick="closeModal()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--text3);">✕</button>
+            <div class="mh-title">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              Assign R&amp;D Team
+            </div>
+            <button onclick="closeModal()" class="modal-close">&times;</button>
         </div>
         <div class="modal-body">
             <div class="proj-info-bar">
-                <div><div style="font-size:.68rem;color:var(--text3);font-weight:600;">Project</div><div style="font-size:.88rem;font-weight:800;" id="modal-proj-name">—</div></div>
-                <div><div style="font-size:.68rem;color:var(--text3);font-weight:600;">Code</div><div style="font-size:.82rem;font-family:var(--font-mono);font-weight:700;color:var(--blue);" id="modal-proj-code">—</div></div>
-                <div><div style="font-size:.68rem;color:var(--text3);font-weight:600;">Client</div><div style="font-size:.82rem;font-weight:600;" id="modal-proj-client">—</div></div>
-                <div><span id="modal-proj-status" style="font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:100px;"></span></div>
+                <div><div style="font-size:.68rem;color:var(--text3);font-weight:600;">Project</div><div style="font-size:.88rem;font-weight:800;" id="modal-proj-name">-</div></div>
+                <div><div style="font-size:.68rem;color:var(--text3);font-weight:600;">Code</div><div style="font-size:.82rem;font-family:var(--font-mono);font-weight:700;color:var(--blue);" id="modal-proj-code">-</div></div>
+                <div><div style="font-size:.68rem;color:var(--text3);font-weight:600;">Client</div><div style="font-size:.82rem;font-weight:600;" id="modal-proj-client">-</div></div>
+                <div><span id="modal-proj-status" style="font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:99px;"></span></div>
             </div>
             <div style="font-size:.78rem;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.6rem;">
-                Select R&D Person(s) <span style="color:var(--text3);font-weight:500;text-transform:none;letter-spacing:0;">(multiple allowed)</span>
+                Select R&amp;D Person(s) <span style="color:var(--text3);font-weight:500;text-transform:none;letter-spacing:0;">(multiple allowed)</span>
             </div>
             <div id="user-cards-list">
                 {% for u in users %}
@@ -569,14 +669,14 @@ function rdOpenAssign(btn) {
                         <div style="font-size:.85rem;font-weight:700;">{{ u.full_name }}</div>
                         <div style="font-size:.72rem;color:var(--text3);">{{ u._display_role if u._display_role is defined else (u.role or 'R&D Executive') }}</div>
                     </div>
-                    <div class="check-ic" id="chk-{{ uid }}">✓</div>
+                    <div class="check-ic" id="chk-{{ uid }}">&#10003;</div>
                   </div>
                   <div class="variant-box" id="vbox-{{ uid }}" style="display:none;padding:0 12px 10px;border-top:1px solid #f1f5f9;">
                     <input type="text"
                       id="vcode-{{ uid }}"
                       onclick="event.stopPropagation()"
                       placeholder="Variant / Code (e.g. V1, Batch-A, Formula-01)..."
-                      style="width:100%;padding:6px 10px;border:1.5px solid #e2e8f0;border-radius:7px;font-size:.8rem;font-family:inherit;outline:none;box-sizing:border-box;margin-top:8px;">
+                      style="width:100%;padding:6px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.8rem;font-family:inherit;outline:none;box-sizing:border-box;margin-top:8px;">
                   </div>
                 </div>
                 {% endfor %}
@@ -585,7 +685,7 @@ function rdOpenAssign(btn) {
         </div>
         <div class="modal-foot">
             <button class="btn-grid-action" onclick="closeModal()">Cancel</button>
-            <button class="btn-add-new" onclick="submitAssign()" id="assign-btn">✅ Assign Selected</button>
+            <button class="btn-add-new" onclick="submitAssign()" id="assign-btn">Assign Selected</button>
         </div>
     </div>
 </div>
@@ -594,8 +694,11 @@ function rdOpenAssign(btn) {
 <div class="modal-ov" id="rd-log-modal">
   <div class="modal-box" style="width:960px;max-width:95vw;">
     <div class="modal-hdr">
-      <div style="font-weight:800;font-size:1rem;">📋 R&D Project Log — <span id="log-modal-title" style="color:#7c3aed;"></span></div>
-      <button onclick="closeRdLog()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--text3);">✕</button>
+      <div class="mh-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6h4"/><path d="M2 12h4"/><path d="M2 18h4"/><path d="M10 6h12"/><path d="M10 12h12"/><path d="M10 18h12"/></svg>
+        R&amp;D Project Log - <span id="log-modal-title" style="color:#7c3aed;"></span>
+      </div>
+      <button onclick="closeRdLog()" class="modal-close">&times;</button>
     </div>
     <div class="modal-body" style="max-height:70vh;overflow-y:auto;padding:0;">
       <div id="rd-log-list" style="padding:12px 16px;">
@@ -609,7 +712,7 @@ function rdOpenAssign(btn) {
 var currentProjId = null;
 var selectedUsers = [];
 
-// ── Pre-assigned members map (for Reassign flow) ──
+// -- Pre-assigned members map (for Reassign flow) --
 // { projectId: [ {id, variant_code}, ... ] }
 var PROJECT_MEMBERS = (function(){
     var m = {};
@@ -632,12 +735,12 @@ function openAssignModal(pid, name, code, type, client, statusColor, statusLabel
     document.getElementById('modal-proj-id').value = pid;
     document.getElementById('modal-proj-name').textContent   = name;
     document.getElementById('modal-proj-code').textContent   = code;
-    document.getElementById('modal-proj-client').textContent = client || '—';
+    document.getElementById('modal-proj-client').textContent = client || '-';
     var st = document.getElementById('modal-proj-status');
     st.textContent = statusLabel;
-    st.style.cssText = 'font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:100px;background:'+statusColor+'18;color:'+statusColor+';border:1px solid '+statusColor+'44;';
+    st.style.cssText = 'font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:99px;background:'+statusColor+'18;color:'+statusColor+';border:1px solid '+statusColor+'44;';
 
-    // ── Pre-select already-assigned members (Reassign flow) ──
+    // -- Pre-select already-assigned members (Reassign flow) --
     var existing = PROJECT_MEMBERS[pid] || PROJECT_MEMBERS[parseInt(pid,10)] || [];
     var isReassign = existing.length > 0;
     existing.forEach(function(mem){
@@ -656,21 +759,25 @@ function openAssignModal(pid, name, code, type, client, statusColor, statusLabel
 
     // Button label reflects mode
     document.getElementById('assign-btn').textContent = isReassign
-        ? '💾 Update Assignment'
-        : '✅ Assign Selected';
+        ? 'Update Assignment'
+        : 'Assign Selected';
     document.getElementById('assign-modal').classList.add('open');
 }
 
-// ── RD Project Log Modal ──
+// -- RD Project Log Modal --
 var _EVENT_ICONS = {
-  'assigned': '👥', 'started': '▶️', 'stopped': '⏹️', 'finished': '✅'
+  'assigned': '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>',
+  'started':  '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 3 20 12 6 21 6 3"/></svg>',
+  'stopped':  '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>',
+  'finished': '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
 };
+var _EVENT_DEFAULT_ICON = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/></svg>';
 var _EVENT_COLORS = {
   'assigned': '#7c3aed', 'started': '#16a34a', 'stopped': '#f59e0b', 'finished': '#2563eb'
 };
 
 function openRdLog(pid, name, code) {
-  document.getElementById('log-modal-title').textContent = code + ' — ' + name;
+  document.getElementById('log-modal-title').textContent = code + ' - ' + name;
   document.getElementById('rd-log-list').innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text3);font-size:.85rem;">Loading...</div>';
   document.getElementById('rd-log-modal').classList.add('open');
   fetch('/rd/projects/' + pid + '/logs')
@@ -679,12 +786,12 @@ function openRdLog(pid, name, code) {
       var list = document.getElementById('rd-log-list');
       var html = '';
 
-      // ── Member Summary Table ──
+      // -- Member Summary Table --
       if (data.members && data.members.length) {
         var statusColor = {'not_started':'#94a3b8','in_progress':'#16a34a','finished':'#2563eb'};
         var statusLabel = {'not_started':'Not Started','in_progress':'In Progress','finished':'Finished'};
         html += '<div style="padding:12px 16px 0;">' +
-          '<div style="font-size:.72rem;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">👥 R&D Team Summary</div>' +
+          '<div style="font-size:.72rem;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">R&D Team Summary</div>' +
           '<table style="width:100%;border-collapse:collapse;font-size:.78rem;">' +
           '<thead><tr style="background:#f8fafc;">' +
             '<th style="padding:6px 8px;text-align:left;color:#64748b;font-weight:700;border-bottom:1px solid #e2e8f0;">Member</th>' +
@@ -699,33 +806,33 @@ function openRdLog(pid, name, code) {
           var sl = statusLabel[m.status] || m.status;
           var ini = m.name.split(' ').map(function(w){return w[0]||'';}).slice(0,2).join('').toUpperCase();
           html += '<tr style="border-bottom:1px solid #f1f5f9;">' +
-            '<td style="padding:8px;"><div style="display:flex;align-items:center;gap:6px;"><span style="width:22px;height:22px;border-radius:50%;background:#ede9fe;color:#7c3aed;display:inline-flex;align-items:center;justify-content:center;font-size:.55rem;font-weight:800;flex-shrink:0;">' + ini + '</span><span style="font-weight:600;">' + m.name + '</span></div></td>' +
+            '<td style="padding:8px;"><div style="display:flex;align-items:center;gap:6px;"><span style="width:22px;height:22px;border-radius:99px;background:#ede9fe;color:#7c3aed;display:inline-flex;align-items:center;justify-content:center;font-size:.55rem;font-weight:800;flex-shrink:0;">' + ini + '</span><span style="font-weight:600;">' + m.name + '</span></div></td>' +
             '<td style="padding:8px;"><span style="background:#ede9fe;color:#7c3aed;border-radius:5px;padding:2px 7px;font-weight:700;">' + m.variant_code + '</span></td>' +
             '<td style="padding:8px;color:#374151;white-space:nowrap;">' + m.started_at + '</td>' +
             '<td style="padding:8px;color:#374151;white-space:nowrap;">' + m.finished_at + '</td>' +
             '<td style="padding:8px;text-align:right;font-family:monospace;font-weight:700;color:#1e293b;">' + m.duration + '</td>' +
-            '<td style="padding:8px;text-align:center;"><span style="background:' + sc + '18;color:' + sc + ';border:1px solid ' + sc + '44;padding:2px 8px;border-radius:100px;font-size:.68rem;font-weight:700;">' + sl + '</span></td>' +
+            '<td style="padding:8px;text-align:center;"><span style="background:' + sc + '18;color:' + sc + ';border:1px solid ' + sc + '44;padding:2px 8px;border-radius:99px;font-size:.68rem;font-weight:700;">' + sl + '</span></td>' +
           '</tr>';
         });
         html += '</tbody></table></div>';
       }
 
-      // ── Activity Timeline ──
+      // -- Activity Timeline --
       html += '<div style="padding:12px 16px;">' +
-        '<div style="font-size:.72rem;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">📋 Activity Timeline</div>';
+        '<div style="font-size:.72rem;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Activity Timeline</div>';
 
       if (!data.logs || !data.logs.length) {
         html += '<div style="text-align:center;padding:1.5rem;color:var(--text3);font-size:.82rem;">No activity yet.</div>';
       } else {
         html += data.logs.map(function(l) {
-          var icon  = _EVENT_ICONS[l.event]  || '📌';
+          var icon  = _EVENT_ICONS[l.event]  || _EVENT_DEFAULT_ICON;
           var color = _EVENT_COLORS[l.event] || '#64748b';
           return '<div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid #f8fafc;align-items:flex-start;">' +
-            '<div style="width:26px;height:26px;border-radius:50%;background:' + color + '18;border:1.5px solid ' + color + '44;display:flex;align-items:center;justify-content:center;font-size:.8rem;flex-shrink:0;">' + icon + '</div>' +
+            '<div style="width:26px;height:26px;border-radius:99px;background:' + color + '18;border:1.5px solid ' + color + '44;color:' + color + ';display:flex;align-items:center;justify-content:center;flex-shrink:0;">' + icon + '</div>' +
             '<div style="flex:1;">' +
               '<div style="display:flex;align-items:center;gap:6px;">' +
                 '<span style="font-size:.78rem;font-weight:700;color:' + color + ';text-transform:capitalize;">' + l.event + '</span>' +
-                '<span style="font-size:.68rem;color:#94a3b8;">· ' + l.created_at + ' · ' + l.user + '</span>' +
+                '<span style="font-size:.68rem;color:#94a3b8;">&middot; ' + l.created_at + ' &middot; ' + l.user + '</span>' +
               '</div>' +
               '<div style="font-size:.78rem;color:#374151;margin-top:2px;">' + l.detail + '</div>' +
             '</div>' +
@@ -789,7 +896,7 @@ function submitAssign() {
     if(selectedUsers.length === 0){ alert('Please select at least one R&D person'); return; }
     var btn = document.getElementById('assign-btn');
     var wasReassign = (PROJECT_MEMBERS[currentProjId] || PROJECT_MEMBERS[parseInt(currentProjId,10)] || []).length > 0;
-    var defaultLabel = wasReassign ? '💾 Update Assignment' : '✅ Assign Selected';
+    var defaultLabel = wasReassign ? 'Update Assignment' : 'Assign Selected';
     btn.textContent = wasReassign ? 'Updating...' : 'Assigning...';
     btn.disabled = true;
 
@@ -812,7 +919,7 @@ function submitAssign() {
     .then(function(data) {
         if(!data.success){ alert(data.error||'Error'); btn.textContent=defaultLabel; btn.disabled=false; return; }
 
-        // ── Update cache so next reassign opens with latest selection ──
+        // -- Update cache so next reassign opens with latest selection --
         PROJECT_MEMBERS[currentProjId] = payload.map(function(p){
             var idNum = parseInt(String(p.user_id).replace(/^u_/, ''), 10);
             return { id: idNum, variant_code: p.variant_code };
@@ -823,7 +930,7 @@ function submitAssign() {
         btn.textContent = defaultLabel;
         btn.disabled = false;
         // Success toast
-        showRdToast((wasReassign ? '💾 Re-assigned: ' : '✅ R&D Team Assigned: ') + (data.rd_names||[]).join(', '));
+        showRdToast((wasReassign ? 'Re-assigned: ' : 'R&D Team Assigned: ') + (data.rd_names||[]).join(', '));
     })
     .catch(function(e){ console.error(e); btn.textContent=defaultLabel; btn.disabled=false; alert('Network error. Please try again.'); });
 }
@@ -831,7 +938,7 @@ function submitAssign() {
 function showRdToast(msg) {
     var t = document.createElement('div');
     t.textContent = msg;
-    t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#16a34a;color:#fff;padding:10px 22px;border-radius:10px;font-size:.85rem;font-weight:700;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.18);';
+    t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#16a34a;color:#fff;padding:10px 22px;border-radius:99px;font-size:.85rem;font-weight:700;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.18);';
     document.body.appendChild(t);
     setTimeout(function(){ t.style.opacity='0'; t.style.transition='opacity .5s'; setTimeout(function(){ t.remove(); }, 500); }, 3000);
 }
@@ -843,7 +950,7 @@ function moveToAllotted(data) {
     if(unEl) unEl.remove();
     var newUn = parseInt(document.getElementById('unallot-count').textContent) - 1;
     document.getElementById('unallot-count').textContent = newUn < 0 ? 0 : newUn;
-    if(newUn <= 0) document.getElementById('unallotted-list').innerHTML='<div class="empty-panel"><div style="font-size:1.8rem">✅</div><div style="font-weight:700;">All projects assigned</div></div>';
+    if(newUn <= 0) document.getElementById('unallotted-list').innerHTML='<div class="empty-panel"><div style="font-weight:700;">All projects assigned</div></div>';
 
     // Remove existing allotted card (reassign case)
     var ex = document.getElementById('allot-'+pid);
@@ -863,13 +970,13 @@ function moveToAllotted(data) {
             '<span class="proj-tag '+typeClass+'">'+data.type.toUpperCase()+'</span>' +
             '<div style="display:flex;align-items:center;gap:.5rem;">' +
                 '<span style="font-size:.7rem;color:var(--text3);">'+data.age+'d</span>' +
-                '<button data-pid="'+pid+'" data-name="'+data.name.replace(/'/g,"")+'" data-code="'+data.code+'" data-type="'+data.type.toUpperCase()+'" data-client="'+data.client.replace(/'/g,"")+'" data-color="'+data.status_color+'" data-status="'+data.status+'" onclick="rdOpenAssign(this)" style="display:inline-flex;align-items:center;gap:4px;padding:5px 10px;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;border-radius:6px;font-size:.75rem;font-weight:700;cursor:pointer;font-family:inherit;">✏️ Reassign</button>' +
+                '<button data-pid="'+pid+'" data-name="'+data.name.replace(/'/g,"")+'" data-code="'+data.code+'" data-type="'+data.type.toUpperCase()+'" data-client="'+data.client.replace(/'/g,"")+'" data-color="'+data.status_color+'" data-status="'+data.status+'" onclick="rdOpenAssign(this)" class="rd-btn rd-btn-reassign">Reassign</button>' +
             '</div>' +
         '</div>' +
         '<div style="font-weight:700;font-size:.86rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+data.name+'</div>' +
         '<div style="font-size:.7rem;color:var(--text3);font-family:var(--font-mono);margin-bottom:4px;">'+data.code+'</div>' +
         '<div class="assignee-row">'+pills+'</div>' +
-        '<div style="margin-top:5px;"><span style="background:'+data.status_color+'18;color:'+data.status_color+';border:1px solid '+data.status_color+'44;padding:1px 7px;border-radius:100px;font-size:.68rem;font-weight:700;">'+data.status+'</span></div>' +
+        '<div style="margin-top:5px;"><span style="background:'+data.status_color+'18;color:'+data.status_color+';border:1px solid '+data.status_color+'44;padding:1px 7px;border-radius:99px;font-size:.68rem;font-weight:700;">'+data.status+'</span></div>' +
     '</div>';
 
     document.getElementById('allotted-list').insertAdjacentHTML('afterbegin', html);
@@ -882,28 +989,30 @@ function moveToAllotted(data) {
 }
 </script>
 
-<!-- ═══════ TRIAL POPUP MODAL ═══════ -->
+<!-- ======= TRIAL POPUP MODAL ======= -->
 <div class="trial-modal-ov" id="proj-trial-modal">
     <div class="trial-modal-box">
         <div class="t-modal-hdr">
             <div style="display:flex;align-items:center;gap:.65rem;">
-                <span style="font-size:1.2rem;">⚗️</span>
+                <span style="width:34px;height:34px;border-radius:10px;background:#ede9fe;color:#7c3aed;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2v6a2 2 0 0 0 .245.96l5.51 10.08A2 2 0 0 1 18 22H6a2 2 0 0 1-1.755-2.96l5.51-10.08A2 2 0 0 0 10 8V2"/><path d="M6.453 15h11.094"/><path d="M8.5 2h7"/></svg>
+                </span>
                 <div>
-                    <div style="font-weight:800;font-size:1rem;">Log R&D Trial</div>
-                    <div style="font-size:.72rem;color:var(--text3);" id="t-modal-subtitle">—</div>
+                    <div style="font-weight:800;font-size:1rem;">Log R&amp;D Trial</div>
+                    <div style="font-size:.72rem;color:var(--text3);" id="t-modal-subtitle">-</div>
                 </div>
             </div>
-            <button onclick="closeTrialModal()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--text3);">✕</button>
+            <button onclick="closeTrialModal()" class="modal-close">&times;</button>
         </div>
         <div class="t-modal-body">
             <!-- Project Info Banner -->
-            <div id="t-proj-banner" style="background:var(--blue-lt);border:1px solid var(--blue-border);border-radius:var(--r-md);padding:.65rem 1rem;margin-bottom:1rem;display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap;">
-                <div><div style="font-size:.65rem;color:var(--text3);font-weight:700;">PROJECT</div><div style="font-size:.88rem;font-weight:800;" id="t-proj-name">—</div></div>
+            <div id="t-proj-banner" style="background:var(--blue-lt);border:1px solid var(--blue-border);border-radius:12px;padding:.65rem 1rem;margin-bottom:1rem;display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap;">
+                <div><div style="font-size:.65rem;color:var(--text3);font-weight:700;">PROJECT</div><div style="font-size:.88rem;font-weight:800;" id="t-proj-name">-</div></div>
                 <div style="width:1px;height:28px;background:var(--blue-border);"></div>
-                <div><div style="font-size:.65rem;color:var(--text3);font-weight:700;">CODE</div><div style="font-size:.82rem;font-weight:700;color:var(--blue);font-family:monospace;" id="t-proj-code">—</div></div>
+                <div><div style="font-size:.65rem;color:var(--text3);font-weight:700;">CODE</div><div style="font-size:.82rem;font-weight:700;color:var(--blue);font-family:monospace;" id="t-proj-code">-</div></div>
                 <div style="width:1px;height:28px;background:var(--blue-border);"></div>
-                <div><div style="font-size:.65rem;color:var(--text3);font-weight:700;">CLIENT</div><div style="font-size:.82rem;font-weight:700;" id="t-proj-client">—</div></div>
-                <div style="margin-left:auto;"><span id="t-proj-status" style="font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:100px;background:var(--blue);color:#fff;"></span></div>
+                <div><div style="font-size:.65rem;color:var(--text3);font-weight:700;">CLIENT</div><div style="font-size:.82rem;font-weight:700;" id="t-proj-client">-</div></div>
+                <div style="margin-left:auto;"><span id="t-proj-status" style="font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:99px;background:var(--blue);color:#fff;"></span></div>
             </div>
 
             <form method="POST" action="{{ url_for('rd.add_trial') }}" id="t-trial-form">
@@ -912,10 +1021,9 @@ function moveToAllotted(data) {
                 <div class="tgr2" style="margin-bottom:.85rem;">
                     <!-- R&D Executive (pre-selected) -->
                     <div class="tfg" style="margin-bottom:0;">
-                        <label>R&D Executive</label>
-                        <select name="exec_id" id="t-exec-select"
-                                style="width:100%;padding:.45rem .75rem;border:1px solid var(--border);border-radius:var(--r-sm);font-size:.85rem;background:var(--white);color:var(--text);outline:none;">
-                            <option value="">— Select —</option>
+                        <label>R&amp;D Executive</label>
+                        <select name="exec_id" id="t-exec-select">
+                            <option value="">Select</option>
                             {% for u in users %}
                             <option value="{{ u.id }}">{{ u.full_name }}</option>
                             {% endfor %}
@@ -924,27 +1032,27 @@ function moveToAllotted(data) {
                     <!-- Iteration Name -->
                     <div class="tfg" style="margin-bottom:0;">
                         <label>Iteration / Sample Name</label>
-                        <input type="text" name="formulation_name" placeholder="e.g. V2 — Stabilized Formula">
+                        <input type="text" name="formulation_name" placeholder="e.g. V2 - Stabilized Formula">
                     </div>
                 </div>
 
                 <!-- Test Parameters -->
                 <div class="tfg">
                     <label>Test Parameters</label>
-                    <div id="t-ck-params" style="min-height:90px;border:1px solid var(--border);border-radius:var(--r-sm);overflow:hidden;"></div>
+                    <div id="t-ck-params" style="min-height:90px;border:1.5px solid #e2e8f0;border-radius:12px;overflow:hidden;"></div>
                     <textarea name="parameters" id="t-params-hidden" style="display:none;"></textarea>
                 </div>
 
                 <!-- Observations -->
                 <div class="tfg">
                     <label>Observations</label>
-                    <div id="t-ck-obs" style="min-height:110px;border:1px solid var(--border);border-radius:var(--r-sm);overflow:hidden;"></div>
+                    <div id="t-ck-obs" style="min-height:110px;border:1.5px solid #e2e8f0;border-radius:12px;overflow:hidden;"></div>
                     <textarea name="observations" id="t-obs-hidden" style="display:none;"></textarea>
                 </div>
 
                 <div style="display:flex;gap:.5rem;justify-content:flex-end;margin-top:.75rem;">
-                    <button type="button" class="btn-grid-action" onclick="closeTrialModal()">Cancel</button>
-                    <button type="submit" class="btn-add-new" onclick="tSyncEditors()">⚗️ Log Trial</button>
+                    <button type="button" class="btn-grid-action" onclick="closeTrialModal()" style="padding:9px 16px;border-radius:99px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-size:.82rem;font-weight:700;cursor:pointer;font-family:inherit;">Cancel</button>
+                    <button type="submit" class="btn-add-new" onclick="tSyncEditors()" style="padding:9px 18px;border-radius:99px;border:none;color:#fff;font-size:.82rem;font-weight:700;cursor:pointer;font-family:inherit;background:linear-gradient(180deg,#8b5cf6,#6d28d9);box-shadow:0 2px 8px rgba(124,58,237,.3), inset 0 1px 0 rgba(255,255,255,.2);">Log Trial</button>
                 </div>
             </form>
         </div>
@@ -962,8 +1070,8 @@ function initTRichEditor(containerId, hiddenId) {
     toolbar.style.cssText = 'display:flex;gap:3px;padding:5px 8px;background:var(--bg);border-bottom:1px solid var(--border);flex-wrap:wrap;';
     var btns = [
         {cmd:'bold',label:'<b>B</b>'},{cmd:'italic',label:'<i>I</i>'},{cmd:'underline',label:'<u>U</u>'},
-        {cmd:'sep'},{cmd:'insertUnorderedList',label:'• List'},{cmd:'insertOrderedList',label:'1. List'},
-        {cmd:'sep'},{cmd:'undo',label:'↩'},{cmd:'redo',label:'↪'}
+        {cmd:'sep'},{cmd:'insertUnorderedList',label:'&bull; List'},{cmd:'insertOrderedList',label:'1. List'},
+        {cmd:'sep'},{cmd:'undo',label:'Undo'},{cmd:'redo',label:'Redo'}
     ];
     var area = document.createElement('div');
     area.contentEditable = 'true';
@@ -971,14 +1079,14 @@ function initTRichEditor(containerId, hiddenId) {
     btns.forEach(function(b){
         if(b.cmd==='sep'){var s=document.createElement('span');s.style.cssText='width:1px;background:var(--border);margin:2px 3px;display:inline-block;';toolbar.appendChild(s);return;}
         var btn=document.createElement('button');btn.type='button';btn.innerHTML=b.label;
-        btn.style.cssText='padding:3px 8px;border:1px solid var(--border);border-radius:5px;background:var(--white);cursor:pointer;font-size:.78rem;min-width:28px;font-family:inherit;';
+        btn.style.cssText='padding:3px 9px;border:1px solid var(--border);border-radius:7px;background:var(--white);cursor:pointer;font-size:.74rem;min-width:28px;font-family:inherit;color:#64748b;font-weight:600;';
         btn.onmousedown=function(e){e.preventDefault();document.execCommand(b.cmd,false,null);area.focus();};
         btn.onmouseover=function(){this.style.background='var(--blue-lt)';};
         btn.onmouseout=function(){this.style.background='var(--white)';};
         toolbar.appendChild(btn);
     });
-    area.addEventListener('focus',function(){container.style.borderColor='var(--blue)';container.style.boxShadow='0 0 0 3px var(--blue-lt)';});
-    area.addEventListener('blur',function(){container.style.borderColor='var(--border)';container.style.boxShadow='none';hidden.value=area.innerHTML;});
+    area.addEventListener('focus',function(){container.style.borderColor='#93c5fd';container.style.boxShadow='0 0 0 3px rgba(37,99,235,.1)';});
+    area.addEventListener('blur',function(){container.style.borderColor='#e2e8f0';container.style.boxShadow='none';hidden.value=area.innerHTML;});
     area.addEventListener('input',function(){hidden.value=area.innerHTML;});
     container.appendChild(toolbar);
     container.appendChild(area);
@@ -989,7 +1097,7 @@ function openTrialModal(pid, name, code, type, client, status, rdUserId) {
     // Fill banner
     document.getElementById('t-proj-name').textContent   = name;
     document.getElementById('t-proj-code').textContent   = code;
-    document.getElementById('t-proj-client').textContent = client || '—';
+    document.getElementById('t-proj-client').textContent = client || '-';
     document.getElementById('t-proj-status').textContent = status;
     document.getElementById('t-modal-subtitle').textContent = '[' + type + '] ' + code;
     document.getElementById('t-proj-id-input').value = pid;
