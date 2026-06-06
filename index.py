@@ -4,7 +4,6 @@ from datetime import datetime, timedelta
 from core.audit_helper import audit
 from models import db, User, LoginLog, Lead, ClientMaster, LeadReminder, Employee, WishLog
 from core.config import Config
-
 from modules.crm.routes.crm_routes  import crm
 from modules.settings.routes.master_routes import masters
 from modules.hr.routes.hr_routes  import hr

@@ -34,8 +34,6 @@ desktop.ini
 *.suo
 *.user
 
-# Sensitive config
-config.py
 
 # Backups / archive
 archive/
