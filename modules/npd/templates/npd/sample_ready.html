@@ -1,115 +1,133 @@
 {% extends "base.html" %}
-{% block title %}Sample Ready — NPD{% endblock %}
+{% block title %}Sample Ready - NPD{% endblock %}
 {% block page_title %}Sample Ready{% endblock %}
 {% block bread %}NPD / Sample Ready{% endblock %}
 
 {% block extra_css %}
 <style>
+/* ============ HEADER ============ */
 .sr-hdr{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem;margin-bottom:1rem;}
-.sr-count-badge{display:inline-flex;align-items:center;gap:6px;background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;padding:4px 12px;border-radius:100px;font-size:.78rem;font-weight:700;}
-.grid-toolbar{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;padding:12px 16px;background:#fff;border-bottom:1px solid var(--border);}
-.grid-search-wrap{display:flex;align-items:center;gap:6px;background:#f8fafc;border:1.5px solid var(--border);border-radius:8px;padding:6px 12px;min-width:220px;transition:border .15s;}
-.grid-search-wrap:focus-within{border-color:#7c3aed;background:#faf5ff;}
-.grid-search-wrap input{border:none;background:none;outline:none;font-size:.84rem;color:var(--text);width:100%;}
-.grid-search-wrap input::placeholder{color:var(--text3);}
+.sr-ic{width:38px;height:38px;border-radius:11px;background:#ede9fe;color:#7c3aed;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;}
+.sr-count-badge{display:inline-flex;align-items:center;gap:6px;background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;padding:4px 13px;border-radius:99px;font-size:.78rem;font-weight:700;}
+.sr-count-badge::before{content:'';width:6px;height:6px;border-radius:99px;background:#16a34a;}
+.btn-history{display:inline-flex;align-items:center;gap:7px;padding:8px 16px;background:#fff;border:1.5px solid #e2e8f0;border-radius:99px;font-size:.82rem;font-weight:700;color:var(--text2);text-decoration:none;transition:all .15s;}
+.btn-history:hover{background:#f5f3ff;border-color:#c4b5fd;color:#6d28d9;}
+.btn-print{display:inline-flex;align-items:center;gap:7px;padding:8px 17px;background:linear-gradient(180deg,#334155,#0f172a);color:#fff;border:none;border-radius:99px;font-size:.82rem;font-weight:700;cursor:pointer;text-decoration:none;box-shadow:0 2px 8px rgba(15,23,42,.25), inset 0 1px 0 rgba(255,255,255,.12);transition:transform .15s, box-shadow .15s;}
+.btn-print:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(15,23,42,.35), inset 0 1px 0 rgba(255,255,255,.12);color:#fff;}
 
-/* Table */
-.sr-table-wrap{background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+/* ============ TOOLBAR ============ */
+.grid-toolbar{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;padding:13px 16px;background:#fff;border-bottom:1.5px solid #e2e8f0;}
+.grid-search-wrap{display:flex;align-items:center;gap:7px;background:#fff;border:1.5px solid #e2e8f0;border-radius:99px;padding:8px 14px;min-width:220px;transition:border-color .15s, box-shadow .15s;}
+.grid-search-wrap:focus-within{border-color:#c4b5fd;box-shadow:0 0 0 3px rgba(124,58,237,.1);}
+.grid-search-wrap input{border:none;background:none;outline:none;font-size:.84rem;color:var(--text);width:100%;font-family:inherit;}
+.grid-search-wrap input::placeholder{color:var(--text3);}
+.btn-search{padding:8px 18px;background:linear-gradient(180deg,#8b5cf6,#6d28d9);color:#fff;border:none;border-radius:99px;font-size:.82rem;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 2px 8px rgba(124,58,237,.3), inset 0 1px 0 rgba(255,255,255,.2);transition:transform .15s, box-shadow .15s;}
+.btn-search:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(124,58,237,.4), inset 0 1px 0 rgba(255,255,255,.2);}
+.btn-clear-q{padding:8px 16px;background:#fff;color:#64748b;border:1.5px solid #e2e8f0;border-radius:99px;font-size:.82rem;font-weight:700;text-decoration:none;transition:all .15s;}
+.btn-clear-q:hover{background:#f5f3ff;border-color:#c4b5fd;color:#6d28d9;}
+
+/* ============ TABLE ============ */
+.sr-table-wrap{background:#fff;border:1px solid #e2e8f0;border-radius:16px;overflow:hidden;box-shadow:0 1px 3px rgba(15,23,42,.05), 0 4px 16px rgba(15,23,42,.04);}
 .sr-table{width:100%;border-collapse:collapse;font-size:13px;}
-.sr-table thead{background:#f8fafc;}
-.sr-table th{font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;padding:10px 14px;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap;}
+.sr-table thead{background:#fff;}
+.sr-table th{font-size:10.5px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;padding:11px 14px;border-bottom:2px solid #e2e8f0;text-align:left;white-space:nowrap;}
 .sr-table td{padding:11px 14px;border-bottom:1px solid #f1f5f9;color:var(--text);vertical-align:middle;font-size:13px;}
 .sr-table tbody tr:last-child td{border-bottom:none;}
-.sr-table tbody tr{background:#fff;transition:background .1s;}
-.sr-table tbody tr:hover td{background:#f8fff8;}
+.sr-table tbody tr{background:#fff;transition:background .12s;}
+.sr-table tbody tr:hover td{background:#faf5ff;}
 .sr-table tbody tr.row-selected td{background:#f5f3ff;}
+.sr-pcode{font-weight:700;color:#7c3aed;text-decoration:none;font-family:'JetBrains Mono',monospace;font-size:12.5px;}
+.sr-pcode:hover{text-decoration:underline;}
 
 /* Checkbox */
 .row-cb{width:16px;height:16px;accent-color:#7c3aed;cursor:pointer;border-radius:3px;}
 .row-check{width:44px;padding-left:16px !important;}
 
-/* Selection bar */
-.sel-bar{display:none;align-items:center;gap:10px;padding:10px 16px;background:#f5f3ff;border-bottom:2px solid #7c3aed;flex-wrap:wrap;}
+/* ============ SELECTION BAR ============ */
+.sel-bar{display:none;align-items:center;gap:10px;padding:11px 16px;background:#f5f3ff;border-bottom:2px solid #7c3aed;flex-wrap:wrap;}
 .sel-bar.show{display:flex;}
 .sel-bar-txt{font-size:.84rem;font-weight:700;color:#7c3aed;}
-.btn-send{display:inline-flex;align-items:center;gap:6px;padding:7px 18px;background:#7c3aed;color:#fff;border:none;border-radius:8px;font-size:.82rem;font-weight:700;cursor:pointer;transition:background .15s;}
-.btn-send:hover{background:#6d28d9;}
+.btn-send{display:inline-flex;align-items:center;gap:7px;padding:8px 19px;background:linear-gradient(180deg,#8b5cf6,#6d28d9);color:#fff;border:none;border-radius:99px;font-size:.82rem;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 2px 8px rgba(124,58,237,.3), inset 0 1px 0 rgba(255,255,255,.2);transition:transform .15s, box-shadow .15s;}
+.btn-send:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(124,58,237,.4), inset 0 1px 0 rgba(255,255,255,.2);}
 .btn-send:disabled{opacity:.5;cursor:not-allowed;}
-.btn-deselect{padding:6px 14px;background:#fff;color:#7c3aed;border:1.5px solid #c4b5fd;border-radius:8px;font-size:.82rem;font-weight:600;cursor:pointer;}
-.btn-deselect:hover{background:#f5f3ff;}
+.btn-deselect{padding:7px 15px;background:#fff;color:#7c3aed;border:1.5px solid #c4b5fd;border-radius:99px;font-size:.82rem;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s;}
+.btn-deselect:hover{background:#ede9fe;}
 
-/* Status badge */
-.badge{display:inline-block;padding:2px 9px;border-radius:100px;font-size:.71rem;font-weight:700;}
-.tbl-action-btn{width:30px;height:30px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;border:none;cursor:pointer;text-decoration:none;transition:background .12s;vertical-align:middle;}
-.tbl-action-btn.view{background:#eff6ff;color:#1d4ed8;}
-.tbl-action-btn.view:hover{background:#dbeafe;}
+/* ============ BADGES + ACTIONS ============ */
+.badge{display:inline-block;padding:2px 10px;border-radius:99px;font-size:.71rem;font-weight:700;}
+.tbl-action-btn{width:30px;height:30px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;border:1px solid transparent;cursor:pointer;text-decoration:none;transition:all .12s;vertical-align:middle;}
+.tbl-action-btn:hover{transform:translateY(-1px);}
+.tbl-action-btn.view{background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe;}
+.tbl-action-btn.view:hover{background:#dbeafe;border-color:#93c5fd;}
+.tbl-action-btn.label{background:#f5f3ff;color:#6d28d9;border-color:#ddd6fe;margin-left:4px;}
+.tbl-action-btn.label:hover{background:#ede9fe;border-color:#c4b5fd;}
 
-/* Empty */
+/* ============ EMPTY ============ */
 .empty-wrap{text-align:center;padding:64px 24px;}
-.empty-icon{font-size:3rem;margin-bottom:12px;}
+.empty-icon{display:flex;justify-content:center;margin-bottom:14px;color:#cbd5e1;}
 .empty-title{font-size:1.1rem;font-weight:700;color:var(--text);margin-bottom:6px;}
 .empty-sub{font-size:.84rem;color:var(--text3);}
 
-/* Pagination */
-.pg-wrap{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;padding:12px 16px;border-top:1px solid var(--border);background:#fafbfc;}
-.pg-info{font-size:.8rem;color:var(--text3);}
-.pg-btns{display:flex;gap:4px;}
-.pg-btn{padding:5px 12px;border-radius:7px;border:1px solid var(--border);background:#fff;font-size:.8rem;font-weight:600;color:var(--text);cursor:pointer;text-decoration:none;transition:all .12s;}
-.pg-btn:hover{background:#f1f5f9;}
-.pg-btn.active{background:#7c3aed;color:#fff;border-color:#7c3aed;}
+/* ============ PAGINATION ============ */
+.pg-wrap{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;padding:13px 16px;border-top:1.5px solid #e2e8f0;background:#f8fafc;}
+.pg-info{font-size:.8rem;color:var(--text3);font-weight:600;}
+.pg-btns{display:flex;gap:5px;}
+.pg-btn{padding:6px 13px;border-radius:99px;border:1.5px solid #e2e8f0;background:#fff;font-size:.8rem;font-weight:700;color:var(--text);cursor:pointer;text-decoration:none;transition:all .12s;}
+.pg-btn:hover{background:#f5f3ff;border-color:#c4b5fd;color:#6d28d9;}
+.pg-btn.active{background:linear-gradient(180deg,#8b5cf6,#6d28d9);color:#fff;border-color:transparent;}
 .pg-btn.disabled{opacity:.4;pointer-events:none;}
 
-/* ── Modal ── */
-.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center;}
+/* ============ MODAL ============ */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:1000;align-items:center;justify-content:center;backdrop-filter:blur(2px);}
 .modal-bg.open{display:flex;}
-.modal-box{background:#fff;border-radius:16px;width:820px;max-width:96vw;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 24px 64px rgba(0,0,0,.22);overflow:visible;}
-.modal-hdr{display:flex;align-items:center;justify-content:space-between;padding:16px 22px;border-bottom:1px solid var(--border);flex-shrink:0;}
-.modal-hdr h3{font-size:1rem;font-weight:800;color:var(--text);margin:0;}
-.modal-close{width:30px;height:30px;border-radius:7px;border:none;background:#f1f5f9;cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center;color:var(--text2);}
-.modal-close:hover{background:#fee2e2;color:#dc2626;}
+.modal-box{background:#fff;border-radius:16px;width:820px;max-width:96vw;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 24px 64px rgba(15,23,42,.25);overflow:visible;}
+.modal-hdr{display:flex;align-items:center;justify-content:space-between;padding:16px 22px;border-bottom:1.5px solid #e2e8f0;flex-shrink:0;}
+.modal-hdr h3{font-size:1rem;font-weight:800;color:var(--text);margin:0;display:inline-flex;align-items:center;gap:8px;}
+.modal-hdr h3 svg{color:#7c3aed;flex:0 0 auto;}
+.modal-close{width:30px;height:30px;border-radius:99px;border:1px solid #e2e8f0;background:#f8fafc;cursor:pointer;font-size:1rem;line-height:1;display:flex;align-items:center;justify-content:center;color:var(--text2);transition:all .15s;}
+.modal-close:hover{background:#ef4444;border-color:#ef4444;color:#fff;}
 .modal-body{padding:16px 22px;overflow-y:auto;overflow-x:visible;flex:1;}
-.modal-footer{display:flex;gap:8px;justify-content:flex-end;padding:14px 22px;border-top:1px solid var(--border);background:#fafbfc;flex-shrink:0;}
-.modal-summary{background:#f5f3ff;border:1px solid #ede9fe;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:.84rem;color:#5b21b6;font-weight:600;}
+.modal-footer{display:flex;gap:8px;justify-content:flex-end;padding:14px 22px;border-top:1.5px solid #e2e8f0;background:#f8fafc;flex-shrink:0;border-radius:0 0 16px 16px;}
+.modal-summary{background:#f5f3ff;border:1px solid #ede9fe;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:.84rem;color:#5b21b6;font-weight:600;}
 .modal-proj-list{margin-bottom:14px;}
 
 /* Row-wise card per project */
-.modal-proj-item{background:#fff;border:1.5px solid #ede9fe;border-radius:10px;margin-bottom:10px;overflow:visible;}
+.modal-proj-item{background:#fff;border:1.5px solid #ede9fe;border-radius:12px;margin-bottom:10px;overflow:visible;}
 .modal-proj-item:last-child{margin-bottom:0;}
-/* Info header strip */
-.proj-info-strip{display:grid;grid-template-columns:140px 1fr 160px;gap:0;background:#f5f3ff;border-bottom:1px solid #ede9fe;}
+.proj-info-strip{display:grid;grid-template-columns:140px 1fr 160px;gap:0;background:#f5f3ff;border-bottom:1px solid #ede9fe;border-radius:12px 12px 0 0;}
 .proj-info-cell{padding:8px 12px;border-right:1px solid #ede9fe;}
 .proj-info-cell:last-child{border-right:none;}
-.proj-info-lbl{font-size:.68rem;font-weight:700;color:#7c3aed;text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px;}
+.proj-info-lbl{font-size:.68rem;font-weight:800;color:#7c3aed;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px;}
 .proj-info-val{font-size:.82rem;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-/* Input row */
-.proj-input-row{display:grid;grid-template-columns:1fr 1fr 1.4fr;gap:0;background:#fff;overflow:visible;}
+.proj-input-row{display:grid;grid-template-columns:1fr 1fr 1.4fr;gap:0;background:#fff;overflow:visible;border-radius:0 0 12px 12px;}
 .proj-input-cell{padding:10px 12px;border-right:1px solid #f1f5f9;}
 .proj-input-cell:last-child{border-right:none;}
-.proj-input-lbl{font-size:.68rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;}
+.proj-input-lbl{font-size:.68rem;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;}
 
-.modal-proj-code{font-weight:700;color:#7c3aed;font-family:monospace;font-size:.8rem;}
-.proj-remove-btn{width:24px;height:24px;border-radius:6px;border:none;background:#fee2e2;color:#dc2626;cursor:pointer;font-size:.85rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .12s;}
-.proj-remove-btn:hover{background:#fecaca;}
-.modal-input{width:100%;padding:6px 10px;border:1.5px solid #e2e8f0;border-radius:7px;font-size:.82rem;font-family:inherit;outline:none;background:#fafbfc;transition:border .15s;box-sizing:border-box;}
+.modal-proj-code{font-weight:700;color:#7c3aed;font-family:'JetBrains Mono',monospace;font-size:.8rem;}
+.proj-remove-btn{width:24px;height:24px;border-radius:99px;border:1px solid #fecaca;background:#fef2f2;color:#dc2626;cursor:pointer;font-size:.85rem;line-height:1;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .12s;}
+.proj-remove-btn:hover{background:#fee2e2;border-color:#fca5a5;}
+.modal-input{width:100%;padding:7px 11px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:.82rem;font-family:inherit;outline:none;background:#fff;transition:border-color .15s, box-shadow .15s;box-sizing:border-box;}
 .modal-input.field-error{border-color:#ef4444!important;background:#fff5f5!important;}
 .field-err-msg{font-size:.7rem;color:#ef4444;font-weight:600;margin-top:3px;display:none;}
 .field-err-msg.show{display:block;}
-.modal-input:focus{border-color:#7c3aed;background:#fff;}
+.modal-input:focus{border-color:#c4b5fd;box-shadow:0 0 0 3px rgba(124,58,237,.1);}
 .autocomplete-wrap{position:relative;}
-.ac-dropdown{display:none;position:absolute;top:calc(100% + 2px);left:0;right:0;background:#fff;border:1.5px solid #c4b5fd;border-radius:7px;box-shadow:0 8px 24px rgba(0,0,0,.15);z-index:9999;max-height:160px;overflow-y:auto;}
+.ac-dropdown{display:none;position:absolute;top:calc(100% + 2px);left:0;right:0;background:#fff;border:1.5px solid #c4b5fd;border-radius:9px;box-shadow:0 8px 24px rgba(15,23,42,.15);z-index:9999;max-height:160px;overflow-y:auto;}
 .ac-dropdown.show{display:block;}
 .ac-item{padding:7px 12px;font-size:.82rem;cursor:pointer;transition:background .1s;}
 .ac-item:hover{background:#f5f3ff;color:#7c3aed;}
-.notes-input{width:100%;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:.84rem;font-family:inherit;resize:vertical;min-height:56px;outline:none;transition:border .15s;}
-.notes-input:focus{border-color:#7c3aed;}
-.btn-cancel{padding:8px 18px;background:#f1f5f9;color:var(--text2);border:none;border-radius:8px;font-size:.84rem;font-weight:600;cursor:pointer;}
-.btn-confirm{padding:8px 22px;background:#7c3aed;color:#fff;border:none;border-radius:8px;font-size:.84rem;font-weight:700;cursor:pointer;}
-.btn-confirm:hover{background:#6d28d9;}
+.notes-input{width:100%;padding:9px 13px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:.84rem;font-family:inherit;resize:vertical;min-height:56px;outline:none;transition:border-color .15s, box-shadow .15s;box-sizing:border-box;}
+.notes-input:focus{border-color:#c4b5fd;box-shadow:0 0 0 3px rgba(124,58,237,.1);}
+.btn-cancel{padding:9px 18px;background:#fff;color:var(--text2);border:1.5px solid #e2e8f0;border-radius:99px;font-size:.84rem;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;}
+.btn-cancel:hover{background:#f5f3ff;border-color:#c4b5fd;color:#6d28d9;}
+.btn-confirm{padding:9px 22px;background:linear-gradient(180deg,#8b5cf6,#6d28d9);color:#fff;border:none;border-radius:99px;font-size:.84rem;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 2px 8px rgba(124,58,237,.3), inset 0 1px 0 rgba(255,255,255,.2);transition:transform .15s, box-shadow .15s;text-decoration:none;}
+.btn-confirm:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(124,58,237,.4), inset 0 1px 0 rgba(255,255,255,.2);}
 .btn-confirm:disabled{opacity:.5;cursor:not-allowed;}
 
-/* ── Token Success Modal ── */
+/* ============ TOKEN SUCCESS ============ */
 .token-success{text-align:center;padding:10px 0 6px;}
-.token-badge{display:inline-block;background:#f0fdf4;border:2px solid #bbf7d0;color:#166534;padding:10px 28px;border-radius:12px;font-size:1.4rem;font-weight:800;letter-spacing:.05em;margin:10px 0;}
+.token-badge{display:inline-block;background:#f0fdf4;border:2px solid #bbf7d0;color:#166534;padding:10px 28px;border-radius:14px;font-size:1.4rem;font-weight:800;letter-spacing:.05em;margin:10px 0;font-family:'JetBrains Mono',monospace;}
 
 @media(max-width:767px){
   .grid-toolbar{flex-direction:column;align-items:stretch;padding:10px 12px;}
@@ -120,7 +138,7 @@
   .sr-table td{display:block;padding:3px 0;border:none;font-size:12.5px;}
   .sr-table td::before{content:attr(data-label);font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;display:block;margin-bottom:2px;}
 }
-/* ── Print Styles ── */
+/* ============ PRINT ============ */
 @media print {
   body * { visibility: hidden; }
   #printArea, #printArea * { visibility: visible; }
@@ -130,8 +148,6 @@
 .print-table th { background: #f8fafc; font-size: 11px; font-weight: 700; text-transform: uppercase; padding: 8px 10px; border: 1px solid #cbd5e1; text-align: left; }
 .print-table td { padding: 7px 10px; border: 1px solid #cbd5e1; font-size: 12px; vertical-align: middle; }
 .print-table tbody tr:nth-child(even) td { background: #f8fafc; }
-.btn-print { display: inline-flex; align-items: center; gap: 6px; padding: 7px 16px; background: #0f172a; color: #fff; border: none; border-radius: 8px; font-size: .82rem; font-weight: 700; cursor: pointer; text-decoration: none; transition: background .15s; }
-.btn-print:hover { background: #1e293b; color: #fff; }
 </style>
 {% endblock %}
 
@@ -139,21 +155,25 @@
 {% block content %}
 <!-- Header -->
 <div class="sr-hdr">
-  <div style="display:flex;align-items:center;gap:10px;">
-    <span style="font-size:1.5rem;">🧪</span>
+  <div style="display:flex;align-items:center;gap:11px;">
+    <span class="sr-ic">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2v6a2 2 0 0 0 .245.96l5.51 10.08A2 2 0 0 1 18 22H6a2 2 0 0 1-1.755-2.96l5.51-10.08A2 2 0 0 0 10 8V2"/><path d="M6.453 15h11.094"/><path d="M8.5 2h7"/></svg>
+    </span>
     <div>
-      <h2 style="font-size:1.1rem;font-weight:800;color:var(--text);margin:0;">Sample Ready</h2>
-      <p style="font-size:.78rem;color:var(--text3);margin:0;">NPD projects jinka sample ready hai — select karke office bhejo</p>
+      <h2 style="font-size:1.1rem;font-weight:800;color:var(--text);margin:0;letter-spacing:-.01em;">Sample Ready</h2>
+      <p style="font-size:.78rem;color:var(--text3);margin:0;">NPD projects jinka sample ready hai - select karke office bhejo</p>
     </div>
-    <span class="sr-count-badge">✅ {{ total }} Project{{ 's' if total != 1 }}</span>
+    <span class="sr-count-badge">{{ total }} Project{{ 's' if total != 1 }}</span>
   </div>
   <!-- Dispatch Tokens History link -->
   <div style="display:flex;gap:8px;align-items:center;">
-    <a href="/npd/sample-history" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:#fff;border:1.5px solid var(--border);border-radius:8px;font-size:.82rem;font-weight:600;color:var(--text2);text-decoration:none;">
-      📋 Sample History
+    <a href="/npd/sample-history" class="btn-history">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>
+      Sample History
     </a>
     <button class="btn-print" onclick="printSampleList()">
-      🖨️ Print List
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+      Print List
     </button>
   </div>
 </div>
@@ -164,12 +184,12 @@
   <form method="get" id="srSearchForm">
     <div class="grid-toolbar">
       <div class="grid-search-wrap" style="flex:1;max-width:320px;">
-        <svg width="14" height="14" fill="none" stroke="#94a3b8" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <svg width="14" height="14" fill="none" stroke="#94a3b8" stroke-width="2.5" viewBox="0 0 24 24" style="flex-shrink:0;"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
         <input type="text" name="q" value="{{ q }}" placeholder="Search project, client, product..." id="srSearchInput">
-        {% if q %}<a href="?" style="color:#94a3b8;text-decoration:none;font-size:.85rem;">✕</a>{% endif %}
+        {% if q %}<a href="?" style="color:#94a3b8;text-decoration:none;font-size:.9rem;line-height:1;">&times;</a>{% endif %}
       </div>
-      <button type="submit" style="padding:7px 16px;background:#7c3aed;color:#fff;border:none;border-radius:8px;font-size:.82rem;font-weight:700;cursor:pointer;">Search</button>
-      {% if q %}<a href="?" style="padding:7px 14px;background:#f1f5f9;color:var(--text2);border-radius:8px;font-size:.82rem;font-weight:600;text-decoration:none;">Clear</a>{% endif %}
+      <button type="submit" class="btn-search">Search</button>
+      {% if q %}<a href="?" class="btn-clear-q">Clear</a>{% endif %}
     </div>
   </form>
 
@@ -177,9 +197,10 @@
   <div class="sel-bar" id="selBar">
     <span class="sel-bar-txt" id="selCount">0 selected</span>
     <button class="btn-send" id="btnSendOffice" onclick="openSendModal()">
-      🏢 Send to Office
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></svg>
+      Send to Office
     </button>
-    <button class="btn-deselect" onclick="deselectAll()">✕ Deselect All</button>
+    <button class="btn-deselect" onclick="deselectAll()">&times; Deselect All</button>
   </div>
 
   {% if projects.items %}
@@ -218,24 +239,24 @@
           <span style="font-size:.78rem;color:var(--text3);font-weight:600;">{{ (projects.page-1)*25 + loop.index }}</span>
         </td>
         <td data-label="Project No">
-          <a href="/npd/projects/{{ p.id }}" style="font-weight:700;color:#7c3aed;text-decoration:none;font-family:monospace;font-size:12.5px;">{{ p.code or '—' }}</a>
+          <a href="/npd/projects/{{ p.id }}" class="sr-pcode">{{ p.code or '-' }}</a>
         </td>
         <td data-label="Product" style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
           <span style="font-weight:600;" title="{{ p.product_name }}">{{ p.product_name }}</span>
         </td>
         <td data-label="Client">
-          <div style="font-weight:600;font-size:12.5px;">{{ p.client_name or '—' }}</div>
+          <div style="font-weight:600;font-size:12.5px;">{{ p.client_name or '-' }}</div>
           {% if p.client_company %}<div style="font-size:11px;color:var(--text3);">{{ p.client_company }}</div>{% endif %}
         </td>
         <td data-label="Category">
           {% if p.product_category %}
-          <span style="background:#f5f3ff;color:#7c3aed;padding:2px 8px;border-radius:6px;font-size:.72rem;font-weight:700;">{{ p.product_category }}</span>
-          {% else %}<span style="color:var(--text3);">—</span>{% endif %}
+          <span style="background:#f5f3ff;color:#7c3aed;padding:2px 9px;border-radius:99px;font-size:.72rem;font-weight:700;">{{ p.product_category }}</span>
+          {% else %}<span style="color:var(--text3);">-</span>{% endif %}
         </td>
         <td data-label="Priority">
           {% set pc={'Urgent':'#ef4444','High':'#f97316','Normal':'#22c55e','Low':'#6b7280'} %}
           {% set pv=p.priority or 'Normal' %}
-          <span style="background:{{ pc.get(pv,'#6b7280') }}18;color:{{ pc.get(pv,'#6b7280') }};padding:2px 9px;border-radius:100px;font-size:.72rem;font-weight:700;">{{ pv }}</span>
+          <span style="background:{{ pc.get(pv,'#6b7280') }}18;color:{{ pc.get(pv,'#6b7280') }};padding:2px 10px;border-radius:99px;font-size:.72rem;font-weight:700;">{{ pv }}</span>
         </td>
         <td data-label="Status">
           <span class="badge" style="background:{{ p.status_color }}22;color:{{ p.status_color }};">{{ p.status_label }}</span>
@@ -243,16 +264,15 @@
         <td data-label="Start Date">
           {% if p.project_start_date %}
           <span style="font-size:.8rem;color:var(--text2);">{{ p.project_start_date.strftime('%d %b %Y') }}</span>
-          {% else %}<span style="color:var(--text3);">—</span>{% endif %}
+          {% else %}<span style="color:var(--text3);">-</span>{% endif %}
         </td>
         <td data-label="Action">
           <a href="/npd/projects/{{ p.id }}" class="tbl-action-btn view" title="View Project">
             <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
           </a>
           <a href="/npd/sample-label/{{ p.id }}" target="_blank"
-             class="tbl-action-btn" title="Print Label"
-             style="background:#eff6ff;color:#1d4ed8;margin-left:4px;text-decoration:none;">
-            🏷️
+             class="tbl-action-btn label" title="Print Label">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/></svg>
           </a>
         </td>
       </tr>
@@ -262,21 +282,23 @@
 
   {% if projects.pages > 1 %}
   <div class="pg-wrap">
-    <span class="pg-info">Showing {{ (projects.page-1)*25+1 }}–{{ [projects.page*25, projects.total]|min }} of {{ projects.total }}</span>
+    <span class="pg-info">Showing {{ (projects.page-1)*25+1 }}-{{ [projects.page*25, projects.total]|min }} of {{ projects.total }}</span>
     <div class="pg-btns">
-      <a class="pg-btn {% if not projects.has_prev %}disabled{% endif %}" href="?page={{ projects.page-1 }}&q={{ q }}">← Prev</a>
+      <a class="pg-btn {% if not projects.has_prev %}disabled{% endif %}" href="?page={{ projects.page-1 }}&q={{ q }}">&larr; Prev</a>
       {% for pg in projects.iter_pages(left_edge=1,right_edge=1,left_current=2,right_current=2) %}
         {% if pg %}<a class="pg-btn {% if pg==projects.page %}active{% endif %}" href="?page={{ pg }}&q={{ q }}">{{ pg }}</a>
-        {% else %}<span class="pg-btn disabled">…</span>{% endif %}
+        {% else %}<span class="pg-btn disabled">...</span>{% endif %}
       {% endfor %}
-      <a class="pg-btn {% if not projects.has_next %}disabled{% endif %}" href="?page={{ projects.page+1 }}&q={{ q }}">Next →</a>
+      <a class="pg-btn {% if not projects.has_next %}disabled{% endif %}" href="?page={{ projects.page+1 }}&q={{ q }}">Next &rarr;</a>
     </div>
   </div>
   {% endif %}
 
   {% else %}
   <div class="empty-wrap">
-    <div class="empty-icon">🧪</div>
+    <div class="empty-icon">
+      <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2v6a2 2 0 0 0 .245.96l5.51 10.08A2 2 0 0 1 18 22H6a2 2 0 0 1-1.755-2.96l5.51-10.08A2 2 0 0 0 10 8V2"/><path d="M6.453 15h11.094"/><path d="M8.5 2h7"/></svg>
+    </div>
     <div class="empty-title">Koi Sample Ready nahi hai</div>
     <div class="empty-sub">
       {% if q %}"{{ q }}" ke liye koi result nahi mila. <a href="?" style="color:#7c3aed;">Clear search</a>
@@ -288,32 +310,38 @@
 </div><!-- /sr-table-wrap -->
 
 
-<!-- ══ Send to Office Modal ══ -->
+<!-- ==== Send to Office Modal ==== -->
 <div class="modal-bg" id="sendModal">
   <div class="modal-box">
     <div class="modal-hdr">
-      <h3>🏢 Send to Office</h3>
-      <button class="modal-close" onclick="closeSendModal()">✕</button>
+      <h3>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></svg>
+        Send to Office
+      </h3>
+      <button class="modal-close" onclick="closeSendModal()">&times;</button>
     </div>
     <div class="modal-body">
       <div class="modal-summary" id="modalSummary"></div>
       <div class="modal-proj-list" id="modalProjList"></div>
-      <label style="font-size:.8rem;font-weight:700;color:var(--text2);display:block;margin-bottom:5px;">Notes (optional)</label>
+      <label style="font-size:.78rem;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:5px;">Notes (optional)</label>
       <textarea class="notes-input" id="dispatchNotes" placeholder="Koi notes likhna ho to..."></textarea>
     </div>
     <div class="modal-footer">
       <button class="btn-cancel" onclick="closeSendModal()">Cancel</button>
-      <button class="btn-confirm" id="btnConfirmSend" onclick="confirmSend()">✅ Confirm & Generate Token</button>
+      <button class="btn-confirm" id="btnConfirmSend" onclick="confirmSend()">Confirm &amp; Generate Token</button>
     </div>
   </div>
 </div>
 
-<!-- ══ Token Success Modal ══ -->
+<!-- ==== Token Success Modal ==== -->
 <div class="modal-bg" id="tokenModal">
   <div class="modal-box">
     <div class="modal-hdr">
-      <h3>✅ Token Generated!</h3>
-      <button class="modal-close" onclick="closeTokenModal()">✕</button>
+      <h3>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        Token Generated!
+      </h3>
+      <button class="modal-close" onclick="closeTokenModal()">&times;</button>
     </div>
     <div class="modal-body token-success">
       <p style="color:var(--text2);font-size:.9rem;margin-bottom:6px;">Samples successfully sent to office.</p>
@@ -322,7 +350,7 @@
       <p style="font-size:.8rem;color:var(--text3);margin-top:6px;" id="tokenCount"></p>
     </div>
     <div class="modal-footer" style="justify-content:center;gap:12px;">
-      <a id="tokenHistoryLink" href="/npd/sample-history" class="btn-confirm" style="text-decoration:none;">🏷️ View All Tokens</a>
+      <a id="tokenHistoryLink" href="/npd/sample-history" class="btn-confirm">View All Tokens</a>
       <button class="btn-cancel" onclick="closeTokenModal()">Close</button>
     </div>
   </div>
@@ -336,7 +364,7 @@ const RD_MAP = {{ rd_members_map | tojson }};
 // All R&D employees (fallback when project has no RD assigned)
 const RD_ALL = {{ rd_all_names | tojson }};
 
-// ── Selection helpers ──
+// -- Selection helpers --
 function updateSelection() {
   const cbs  = document.querySelectorAll('.proj-cb:checked');
   const all  = document.querySelectorAll('.proj-cb');
@@ -368,7 +396,7 @@ function deselectAll() {
   updateSelection();
 }
 
-// ── Send to Office Modal ──
+// -- Send to Office Modal --
 function makeAC(id, pid, prefix, customList) {
   const wrap = document.createElement('div');
   wrap.className = 'autocomplete-wrap';
@@ -392,16 +420,16 @@ function makeAC(id, pid, prefix, customList) {
 
 function buildProjectRow(cb) {
   const pid    = cb.value;
-  const code   = cb.dataset.code   || '—';
+  const code   = cb.dataset.code   || '-';
   const name   = cb.dataset.name   || '';
-  const client = cb.dataset.client || '—';
+  const client = cb.dataset.client || '-';
 
   // Outer card
   const card = document.createElement('div');
   card.className = 'modal-proj-item';
   card.id = 'dispatch-card-' + pid;
 
-  // ── Row 1: Info strip (autofill) ──
+  // -- Row 1: Info strip (autofill) --
   const strip = document.createElement('div');
   strip.className = 'proj-info-strip';
   strip.innerHTML =
@@ -412,7 +440,7 @@ function buildProjectRow(cb) {
     '<div class="proj-info-cell" style="display:flex;align-items:center;justify-content:space-between;">' +
       '<div><div class="proj-info-lbl">Client Name</div>' +
       '<div class="proj-info-val">' + client + '</div></div>' +
-      '<button class="proj-remove-btn" data-pid="' + pid + '" title="Remove from dispatch" type="button">✕</button>' +
+      '<button class="proj-remove-btn" data-pid="' + pid + '" title="Remove from dispatch" type="button">&times;</button>' +
     '</div>';
   // Attach remove event via addEventListener (no inline onclick = no quote issues)
   strip.querySelector('.proj-remove-btn').addEventListener('click', function() {
@@ -420,7 +448,7 @@ function buildProjectRow(cb) {
   });
   card.appendChild(strip);
 
-  // ── Row 2: Input row ──
+  // -- Row 2: Input row --
   const inputRow = document.createElement('div');
   inputRow.className = 'proj-input-row';
 
@@ -431,7 +459,7 @@ function buildProjectRow(cb) {
   htCell.appendChild(makeAC('ht_' + pid, pid, 'ht'));
   inputRow.appendChild(htCell);
 
-  // Submitted By cell — auto-fill from R&D member, dropdown shows only RD members
+  // Submitted By cell - auto-fill from R&D member, dropdown shows only RD members
   const sbCell = document.createElement('div');
   sbCell.className = 'proj-input-cell';
   sbCell.innerHTML = '<div class="proj-input-lbl">Submitted By <span style="color:#ef4444;">*</span></div>';
@@ -467,7 +495,7 @@ function openSendModal() {
   if (!selected.length) return;
 
   document.getElementById('modalSummary').innerHTML =
-    '📦 <strong>' + selected.length + ' project' + (selected.length > 1 ? 's' : '') +
+    '<strong>' + selected.length + ' project' + (selected.length > 1 ? 's' : '') +
     '</strong> office bheje jayenge. Ek token generate hoga.';
 
   const list = document.getElementById('modalProjList');
@@ -496,7 +524,7 @@ function removeFromDispatch(pid) {
   if (remaining === 0) {
     closeSendModal();
   } else {
-    sum.innerHTML = '📦 <strong>' + remaining + ' project' + (remaining > 1 ? 's' : '') + '</strong> office bheje jayenge. Ek token generate hoga.';
+    sum.innerHTML = '<strong>' + remaining + ' project' + (remaining > 1 ? 's' : '') + '</strong> office bheje jayenge. Ek token generate hoga.';
   }
 }
 
@@ -505,7 +533,7 @@ async function confirmSend() {
   const selected    = selectedCbs.map(cb => cb.value);
   const notes       = document.getElementById('dispatchNotes').value.trim();
 
-  // ── Validation ──
+  // -- Validation --
   let hasError = false;
   // Clear previous errors
   document.querySelectorAll('.modal-input.field-error').forEach(el => el.classList.remove('field-error'));
@@ -560,7 +588,7 @@ async function confirmSend() {
   });
   const btn       = document.getElementById('btnConfirmSend');
   btn.disabled    = true;
-  btn.textContent = 'Sending…';
+  btn.textContent = 'Sending...';
 
   try {
     const res  = await fetch('/npd/sample-ready/send-to-office', {
@@ -583,7 +611,7 @@ async function confirmSend() {
     alert('Network error. Please try again.');
   } finally {
     btn.disabled    = false;
-    btn.textContent = '✅ Confirm & Generate Token';
+    btn.textContent = 'Confirm & Generate Token';
   }
 }
 
@@ -591,7 +619,7 @@ function closeTokenModal() {
   document.getElementById('tokenModal').classList.remove('open');
 }
 
-// ── Autocomplete ──
+// -- Autocomplete --
 function showAC(inp, fieldId) {
   const q   = inp.value.toLowerCase().trim();
   const dd  = document.getElementById('acd_' + fieldId);
@@ -602,7 +630,7 @@ function showAC(inp, fieldId) {
   if (inp.dataset.customList) {
     try {
       const cl = JSON.parse(inp.dataset.customList);
-      sourceList = cl;   // could be empty — intentionally restrict
+      sourceList = cl;   // could be empty - intentionally restrict
       hasCustomList = true;
     } catch(e) {}
   }
@@ -647,7 +675,7 @@ document.getElementById('srSearchInput').addEventListener('keydown', function(e)
   if(e.key==='Enter') document.getElementById('srSearchForm').submit();
 });
 
-// ── Print Function ──
+// -- Print Function --
 function printSampleList() {
   const today = new Date();
   const dateStr = today.toLocaleDateString('en-IN', { day:'2-digit', month:'2-digit', year:'numeric' });
@@ -660,13 +688,13 @@ function printSampleList() {
   rows.forEach(function(tr) {
     const tds = tr.querySelectorAll('td');
     if (!tds.length) return;
-    const projectNo = tds[2] ? tds[2].innerText.trim() : '—';
-    const productName = tds[3] ? tds[3].innerText.trim() : '—';
-    const client = tds[4] ? tds[4].innerText.trim() : '—';
-    const category = tds[5] ? tds[5].innerText.trim() : '—';
-    const priority = tds[6] ? tds[6].innerText.trim() : '—';
-    const status = tds[7] ? tds[7].innerText.trim() : '—';
-    const startDate = tds[8] ? tds[8].innerText.trim() : '—';
+    const projectNo = tds[2] ? tds[2].innerText.trim() : '-';
+    const productName = tds[3] ? tds[3].innerText.trim() : '-';
+    const client = tds[4] ? tds[4].innerText.trim() : '-';
+    const category = tds[5] ? tds[5].innerText.trim() : '-';
+    const priority = tds[6] ? tds[6].innerText.trim() : '-';
+    const status = tds[7] ? tds[7].innerText.trim() : '-';
+    const startDate = tds[8] ? tds[8].innerText.trim() : '-';
     tableRows += '<tr>' +
       '<td style="text-align:center;">' + sr++ + '</td>' +
       '<td>' + projectNo + '</td>' +
@@ -710,7 +738,7 @@ function printSampleList() {
   setTimeout(function(){ pw.print(); }, 400);
 }
 
-// ── Print Project Label (40mm x 20mm, 2 per row, 3 copies) ──
+// -- Print Project Label (40mm x 20mm, 2 per row, 3 copies) --
 function printProjectLabel(productName, projectNo) {
   var copies = 3;
 

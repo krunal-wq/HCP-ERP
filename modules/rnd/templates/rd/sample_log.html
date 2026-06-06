@@ -5,78 +5,84 @@
 
 {% block extra_css %}
 <style>
-/* ── Summary cards ─────────────────────────── */
+/* ============ SUMMARY CARDS ============ */
 .sl-summary{display:grid;grid-template-columns:repeat(4, 1fr);gap:12px;margin-bottom:16px;}
 @media(max-width:800px){.sl-summary{grid-template-columns:repeat(2, 1fr);}}
-.sl-stat{background:var(--white);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px 16px;display:flex;align-items:center;gap:12px;}
-.sl-stat .sl-ic{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.25rem;}
+.sl-stat{background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 1px 3px rgba(15,23,42,.05), 0 4px 16px rgba(15,23,42,.04);transition:transform .15s, box-shadow .15s;}
+.sl-stat:hover{transform:translateY(-1px);box-shadow:0 2px 6px rgba(15,23,42,.06), 0 8px 24px rgba(15,23,42,.07);}
+.sl-stat .sl-ic{width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .sl-stat .sl-val{font-size:1.35rem;font-weight:800;color:var(--text);line-height:1;}
-.sl-stat .sl-lbl{font-size:.72rem;color:var(--text3);font-weight:600;text-transform:uppercase;margin-top:4px;letter-spacing:.3px;}
+.sl-stat .sl-lbl{font-size:.7rem;color:#94a3b8;font-weight:800;text-transform:uppercase;margin-top:4px;letter-spacing:.05em;}
 .sl-stat.t-total .sl-ic{background:#eef2ff;color:#4338ca;}
 .sl-stat.t-prog .sl-ic {background:#dcfce7;color:#16a34a;}
 .sl-stat.t-fin .sl-ic  {background:#dbeafe;color:#2563eb;}
 .sl-stat.t-new .sl-ic  {background:#f1f5f9;color:#64748b;}
 
-/* ── Filter bar ───────────────────────────── */
-.sl-filters{background:var(--white);border:1px solid var(--border);border-radius:var(--r-lg);padding:12px 14px;margin-bottom:14px;display:grid;grid-template-columns:2fr 1.2fr 1.2fr 1fr 1fr auto;gap:10px;align-items:end;}
+/* ============ FILTER BAR ============ */
+.sl-filters{background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:13px 15px;margin-bottom:14px;display:grid;grid-template-columns:2fr 1.2fr 1.2fr 1fr 1fr auto;gap:10px;align-items:end;box-shadow:0 1px 3px rgba(15,23,42,.05), 0 4px 16px rgba(15,23,42,.04);}
 @media(max-width:1100px){.sl-filters{grid-template-columns:1fr 1fr 1fr;}}
 @media(max-width:640px){.sl-filters{grid-template-columns:1fr 1fr;}}
 .sl-fg{display:flex;flex-direction:column;gap:4px;}
-.sl-fg label{font-size:.7rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.3px;}
-.sl-fg select,.sl-fg input{padding:.45rem .65rem;border:1px solid var(--border);border-radius:var(--r-sm);font-size:.85rem;background:var(--white);color:var(--text);outline:none;}
-.sl-fg select:focus,.sl-fg input:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-lt);}
-.sl-btn{padding:.5rem 1rem;border-radius:var(--r-sm);font-size:.82rem;font-weight:700;cursor:pointer;border:1px solid var(--border);background:var(--white);color:var(--text);transition:.1s;}
-.sl-btn.primary{background:var(--blue);border-color:var(--blue);color:#fff;}
-.sl-btn.primary:hover{background:#1d4ed8;}
+.sl-fg label{font-size:.68rem;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;}
+.sl-fg select,.sl-fg input{padding:.48rem .8rem;border:1.5px solid #e2e8f0;border-radius:10px;font-size:.85rem;background:#fff;color:var(--text);outline:none;font-family:inherit;transition:border-color .15s, box-shadow .15s;}
+.sl-fg select{appearance:none;padding-right:30px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;cursor:pointer;}
+.sl-fg select:focus,.sl-fg input:focus{border-color:#c4b5fd;box-shadow:0 0 0 3px rgba(124,58,237,.1);}
+.sl-btn{padding:.5rem 1.1rem;border-radius:99px;font-size:.82rem;font-weight:700;cursor:pointer;border:1.5px solid #e2e8f0;background:#fff;color:var(--text);transition:.15s;font-family:inherit;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;}
+.sl-btn.primary{background:linear-gradient(180deg,#8b5cf6,#6d28d9);border-color:transparent;color:#fff;box-shadow:0 2px 8px rgba(124,58,237,.3), inset 0 1px 0 rgba(255,255,255,.2);}
+.sl-btn.primary:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(124,58,237,.4), inset 0 1px 0 rgba(255,255,255,.2);}
 .sl-btn:hover{background:var(--bg);}
+.sl-btn.primary:hover{background:linear-gradient(180deg,#8b5cf6,#6d28d9);}
 
-/* ── Action bar (print buttons) ───────────── */
+/* ============ ACTION BAR (print buttons) ============ */
 .sl-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;}
-.sl-action-btn{display:inline-flex;align-items:center;gap:6px;padding:.55rem 1rem;border-radius:var(--r-sm);font-size:.84rem;font-weight:700;cursor:pointer;border:1px solid var(--border);background:var(--white);color:var(--text);transition:.1s;}
-.sl-action-btn:hover{background:var(--bg);}
-.sl-action-btn.sticker{border-color:#7c3aed;color:#7c3aed;}
-.sl-action-btn.sticker:hover{background:#f5f3ff;}
-.sl-action-btn.a4{border-color:#16a34a;color:#16a34a;}
-.sl-action-btn.a4:hover{background:#f0fdf4;}
-.sl-action-btn:disabled{opacity:.45;cursor:not-allowed;}
+.sl-action-btn{display:inline-flex;align-items:center;gap:7px;padding:.55rem 1.05rem;border-radius:99px;font-size:.84rem;font-weight:700;cursor:pointer;border:1.5px solid #e2e8f0;background:#fff;color:var(--text);transition:.15s;font-family:inherit;}
+.sl-action-btn:hover{background:var(--bg);transform:translateY(-1px);}
+.sl-action-btn.sticker{border-color:#c4b5fd;color:#6d28d9;background:#f5f3ff;}
+.sl-action-btn.sticker:hover{background:#ede9fe;}
+.sl-action-btn.a4{border-color:#86efac;color:#15803d;background:#f0fdf4;}
+.sl-action-btn.a4:hover{background:#dcfce7;}
+.sl-action-btn:disabled{opacity:.45;cursor:not-allowed;transform:none;}
 .sl-sel-hint{font-size:.78rem;color:var(--text3);margin-left:auto;}
 
-/* ── Main table ───────────────────────────── */
-.sl-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;}
-.sl-card-hdr{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--bg);}
-.sl-card-title{font-weight:700;font-size:.95rem;color:var(--text);}
-.sl-card-title .sl-pill{font-size:.68rem;font-weight:700;background:#ede9fe;color:#7c3aed;border-radius:100px;padding:2px 9px;margin-left:6px;}
+/* ============ MAIN TABLE ============ */
+.sl-card{background:#fff;border:1px solid #e2e8f0;border-radius:16px;overflow:hidden;box-shadow:0 1px 3px rgba(15,23,42,.05), 0 4px 16px rgba(15,23,42,.04);}
+.sl-card-hdr{padding:13px 16px;border-bottom:1.5px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;background:#fff;}
+.sl-card-title{font-weight:800;font-size:.95rem;color:var(--text);display:inline-flex;align-items:center;gap:8px;letter-spacing:-.01em;}
+.sl-card-title svg{color:#7c3aed;}
+.sl-card-title .sl-pill{font-size:.68rem;font-weight:800;background:#ede9fe;color:#7c3aed;border-radius:99px;padding:2px 10px;margin-left:2px;}
 .sl-tbl{width:100%;border-collapse:collapse;font-size:.84rem;}
-.sl-tbl thead tr{background:#f8fafc;border-bottom:2px solid #e2e8f0;}
-.sl-tbl th{padding:10px 14px;text-align:left;color:#64748b;font-weight:700;font-size:.72rem;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;}
+.sl-tbl thead tr{background:#fff;border-bottom:2px solid #e2e8f0;}
+.sl-tbl th{padding:11px 14px;text-align:left;color:#94a3b8;font-weight:800;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;}
 .sl-tbl td{padding:11px 14px;border-bottom:1px solid #f1f5f9;color:#374151;vertical-align:middle;}
-.sl-tbl tr:hover td{background:#fafbfc;}
+.sl-tbl tr:hover td{background:#faf5ff;}
 .sl-tbl tr.sl-row-sel td{background:#f5f3ff;}
 .sl-tbl tr:last-child td{border-bottom:none;}
 .sl-tbl .c-right{text-align:right;}
 .sl-tbl .c-center{text-align:center;}
 .sl-cb{width:16px;height:16px;accent-color:#7c3aed;cursor:pointer;}
-.sl-avatar{width:24px;height:24px;border-radius:50%;background:#ede9fe;color:#7c3aed;display:inline-flex;align-items:center;justify-content:center;font-size:.58rem;font-weight:800;flex-shrink:0;}
+.sl-avatar{width:24px;height:24px;border-radius:99px;background:#ede9fe;color:#7c3aed;display:inline-flex;align-items:center;justify-content:center;font-size:.58rem;font-weight:800;flex-shrink:0;}
 .sl-member{display:flex;align-items:center;gap:7px;}
-.sl-variant{background:#ede9fe;color:#7c3aed;border-radius:5px;padding:2px 8px;font-weight:700;font-size:.75rem;display:inline-block;}
-.sl-duration{font-family:'SFMono-Regular',Consolas,monospace;font-weight:700;}
-.sl-status{padding:3px 10px;border-radius:100px;font-size:.7rem;font-weight:700;display:inline-block;border:1px solid;}
-.sl-status.s-finished   {background:rgba(37,99,235,.12); color:#2563eb; border-color:rgba(37,99,235,.28);}
-.sl-status.s-in-progress{background:rgba(22,163,74,.12); color:#16a34a; border-color:rgba(22,163,74,.28);}
-.sl-status.s-not-started{background:rgba(148,163,184,.15);color:#64748b;border-color:rgba(148,163,184,.3);}
-.sl-proj-code{background:#eef2ff;color:#4338ca;border-radius:4px;padding:1px 7px;font-size:.72rem;font-weight:700;font-family:monospace;display:inline-block;margin-right:6px;}
-.sl-saved-code{background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0;border-radius:4px;padding:2px 8px;font-size:.72rem;font-weight:700;font-family:monospace;display:inline-block;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle;}
+.sl-variant{background:#ede9fe;color:#7c3aed;border-radius:6px;padding:2px 9px;font-weight:700;font-size:.75rem;display:inline-block;}
+.sl-duration{font-family:'JetBrains Mono','SFMono-Regular',Consolas,monospace;font-weight:700;}
+.sl-status{padding:3px 11px;border-radius:99px;font-size:.7rem;font-weight:700;display:inline-flex;align-items:center;gap:6px;border:1px solid;}
+.sl-status::before{content:'';width:6px;height:6px;border-radius:99px;background:currentColor;}
+.sl-status.s-finished   {background:rgba(37,99,235,.1); color:#2563eb; border-color:rgba(37,99,235,.25);}
+.sl-status.s-in-progress{background:rgba(22,163,74,.1); color:#16a34a; border-color:rgba(22,163,74,.25);}
+.sl-status.s-not-started{background:rgba(148,163,184,.12);color:#64748b;border-color:rgba(148,163,184,.3);}
+.sl-proj-code{background:#eef2ff;color:#4338ca;border-radius:5px;padding:1px 8px;font-size:.72rem;font-weight:700;font-family:'JetBrains Mono',monospace;display:inline-block;margin-right:6px;}
+.sl-saved-code{background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0;border-radius:6px;padding:2px 8px;font-size:.72rem;font-weight:700;font-family:'JetBrains Mono',monospace;display:inline-block;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle;}
 .sl-empty{text-align:center;padding:3.5rem 1rem;color:var(--text3);}
-.sl-empty .e-ic{font-size:2.25rem;margin-bottom:.5rem;opacity:.6;}
+.sl-empty .e-ic{display:flex;justify-content:center;margin-bottom:.7rem;color:#cbd5e1;}
 .sl-empty .e-t{font-weight:700;color:var(--text2);margin-bottom:.25rem;}
 .sl-empty .e-s{font-size:.82rem;}
-.sl-bucket-note{font-size:.75rem;font-weight:500;background:#fef3c7;border:1px solid #fde68a;color:#92400e;border-radius:var(--r-sm);padding:8px 12px;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+.sl-bucket-note{font-size:.75rem;font-weight:500;background:#fef3c7;border:1px solid #fde68a;color:#92400e;border-radius:10px;padding:8px 13px;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+.sl-bucket-note::before{content:'';width:7px;height:7px;border-radius:99px;background:currentColor;flex-shrink:0;}
 .sl-bucket-note.t-info{background:#dbeafe;border-color:#bfdbfe;color:#1e40af;}
 .sl-bucket-note.t-ok  {background:#dcfce7;border-color:#bbf7d0;color:#166534;}
 
-/* ═════════════════════════════════════════════════════════════
+/* =============================================================
    STICKER POPUP / MODAL
-   ═════════════════════════════════════════════════════════════ */
+   ============================================================= */
 .stk-ov{
     display:none; position:fixed; inset:0;
     background:rgba(15,23,42,.55); z-index:9999;
@@ -85,56 +91,59 @@
 }
 .stk-ov.open{display:flex;}
 .stk-box{
-    background:#fff; border-radius:12px;
+    background:#fff; border-radius:16px;
     width:640px; max-width:95vw; max-height:92vh; overflow-y:auto;
-    box-shadow:0 20px 60px rgba(0,0,0,.22);
+    box-shadow:0 20px 60px rgba(15,23,42,.22);
     border:1px solid var(--border);
 }
 .stk-hdr{
     padding:14px 20px;
-    border-bottom:1px solid var(--border);
+    border-bottom:1.5px solid #e2e8f0;
     display:flex; align-items:center; justify-content:space-between;
-    background:#f8fafc; border-radius:12px 12px 0 0;
+    background:#f8fafc; border-radius:16px 16px 0 0;
 }
 .stk-hdr-t{font-size:1rem;font-weight:800;color:var(--text);display:flex;align-items:center;gap:8px;}
+.stk-hdr-t svg{color:#7c3aed;}
 .stk-close{
-    width:28px;height:28px;border-radius:50%;
-    background:transparent;border:none;cursor:pointer;
-    font-size:1.15rem;color:var(--text3);
+    width:28px;height:28px;border-radius:99px;
+    background:#fff;border:1px solid #e2e8f0;cursor:pointer;
+    font-size:1rem;line-height:1;color:var(--text3);
     display:flex;align-items:center;justify-content:center;
+    transition:all .15s;
 }
-.stk-close:hover{background:#f1f5f9;color:var(--text);}
+.stk-close:hover{background:#ef4444;border-color:#ef4444;color:#fff;}
 .stk-body{padding:20px;}
 .stk-fg{margin-bottom:14px;}
-.stk-fg label{display:block;font-size:.78rem;font-weight:700;color:var(--text2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.3px;}
+.stk-fg label{display:block;font-size:.74rem;font-weight:800;color:#94a3b8;margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em;}
 .stk-fg label .req{color:#dc2626;margin-left:2px;}
 .stk-fg label .lock{font-size:.65rem;color:var(--text3);font-weight:500;margin-left:6px;text-transform:none;letter-spacing:0;}
 .stk-fg input{
     width:100%; box-sizing:border-box;
-    padding:.6rem .8rem;
-    border:1.5px solid var(--border); border-radius:8px;
+    padding:.6rem .85rem;
+    border:1.5px solid #e2e8f0; border-radius:10px;
     font-size:.9rem; color:var(--text);
     outline:none; background:#fff;
     font-family:inherit;
+    transition:border-color .15s, box-shadow .15s;
 }
-.stk-fg input:focus{border-color:#7c3aed;box-shadow:0 0 0 3px rgba(124,58,237,.14);}
+.stk-fg input:focus{border-color:#c4b5fd;box-shadow:0 0 0 3px rgba(124,58,237,.12);}
 .stk-fg input[readonly]{background:#f8fafc;color:var(--text2);cursor:not-allowed;}
 .stk-fg .hint{font-size:.72rem;color:var(--text3);margin-top:4px;}
 .stk-fg .err{font-size:.72rem;color:#dc2626;margin-top:4px;font-weight:600;display:none;}
 .stk-fg.bad input{border-color:#dc2626;background:#fef2f2;}
 
-/* ── Multi-row entry cards ───────────────────── */
+/* -- Multi-row entry cards --------------------- */
 .stk-multi-hint{
     font-size:.78rem; color:#1e40af;
     background:#dbeafe; border:1px solid #bfdbfe;
-    padding:8px 12px; border-radius:8px;
+    padding:8px 12px; border-radius:10px;
     margin-bottom:14px; font-weight:500;
 }
 .stk-multi-hint #stkRowCount{font-weight:800;}
 .stk-row-card{
-    border:1.5px solid var(--border); border-radius:10px;
+    border:1.5px solid var(--border); border-radius:12px;
     padding:12px 14px; margin-bottom:10px;
-    background:#fafbfc;
+    background:#fff;
     transition:.15s;
 }
 .stk-row-card.bad{border-color:#dc2626;background:#fef2f2;}
@@ -145,7 +154,7 @@
     border-bottom:1px dashed var(--border);
 }
 .stk-row-idx{
-    width:24px; height:24px; border-radius:50%;
+    width:24px; height:24px; border-radius:99px;
     background:#7c3aed; color:#fff;
     display:inline-flex; align-items:center; justify-content:center;
     font-size:.72rem; font-weight:800;
@@ -153,9 +162,9 @@
 }
 .stk-row-meta{flex:1;min-width:0;}
 .stk-row-npd{
-    font-family:monospace; font-size:.72rem; font-weight:700;
+    font-family:'JetBrains Mono',monospace; font-size:.72rem; font-weight:700;
     background:#eef2ff; color:#4338ca;
-    padding:2px 7px; border-radius:4px;
+    padding:2px 7px; border-radius:5px;
     display:inline-block; margin-right:6px;
 }
 .stk-row-prod{
@@ -165,19 +174,20 @@
 }
 .stk-row-input-wrap{display:flex;flex-direction:column;gap:4px;}
 .stk-row-input-wrap label{
-    font-size:.7rem; font-weight:700; color:var(--text2);
-    text-transform:uppercase; letter-spacing:.3px;
+    font-size:.7rem; font-weight:800; color:#94a3b8;
+    text-transform:uppercase; letter-spacing:.04em;
 }
 .stk-row-input-wrap label .req{color:#dc2626;}
 .stk-row-input-wrap input{
     width:100%; box-sizing:border-box;
-    padding:.5rem .7rem;
-    border:1.5px solid var(--border); border-radius:6px;
+    padding:.5rem .8rem;
+    border:1.5px solid #e2e8f0; border-radius:9px;
     font-size:.85rem; color:var(--text);
     outline:none; background:#fff;
     font-family:inherit;
+    transition:border-color .15s, box-shadow .15s;
 }
-.stk-row-input-wrap input:focus{border-color:#7c3aed;box-shadow:0 0 0 3px rgba(124,58,237,.14);}
+.stk-row-input-wrap input:focus{border-color:#c4b5fd;box-shadow:0 0 0 3px rgba(124,58,237,.12);}
 .stk-row-input-wrap .hint{font-size:.68rem;color:var(--text3);}
 .stk-row-input-wrap .err{font-size:.68rem;color:#dc2626;font-weight:600;display:none;}
 .stk-row-card.bad .err{display:block;}
@@ -186,16 +196,16 @@
 .stk-prev-wrap{
     margin-top:8px;
     background:#fafbfc;
-    border:1px solid var(--border); border-radius:8px;
+    border:1px solid var(--border); border-radius:10px;
     padding:12px;
 }
 .stk-prev-lbl{
-    font-size:.72rem;font-weight:700;color:var(--text3);
-    text-transform:uppercase;letter-spacing:.3px;
+    font-size:.72rem;font-weight:800;color:var(--text3);
+    text-transform:uppercase;letter-spacing:.04em;
     margin-bottom:8px;
     display:flex;align-items:center;justify-content:space-between;
 }
-.stk-prev-count{background:#ede9fe;color:#7c3aed;padding:2px 8px;border-radius:100px;font-size:.68rem;font-weight:800;}
+.stk-prev-count{background:#ede9fe;color:#7c3aed;padding:2px 9px;border-radius:99px;font-size:.68rem;font-weight:800;}
 .stk-prev-grid{
     display:grid;
     grid-template-columns:repeat(2, 40mm);
@@ -207,18 +217,18 @@
 
 .stk-foot{
     padding:14px 20px;
-    border-top:1px solid var(--border);
+    border-top:1.5px solid #e2e8f0;
     display:flex; justify-content:flex-end; gap:8px;
-    background:#fafbfc;
-    border-radius:0 0 12px 12px;
+    background:#f8fafc;
+    border-radius:0 0 16px 16px;
 }
 
-/* ── Custom confirm modal ─────────────────────── */
+/* -- Custom confirm modal ----------------------- */
 .confirm-box{
-    background:#fff; border-radius:14px;
+    background:#fff; border-radius:16px;
     width:420px; max-width:92vw;
     padding:28px 26px 20px;
-    box-shadow:0 25px 70px rgba(0,0,0,.25);
+    box-shadow:0 25px 70px rgba(15,23,42,.25);
     border:1px solid var(--border);
     text-align:center;
     animation:confirmPop .18s cubic-bezier(0.16, 1, 0.3, 1);
@@ -261,9 +271,9 @@
     padding:.6rem 1.2rem;
 }
 
-/* ═════════════════════════════════════════════════════════════
-   STICKER — exact 40mm × 20mm (same for preview & print)
-   ═════════════════════════════════════════════════════════════ */
+/* =============================================================
+   STICKER - exact 40mm x 20mm (same for preview & print)
+   ============================================================= */
 .stk{
     width:40mm; height:20mm;
     border:0.4mm solid #000;
@@ -317,17 +327,17 @@
     margin-top:.3mm;
 }
 
-/* Print-only sheets — hide the rest of the page */
+/* Print-only sheets - hide the rest of the page */
 #stkPrintSheet { display:none; }
 /* A4 sheet is shown inside the preview modal AND during print */
 #slA4Sheet { display:block; background:#fff; padding:4mm; border:1px solid #e5e7eb; }
 
-/* ═════════════════════════════════════════════════════════════
+/* =============================================================
    STICKER PRINT MODE
    Same strategy as A4 print: hide everything with visibility:hidden,
    then re-show #stkPrintSheet + all its ancestors, and pin it to
    the top-left so wrapper layouts don't push it off-page.
-   ═════════════════════════════════════════════════════════════ */
+   ============================================================= */
 body.print-stickers * { visibility: hidden !important; }
 
 body.print-stickers #stkPrintSheet,
@@ -350,12 +360,12 @@ body.print-stickers #stkPrintSheet{
 
 /* A4 print-mode: hide everything, then walk up the tree
    making #slA4Sheet and all its ancestors visible */
-/* ═════════════════════════════════════════════════════════════
+/* =============================================================
    A4 PRINT MODE
    Strategy: hide everything with visibility:hidden, then make the
    A4 modal ALONE visible + position: fixed at page top so it's
    not affected by any ancestor wrapper's layout.
-   ═════════════════════════════════════════════════════════════ */
+   ============================================================= */
 
 body.print-a4 * { visibility: hidden !important; }
 
@@ -418,7 +428,7 @@ body.print-a4 #alertModal *{
     visibility: hidden !important;
 }
 
-/* The sheet itself — normal flow */
+/* The sheet itself - normal flow */
 body.print-a4 #slA4Sheet{
     display: block !important;
     position: static !important;
@@ -435,7 +445,7 @@ body.print-a4 #slA4Sheet input{
     width:100% !important;
 }
 
-/* Sticker print sheet grid — exact 40mm × 20mm, 2 per row */
+/* Sticker print sheet grid - exact 40mm x 20mm, 2 per row */
 .stk-grid{
     display:grid;
     grid-template-columns:repeat(2, 40mm);
@@ -445,7 +455,7 @@ body.print-a4 #slA4Sheet input{
     padding:0; margin:0;
 }
 
-/* A4 list — matches reference */
+/* A4 list - matches reference */
 .a4-hdr{text-align:center;font-weight:800;font-size:14pt;background:#f3f4f6;padding:8px;border:1px solid #000;border-bottom:none;}
 .a4-tbl{width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:10pt;color:#000;table-layout:fixed;}
 .a4-tbl th,.a4-tbl td{
@@ -457,10 +467,10 @@ body.print-a4 #slA4Sheet input{
 .a4-tbl td.c-left{text-align:left;}
 /* Ensure the final row has a visible bottom border */
 .a4-tbl tbody tr:last-child td{border-bottom:2px solid #000 !important;}
-/* Bold outer frame for the whole sheet (only visible in print — preview uses #slA4Sheet's own light border) */
+/* Bold outer frame for the whole sheet (only visible in print - preview uses #slA4Sheet's own light border) */
 
 @media print {
-    /* Landscape A4 + tight margins — the 7-col table needs the extra width */
+    /* Landscape A4 + tight margins - the 7-col table needs the extra width */
     @page { size: A4 landscape; margin: 6mm; }
 
     /* Compact everything so it fits within landscape width */
@@ -480,18 +490,18 @@ body.print-a4 #slA4Sheet input{
 {% block content %}
 
 {% if bucket == 'full' %}
-  <div class="sl-bucket-note t-ok">🛡️ <b>Full Access</b> — Showing all sample logs across every project and every team member.</div>
+  <div class="sl-bucket-note t-ok"><b>Full Access</b> - Showing all sample logs across every project and every team member.</div>
 {% elif bucket == 'project' %}
-  <div class="sl-bucket-note t-info">👥 <b>Project-Scoped</b> — Showing all sample logs for projects assigned to you.</div>
+  <div class="sl-bucket-note t-info"><b>Project-Scoped</b> - Showing all sample logs for projects assigned to you.</div>
 {% else %}
-  <div class="sl-bucket-note">👤 <b>Personal View</b> — Showing only your own sample logs on projects assigned to you.</div>
+  <div class="sl-bucket-note"><b>Personal View</b> - Showing only your own sample logs on projects assigned to you.</div>
 {% endif %}
 
 <div class="sl-summary">
-    <div class="sl-stat t-total"><div class="sl-ic">📊</div><div><div class="sl-val">{{ summary.total }}</div><div class="sl-lbl">Total Logs</div></div></div>
-    <div class="sl-stat t-prog"><div class="sl-ic">🔄</div><div><div class="sl-val">{{ summary.in_progress }}</div><div class="sl-lbl">In Progress</div></div></div>
-    <div class="sl-stat t-fin"><div class="sl-ic">✅</div><div><div class="sl-val">{{ summary.finished }}</div><div class="sl-lbl">Finished</div></div></div>
-    <div class="sl-stat t-new"><div class="sl-ic">⏳</div><div><div class="sl-val">{{ summary.not_started }}</div><div class="sl-lbl">Not Started</div></div></div>
+    <div class="sl-stat t-total"><div class="sl-ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg></div><div><div class="sl-val">{{ summary.total }}</div><div class="sl-lbl">Total Logs</div></div></div>
+    <div class="sl-stat t-prog"><div class="sl-ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg></div><div><div class="sl-val">{{ summary.in_progress }}</div><div class="sl-lbl">In Progress</div></div></div>
+    <div class="sl-stat t-fin"><div class="sl-ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div><div><div class="sl-val">{{ summary.finished }}</div><div class="sl-lbl">Finished</div></div></div>
+    <div class="sl-stat t-new"><div class="sl-ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div><div class="sl-val">{{ summary.not_started }}</div><div class="sl-lbl">Not Started</div></div></div>
 </div>
 
 <form method="get" class="sl-filters" id="slFilterForm">
@@ -500,7 +510,7 @@ body.print-a4 #slA4Sheet input{
         <select name="project_id">
             <option value="">All projects</option>
             {% for p in projects %}
-            <option value="{{ p.id }}" {{ 'selected' if filters.project_id|string == p.id|string }}>{{ p.code or ('P-' ~ p.id) }} — {{ p.product_name[:40] if p.product_name else '—' }}</option>
+            <option value="{{ p.id }}" {{ 'selected' if filters.project_id|string == p.id|string }}>{{ p.code or ('P-' ~ p.id) }} - {{ p.product_name[:40] if p.product_name else '-' }}</option>
             {% endfor %}
         </select>
     </div>
@@ -535,15 +545,18 @@ body.print-a4 #slA4Sheet input{
 {% if logs %}
 <div class="sl-actions">
     <button type="button" class="sl-action-btn sticker" id="btnPrintSticker" disabled>
-        🖨️ Print Sticker
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        Print Sticker
     </button>
     <button type="button" class="sl-action-btn a4" id="btnPrintA4">
-        📄 Print Full List (A4)
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M8 13h8"/><path d="M8 17h8"/></svg>
+        Print Full List (A4)
     </button>
     <a href="{{ url_for('rd.sample_history') }}"
        class="sl-action-btn"
-       style="border-color:#16a34a;color:#16a34a;text-decoration:none;">
-        📋 Sample History
+       style="border-color:#86efac;color:#15803d;background:#f0fdf4;text-decoration:none;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>
+        Sample History
     </a>
     <span class="sl-sel-hint">Select rows + <b>Print Sticker</b> for labels, or <b>Print Full List (A4)</b> for the A4 sheet (uses selection, or all rows if none selected).</span>
 </div>
@@ -551,7 +564,10 @@ body.print-a4 #slA4Sheet input{
 
 <div class="sl-card">
     <div class="sl-card-hdr">
-        <div class="sl-card-title">🧪 Sample Log Entries <span class="sl-pill">{{ logs|length }}</span></div>
+        <div class="sl-card-title">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2v6a2 2 0 0 0 .245.96l5.51 10.08A2 2 0 0 1 18 22H6a2 2 0 0 1-1.755-2.96l5.51-10.08A2 2 0 0 0 10 8V2"/><path d="M6.453 15h11.094"/><path d="M8.5 2h7"/></svg>
+            Sample Log Entries <span class="sl-pill">{{ logs|length }}</span>
+        </div>
     </div>
     {% if logs %}
     <div style="overflow-x:auto;">
@@ -579,9 +595,9 @@ body.print-a4 #slA4Sheet input{
                 {% set td_s = (s.total_seconds % 60)|int %}
                 {% set dur = "%02d:%02d:%02d"|format(td_h,td_m,td_s) %}
             {% elif s.started_at and s.status == 'in_progress' %}
-                {% set dur = 'running…' %}
+                {% set dur = 'running...' %}
             {% else %}
-                {% set dur = '—' %}
+                {% set dur = '-' %}
             {% endif %}
             {% if s.status == 'in_progress' %}{% set s_cls='s-in-progress' %}{% set s_lbl='In Progress' %}
             {% elif s.status == 'finished' %} {% set s_cls='s-finished' %}{% set s_lbl='Finished' %}
@@ -598,8 +614,8 @@ body.print-a4 #slA4Sheet input{
                 <td>
                     {% if proj %}
                         <span class="sl-proj-code">{{ proj.code or ('P-' ~ proj.id) }}</span>
-                        <span>{{ (proj.product_name or '—')[:48] }}</span>
-                    {% else %}—{% endif %}
+                        <span>{{ (proj.product_name or '-')[:48] }}</span>
+                    {% else %}-{% endif %}
                 </td>
                 {% if bucket != 'employee' %}
                 <td>
@@ -611,10 +627,10 @@ body.print-a4 #slA4Sheet input{
                             <span class="sl-avatar">{{ ini }}</span>
                             <span style="font-weight:600;">{{ exec_user.full_name or exec_user.username }}</span>
                         </div>
-                    {% else %}—{% endif %}
+                    {% else %}-{% endif %}
                 </td>
                 {% endif %}
-                <td>{% if s.variant_code %}<span class="sl-variant">{{ s.variant_code }}</span>{% else %}<span style="color:#94a3b8;">—</span>{% endif %}</td>
+                <td>{% if s.variant_code %}<span class="sl-variant">{{ s.variant_code }}</span>{% else %}<span style="color:#94a3b8;">-</span>{% endif %}</td>
                 <td class="sl-saved-code-cell">
                     {% if s.sample_code %}
                         <span class="sl-saved-code" title="{{ s.sample_code }}">{{ s.sample_code }}</span>
@@ -622,8 +638,8 @@ body.print-a4 #slA4Sheet input{
                         <span style="color:#94a3b8;font-style:italic;font-size:.75rem;">not assigned</span>
                     {% endif %}
                 </td>
-                <td>{{ s.started_at.strftime('%d-%m-%Y %H:%M') if s.started_at else '—' }}</td>
-                <td>{{ s.finished_at.strftime('%d-%m-%Y %H:%M') if s.finished_at else '—' }}</td>
+                <td>{{ s.started_at.strftime('%d-%m-%Y %H:%M') if s.started_at else '-' }}</td>
+                <td>{{ s.finished_at.strftime('%d-%m-%Y %H:%M') if s.finished_at else '-' }}</td>
                 <td class="c-right sl-duration">{{ dur }}</td>
                 <td class="c-center"><span class="sl-status {{ s_cls }}">{{ s_lbl }}</span></td>
             </tr>
@@ -633,7 +649,9 @@ body.print-a4 #slA4Sheet input{
     </div>
     {% else %}
     <div class="sl-empty">
-        <div class="e-ic">🧪</div>
+        <div class="e-ic">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2v6a2 2 0 0 0 .245.96l5.51 10.08A2 2 0 0 1 18 22H6a2 2 0 0 1-1.755-2.96l5.51-10.08A2 2 0 0 0 10 8V2"/><path d="M6.453 15h11.094"/><path d="M8.5 2h7"/></svg>
+        </div>
         <div class="e-t">No sample logs found</div>
         <div class="e-s">
             {% if bucket == 'employee' %}You do not have any sample logs yet on your assigned projects.
@@ -645,19 +663,22 @@ body.print-a4 #slA4Sheet input{
 </div>
 
 
-{# ══════════════════════════════════════════════
+{# ==============================================
    STICKER POPUP
-   ══════════════════════════════════════════════ #}
+   ============================================== #}
 <div class="stk-ov" id="stkModal" role="dialog" aria-modal="true">
     <div class="stk-box">
         <div class="stk-hdr">
-            <div class="stk-hdr-t">🖨️ Print Sticker</div>
-            <button type="button" class="stk-close" id="stkCloseBtn" aria-label="Close">✕</button>
+            <div class="stk-hdr-t">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                Print Sticker
+            </div>
+            <button type="button" class="stk-close" id="stkCloseBtn" aria-label="Close">&times;</button>
         </div>
 
         <div class="stk-body">
             <div class="stk-multi-hint" id="stkMultiHint">
-                <span id="stkRowCount">0</span> row(s) selected — enter sample code(s) for each. Comma-separated codes allowed per row.
+                <span id="stkRowCount">0</span> row(s) selected - enter sample code(s) for each. Comma-separated codes allowed per row.
             </div>
 
             <div id="stkRowsWrap">
@@ -675,8 +696,8 @@ body.print-a4 #slA4Sheet input{
 
         <div class="stk-foot">
             <button type="button" class="sl-btn" id="stkCancelBtn">Cancel</button>
-            <button type="button" class="sl-btn primary" id="stkPrintBtn" style="background:#7c3aed;border-color:#7c3aed;">
-                🖨️ Print
+            <button type="button" class="sl-btn primary" id="stkPrintBtn">
+                Print
             </button>
         </div>
     </div>
@@ -688,13 +709,13 @@ body.print-a4 #slA4Sheet input{
     <div class="stk-grid" id="stkPrintGrid"></div>
 </div>
 
-{# ══════════════════════════════════════════════
-   CONFIRM MODAL — reusable (Send-to-Office, etc.)
+{# ==============================================
+   CONFIRM MODAL - reusable (Send-to-Office, etc.)
    Higher z-index so it stacks above the A4 modal.
-   ══════════════════════════════════════════════ #}
+   ============================================== #}
 <div class="stk-ov" id="confirmModal" role="dialog" aria-modal="true" style="z-index:10050 !important;">
     <div class="confirm-box">
-        <div class="confirm-icon" id="confirmIcon">📤</div>
+        <div class="confirm-icon" id="confirmIcon">&#128228;</div>
         <div class="confirm-title" id="confirmTitle">Mark as Sent to Office?</div>
         <div class="confirm-msg" id="confirmMsg">Sample codes will be saved and status updated.</div>
         <div class="confirm-detail" id="confirmDetail"></div>
@@ -708,12 +729,12 @@ body.print-a4 #slA4Sheet input{
 </div>
 
 
-{# ══════════════════════════════════════════════
-   ALERT MODAL — reusable (replaces native alert())
-   ══════════════════════════════════════════════ #}
+{# ==============================================
+   ALERT MODAL - reusable (replaces native alert())
+   ============================================== #}
 <div class="stk-ov" id="alertModal" role="dialog" aria-modal="true" style="z-index:10060 !important;">
     <div class="confirm-box">
-        <div class="confirm-icon" id="alertIcon">ℹ️</div>
+        <div class="confirm-icon" id="alertIcon">&#8505;</div>
         <div class="confirm-title" id="alertTitle">Notice</div>
         <div class="confirm-msg" id="alertMsg"></div>
         <div class="confirm-detail" id="alertDetail"></div>
@@ -728,7 +749,7 @@ body.print-a4 #slA4Sheet input{
 
 <script>
 (function(){
-    // ─── Reusable custom confirm modal — returns a Promise<boolean>
+    // --- Reusable custom confirm modal - returns a Promise<boolean>
     const cm       = document.getElementById('confirmModal');
     const cmIcon   = document.getElementById('confirmIcon');
     const cmTitle  = document.getElementById('confirmTitle');
@@ -739,7 +760,7 @@ body.print-a4 #slA4Sheet input{
 
     window.sampleLogConfirm = function(opts){
         opts = opts || {};
-        cmIcon.textContent   = opts.icon    || '❓';
+        cmIcon.textContent   = opts.icon    || '\u2753';
         cmTitle.textContent  = opts.title   || 'Are you sure?';
         cmMsg.textContent    = opts.message || '';
         cmDetail.innerHTML   = opts.detail  || '';
@@ -784,10 +805,10 @@ body.print-a4 #slA4Sheet input{
         });
     };
 
-    // ─── Reusable custom alert modal — returns a Promise<void>
+    // --- Reusable custom alert modal - returns a Promise<void>
     //     Call it with a string message (legacy alert() usage) OR an options object:
     //       sampleLogAlert('Something happened')
-    //       sampleLogAlert({ title:'Done', message:'✓ 2 saved', theme:'success' })
+    //       sampleLogAlert({ title:'Done', message:'2 saved', theme:'success' })
     const am      = document.getElementById('alertModal');
     const amIcon  = document.getElementById('alertIcon');
     const amTitle = document.getElementById('alertTitle');
@@ -800,21 +821,21 @@ body.print-a4 #slA4Sheet input{
         let opts = {};
         if (typeof arg === 'string') {
             // Auto-detect theme from common prefixes
-            let icon = 'ℹ️', theme = 'primary', title = 'Notice';
+            let icon = '\u2139\uFE0F', theme = 'primary', title = 'Notice';
             const s = arg.trim();
-            if (s.startsWith('✓') || /success|saved|sent|done/i.test(s)) {
-                icon = '✅'; theme = 'success'; title = 'Success';
-            } else if (s.startsWith('⚠') || /warn|duplicate|invalid/i.test(s)) {
-                icon = '⚠️'; theme = 'danger'; title = 'Warning';
-            } else if (s.startsWith('❌') || /error|failed|network/i.test(s)) {
-                icon = '❌'; theme = 'danger'; title = 'Error';
+            if (s.startsWith('\u2713') || /success|saved|sent|done/i.test(s)) {
+                icon = '\u2705'; theme = 'success'; title = 'Success';
+            } else if (s.startsWith('\u26A0') || /warn|duplicate|invalid/i.test(s)) {
+                icon = '\u26A0\uFE0F'; theme = 'danger'; title = 'Warning';
+            } else if (s.startsWith('\u274C') || /error|failed|network/i.test(s)) {
+                icon = '\u274C'; theme = 'danger'; title = 'Error';
             }
             opts = { message: s, icon, theme, title };
         } else {
             opts = arg || {};
         }
 
-        amIcon.textContent   = opts.icon    || 'ℹ️';
+        amIcon.textContent   = opts.icon    || '\u2139\uFE0F';
         amTitle.textContent  = opts.title   || 'Notice';
         amMsg.textContent    = opts.message || '';
         amDetail.innerHTML   = opts.detail  || '';
@@ -856,23 +877,26 @@ body.print-a4 #slA4Sheet input{
 </script>
 
 
-{# ══════════════════════════════════════════════
+{# ==============================================
    A4 PREVIEW MODAL (editable before print / dispatch)
-   ══════════════════════════════════════════════ #}
+   ============================================== #}
 <div class="stk-ov" id="a4Modal" role="dialog" aria-modal="true">
     <div class="stk-box" style="width:95vw;max-width:1100px;">
         <div class="stk-hdr">
-            <div class="stk-hdr-t">📄 A4 Print Preview — R&amp;D Samples</div>
-            <button type="button" class="stk-close" id="a4CloseBtn" aria-label="Close">✕</button>
+            <div class="stk-hdr-t">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M8 13h8"/><path d="M8 17h8"/></svg>
+                A4 Print Preview - R&amp;D Samples
+            </div>
+            <button type="button" class="stk-close" id="a4CloseBtn" aria-label="Close">&times;</button>
         </div>
         <div class="stk-body" style="padding:16px 18px;max-height:75vh;overflow:auto;">
             <div class="stk-multi-hint" style="background:#dbeafe;border-color:#bfdbfe;color:#1e40af;">
-                <b><span id="a4Count">0</span></b> row(s) in preview — edit Sample Codes or Handover To as needed.
-                Click <b>🖨️ Print Only</b> to just save + print, or <b>📤 Send to Office + Print</b> to
+                <b><span id="a4Count">0</span></b> row(s) in preview - edit Sample Codes or Handover To as needed.
+                Click <b>Print Only</b> to just save + print, or <b>Send to Office + Print</b> to
                 also mark these rows as dispatched (they'll move to the Sent-to-Office list).
             </div>
 
-            {# Print-only sheet — hidden on screen, shown only during print #}
+            {# Print-only sheet - hidden on screen, shown only during print #}
             <div id="slA4Sheet">
                 <div class="a4-hdr">R&amp;D SAMPLES (<span id="a4Date"></span>)</div>
                 <table class="a4-tbl">
@@ -894,10 +918,10 @@ body.print-a4 #slA4Sheet input{
         <div class="stk-foot">
             <button type="button" class="sl-btn" id="a4CancelBtn">Cancel</button>
             <button type="button" class="sl-btn" id="a4PrintBtn" style="background:#3b82f6;border-color:#3b82f6;color:#fff;">
-                🖨️ Print Only
+                Print Only
             </button>
-            <button type="button" class="sl-btn primary" id="a4SendBtn" style="background:#16a34a;border-color:#16a34a;color:#fff;">
-                📤 Send to Office + Print
+            <button type="button" class="sl-btn primary" id="a4SendBtn" style="background:#16a34a;border-color:#16a34a;color:#fff;box-shadow:0 2px 8px rgba(22,163,74,.3), inset 0 1px 0 rgba(255,255,255,.2);">
+                Send to Office + Print
             </button>
         </div>
     </div>
@@ -924,6 +948,8 @@ body.print-a4 #slA4Sheet input{
     const prevGrid   = document.getElementById('stkPrevGrid');
     const prevCount  = document.getElementById('stkPrevCount');
 
+    const STK_BTN_SVG = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg> ';
+
     function escapeHtml(s){
         return String(s || '').replace(/[&<>"']/g, c => (
             {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]
@@ -945,8 +971,8 @@ body.print-a4 #slA4Sheet input{
 
         btnSticker.disabled = rows.length === 0;
         btnSticker.innerHTML = rows.length > 0
-            ? `🖨️ Print Sticker (${rows.length})`
-            : `🖨️ Print Sticker`;
+            ? STK_BTN_SVG + `Print Sticker (${rows.length})`
+            : STK_BTN_SVG + `Print Sticker`;
 
         // Sync "select all" header checkbox state (check / indeterminate / unchecked)
         const allRowCbs = document.querySelectorAll('.sl-row-check');
@@ -972,7 +998,7 @@ body.print-a4 #slA4Sheet input{
         });
     }
 
-    // Parse comma-separated sample codes → clean array
+    // Parse comma-separated sample codes -> clean array
     function parseCodes(raw){
         return (raw || '')
             .split(',')
@@ -985,9 +1011,9 @@ body.print-a4 #slA4Sheet input{
         const el = document.createElement('div');
         el.className = 'stk';
         el.innerHTML = `
-            <div class="stk-product"><span class="stk-product-txt">${escapeHtml(product || '—')}</span></div>
+            <div class="stk-product"><span class="stk-product-txt">${escapeHtml(product || '-')}</span></div>
             ${npd ? `<div class="stk-npd">${escapeHtml(npd)}</div>` : ''}
-            <div class="stk-sample">${escapeHtml(sampleCode || '—')}</div>
+            <div class="stk-sample">${escapeHtml(sampleCode || '-')}</div>
             <div class="stk-footer">HCP WELLNESS PVT LTD</div>
         `;
         return el;
@@ -1041,8 +1067,8 @@ body.print-a4 #slA4Sheet input{
         rowsWrap.innerHTML = '';
         rows.forEach((tr, idx) => {
             const rowId   = tr.dataset.rowId || '';
-            const npd     = tr.dataset.npdCode || '—';
-            const product = tr.dataset.productName || '—';
+            const npd     = tr.dataset.npdCode || '-';
+            const product = tr.dataset.productName || '-';
             const variant = tr.dataset.variant || '';
             const saved   = tr.dataset.sampleCode || '';
 
@@ -1062,7 +1088,7 @@ body.print-a4 #slA4Sheet input{
                         <span class="stk-row-npd">${escapeHtml(npd)}</span>
                         <span class="stk-row-prod" title="${escapeHtml(product)}">${escapeHtml(product)}</span>
                     </div>
-                    ${saved ? '<span style="font-size:.65rem;font-weight:700;color:#15803d;background:#f0fdf4;border:1px solid #bbf7d0;padding:2px 7px;border-radius:100px;">SAVED</span>' : ''}
+                    ${saved ? '<span style="font-size:.65rem;font-weight:700;color:#15803d;background:#f0fdf4;border:1px solid #bbf7d0;padding:2px 7px;border-radius:99px;">SAVED</span>' : ''}
                 </div>
                 <div class="stk-row-input-wrap">
                     <label>Sample Code <span class="req">*</span></label>
@@ -1077,7 +1103,7 @@ body.print-a4 #slA4Sheet input{
             rowsWrap.appendChild(card);
         });
 
-        // Bind input listeners → live preview + clear error state on type
+        // Bind input listeners -> live preview + clear error state on type
         rowsWrap.querySelectorAll('.stk-row-codes').forEach(inp => {
             inp.addEventListener('input', () => {
                 inp.closest('.stk-row-card').classList.remove('bad');
@@ -1113,13 +1139,13 @@ body.print-a4 #slA4Sheet input{
         if (e.key === 'Escape' && modal.classList.contains('open')) closeModal();
     });
 
-    // Print — validate ALL rows → save to DB → then build sheet & open printer
+    // Print - validate ALL rows -> save to DB -> then build sheet & open printer
     printBtn.addEventListener('click', async () => {
         const cards = Array.from(document.querySelectorAll('.stk-row-card'));
         let hasError = false;
         let firstBadInput = null;
 
-        // ── 1. Client-side validation ─────────────────────────────
+        // -- 1. Client-side validation --------------------------------
         cards.forEach(card => {
             const inp = card.querySelector('.stk-row-codes');
             const codes = parseCodes(inp.value);
@@ -1137,8 +1163,8 @@ body.print-a4 #slA4Sheet input{
             return;
         }
 
-        // ── 2. In-batch duplicate check (client-side early-exit) ───
-        const allCodesSeen = new Map();   // code (upper) → row idx
+        // -- 2. In-batch duplicate check (client-side early-exit) ------
+        const allCodesSeen = new Map();   // code (upper) -> row idx
         let localDup = null;
         for (let i = 0; i < cards.length && !localDup; i++){
             const inp = cards[i].querySelector('.stk-row-codes');
@@ -1158,19 +1184,19 @@ body.print-a4 #slA4Sheet input{
             return;
         }
 
-        // ── 3. Build save-payload ─────────────────────────────────
+        // -- 3. Build save-payload --------------------------------------
         const payload = cards.map(card => ({
             id:    parseInt(card.dataset.rowId, 10),
             codes: card.querySelector('.stk-row-codes').value.trim()
         }));
 
-        // ── 4. Disable button + show "saving..." ──────────────────
+        // -- 4. Disable button + show "saving..." -----------------------
         const originalLabel = printBtn.innerHTML;
         printBtn.disabled   = true;
-        printBtn.innerHTML  = '💾 Saving...';
+        printBtn.innerHTML  = 'Saving...';
 
         try {
-            // ── 5. POST to /api/save-sample-codes ──────────────────
+            // -- 5. POST to /api/save-sample-codes ----------------------
             const res = await fetch('{{ url_for("rd_sample_log.api_save_sample_codes") }}', {
                 method: 'POST',
                 headers: {
@@ -1181,18 +1207,18 @@ body.print-a4 #slA4Sheet input{
                 body: JSON.stringify({ rows: payload })
             });
 
-            // ── Robust response parsing — log full text on failure ──
+            // -- Robust response parsing - log full text on failure -----
             // Earlier code used `res.json().catch(() => ({}))` which
             // silently swallowed non-JSON responses (HTML 500 page, empty
             // body, redirect HTML, etc.) and showed a useless
             // "Server error (HTTP 200)" alert. Now we read body text first
-            // and try to parse — exposing the real cause.
+            // and try to parse - exposing the real cause.
             const rawText = await res.text();
             let data = {};
             try {
                 data = rawText ? JSON.parse(rawText) : {};
             } catch (parseErr) {
-                console.error('Sticker print — non-JSON response:', rawText);
+                console.error('Sticker print - non-JSON response:', rawText);
                 sampleLogAlert(
                     'Server returned a non-JSON response (HTTP ' + res.status + ').\n\n' +
                     'First 200 chars:\n' + rawText.slice(0, 200) +
@@ -1206,7 +1232,7 @@ body.print-a4 #slA4Sheet input{
                 let msg = data.error
                     || ('Server returned ok=false with no error field (HTTP ' + res.status + ')');
                 if (Array.isArray(data.duplicates) && data.duplicates.length){
-                    msg += '\n\nDuplicate codes:\n  • ' + data.duplicates.join('\n  • ');
+                    msg += '\n\nDuplicate codes:\n  - ' + data.duplicates.join('\n  - ');
                     // Highlight matching rows
                     const dupSet = new Set(data.duplicates.map(s => s.toUpperCase()));
                     cards.forEach(card => {
@@ -1222,7 +1248,7 @@ body.print-a4 #slA4Sheet input{
                 return;
             }
 
-            // ── 6. Save OK — update table DOM so the "Sample Code" column reflects new values
+            // -- 6. Save OK - update table DOM so the "Sample Code" column reflects new values
             (data.rows || []).forEach(r => {
                 const tr = document.querySelector(`#slTable tbody tr[data-row-id="${r.id}"]`);
                 if (!tr) return;
@@ -1233,7 +1259,7 @@ body.print-a4 #slA4Sheet input{
                 }
             });
 
-            // ── 7. Build print sheet across all rows ────────────────
+            // -- 7. Build print sheet across all rows -------------------
             const grid = document.getElementById('stkPrintGrid');
             grid.innerHTML = '';
             cards.forEach(card => {
@@ -1247,7 +1273,7 @@ body.print-a4 #slA4Sheet input{
 
             closeModal();
 
-            // ── 8. Trigger browser print ────────────────────────────
+            // -- 8. Trigger browser print -------------------------------
             document.body.classList.add('print-stickers');
             setTimeout(() => {
                 fitStickerNames(document.getElementById('stkPrintGrid'));
@@ -1272,10 +1298,10 @@ body.print-a4 #slA4Sheet input{
         }
     });
 
-    // ═══════════════════════════════════════════════════════════════
-    // A4 FULL LIST PRINT — uses SELECTED rows, shows preview, saves codes,
-    //                     and offers Send-to-Office action
-    // ═══════════════════════════════════════════════════════════════
+    // ================================================================
+    // A4 FULL LIST PRINT - uses SELECTED rows, shows preview, saves codes,
+    //                      and offers Send-to-Office action
+    // ================================================================
 
     // State for the A4 preview modal (built dynamically)
     let a4Cards = [];   // [{ id, npd, product, client, member, defaultCode }]
@@ -1283,7 +1309,7 @@ body.print-a4 #slA4Sheet input{
     btnA4.addEventListener('click', () => {
         const selectedRows = getSelectedRows();
         const allRows      = Array.from(document.querySelectorAll('#slTable tbody tr'));
-        // If nothing selected → fall back to ALL filtered rows (backward compat)
+        // If nothing selected -> fall back to ALL filtered rows (backward compat)
         const rows = selectedRows.length > 0 ? selectedRows : allRows;
 
         if (!rows.length){ sampleLogAlert('No rows to print.'); return; }
@@ -1294,10 +1320,10 @@ body.print-a4 #slA4Sheet input{
     function openA4Preview(rows){
         // Build state + preview body
         a4Cards = rows.map(tr => {
-            const npd     = tr.dataset.npdCode     || '—';
-            const product = tr.dataset.productName || '—';
-            const client  = tr.dataset.clientName  || '—';
-            const member  = tr.dataset.member      || '—';
+            const npd     = tr.dataset.npdCode     || '-';
+            const product = tr.dataset.productName || '-';
+            const client  = tr.dataset.clientName  || '-';
+            const member  = tr.dataset.member      || '-';
             const variant = tr.dataset.variant     || '';
             const saved   = tr.dataset.sampleCode  || '';
             return {
@@ -1368,7 +1394,7 @@ body.print-a4 #slA4Sheet input{
             const id       = parseInt(tr.dataset.rowId, 10);
             const codes    = (tr.querySelector('.a4-code')?.value || '').trim();
             const handover = (tr.querySelector('.a4-handover')?.value || '').trim();
-            // Submitted By is shown as static text (the executive's name) —
+            // Submitted By is shown as static text (the executive's name) -
             // grab it from the cell for persistence.
             const submittedCell = tr.children[5];  // 0=SrNo 1=NPD 2=Product 3=Client 4=Handover 5=SubmittedBy
             const submitted = submittedCell ? submittedCell.innerText.trim() : '';
@@ -1402,7 +1428,7 @@ body.print-a4 #slA4Sheet input{
 
         const btn = document.getElementById('a4PrintBtn');
         const orig = btn.innerHTML;
-        btn.disabled = true; btn.innerHTML = '💾 Saving...';
+        btn.disabled = true; btn.innerHTML = 'Saving...';
 
         try {
             const res = await fetch('{{ url_for("rd_sample_log.api_save_sample_codes") }}', {
@@ -1415,7 +1441,7 @@ body.print-a4 #slA4Sheet input{
             if (!res.ok || !data.ok){
                 let msg = data.error || ('Server error '+res.status);
                 if (Array.isArray(data.duplicates) && data.duplicates.length){
-                    msg += '\n\nDuplicate codes:\n  • ' + data.duplicates.join('\n  • ');
+                    msg += '\n\nDuplicate codes:\n  - ' + data.duplicates.join('\n  - ');
                 }
                 sampleLogAlert(msg);
                 return;
@@ -1446,18 +1472,18 @@ body.print-a4 #slA4Sheet input{
         }
     });
 
-    // Save + dispatch to office (status → sent_to_office)
+    // Save + dispatch to office (status -> sent_to_office)
     document.getElementById('a4SendBtn').addEventListener('click', async () => {
         const { rows, handover_to, submitted_by } = collectA4Payload();
         const err = validateA4Payload(rows);
         if (err){ sampleLogAlert(err); return; }
 
         const ok = await sampleLogConfirm({
-            icon:    '📤',
+            icon:    '\uD83D\uDCE4',
             title:   'Mark as Sent to Office?',
             message: 'Sample codes will be saved and status updated.',
             detail:  `<b>${rows.length}</b> sample(s) will be dispatched. They'll appear in the <b>Sample History</b> page.`,
-            okText:  '📤 Yes, Send to Office',
+            okText:  'Yes, Send to Office',
             cancelText: 'Cancel',
             theme:   'success',
         });
@@ -1465,7 +1491,7 @@ body.print-a4 #slA4Sheet input{
 
         const btn = document.getElementById('a4SendBtn');
         const orig = btn.innerHTML;
-        btn.disabled = true; btn.innerHTML = '📤 Dispatching...';
+        btn.disabled = true; btn.innerHTML = 'Dispatching...';
 
         try {
             const res = await fetch('{{ url_for("rd_sample_log.api_send_to_office") }}', {
@@ -1478,7 +1504,7 @@ body.print-a4 #slA4Sheet input{
             if (!res.ok || !data.ok){
                 let msg = data.error || ('Server error '+res.status);
                 if (Array.isArray(data.duplicates) && data.duplicates.length){
-                    msg += '\n\nDuplicate codes:\n  • ' + data.duplicates.join('\n  • ');
+                    msg += '\n\nDuplicate codes:\n  - ' + data.duplicates.join('\n  - ');
                 }
                 sampleLogAlert(msg);
                 return;
@@ -1498,7 +1524,7 @@ body.print-a4 #slA4Sheet input{
                     closeA4Modal();
                     // Show success toast-style message
                     sampleLogAlert({
-                        icon:    '✅',
+                        icon:    '\u2705',
                         title:   'Sent to Office',
                         message: data.saved + ' sample(s) successfully dispatched.',
                         detail:  `Token: <b>${data.token_no}</b><br>Time: ${data.dispatched_at}`,
