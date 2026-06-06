@@ -1,94 +1,135 @@
 {% extends 'base.html' %}
-{% block title %}{% if grn_type_label %}{{ grn_type_label }} – {% endif %}GRN — HCP ERP{% endblock %}
-{% block page_title %}{% if grn_type_label %}{{ grn_type_label }} – {% endif %}Goods Receipt Notes{% endblock %}
+{% block title %}{% if grn_type_label %}{{ grn_type_label }} - {% endif %}GRN - HCP ERP{% endblock %}
+{% block page_title %}{% if grn_type_label %}{{ grn_type_label }} - {% endif %}Goods Receipt Notes{% endblock %}
 {% block bread %}Stores / GRN{% if grn_type_label %} / {{ grn_type_label }}{% endif %}{% endblock %}
 
 {% block extra_css %}
 <style>
-.grn-toolbar { display:flex; gap:10px; align-items:center; margin-bottom:14px; flex-wrap:wrap; }
-.grn-toolbar .search-box { flex:1; max-width:340px; position:relative; }
-.grn-toolbar .search-box input { width:100%; padding:9px 12px 9px 36px; border:1.5px solid #e2e8f0;
-    border-radius:8px; font-size:13px; outline:none; background:#fff; }
-.grn-toolbar .search-box input:focus { border-color:#2563eb; }
-.grn-toolbar .search-box::before { content:'🔍'; position:absolute; left:11px; top:50%;
-    transform:translateY(-50%); font-size:13px; opacity:.6; }
-.grn-toolbar select { padding:9px 12px; border:1.5px solid #e2e8f0; border-radius:8px;
-    font-size:13px; background:#fff; cursor:pointer; }
-.btn-add-new { padding:9px 18px; border-radius:8px; background:#1e40af; color:#fff;
-    font-size:13px; font-weight:700; text-decoration:none; display:inline-flex;
-    align-items:center; gap:6px; margin-left:auto; transition:all .15s; border:0; cursor:pointer; }
-.btn-add-new:hover { background:#1e3a8a; color:#fff; }
+/* ============================================================
+   GRN LISTING - PREMIUM BLUE THEME
+   ============================================================ */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700&display=swap');
 
-.grn-wrap { background:#fff; border-radius:12px; border:1px solid #e2e8f0;
-    box-shadow:0 1px 3px rgba(0,0,0,.04); overflow:hidden; }
+.grn-toolbar, .grn-toolbar input, .grn-toolbar select, .grn-toolbar button, .grn-toolbar a,
+.grn-wrap, .grn-wrap button { font-family:'Inter','Segoe UI',system-ui,-apple-system,sans-serif; }
+
+/* -- Toolbar -- */
+.grn-toolbar { display:flex; gap:8px; align-items:center; margin-bottom:14px; flex-wrap:wrap; }
+.grn-toolbar .search-box { flex:1; max-width:340px; min-width:180px; position:relative; }
+.grn-toolbar .search-box svg { position:absolute; left:13px; top:50%; transform:translateY(-50%); color:#94a3b8; pointer-events:none; }
+.grn-toolbar .search-box input { width:100%; height:36px; padding:0 12px 0 36px; border:1.5px solid #e2e8f0;
+    border-radius:999px; font-size:12.5px; outline:none; background:#fff; color:#0f172a;
+    transition:border-color .15s, box-shadow .15s; box-sizing:border-box; font-family:inherit; }
+.grn-toolbar .search-box input:focus { border-color:#2563eb; box-shadow:0 0 0 3px rgba(37,99,235,.12); }
+.grn-toolbar select { height:36px; padding:0 12px; border:1.5px solid #e2e8f0; border-radius:999px;
+    font-size:12.5px; background:#fff; cursor:pointer; color:#475569; font-weight:600; outline:none;
+    transition:border-color .15s, box-shadow .15s; font-family:inherit; }
+.grn-toolbar select:focus { border-color:#2563eb; box-shadow:0 0 0 3px rgba(37,99,235,.12); }
+.grn-toolbar select:hover { border-color:#93c5fd; }
+.grn-date { height:36px; padding:0 12px; border:1.5px solid #e2e8f0; border-radius:999px; font-size:12.5px;
+    color:#475569; outline:none; background:#fff; transition:border-color .15s, box-shadow .15s;
+    box-sizing:border-box; font-family:inherit; }
+.grn-date:focus { border-color:#2563eb; box-shadow:0 0 0 3px rgba(37,99,235,.12); }
+.btn-clear { height:36px; padding:0 14px; border:1.5px solid #e2e8f0; border-radius:999px; font-size:12.5px;
+    background:#fff; cursor:pointer; font-weight:600; color:#475569; transition:all .15s; font-family:inherit; }
+.btn-clear:hover { background:#eff6ff; color:#2563eb; border-color:#93c5fd; }
+.btn-excel { display:inline-flex; align-items:center; gap:6px; height:36px; padding:0 16px; margin-left:auto;
+    background:linear-gradient(180deg,#22c55e,#16a34a); color:#fff; border-radius:999px;
+    font-size:12.5px; font-weight:700; text-decoration:none; transition:all .18s;
+    box-shadow:0 2px 8px rgba(22,163,74,.28), inset 0 1px 0 rgba(255,255,255,.25); }
+.btn-excel:hover { transform:translateY(-1px); color:#fff; box-shadow:0 5px 14px rgba(22,163,74,.38); }
+.btn-add-new { display:inline-flex; align-items:center; gap:6px; height:36px; padding:0 18px;
+    background:linear-gradient(180deg,#3b82f6,#1d4ed8); color:#fff; border-radius:999px;
+    font-size:12.5px; font-weight:700; text-decoration:none; transition:all .18s; border:0; cursor:pointer;
+    box-shadow:0 2px 8px rgba(37,99,235,.28), inset 0 1px 0 rgba(255,255,255,.25); white-space:nowrap; }
+.btn-add-new:hover { transform:translateY(-1px); color:#fff; box-shadow:0 5px 14px rgba(37,99,235,.38); }
+
+/* -- Card + table : premium light headers (normal case) -- */
+.grn-wrap { background:#fff; border-radius:16px; border:1px solid #e2e8f0;
+    box-shadow:0 1px 3px rgba(15,23,42,.05), 0 8px 24px rgba(15,23,42,.04); overflow:hidden; }
 .grn-table { width:100%; border-collapse:collapse; font-size:13px; }
-.grn-table thead th { background:#f1f5f9; color:#475569; font-size:11px; font-weight:700;
-    text-transform:uppercase; letter-spacing:.04em; padding:11px 12px; text-align:left;
-    border-bottom:2px solid #cbd5e1; }
-.grn-table tbody td { padding:11px 12px; border-bottom:1px solid #f1f5f9; vertical-align:middle; }
-.grn-table tbody tr:hover { background:#fafbfd; }
-.grn-table .num-col { font-weight:700; color:#1e40af; }
-.grn-table .num-col a { color:#1e40af; text-decoration:none; }
-.grn-table .num-col a:hover { text-decoration:underline; }
-.grn-table .small-meta { font-size:11px; color:#94a3b8; }
+.grn-table thead th { background:#f8fafc; color:#475569; font-size:11.5px; font-weight:700;
+    text-transform:none; letter-spacing:0; padding:12px; text-align:left;
+    border-bottom:1.5px solid #e2e8f0; position:sticky; top:0; z-index:2; white-space:nowrap; }
+.grn-table tbody td { padding:11px 12px; border-bottom:1px solid #f1f5f9; vertical-align:middle; color:#0f172a; }
+.grn-table tbody tr { transition:background .12s; }
+.grn-table tbody tr:hover { background:#f8fbff; }
+.grn-table .num-col { font-weight:700; color:#1d4ed8; font-family:'JetBrains Mono', ui-monospace, monospace; font-size:12px; }
+.grn-table .num-col a { color:#1d4ed8; text-decoration:none; }
+.grn-table .num-col a:hover { text-decoration:underline; color:#1e40af; }
+.grn-table .small-meta { font-size:11px; color:#94a3b8; font-family:'Inter',sans-serif; font-weight:500; }
 
 .po-cell-center { text-align:center; }
-.po-actions { display:flex; gap:5px; justify-content:flex-end; }
-.po-act { width:30px; height:30px; display:inline-flex; align-items:center;
-          justify-content:center; border-radius:7px; border:1.5px solid #e2e8f0;
-          background:#fff; color:#475569; cursor:pointer; transition:all .15s;
-          font-family:inherit; text-decoration:none; }
-.po-act:hover { background:#eff6ff; color:#2563eb; border-color:#2563eb; }
-.po-act.danger:hover { background:#fef2f2; color:#dc2626; border-color:#fca5a5; }
-.po-act.success:hover { background:#f0fdf4; color:#16a34a; border-color:#86efac; }
-.po-act.po-act-edit { background:#eff6ff; border-color:#93c5fd; color:#1d4ed8; }
-.po-act.po-act-edit:hover { background:#2563eb; border-color:#2563eb; color:#fff; }
 
-.type-pill { display:inline-block; padding:2px 9px; border-radius:11px;
+/* -- Action icon buttons : tinted squares -- */
+.po-actions { display:flex; gap:5px; justify-content:flex-end; }
+.po-act { width:28px; height:28px; display:inline-flex; align-items:center;
+          justify-content:center; border-radius:8px; border:none;
+          background:#eff6ff; color:#2563eb; cursor:pointer; transition:all .15s;
+          font-family:inherit; text-decoration:none; padding:0; }
+.po-act svg { width:14px; height:14px; }
+.po-act:hover { background:#2563eb; color:#fff; transform:translateY(-1px); box-shadow:0 3px 8px rgba(37,99,235,.3); }
+.po-act.danger { background:#fee2e2; color:#dc2626; }
+.po-act.danger:hover { background:#dc2626; color:#fff; box-shadow:0 3px 8px rgba(220,38,38,.3); }
+.po-act.success { background:#dcfce7; color:#16a34a; }
+.po-act.success:hover { background:#16a34a; color:#fff; box-shadow:0 3px 8px rgba(22,163,74,.3); }
+.po-act.po-act-edit { background:#dbeafe; color:#1d4ed8; }
+.po-act.po-act-edit:hover { background:#2563eb; color:#fff; }
+.po-act.scan { background:#ede9fe; color:#7c3aed; }
+.po-act.scan:hover { background:#7c3aed; color:#fff; box-shadow:0 3px 8px rgba(124,58,237,.3); }
+
+/* -- Pills -- */
+.type-pill { display:inline-block; padding:2px 10px; border-radius:999px;
     font-size:10.5px; font-weight:800; text-transform:uppercase; letter-spacing:.04em;
     background:#e0f2fe; color:#0369a1; }
-
-.status-pill { display:inline-block; padding:3px 10px; border-radius:12px;
+.status-pill { display:inline-block; padding:3px 11px; border-radius:999px;
     font-size:10.5px; font-weight:800; text-transform:uppercase; letter-spacing:.04em;
     color:#fff; }
 
 .empty-state { padding:60px 20px; text-align:center; color:#94a3b8; }
-.empty-state .icon { font-size:48px; margin-bottom:10px; opacity:.5; }
+.empty-state .icon { margin-bottom:10px; opacity:.5; }
 
-/* ─── Row expand on double-click ─── */
+/* -- Row expand on double-click -- */
 .grn-table tbody tr.grn-row { cursor:pointer; user-select:none; }
-.grn-table tbody tr.grn-row.expanded { background:#f8fafc; }
+.grn-table tbody tr.grn-row.expanded { background:#f8fbff; }
 .grn-table tbody tr.grn-row.expanded td { border-bottom:0; }
 .grn-expand-row td { padding:0 !important; background:#f1f5f9; border-bottom:2px solid #cbd5e1 !important; }
-.grn-expand-wrap { padding:14px 18px; background:#ffffff; border:2px solid #2563eb;
-    border-radius:0; margin:0; }
-.grn-expand-title { font-size:11.5px; font-weight:800; color:#1e3a5f; margin-bottom:8px;
-    text-transform:uppercase; letter-spacing:.04em; display:flex; align-items:center; gap:8px; }
-.grn-expand-title .pe-cnt { background:#dbeafe; color:#1e40af; padding:2px 9px;
-    border-radius:11px; font-size:10.5px; }
+.grn-expand-wrap { padding:14px 18px; background:#f8fbff; border-top:2px solid #2563eb; margin:0; }
+.grn-expand-title { font-size:11px; font-weight:700; color:#64748b; margin-bottom:10px;
+    text-transform:uppercase; letter-spacing:.05em; display:flex; align-items:center; gap:8px; }
+.grn-expand-title .pe-cnt { background:#dbeafe; color:#1d4ed8; padding:2px 9px;
+    border-radius:999px; font-size:10px; font-weight:700; }
 .grn-loading { padding:24px; text-align:center; color:#64748b; font-size:12px; }
-.grn-expand-table { width:100%; border-collapse:collapse; font-size:11.5px; }
-.grn-expand-table th { background:#eff6ff; color:#1e3a5f; font-size:10px; font-weight:700;
-    text-transform:uppercase; letter-spacing:.03em; padding:7px 9px; text-align:left;
-    border-bottom:1.5px solid #93c5fd; }
+.grn-expand-table { width:100%; border-collapse:collapse; font-size:11.5px; background:#fff;
+    border:1px solid #e2e8f0; border-radius:10px; overflow:hidden; }
+.grn-expand-table th { background:#f8fafc; color:#475569; font-size:11px; font-weight:700;
+    text-transform:none; letter-spacing:0; padding:8px 9px; text-align:left;
+    border-bottom:1.5px solid #e2e8f0; }
 .grn-expand-table th.num { text-align:right; }
-.grn-expand-table td { padding:7px 9px; border-bottom:1px solid #e0e7ff; vertical-align:top; }
-.grn-expand-table td.num { text-align:right; }
-.grn-expand-table tr:hover td { background:#fafbfd; }
+.grn-expand-table td { padding:7px 9px; border-bottom:1px solid #f1f5f9; vertical-align:top; color:#0f172a; }
+.grn-expand-table td.num { text-align:right; font-variant-numeric:tabular-nums; }
+.grn-expand-table tbody tr:last-child td { border-bottom:0; }
+.grn-expand-table tr:hover td { background:#f8fbff; }
 
-.pager { display:flex; gap:6px; justify-content:flex-end; align-items:center; padding:14px 18px;
-    border-top:1px solid #e2e8f0; background:#f8fafc; }
-.pager button { padding:5px 10px; border:1.5px solid #e2e8f0; border-radius:5px;
-    background:#fff; cursor:pointer; font-size:12px; font-weight:600; }
-.pager button:hover:not(:disabled) { border-color:#2563eb; color:#2563eb; }
+/* -- Pager -- */
+.pager { display:flex; gap:6px; justify-content:flex-end; align-items:center; padding:13px 18px;
+    border-top:1px solid #e2e8f0; background:#fbfcfe; }
+.pager button { height:32px; padding:0 14px; border:1.5px solid #e2e8f0; border-radius:999px;
+    background:#fff; cursor:pointer; font-size:12px; font-weight:600; color:#475569;
+    transition:all .15s; font-family:inherit; }
+.pager button:hover:not(:disabled) { border-color:#93c5fd; color:#2563eb; background:#eff6ff; }
 .pager button:disabled { opacity:.4; cursor:not-allowed; }
-.pager .total { font-size:11.5px; color:#64748b; margin-right:auto; }
+.pager .total { font-size:11.5px; color:#64748b; margin-right:auto; font-weight:600; }
+
+@media print { .grn-toolbar, .pager, .po-actions { display:none !important; } }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="grn-toolbar">
   <div class="search-box">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
     <input id="fSearch" type="text" placeholder="Search GRN no, PO no, supplier, invoice...">
   </div>
   <select id="fType" {% if request.args.get('grn_type') %}disabled title="Locked from menu"{% endif %}>
@@ -103,19 +144,15 @@
     <option value="{{ s }}">{{ s }}</option>
     {% endfor %}
   </select>
-  <input type="date" id="fDateFrom" title="From date"
-    style="padding:9px 10px; border:1.5px solid #e2e8f0; border-radius:8px; font-size:13px;">
-  <input type="date" id="fDateTo" title="To date"
-    style="padding:9px 10px; border:1.5px solid #e2e8f0; border-radius:8px; font-size:13px;">
-  <button type="button" onclick="clearFilters()"
-    style="padding:9px 12px; border:1.5px solid #e2e8f0; border-radius:8px; font-size:12px;
-    background:#fff; cursor:pointer; font-weight:600; color:#475569;">Clear</button>
+  <input type="date" id="fDateFrom" title="From date" class="grn-date">
+  <input type="date" id="fDateTo" title="To date" class="grn-date">
+  <button type="button" onclick="clearFilters()" class="btn-clear">Clear</button>
 
-  <a href="#" onclick="exportExcel(event)"
-    style="padding:9px 14px; background:#16a34a; color:#fff; border-radius:8px;
-    font-size:12px; font-weight:700; text-decoration:none; margin-left:auto;">📊 Excel</a>
+  <a href="#" onclick="exportExcel(event)" class="btn-excel">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="17"/><line x1="15" y1="13" x2="9" y2="17"/></svg> Excel
+  </a>
   <a class="btn-add-new" href="{{ url_for('grn.new_grn') }}?grn_type={{ grn_type or 'RM' }}">
-    + New GRN
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> New GRN
   </a>
 </div>
 
@@ -137,27 +174,34 @@
     </thead>
     <tbody id="grnBody">
       <tr><td colspan="10" class="empty-state">
-        <div class="icon">📦</div>Loading GRNs...
+        <div class="icon"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></div>Loading GRNs...
       </td></tr>
     </tbody>
   </table>
 
   <div class="pager">
-    <span class="total" id="totalCount">— rows</span>
-    <button id="prevBtn" onclick="changePage(-1)">‹ Prev</button>
+    <span class="total" id="totalCount">- rows</span>
+    <button id="prevBtn" onclick="changePage(-1)">&lt; Prev</button>
     <span id="pageInfo" style="font-size:12px;padding:0 8px;">Page 1</span>
-    <button id="nextBtn" onclick="changePage(1)">Next ›</button>
+    <button id="nextBtn" onclick="changePage(1)">Next &gt;</button>
   </div>
 </div>
 
-<!-- Approval system removed — GRN goes Draft → Completed directly -->
+<!-- Approval system removed - GRN goes Draft -> Completed directly -->
 {% endblock %}
-
 {% block extra_js %}
 <script>
 const STATUS_COLORS = {{ status_colors|tojson }};
 const TYPE_LABELS   = {{ grn_types|tojson }};
 const FORCED_TYPE   = "{{ grn_type or '' }}";
+
+/* == Inline SVG icons (ASCII-safe, replace emojis) == */
+const _SV = (p)=>`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
+const ICO_VIEW = _SV('<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>');
+const ICO_EDIT = _SV('<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/>');
+const ICO_LOCK = _SV('<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>');
+const ICO_DEL  = _SV('<polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>');
+const ICO_CAM  = _SV('<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>');
 
 let currentPage = 1;
 let currentTotal = 0;
@@ -206,7 +250,7 @@ function renderRows(rows, total){
   const tbody = document.getElementById('grnBody');
   if (!rows.length){
     tbody.innerHTML = `<tr><td colspan="10" class="empty-state">
-        <div class="icon">📦</div>No GRNs found. Click <b>+ New GRN</b> above to create one.
+        <div class="icon"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></div>No GRNs found. Click <b>+ New GRN</b> above to create one.
       </td></tr>`;
     document.getElementById('totalCount').textContent = '0 rows';
     document.getElementById('pageInfo').textContent = 'Page 1';
@@ -219,17 +263,17 @@ function renderRows(rows, total){
   rows.forEach(r => {
     const canEdit = r.is_editable || r.status === 'Draft';
     const editBtn = canEdit
-      ? `<a class="po-act po-act-edit" title="Edit" href="/grn/${r.id}/edit">✏️</a>`
-      : `<span class="po-act" style="opacity:.4;cursor:not-allowed;" title="Locked — ${r.status}">🔒</span>`;
+      ? `<a class="po-act po-act-edit" title="Edit" href="/grn/${r.id}/edit">${ICO_EDIT}</a>`
+      : `<span class="po-act" style="opacity:.4;cursor:not-allowed;" title="Locked - ${r.status}">${ICO_LOCK}</span>`;
     const deleteBtn = r.status === 'Draft'
-      ? `<button class="po-act danger" title="Delete Draft" onclick="grnDelete(${r.id},'${escapeHTML(r.grn_number)}')">🗑️</button>`
+      ? `<button class="po-act danger" title="Delete Draft" onclick="grnDelete(${r.id},'${escapeHTML(r.grn_number)}')">${ICO_DEL}</button>`
       : '';
     const scanBtn = r.status === 'Completed'
-      ? `<a class="po-act" title="Scan Boxes" href="/grn/${r.id}/scan" style="background:#dbeafe;border-color:#93c5fd;color:#1d4ed8;">📷</a>`
+      ? `<a class="po-act scan" title="Scan Boxes" href="/grn/${r.id}/scan">${ICO_CAM}</a>`
       : '';
 
     html += `<tr class="grn-row" data-grn-id="${r.id}" data-grn-number="${escapeHTML(r.grn_number)}" title="Click GRN number to preview items">
-      <td class="num-col"><a href="/grn/${r.id}/view" onclick="toggleGrnExpand(this.closest('tr')); return false;" title="Click to preview items · Open with eye icon →">${escapeHTML(r.grn_number)}</a>
+      <td class="num-col"><a href="/grn/${r.id}/view" onclick="toggleGrnExpand(this.closest('tr')); return false;" title="Click to preview items. Open with eye icon">${escapeHTML(r.grn_number)}</a>
           <div class="small-meta">${escapeHTML(r.grn_number_short)}</div></td>
       <td>${escapeHTML(r.grn_date)}</td>
       <td><span class="type-pill">${escapeHTML(r.grn_type)}</span></td>
@@ -247,7 +291,7 @@ function renderRows(rows, total){
       <td>${escapeHTML(r.created_by)}
           <div class="small-meta">${escapeHTML(r.created_at)}</div></td>
       <td class="po-cell-center"><div class="po-actions">
-          <a class="po-act" title="View" href="/grn/${r.id}/view">👁️</a>
+          <a class="po-act" title="View" href="/grn/${r.id}/view">${ICO_VIEW}</a>
           ${editBtn}
           ${scanBtn}
           ${deleteBtn}
@@ -279,7 +323,7 @@ document.getElementById('fStatus').addEventListener('change', () => { currentPag
 document.getElementById('fDateFrom').addEventListener('change', () => { currentPage = 1; load(); });
 document.getElementById('fDateTo').addEventListener('change', () => { currentPage = 1; load(); });
 
-// Approval system removed — Draft GRN auto-completes on submit.
+// Approval system removed - Draft GRN auto-completes on submit.
 
 function grnDelete(id, num){
   if (!confirm(`Delete this draft GRN?\n\n${num}\n\nThis action cannot be undone.`)) return;
@@ -292,7 +336,7 @@ function grnDelete(id, num){
     .catch(e => alert('Network error: ' + e));
 }
 
-// ─────────── Double-click row to expand & preview items ───────────
+// ----------- Double-click row to expand & preview items -----------
 function bindRowExpand(){
   document.querySelectorAll('#grnBody .grn-row').forEach(tr => {
     tr.addEventListener('dblclick', function(e){
@@ -323,7 +367,7 @@ function toggleGrnExpand(tr){
   er.dataset.grnId = grnId;
   er.innerHTML = `<td colspan="${colspan}">
     <div class="grn-expand-wrap">
-      <div class="grn-loading">⏳ Loading items for ${escapeHTML(grnNum)}…</div>
+      <div class="grn-loading">Loading items for ${escapeHTML(grnNum)}...</div>
     </div>
   </td>`;
   tr.classList.add('expanded');
@@ -356,26 +400,26 @@ function renderItemsInline(er, d, grnNum){
   const rowsHtml = d.items.map(it => `
     <tr>
       <td>${it.sr_no}</td>
-      <td>${escapeHTML(it.po_number || '—')}</td>
+      <td>${escapeHTML(it.po_number || '-')}</td>
       <td>
         <div style="font-weight:700;">${escapeHTML(it.item_name)}</div>
         ${it.item_code  ? `<div style="font-size:10px;color:#94a3b8;">${escapeHTML(it.item_code)}</div>` : ''}
         ${isRm && it.manufacturer ? `<div style="font-size:10px;color:#94a3b8;">Mfg: ${escapeHTML(it.manufacturer)}</div>` : ''}
       </td>
-      ${isRm ? `<td>${escapeHTML(it.batch_no || '—')}
-        ${it.mfg_date || it.expiry_date ? `<div style="font-size:10px;color:#94a3b8;">MFG: ${escapeHTML(it.mfg_date||'—')} · EXP: ${escapeHTML(it.expiry_date||'—')}</div>` : ''}
+      ${isRm ? `<td>${escapeHTML(it.batch_no || '-')}
+        ${it.mfg_date || it.expiry_date ? `<div style="font-size:10px;color:#94a3b8;">MFG: ${escapeHTML(it.mfg_date||'-')} | EXP: ${escapeHTML(it.expiry_date||'-')}</div>` : ''}
       </td>` : ''}
       <td class="num">${it.no_of_boxes || 0}</td>
       <td class="num">${fmt(it.per_box_qty)}</td>
       <td class="num">${fmt(it.ordered_qty)}</td>
       <td class="num"><b>${fmt(it.received_qty)}</b> ${escapeHTML(it.uom)}</td>
-      <td>${escapeHTML(it.storage_location_name || '—')}</td>
+      <td>${escapeHTML(it.storage_location_name || '-')}</td>
     </tr>`).join('');
   er.querySelector('.grn-expand-wrap').innerHTML = `
     <div class="grn-expand-title">
-      📦 Items in <span style="color:#1e40af;">${escapeHTML(grnNum)}</span>
+      Items in <span style="color:#1e40af;">${escapeHTML(grnNum)}</span>
       <span class="pe-cnt">${d.items.length} item${d.items.length===1?'':'s'}</span>
-      <a href="/grn/${d.grn_id}/view" style="margin-left:auto;font-size:11px;color:#2563eb;text-decoration:none;font-weight:700;">Open full view →</a>
+      <a href="/grn/${d.grn_id}/view" style="margin-left:auto;font-size:11px;color:#2563eb;text-decoration:none;font-weight:700;">Open full view -&gt;</a>
     </div>
     <table class="grn-expand-table">
       <thead>

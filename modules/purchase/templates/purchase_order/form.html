@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}{% if mode == 'edit' %}Edit{% else %}Generate{% endif %} Purchase Order — HCP ERP{% endblock %}
+{% block title %}{% if mode == 'edit' %}Edit{% else %}Generate{% endif %} Purchase Order - HCP ERP{% endblock %}
 {% block page_title %}Purchase Order{% endblock %}
 {% block bread %}Procurement / Purchase Order / {{ po_types.get(po_type, po_type) }} / {% if mode == 'edit' %}Edit{% else %}New{% endif %}{% endblock %}
 
@@ -7,137 +7,170 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <style>
-  .po-wrap{ background:#fff; border-radius:12px; padding:0; margin-bottom:90px;
-            border:1px solid #e2e8f0; box-shadow:0 1px 3px rgba(0,0,0,.04); }
-  .po-title-bar{ padding:24px 28px 18px; border-bottom:1px solid #e2e8f0;
-                 background:#f8fafc; border-radius:12px 12px 0 0; text-align:center; }
-  .po-title-bar h1{ font-size:22px; font-weight:800; letter-spacing:.04em;
-                    text-decoration:underline; text-underline-offset:6px;
-                    color:#0f172a; margin:0; }
-  .po-type-tabs{ display:flex; gap:6px; justify-content:center; margin-top:10px; }
-  .po-type-tab{ padding:5px 14px; border-radius:20px; font-size:11px; font-weight:700;
-                background:#e2e8f0; color:#475569; cursor:pointer; border:0; transition:all .15s; }
-  .po-type-tab.active{ background:#2563eb; color:#fff; }
-  .po-type-tab:hover:not(.active){ background:#cbd5e1; }
+/* ============================================================
+   PURCHASE ORDER FORM - PREMIUM BLUE THEME
+   ============================================================ */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700&display=swap');
 
-  /* Packing Material sub-type tabs (PM / Corrugation / Sleeves) */
-  .po-subtype-tabs{ display:inline-flex; gap:0; justify-content:center; margin-top:12px;
-                    align-items:center; padding:4px; background:#f1f5f9; border-radius:8px;
-                    border:1px solid #e2e8f0; }
-  .po-subtype-lbl{ font-size:10.5px; font-weight:700; color:#64748b;
-                   text-transform:uppercase; letter-spacing:.05em; padding:0 10px 0 6px; }
-  .po-subtype-tab{ padding:6px 16px; border-radius:6px; font-size:12px; font-weight:600;
-                   background:transparent; color:#64748b; cursor:pointer; border:0;
-                   transition:all .15s; }
-  .po-subtype-tab.active{ background:#0ea5e9; color:#fff; box-shadow:0 1px 3px rgba(14,165,233,.3); }
-  .po-subtype-tab:hover:not(.active){ background:#e2e8f0; color:#1e293b; }
+.po-wrap, .po-wrap input, .po-wrap select, .po-wrap textarea, .po-wrap button, .po-wrap label,
+.po-footer, .po-footer a, .po-footer button, .select2-container, .select2-dropdown {
+  font-family:'Inter','Segoe UI',system-ui,-apple-system,sans-serif;
+}
+.po-input.mono { font-family:'JetBrains Mono', ui-monospace, monospace !important; font-weight:600; letter-spacing:.02em; }
 
-  .po-body{ padding:22px 28px; }
+.po-wrap{ background:#fff; border-radius:16px; padding:0; margin-bottom:90px;
+          border:1px solid #e2e8f0; box-shadow:0 1px 3px rgba(15,23,42,.05), 0 8px 24px rgba(15,23,42,.04); }
+.po-title-bar{ padding:22px 28px 18px; border-bottom:1px solid #e2e8f0;
+               background:#f8fafc; border-radius:16px 16px 0 0; text-align:center; }
+.po-title-bar h1{ font-size:20px; font-weight:800; letter-spacing:.06em;
+                  color:#0f172a; margin:0; display:inline-block;
+                  border-bottom:3px solid #2563eb; padding-bottom:7px; }
+.po-type-tabs{ display:flex; gap:6px; justify-content:center; margin-top:14px; flex-wrap:wrap; }
+.po-type-tab{ padding:6px 16px; border-radius:999px; font-size:11.5px; font-weight:700;
+              background:#fff; color:#475569; cursor:pointer; border:1.5px solid #e2e8f0; transition:all .15s; }
+.po-type-tab.active{ background:linear-gradient(180deg,#3b82f6,#1d4ed8); color:#fff; border-color:transparent;
+                     box-shadow:0 2px 8px rgba(37,99,235,.3); }
+.po-type-tab:hover:not(.active){ background:#eff6ff; color:#2563eb; border-color:#93c5fd; }
 
-  .po-3col{ display:grid; grid-template-columns:1fr 1fr 1.6fr; gap:18px; margin-bottom:24px; }
-  @media (max-width:1024px){ .po-3col{ grid-template-columns:1fr; } }
-  .po-col{ display:flex; flex-direction:column; gap:10px; }
+/* Packing Material sub-type tabs (PM / Corrugation / Sleeves) */
+.po-subtype-tabs{ display:inline-flex; gap:0; justify-content:center; margin-top:14px;
+                  align-items:center; padding:4px; background:#f1f5f9; border-radius:999px;
+                  border:1px solid #e2e8f0; }
+.po-subtype-lbl{ font-size:10.5px; font-weight:700; color:#64748b;
+                 text-transform:uppercase; letter-spacing:.05em; padding:0 10px 0 8px; }
+.po-subtype-tab{ padding:6px 16px; border-radius:999px; font-size:12px; font-weight:600;
+                 background:transparent; color:#64748b; cursor:pointer; border:0;
+                 transition:all .15s; }
+.po-subtype-tab.active{ background:linear-gradient(180deg,#3b82f6,#1d4ed8); color:#fff; box-shadow:0 2px 6px rgba(37,99,235,.3); }
+.po-subtype-tab:hover:not(.active){ background:#e2e8f0; color:#1e293b; }
 
-  .po-fld{ position:relative; }
-  .po-fld .req{ color:#dc2626; margin-left:2px; }
+.po-body{ padding:22px 28px; }
 
-  .po-input, .po-select, .po-textarea{
-    width:100%; padding:18px 12px 6px; font-size:13px; color:#0f172a;
-    border:1px solid #d1d5db; border-radius:6px; background:#f8fafc;
-    outline:none; transition:border-color .15s, background .15s; font-family:inherit;
-  }
-  .po-textarea{ min-height:64px; resize:vertical; }
-  .po-input:focus, .po-select:focus, .po-textarea:focus{ border-color:#2563eb; background:#fff; }
-  .po-input[readonly]{ background:#f1f5f9; color:#64748b; }
-  .po-input.invalid, .po-select.invalid, .po-textarea.invalid{ border-color:#dc2626; background:#fef2f2; }
+.po-3col{ display:grid; grid-template-columns:1fr 1fr 1.6fr; gap:18px; margin-bottom:24px; }
+@media (max-width:1024px){ .po-3col{ grid-template-columns:1fr; } }
+.po-col{ display:flex; flex-direction:column; gap:10px; }
 
-  .po-fld label{
-    position:absolute; left:12px; top:4px; font-size:10px; font-weight:600;
-    color:#64748b; letter-spacing:.04em; pointer-events:none; text-transform:uppercase;
-  }
+.po-fld{ position:relative; }
+.po-fld .req{ color:#dc2626; margin-left:2px; }
 
-  .po-fld .select2-container--default .select2-selection--single{
-    height:46px; border:1px solid #d1d5db; border-radius:6px; background:#f8fafc; padding:14px 0 0 0;
-  }
-  .po-fld .select2-container--default .select2-selection--single .select2-selection__rendered{
-    line-height:30px; padding-left:12px; color:#0f172a; font-size:13px;
-  }
-  .po-fld .select2-container--default .select2-selection--single .select2-selection__placeholder{ color:#94a3b8; }
-  .po-fld .select2-container--default .select2-selection--single .select2-selection__arrow{ height:44px; }
-  .po-fld .select2-container--default.select2-container--focus .select2-selection--single{ border-color:#2563eb; background:#fff; }
+.po-input, .po-select, .po-textarea{
+  width:100%; padding:18px 12px 6px; font-size:13px; color:#0f172a;
+  border:1.5px solid #e2e8f0; border-radius:9px; background:#fff;
+  outline:none; transition:border-color .15s, box-shadow .15s; font-family:inherit;
+  box-sizing:border-box;
+}
+.po-textarea{ min-height:64px; resize:vertical; }
+.po-input:focus, .po-select:focus, .po-textarea:focus{ border-color:#2563eb; box-shadow:0 0 0 3px rgba(37,99,235,.12); }
+.po-input[readonly]{ background:#f8fafc; color:#64748b; }
+.po-input.invalid, .po-select.invalid, .po-textarea.invalid{ border-color:#dc2626; background:#fef2f2; box-shadow:0 0 0 3px rgba(220,38,38,.08); }
 
-  .po-terms-card{ border:1px solid #d1d5db; border-radius:6px; min-height:380px;
-                  display:flex; flex-direction:column; background:#fff; }
-  .po-terms-toolbar{ display:flex; gap:2px; padding:6px 8px; flex-wrap:wrap;
-                     border-bottom:1px solid #e2e8f0; background:#f8fafc;
-                     border-radius:6px 6px 0 0; }
-  .po-terms-toolbar button{
-    width:30px; height:30px; border:0; background:transparent; border-radius:4px;
-    color:#475569; cursor:pointer; display:inline-flex; align-items:center;
-    justify-content:center; font-size:13px;
-  }
-  .po-terms-toolbar button:hover{ background:#e2e8f0; }
-  .po-terms-toolbar select{ height:30px; border:0; background:transparent; font-size:13px; color:#475569; cursor:pointer; padding:0 6px; }
-  .po-terms-toolbar .po-tb-sep{ width:1px; background:#e2e8f0; margin:4px 4px; }
-  .po-terms-body{ flex:1; min-height:320px; padding:14px 16px; outline:none; font-size:13px; line-height:1.55; color:#0f172a; }
-  .po-terms-body:empty::before{ content:"Terms of Delivery"; color:#94a3b8; pointer-events:none; }
+.po-fld label{
+  position:absolute; left:12px; top:4px; font-size:10px; font-weight:700;
+  color:#64748b; letter-spacing:.05em; pointer-events:none; text-transform:uppercase;
+  z-index:3;
+}
 
-  .po-items-card{ border:1px solid #e2e8f0; border-radius:8px; overflow:visible; margin-top:6px; }
-  .po-items-card table{ width:100%; border-collapse:collapse; font-size:13px; }
-  .po-items-card thead th{
-    background:#f1f5f9; color:#475569; font-size:11px; font-weight:700;
-    text-transform:uppercase; letter-spacing:.04em; padding:10px 8px; text-align:left; border-bottom:1px solid #e2e8f0;
-  }
-  .po-items-card thead th.num{ text-align:right; }
-  .po-items-card tbody td{ padding:6px; border-bottom:1px solid #f1f5f9; vertical-align:top; }
-  .po-items-card tbody tr:hover{ background:#fcfcfd; }
-  .po-items-card .cell-input{
-    width:100%; padding:8px 10px; border:1px solid #e2e8f0; border-radius:5px;
-    font-size:13px; background:#fff; outline:none; font-family:inherit;
-  }
-  .po-items-card .cell-input:focus{ border-color:#2563eb; }
-  .po-items-card .cell-input.num{ text-align:right; }
-  .po-items-card .cell-amt{ padding:8px 10px; text-align:right; font-weight:700; }
-  .po-items-card .row-del{ background:#fee2e2; color:#dc2626; border:0;
-                           width:28px; height:28px; border-radius:5px; cursor:pointer; font-size:16px; }
-  .po-items-card .row-del:hover{ background:#fecaca; }
-  .po-items-card .select2-container--default .select2-selection--single{ height:36px; padding:0; border:1px solid #e2e8f0; border-radius:5px; }
-  .po-items-card .select2-container--default .select2-selection--single .select2-selection__rendered{ line-height:34px; padding-left:10px; font-size:13px; }
-  .po-items-card .select2-container--default .select2-selection--single .select2-selection__arrow{ height:34px; }
+.po-fld .select2-container--default .select2-selection--single{
+  height:46px; border:1.5px solid #e2e8f0; border-radius:9px; background:#fff; padding:14px 0 0 0;
+}
+.po-fld .select2-container--default .select2-selection--single .select2-selection__rendered{
+  line-height:30px; padding-left:12px; color:#0f172a; font-size:13px;
+}
+.po-fld .select2-container--default .select2-selection--single .select2-selection__placeholder{ color:#94a3b8; }
+.po-fld .select2-container--default .select2-selection--single .select2-selection__arrow{ height:44px; }
+.po-fld .select2-container--default.select2-container--focus .select2-selection--single{ border-color:#2563eb; box-shadow:0 0 0 3px rgba(37,99,235,.12); }
+.select2-dropdown{ border:1px solid #e2e8f0 !important; border-radius:10px !important; box-shadow:0 12px 32px rgba(15,23,42,.14) !important; font-family:inherit; }
+.select2-results__option--highlighted{ background:#eff6ff !important; color:#2563eb !important; }
 
-  .po-add-row{
-    display:inline-flex; align-items:center; gap:6px; margin:12px;
-    background:#eff6ff; color:#2563eb; border:1px dashed #93c5fd;
-    padding:8px 18px; border-radius:6px; font-size:13px; font-weight:600; cursor:pointer;
-    transition:all .15s;
-  }
-  .po-add-row:hover:not(:disabled){ background:#dbeafe; }
-  .po-add-row:disabled{
-    background:#f1f5f9; color:#94a3b8; border-color:#cbd5e1;
-    cursor:not-allowed; opacity:.7;
-  }
+/* -- Terms of Delivery editor -- */
+.po-terms-card{ border:1.5px solid #e2e8f0; border-radius:12px; min-height:380px;
+                display:flex; flex-direction:column; background:#fff; overflow:hidden; }
+.po-terms-toolbar{ display:flex; gap:2px; padding:6px 8px; flex-wrap:wrap;
+                   border-bottom:1px solid #e2e8f0; background:#f8fafc; align-items:center; }
+.po-terms-toolbar button{
+  width:30px; height:30px; border:0; background:transparent; border-radius:7px;
+  color:#475569; cursor:pointer; display:inline-flex; align-items:center;
+  justify-content:center; font-size:13px; transition:all .12s;
+}
+.po-terms-toolbar button:hover{ background:#eff6ff; color:#2563eb; }
+.po-terms-toolbar select{ height:30px; border:0; background:transparent; font-size:12.5px; color:#475569; cursor:pointer; padding:0 6px; border-radius:7px; outline:none; font-family:inherit; }
+.po-terms-toolbar select:hover{ background:#eff6ff; color:#2563eb; }
+.po-terms-toolbar .po-tb-sep{ width:1px; background:#e2e8f0; margin:4px 4px; align-self:stretch; }
+.po-terms-body{ flex:1; min-height:320px; padding:14px 16px; outline:none; font-size:13px; line-height:1.55; color:#0f172a; }
+.po-terms-body:empty::before{ content:"Terms of Delivery"; color:#94a3b8; pointer-events:none; }
+.po-terms-body:focus{ background:#fcfdff; }
 
-  .po-totals{ margin-left:auto; max-width:480px; margin-top:14px; display:flex; flex-direction:column; gap:8px; }
-  .po-total-row{ display:flex; align-items:center; justify-content:space-between; padding:8px 14px; border-radius:6px; }
-  .po-total-row.alt{ background:#f8fafc; }
-  .po-total-row.grand{ background:#1e40af; color:#fff; font-weight:700; font-size:15px; padding:12px 14px; }
-  .po-total-lbl{ font-size:13px; font-weight:600; color:#475569; }
-  .po-total-row.grand .po-total-lbl{ color:#fff; }
-  .po-total-val{ font-size:14px; font-weight:700; color:#0f172a; font-variant-numeric:tabular-nums; }
-  .po-total-row.grand .po-total-val{ color:#fff; font-size:16px; }
-  .po-amt-words{ margin-top:6px; padding:10px 14px; background:#fef3c7; border-radius:6px; font-size:12px; color:#78350f; font-style:italic; }
+/* -- Items table : premium light headers -- */
+.po-items-card{ border:1px solid #e2e8f0; border-radius:12px; overflow:visible; margin-top:6px;
+                box-shadow:0 1px 3px rgba(15,23,42,.04); }
+.po-items-card table{ width:100%; border-collapse:collapse; font-size:13px; }
+.po-items-card thead th{
+  background:#f8fafc; color:#475569; font-size:11.5px; font-weight:700;
+  text-transform:none; letter-spacing:0; padding:11px 8px; text-align:left; border-bottom:1.5px solid #e2e8f0;
+}
+.po-items-card thead th:first-child{ border-radius:12px 0 0 0; }
+.po-items-card thead th:last-child{ border-radius:0 12px 0 0; }
+.po-items-card thead th.num{ text-align:right; }
+.po-items-card tbody td{ padding:6px; border-bottom:1px solid #f1f5f9; vertical-align:top; }
+.po-items-card tbody tr:hover{ background:#f8fbff; }
+.po-items-card .cell-input{
+  width:100%; padding:8px 10px; border:1.5px solid #e2e8f0; border-radius:7px;
+  font-size:13px; background:#fff; outline:none; font-family:inherit; color:#0f172a;
+  transition:border-color .15s, box-shadow .15s; box-sizing:border-box;
+}
+.po-items-card .cell-input:focus{ border-color:#2563eb; box-shadow:0 0 0 3px rgba(37,99,235,.1); }
+.po-items-card .cell-input.num{ text-align:right; font-variant-numeric:tabular-nums; }
+.po-items-card .cell-amt{ padding:8px 10px; text-align:right; font-weight:700; font-variant-numeric:tabular-nums; }
+.po-items-card .row-del{ background:#fee2e2; color:#dc2626; border:0;
+                         width:28px; height:28px; border-radius:8px; cursor:pointer; font-size:15px;
+                         transition:all .15s; }
+.po-items-card .row-del:hover{ background:#dc2626; color:#fff; transform:translateY(-1px); box-shadow:0 3px 8px rgba(220,38,38,.3); }
+.po-items-card .select2-container--default .select2-selection--single{ height:36px; padding:0; border:1.5px solid #e2e8f0; border-radius:7px; }
+.po-items-card .select2-container--default .select2-selection--single .select2-selection__rendered{ line-height:33px; padding-left:10px; font-size:13px; }
+.po-items-card .select2-container--default .select2-selection--single .select2-selection__arrow{ height:34px; }
+.po-items-card .select2-container--default.select2-container--focus .select2-selection--single{ border-color:#2563eb; box-shadow:0 0 0 3px rgba(37,99,235,.1); }
 
-  .po-footer{ position:fixed; bottom:0; left:0; right:0;
-              padding:12px 28px; background:#fff; border-top:1px solid #e2e8f0;
-              box-shadow:0 -2px 10px rgba(0,0,0,.04);
-              display:flex; justify-content:flex-end; gap:10px; z-index:100; }
-  .po-btn{ padding:10px 22px; border-radius:6px; font-size:13px; font-weight:700; cursor:pointer; border:0; transition:all .15s; }
-  .po-btn-primary{ background:#1e40af; color:#fff; }
-  .po-btn-primary:hover{ background:#1e3a8a; }
-  .po-btn-outline{ background:#fff; color:#475569; border:1px solid #d1d5db; }
-  .po-btn-outline:hover{ background:#f8fafc; }
-  .po-btn-success{ background:#16a34a; color:#fff; }
-  .po-btn-success:hover{ background:#15803d; }
+.po-add-row{
+  display:inline-flex; align-items:center; gap:6px; margin:12px;
+  background:#eff6ff; color:#2563eb; border:1.5px dashed #93c5fd;
+  padding:8px 20px; border-radius:999px; font-size:13px; font-weight:700; cursor:pointer;
+  transition:all .15s; font-family:inherit;
+}
+.po-add-row:hover:not(:disabled){ background:#dbeafe; border-style:solid; transform:translateY(-1px); }
+.po-add-row:disabled{
+  background:#f1f5f9; color:#94a3b8; border-color:#cbd5e1;
+  cursor:not-allowed; opacity:.7; transform:none;
+}
+
+/* -- Totals -- */
+.po-totals{ margin-left:auto; max-width:480px; margin-top:16px; display:flex; flex-direction:column; gap:8px; }
+.po-total-row{ display:flex; align-items:center; justify-content:space-between; padding:8px 16px; border-radius:10px; }
+.po-total-row.alt{ background:#f8fafc; }
+.po-total-row.grand{ background:linear-gradient(135deg,#2563eb,#1e40af); color:#fff; font-weight:700; font-size:15px; padding:13px 16px;
+                     box-shadow:0 6px 18px rgba(37,99,235,.3); }
+.po-total-lbl{ font-size:13px; font-weight:600; color:#475569; }
+.po-total-row.grand .po-total-lbl{ color:#fff; }
+.po-total-val{ font-size:14px; font-weight:700; color:#0f172a; font-variant-numeric:tabular-nums; }
+.po-total-row.grand .po-total-val{ color:#fff; font-size:16px; }
+.po-amt-words{ margin-top:6px; padding:10px 16px; background:#fffbeb; border:1px solid #fde68a; border-radius:10px; font-size:12px; color:#78350f; font-style:italic; }
+
+/* -- Footer -- */
+.po-footer{ position:fixed; bottom:0; left:0; right:0;
+            padding:12px 28px; background:rgba(255,255,255,.92); backdrop-filter:blur(8px); border-top:1px solid #e2e8f0;
+            box-shadow:0 -6px 24px rgba(15,23,42,.08);
+            display:flex; justify-content:flex-end; gap:10px; z-index:100; }
+.po-btn{ height:38px; padding:0 22px; border-radius:999px; font-size:13px; font-weight:700; cursor:pointer; border:1.5px solid transparent;
+         transition:all .15s; font-family:inherit; display:inline-flex; align-items:center; text-decoration:none; }
+.po-btn-primary{ background:linear-gradient(180deg,#3b82f6,#1d4ed8); color:#fff; box-shadow:0 2px 8px rgba(37,99,235,.28); }
+.po-btn-primary:hover{ transform:translateY(-1px); box-shadow:0 5px 14px rgba(37,99,235,.38); }
+.po-btn-outline{ background:#fff; color:#475569; border-color:#e2e8f0; }
+.po-btn-outline:hover{ background:#eff6ff; color:#2563eb; border-color:#93c5fd; }
+.po-btn-success{ background:linear-gradient(180deg,#22c55e,#16a34a); color:#fff; box-shadow:0 2px 8px rgba(22,163,74,.28); }
+.po-btn-success:hover{ transform:translateY(-1px); box-shadow:0 5px 14px rgba(22,163,74,.38); }
+
+/* -- Flatpickr accents -- */
+.flatpickr-day.selected, .flatpickr-day.selected:hover{ background:#2563eb; border-color:#2563eb; }
 </style>
 {% endblock %}
 
@@ -177,7 +210,7 @@
       <input type="hidden" name="po_id"   value="{{ po.id if po else '' }}">
       <input type="hidden" name="po_type" id="fPoType" value="{{ po_type }}">
 
-      <!-- ═════ Header — 3 columns ═════ -->
+      <!-- ===== Header - 3 columns ===== -->
       <div class="po-3col">
 
         <!-- COLUMN 1: SUPPLIER (BILL FROM) -->
@@ -198,7 +231,7 @@
             <select class="po-select" id="fShipLocation" name="ship_location">
               {# Options injected from master via JS on page load #}
               {% if po and po.delivery_address %}
-              <option value="{{ po.delivery_address.split(',')[0] }}" selected>(saved) {{ po.delivery_address[:60] }}…</option>
+              <option value="{{ po.delivery_address.split(',')[0] }}" selected>(saved) {{ po.delivery_address[:60] }}...</option>
               {% endif %}
             </select>
             <label>Select Ship Location <span class="req">*</span></label>
@@ -224,7 +257,7 @@
           </div>
 
           <div class="po-fld">
-            <input class="po-input" id="fSupGst" name="supplier_gst" value="{{ po.supplier_gst if po else '' }}" style="font-family:monospace;">
+            <input class="po-input mono" id="fSupGst" name="supplier_gst" value="{{ po.supplier_gst if po else '' }}">
             <label>GST Number <span class="req">*</span></label>
           </div>
 
@@ -257,7 +290,7 @@
         <!-- COLUMN 2: INVOICE / DISPATCH DETAILS -->
         <div class="po-col">
           <div class="po-fld">
-            <input class="po-input" id="fVoucherNo" value="{{ po.po_number if po else '(auto-generated on save)' }}" readonly>
+            <input class="po-input mono" id="fVoucherNo" value="{{ po.po_number if po else '(auto-generated on save)' }}" readonly>
             <label>Voucher Number</label>
           </div>
 
@@ -306,8 +339,8 @@
         <div class="po-col">
           <div class="po-terms-card">
             <div class="po-terms-toolbar">
-              <button type="button" onclick="document.execCommand('undo')" title="Undo">↶</button>
-              <button type="button" onclick="document.execCommand('redo')" title="Redo">↷</button>
+              <button type="button" onclick="document.execCommand('undo')" title="Undo"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg></button>
+              <button type="button" onclick="document.execCommand('redo')" title="Redo"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 14 20 9 15 4"/><path d="M4 20v-7a4 4 0 0 1 4-4h12"/></svg></button>
               <span class="po-tb-sep"></span>
               <select onchange="document.execCommand('formatBlock', false, this.value); this.selectedIndex=0;">
                 <option value="">Paragraph</option>
@@ -319,10 +352,10 @@
               <button type="button" onclick="document.execCommand('bold')" title="Bold"><b>B</b></button>
               <button type="button" onclick="document.execCommand('italic')" title="Italic"><i>I</i></button>
               <span class="po-tb-sep"></span>
-              <button type="button" onclick="document.execCommand('insertUnorderedList')" title="Bullet list">•</button>
+              <button type="button" onclick="document.execCommand('insertUnorderedList')" title="Bullet list">&#8226;</button>
               <button type="button" onclick="document.execCommand('insertOrderedList')" title="Numbered list">1.</button>
               <span class="po-tb-sep"></span>
-              <button type="button" onclick="poInsertLink()" title="Insert link">🔗</button>
+              <button type="button" onclick="poInsertLink()" title="Insert link"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></button>
             </div>
             <div class="po-terms-body" id="fTermsBody" contenteditable="true">{% if po and po.terms %}{% for t in po.terms %}<p>{{ t.text }}</p>{% endfor %}{% elif terms %}{% for t in terms %}<p>{{ t.text }}</p>{% endfor %}{% endif %}</div>
           </div>
@@ -330,7 +363,7 @@
 
       </div>
 
-      <!-- ═════ Items table ═════ -->
+      <!-- ===== Items table ===== -->
       <div class="po-items-card">
         <table>
           <thead>
@@ -342,7 +375,7 @@
               <th style="width:10%;" class="num">Rate</th>
               <th style="width:7%;">Per</th>
               <th style="width:7%;"  class="num">Disc(%)</th>
-              <th style="width:11%;" class="num">Amount (₹)</th>
+              <th style="width:11%;" class="num">Amount (&#8377;)</th>
               <th style="width:38px;"></th>
             </tr>
           </thead>
@@ -350,11 +383,11 @@
         </table>
         <button type="button" id="poAddRowBtn" class="po-add-row" onclick="poAddRow()">+ Add Item</button>
         <div id="poAddRowHint" style="display:none;font-size:11.5px;color:#dc2626;margin:0 12px 12px;font-style:italic;">
-          ⓘ Pelaa current row fill karo (Item + Quantity + Rate) — pachhi navi row add thai shake
+          Note: Pelaa current row fill karo (Item + Quantity + Rate) - pachhi navi row add thai shake
         </div>
       </div>
 
-      <!-- ═════ Totals ═════ -->
+      <!-- ===== Totals ===== -->
       <div class="po-totals">
         <div class="po-total-row">
           <div class="po-total-lbl">Sub Total</div>
@@ -378,7 +411,7 @@
         </div>
         <div class="po-total-row grand">
           <div class="po-total-lbl">Total Amount</div>
-          <div class="po-total-val" id="ttGrand">₹ 0.00</div>
+          <div class="po-total-val" id="ttGrand">&#8377; 0.00</div>
         </div>
         <div class="po-amt-words" id="ttWords">INR Zero Only</div>
       </div>
@@ -393,7 +426,6 @@
   <button type="button" class="po-btn po-btn-success"  onclick="poSave('submit')">Save &amp; Submit</button>
 </div>
 {% endblock %}
-
 {% block extra_js %}
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
@@ -425,11 +457,11 @@
     {% endfor %}
   ]{% else %}[]{% endif %};
 
-  // ───── Date pickers ──────────────────────────────────────
+  // ----- Date pickers ------------------------------------------------------
   flatpickr("#fPoDate",  { dateFormat:"Y-m-d", defaultDate: "{{ po.po_date.strftime('%Y-%m-%d') if po and po.po_date else '' }}" || "today", allowInput:true });
   flatpickr("#fRefDate", { dateFormat:"Y-m-d", allowInput:true });
 
-  // ───── Load Ship Locations from master ────────────────────
+  // ----- Load Ship Locations from master ------------------------------------
   // Populates the Ship Location dropdown from the master table.
   // The first row marked is_default auto-selects (only on new PO; edit
   // keeps the PO's saved value).
@@ -454,7 +486,7 @@
       (d.results || []).forEach(loc => {
         const $opt = $('<option>')
           .val(loc.name)
-          .text(loc.name + (loc.city ? ' — ' + loc.city : ''))
+          .text(loc.name + (loc.city ? ' - ' + loc.city : ''))
           .attr('data-address', loc.address)
           .attr('data-state', loc.state || '')
           .attr('data-state-code', loc.state_code || '');
@@ -483,7 +515,7 @@
     })
     .catch(e => console.warn('Ship locations load failed', e));
 
-  // ───── Supplier Select2 ──────────────────────────────────
+  // ----- Supplier Select2 ---------------------------------------------------
   $('#fSupplier').select2({
     placeholder:'-- Select Supplier --', allowClear:true, width:'100%',
     ajax:{
@@ -537,7 +569,7 @@
       }).catch(e=>console.warn('Supplier load failed', e));
   });
 
-  // ───── Country Select2 ────────────────────────────────────
+  // ----- Country Select2 ----------------------------------------------------
   $('#fSupCountry').select2({
     placeholder:'-- Select Country --', allowClear:true, width:'100%',
     ajax:{
@@ -555,7 +587,7 @@
     $('#fSupStateCode').val('');
   });
 
-  // ───── State Select2 ──────────────────────────────────────
+  // ----- State Select2 ------------------------------------------------------
   $('#fSupState').select2({
     placeholder:'-- Select State --', allowClear:true, width:'100%',
     ajax:{
@@ -572,7 +604,7 @@
     poRecalcAll();
   });
 
-  // ───── Auto-derive State from GSTIN's first 2 digits ─────────────────
+  // ----- Auto-derive State from GSTIN's first 2 digits ----------------------
   // Fires when supplier loads (if billing_state was empty) OR when user
   // manually edits the GST input.
   function autoFillStateFromGst(){
@@ -595,7 +627,7 @@
   }
   $('#fSupGst').on('blur', autoFillStateFromGst);
 
-  // ───── Items table ────────────────────────────────────────
+  // ----- Items table --------------------------------------------------------
   let _rowIdx = 0;
 
   // Check whether the *last* (current bottom) row is filled enough to allow
@@ -614,7 +646,7 @@
     const $btn  = $('#poAddRowBtn');
     const $hint = $('#poAddRowHint');
     if (!$rows.length){
-      // No rows yet — always allow adding the first row
+      // No rows yet - always allow adding the first row
       $btn.prop('disabled', false);
       $hint.hide();
       return;
@@ -632,7 +664,7 @@
     if (isManual){
       const $rows = $('#poItemsBody tr');
       if ($rows.length && !_isRowFilled($rows.last())){
-        // Block adding — show the hint and keep button disabled
+        // Block adding - show the hint and keep button disabled
         updateAddRowState();
         return;
       }
@@ -703,10 +735,10 @@
           $row.find('.hf-hsn').val(it.hsn_code||'');
           $row.find('.hf-desc').val(it.description||'');
 
-          // Auto-fill UOM (always overwrite — most-recent item's UOM)
+          // Auto-fill UOM (always overwrite - most-recent item's UOM)
           $row.find('.cell-uom').val(it.uom || 'KG');
 
-          // Auto-fill GST rate (always overwrite — even if 0)
+          // Auto-fill GST rate (always overwrite - even if 0)
           if (it.gst_rate !== undefined && it.gst_rate !== null) {
               $row.find('.cell-gst').val(it.gst_rate);
           }
@@ -760,7 +792,7 @@
     updateAddRowState();
   };
 
-  // ───── Calculations ────────────────────────────────────────
+  // ----- Calculations --------------------------------------------------------
   function _n(v){ const f = parseFloat(v); return isNaN(f) ? 0 : f; }
   function isInterstate(){
     const supState = ($('#fSupState').val()||'').toLowerCase().trim();
@@ -798,7 +830,7 @@
     $('#ttSgst').text(sgst.toFixed(2));
     $('#ttIgst').text(igst.toFixed(2));
     $('#ttRoundoff').text(roundOff.toFixed(2));
-    $('#ttGrand').text('₹ '+grand.toFixed(2));
+    $('#ttGrand').text('\u20b9 '+grand.toFixed(2));
     if (inter){ $('#rowCgst, #rowSgst').hide(); $('#rowIgst').show(); }
     else      { $('#rowCgst, #rowSgst').show(); $('#rowIgst').hide(); }
     $('#ttWords').text(amountInWordsINR(grand)+' Only');
@@ -827,7 +859,7 @@
     return 'INR '+parts.join(' ').replace(/\s+/g,' ').trim();
   }
 
-  // ───── Link in terms editor ────────────────────────────────
+  // ----- Link in terms editor -------------------------------------------------
   window.poInsertLink = function(){
     const url = prompt('Enter URL:'); if (!url) return;
     document.execCommand('createLink', false, url);
@@ -842,7 +874,7 @@
     return (tmp.textContent || tmp.innerText || '').replace(/\s+/g, ' ').trim();
   }
 
-  // ───── Save ────────────────────────────────────────────────
+  // ----- Save ------------------------------------------------------------------
   window.poSave = function(action){
     let ok = true;
     if (!$('#fSupplier').val()){ ok=false; }
@@ -851,7 +883,7 @@
     if (!$('#poItemsBody tr').length){ alert('Please add at least one item.'); return; }
     if (!ok){ alert('Please fill required fields.'); return; }
 
-    // Terms editor → split paragraphs into multiple term_text[] rows
+    // Terms editor -> split paragraphs into multiple term_text[] rows
     $('input[name="term_text[]"], input[name="term_section[]"]').remove();
     const termsHtml = document.getElementById('fTermsBody').innerHTML.trim();
     if (termsHtml){
@@ -873,7 +905,7 @@
       });
     }
 
-    // Ship Location → delivery_address (resolved from loaded master)
+    // Ship Location -> delivery_address (resolved from loaded master)
     const $shipOpt = $('#fShipLocation option:selected');
     const shipAddr = $shipOpt.data('address')
                   || $('#fShipLocation').val()
@@ -903,7 +935,7 @@
         } else if (d && (d.error || d.message)){
           alert('Save failed: ' + (d.error || d.message));
         } else {
-          // Non-JSON response — usually a 500 HTML error page. Extract a useful snippet.
+          // Non-JSON response - usually a 500 HTML error page. Extract a useful snippet.
           let snippet = res.raw || '';
           const m = snippet.match(/<title>([^<]+)<\/title>/i)
                  || snippet.match(/<h1>([^<]+)<\/h1>/i)
@@ -916,7 +948,7 @@
       .catch(e => alert('Network/JS error: ' + e.message));
   };
 
-  // ───── Init existing rows (edit mode only) — NO default empty row ────
+  // ----- Init existing rows (edit mode only) - NO default empty row -----------
   // For new POs, table starts empty; user must click "+ Add Item" to add the first row.
   if (EXISTING_ITEMS.length){
     EXISTING_ITEMS.forEach(it => poAddRow(it));
