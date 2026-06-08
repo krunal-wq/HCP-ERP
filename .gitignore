@@ -1,0 +1,41 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyc
+*.cpython-*.pyc
+
+# Virtual environment
+venv/
+env/
+.env
+.venv/
+
+# Flask / App
+instance/
+*.db
+*.sqlite3
+
+
+# Uploads (user files)
+static/uploads/
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.suo
+*.user
+
+# Backups / archive
+archive/
+*.bak
+*.bak_*

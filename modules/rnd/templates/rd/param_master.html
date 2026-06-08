@@ -1,0 +1,352 @@
+{% extends "base.html" %}
+{% block title %}Test Parameter Master{% endblock %}
+{% block page_title %}Test Parameter Master{% endblock %}
+{% block bread %}R&D / Parameter Master{% endblock %}
+
+{% block extra_css %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============ TEST PARAMETER MASTER - PREMIUM ============ */
+.pmm-page * { font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif; }
+
+/* ---- Hero ---- */
+.pmm-hero{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:16px;}
+.pmm-hero-left{display:flex;align-items:center;gap:14px;}
+.pmm-hero-tile{width:48px;height:48px;border-radius:14px;flex-shrink:0;
+               background:linear-gradient(180deg,#8b5cf6,#6d28d9);color:#fff;
+               display:flex;align-items:center;justify-content:center;
+               box-shadow:0 4px 14px rgba(124,58,237,.35), inset 0 1px 0 rgba(255,255,255,.25);}
+.pmm-hero-tile svg{width:24px;height:24px;}
+.pmm-h1{font-size:1.3rem;font-weight:900;letter-spacing:-.02em;margin:0;color:#1e293b;}
+.pmm-sub{font-size:12.5px;color:#94a3b8;margin:3px 0 0;font-weight:500;}
+.pmm-hdr-btns{display:flex;gap:8px;flex-wrap:wrap;}
+
+/* ---- Buttons (pills) ---- */
+.pmm-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:99px;font-size:.83rem;
+         font-weight:700;cursor:pointer;font-family:inherit;text-decoration:none;border:none;transition:transform .12s, box-shadow .12s, background .12s;}
+.pmm-btn svg{flex-shrink:0;}
+.pmm-btn.primary{background:linear-gradient(180deg,#8b5cf6,#6d28d9);color:#fff;
+                 box-shadow:0 2px 8px rgba(124,58,237,.3), inset 0 1px 0 rgba(255,255,255,.2);}
+.pmm-btn.primary:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(124,58,237,.4), inset 0 1px 0 rgba(255,255,255,.2);}
+.pmm-btn.primary:disabled{opacity:.6;cursor:not-allowed;transform:none;}
+.pmm-btn.ghost{background:#fff;color:#6d28d9;border:1.5px solid #ddd6fe;box-shadow:0 1px 2px rgba(15,23,42,.04);}
+.pmm-btn.ghost:hover{background:#f5f3ff;border-color:#c4b5fd;transform:translateY(-1px);}
+
+/* ---- Stat chips ---- */
+.pmm-stats{display:flex;gap:9px;margin-bottom:16px;flex-wrap:wrap;}
+.pmm-stat{display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:8px 16px;border-radius:14px;
+          background:#fff;border:1px solid #e2e8f0;min-width:74px;box-shadow:0 1px 3px rgba(15,23,42,.05);}
+.pmm-stat .n{font-size:1.15rem;font-weight:800;font-family:'JetBrains Mono',monospace;line-height:1;}
+.pmm-stat .l{font-size:.62rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#94a3b8;margin-top:3px;}
+.pmm-stat.total .n{color:#7c3aed;}
+.pmm-stat.active .n{color:#16a34a;}
+.pmm-stat.inactive .n{color:#94a3b8;}
+
+/* ---- Card ---- */
+.pmm-page .card{background:#fff;border:1px solid #e2e8f0;border-radius:16px;overflow:hidden;
+                box-shadow:0 1px 3px rgba(15,23,42,.05), 0 4px 16px rgba(15,23,42,.04);}
+
+/* ---- Table ---- */
+.pm-tbl{width:100%;border-collapse:collapse;font-size:.84rem;}
+.pm-tbl th{font-size:10.5px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;
+           padding:12px 16px;border-bottom:2px solid #e2e8f0;text-align:left;background:#fff;white-space:nowrap;}
+.pm-tbl td{padding:10px 16px;border-bottom:1px solid #f1f5f9;color:#334155;vertical-align:middle;}
+.pm-tbl tbody tr:last-child td{border-bottom:none;}
+.pm-tbl tbody tr{transition:background .12s;}
+.pm-tbl tbody tr:hover td{background:#faf5ff;}
+.pm-inp{padding:6px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.83rem;font-family:inherit;
+        background:#fff;color:#1e293b;outline:none;transition:border-color .12s, box-shadow .12s;box-shadow:0 1px 2px rgba(15,23,42,.03);}
+.pm-inp:focus{border-color:#c4b5fd;box-shadow:0 0 0 3px rgba(124,58,237,.1);}
+.pm-inp::placeholder{color:#cbd5e1;}
+.drag-handle{cursor:grab;color:#cbd5e1;padding:0 2px;user-select:none;display:inline-flex;align-items:center;}
+.drag-handle:hover{color:#a78bfa;}
+.drag-handle:active{cursor:grabbing;}
+.drag-over-row td{background:#faf5ff!important;box-shadow:inset 0 3px 0 #7c3aed;}
+.pm-row-inactive td{opacity:.5;}
+.sort-num{font-size:.74rem;color:#94a3b8;font-family:'JetBrains Mono',monospace;font-weight:700;}
+
+/* ---- Status badge (dot-pill) ---- */
+.badge-active,.badge-inactive{display:inline-flex;align-items:center;gap:6px;padding:3px 11px;border-radius:99px;font-size:.7rem;font-weight:700;}
+.badge-active{background:#dcfce7;color:#166534;}
+.badge-inactive{background:#f1f5f9;color:#64748b;}
+.bdot{width:7px;height:7px;border-radius:50%;flex-shrink:0;background:currentColor;}
+
+/* ---- Row action buttons (circular) ---- */
+.pm-act{width:30px;height:30px;border-radius:99px;border:1.5px solid #e2e8f0;background:#fff;cursor:pointer;
+        display:inline-flex;align-items:center;justify-content:center;color:#64748b;transition:all .12s;padding:0;}
+.pm-act:hover{transform:translateY(-1px);}
+.pm-act svg{flex-shrink:0;}
+.pm-act.tog{border-color:#ddd6fe;color:#6d28d9;}
+.pm-act.tog:hover{background:#f5f3ff;border-color:#c4b5fd;}
+.pm-act.del{border-color:#fecaca;color:#dc2626;}
+.pm-act.del:hover{background:#fef2f2;border-color:#f87171;}
+
+/* ---- Empty state ---- */
+.pmm-empty .es-icon{width:60px;height:60px;border-radius:16px;margin:0 auto 12px;
+                    background:#f5f3ff;border:1px solid #ede9fe;color:#a78bfa;
+                    display:flex;align-items:center;justify-content:center;}
+
+/* ---- Modal ---- */
+.modal-ov{display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:9999;
+          align-items:center;justify-content:center;backdrop-filter:blur(3px);}
+.modal-ov.open{display:flex;}
+.modal-box{background:#fff;border-radius:16px;width:460px;max-width:95vw;
+           box-shadow:0 20px 60px rgba(15,23,42,.22);overflow:hidden;}
+.modal-hdr{background:linear-gradient(180deg,#8b5cf6,#6d28d9);color:#fff;padding:15px 22px;
+           display:flex;align-items:center;justify-content:space-between;}
+.modal-hdr-ttl{font-weight:800;font-size:.98rem;display:flex;align-items:center;gap:8px;}
+.modal-x{background:rgba(255,255,255,.18);border:none;color:#fff;width:28px;height:28px;border-radius:50%;
+         cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:1rem;transition:background .12s;}
+.modal-x:hover{background:rgba(255,255,255,.3);}
+.modal-body{padding:20px 22px;}
+.modal-foot{padding:14px 22px;border-top:1px solid #e2e8f0;display:flex;justify-content:flex-end;gap:8px;background:#fafbfc;}
+.fg{display:flex;flex-direction:column;gap:5px;margin-bottom:14px;}
+.fg label{font-size:.7rem;font-weight:800;color:#6b21a8;text-transform:uppercase;letter-spacing:.05em;}
+.fg input{padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:.85rem;color:#1e293b;background:#fff;
+          font-family:inherit;width:100%;outline:none;box-sizing:border-box;font-weight:500;transition:border-color .12s, box-shadow .12s;}
+.fg input:focus{border-color:#c4b5fd;box-shadow:0 0 0 3px rgba(124,58,237,.1);}
+.fg input::placeholder{color:#cbd5e1;}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="pmm-page">
+
+{# -- Hero -- #}
+<div class="pmm-hero">
+    <div class="pmm-hero-left">
+        <div class="pmm-hero-tile">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6"/><path d="M10 3v6.31a2 2 0 0 1-.36 1.14L4.2 18.4A1.5 1.5 0 0 0 5.43 21h13.14a1.5 1.5 0 0 0 1.23-2.6l-5.44-7.95a2 2 0 0 1-.36-1.14V3"/><path d="M6.5 15h11"/></svg>
+        </div>
+        <div>
+            <h1 class="pmm-h1">Test Parameter Master</h1>
+            <p class="pmm-sub">Define parameters shown in R&amp;D trial forms - drag to reorder</p>
+        </div>
+    </div>
+    <div class="pmm-hdr-btns">
+        <button class="pmm-btn primary" onclick="openAddModal()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+            Add Parameter
+        </button>
+        <a href="{{ url_for('rd.dashboard') }}" class="pmm-btn ghost">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+            Dashboard
+        </a>
+    </div>
+</div>
+
+{# -- Stats -- #}
+<div class="pmm-stats">
+    <div class="pmm-stat total"><span class="n">{{ params|length }}</span><span class="l">Total</span></div>
+    <div class="pmm-stat active"><span class="n">{{ params|selectattr('is_active')|list|length }}</span><span class="l">Active</span></div>
+    <div class="pmm-stat inactive"><span class="n">{{ params|rejectattr('is_active')|list|length }}</span><span class="l">Inactive</span></div>
+</div>
+
+{# -- Table -- #}
+<div class="card">
+    <div style="overflow-x:auto;">
+    <table class="pm-tbl" id="param-table">
+        <thead>
+            <tr>
+                <th style="width:32px;"></th>
+                <th style="width:40px;">#</th>
+                <th>Parameter Name</th>
+                <th>Default Value</th>
+                <th>Unit</th>
+                <th>Status</th>
+                <th style="width:100px;">Actions</th>
+            </tr>
+        </thead>
+        <tbody id="param-tbody">
+        {% if params %}
+        {% for p in params %}
+        <tr class="pm-row{% if not p.is_active %} pm-row-inactive{% endif %}" data-id="{{ p.id }}" data-order="{{ p.sort_order }}">
+            <td><span class="drag-handle" title="Drag to reorder"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg></span></td>
+            <td class="sort-num">{{ p.sort_order }}</td>
+            <td>
+                <input class="pm-inp" style="width:175px;" value="{{ p.name }}"
+                       onblur="inlineUpdate(this,{{ p.id }},'name')">
+            </td>
+            <td>
+                <input class="pm-inp" style="width:145px;" value="{{ p.default_val or '' }}" placeholder="-"
+                       onblur="inlineUpdate(this,{{ p.id }},'default_val')">
+            </td>
+            <td>
+                <input class="pm-inp" style="width:75px;" value="{{ p.unit or '' }}" placeholder="cP"
+                       onblur="inlineUpdate(this,{{ p.id }},'unit')">
+            </td>
+            <td>
+                <span class="{{ 'badge-active' if p.is_active else 'badge-inactive' }}">
+                    <span class="bdot"></span> {{ 'Active' if p.is_active else 'Inactive' }}
+                </span>
+            </td>
+            <td>
+                <div style="display:flex;gap:6px;">
+                    <button onclick="toggleStatus({{ p.id }},this)" class="pm-act tog"
+                            title="{{ 'Deactivate' if p.is_active else 'Activate' }}">
+                        {% if p.is_active %}
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>
+                        {% else %}
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M6 4.5v15a1 1 0 0 0 1.5.87l13-7.5a1 1 0 0 0 0-1.74l-13-7.5A1 1 0 0 0 6 4.5Z"/></svg>
+                        {% endif %}
+                    </button>
+                    <button onclick="deleteParam({{ p.id }},'{{ p.name|replace("'","") }}')" class="pm-act del" title="Delete">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                    </button>
+                </div>
+            </td>
+        </tr>
+        {% endfor %}
+        {% else %}
+        <tr id="empty-row">
+            <td colspan="7" style="text-align:center;padding:48px 20px;color:#94a3b8;">
+                <div class="pmm-empty">
+                    <div class="es-icon">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6"/><path d="M10 3v6.31a2 2 0 0 1-.36 1.14L4.2 18.4A1.5 1.5 0 0 0 5.43 21h13.14a1.5 1.5 0 0 0 1.23-2.6l-5.44-7.95a2 2 0 0 1-.36-1.14V3"/><path d="M6.5 15h11"/></svg>
+                    </div>
+                    <div style="font-weight:800;color:#475569;">No parameters yet</div>
+                    <button class="pmm-btn primary" style="margin-top:14px;" onclick="openAddModal()">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                        Add First Parameter
+                    </button>
+                </div>
+            </td>
+        </tr>
+        {% endif %}
+        </tbody>
+    </table>
+    </div>
+</div>
+
+{# -- Add Modal -- #}
+<div class="modal-ov" id="add-modal">
+    <div class="modal-box">
+        <div class="modal-hdr">
+            <div class="modal-hdr-ttl">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                Add Test Parameter
+            </div>
+            <button onclick="closeAddModal()" class="modal-x">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="fg">
+                <label>Parameter Name <span style="color:#dc2626;">*</span></label>
+                <input type="text" id="add-name" placeholder="e.g. Foam Height">
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div class="fg" style="margin-bottom:0;">
+                    <label>Default Value</label>
+                    <input type="text" id="add-default" placeholder="e.g. Clear">
+                </div>
+                <div class="fg" style="margin-bottom:0;">
+                    <label>Unit</label>
+                    <input type="text" id="add-unit" placeholder="e.g. cP">
+                </div>
+            </div>
+        </div>
+        <div class="modal-foot">
+            <button class="pmm-btn ghost" onclick="closeAddModal()">Cancel</button>
+            <button class="pmm-btn primary" id="add-submit-btn" onclick="submitAdd()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                Add Parameter
+            </button>
+        </div>
+    </div>
+</div>
+
+</div>{# end pmm-page #}
+
+<script>
+var PM_ADD_LABEL = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Add Parameter';
+
+function openAddModal(){
+    ['add-name','add-default','add-unit'].forEach(function(id){ document.getElementById(id).value=''; });
+    document.getElementById('add-modal').classList.add('open');
+    setTimeout(function(){ document.getElementById('add-name').focus(); },100);
+}
+function closeAddModal(){ document.getElementById('add-modal').classList.remove('open'); }
+document.getElementById('add-modal').addEventListener('click',function(e){ if(e.target===this) closeAddModal(); });
+document.getElementById('add-name').addEventListener('keydown',function(e){ if(e.key==='Enter') submitAdd(); });
+
+function submitAdd(){
+    var name = document.getElementById('add-name').value.trim();
+    if(!name){ document.getElementById('add-name').style.borderColor='#dc2626'; return; }
+    var btn = document.getElementById('add-submit-btn');
+    btn.textContent='Adding...'; btn.disabled=true;
+    fetch('/rd/param-master/add',{
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({name:name, default_val:document.getElementById('add-default').value.trim(), unit:document.getElementById('add-unit').value.trim()})
+    }).then(function(r){return r.json();}).then(function(d){
+        if(d.success){ window.location.reload(); }
+        else{ alert(d.error||'Error'); btn.innerHTML=PM_ADD_LABEL; btn.disabled=false; }
+    });
+}
+
+function inlineUpdate(input, pid, field){
+    fetch('/rd/param-master/'+pid+'/update',{
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({field:field, value:input.value.trim()})
+    }).then(function(r){return r.json();}).then(function(d){
+        input.style.borderColor = d.success ? '#16a34a' : '#dc2626';
+        setTimeout(function(){ input.style.borderColor=''; },1200);
+    });
+}
+
+function toggleStatus(pid, btn){
+    fetch('/rd/param-master/'+pid+'/toggle',{method:'POST'})
+    .then(function(r){return r.json();}).then(function(d){ if(d.success) window.location.reload(); });
+}
+
+function deleteParam(pid, name){
+    if(!confirm('Delete parameter "'+name+'"?\nThis will not affect already-saved trials.')) return;
+    fetch('/rd/param-master/'+pid+'/delete',{method:'POST'})
+    .then(function(r){return r.json();}).then(function(d){
+        if(d.success){
+            var row = document.querySelector('tr[data-id="'+pid+'"]');
+            if(row) row.remove();
+        }
+    });
+}
+
+// -- Drag to Reorder --
+var dragSrc = null;
+document.querySelectorAll('.drag-handle').forEach(function(h){
+    var row = h.closest('tr');
+    row.draggable = true;
+    row.addEventListener('dragstart',function(e){
+        dragSrc=this; e.dataTransfer.effectAllowed='move'; this.style.opacity='.4';
+    });
+    row.addEventListener('dragend',function(){
+        this.style.opacity='';
+        document.querySelectorAll('.drag-over-row').forEach(function(r){ r.classList.remove('drag-over-row'); });
+        saveOrder();
+    });
+    row.addEventListener('dragover',function(e){
+        e.preventDefault(); if(this!==dragSrc) this.classList.add('drag-over-row');
+    });
+    row.addEventListener('dragleave',function(){ this.classList.remove('drag-over-row'); });
+    row.addEventListener('drop',function(e){
+        e.preventDefault(); this.classList.remove('drag-over-row');
+        if(dragSrc && dragSrc!==this){
+            var tbody=document.getElementById('param-tbody');
+            var rows=Array.from(tbody.querySelectorAll('tr[data-id]'));
+            if(rows.indexOf(dragSrc)<rows.indexOf(this)) this.after(dragSrc);
+            else this.before(dragSrc);
+        }
+    });
+});
+
+function saveOrder(){
+    var rows=document.querySelectorAll('#param-tbody tr[data-id]');
+    var order=Array.from(rows).map(function(r,i){
+        r.querySelector('.sort-num').textContent=i+1;
+        return {id:parseInt(r.dataset.id), sort_order:i+1};
+    });
+    fetch('/rd/param-master/reorder',{
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({order:order})
+    });
+}
+</script>
+{% endblock %}

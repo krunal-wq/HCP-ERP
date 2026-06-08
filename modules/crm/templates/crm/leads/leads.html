@@ -1,0 +1,1542 @@
+{% extends "base.html" %}
+{% from 'macros/pagination.html' import render_pagination %}
+{% block title %}Leads — CRM{% endblock %}
+{% block page_title %}Leads{% endblock %}
+{% block bread %}CRM / Leads{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Status badge colours for leads */
+.sbadge.open       { background:#e0e7ff; color:#3730a3; }
+/* Trash / Soft-delete styles */
+.trash-tab { color:#dc2626 !important; }
+.trash-tab.active { color:#dc2626 !important; background:#fef2f2 !important; }
+.trash-badge { display:inline-block; background:#dc2626; color:#fff; font-size:.6rem; font-weight:800; padding:1px 5px; border-radius:10px; margin-left:3px; vertical-align:middle; }
+.trash-banner { background:#fef3c7; border-bottom:1px solid #fcd34d; padding:8px 14px; font-size:.8rem; color:#92400e; display:flex; align-items:center; gap:8px; }
+.ra-btn.restore-btn { color:#059669; border-color:#a7f3d0; background:#ecfdf5; display:flex; align-items:center; gap:4px; padding:3px 9px; border-radius:6px; border:1px solid; font-size:.73rem; font-weight:700; cursor:pointer; white-space:nowrap; }
+.ra-btn.restore-btn:hover { background:#d1fae5; }
+.sbadge.open::before { background:#6366f1; }
+.sbadge.in_process { background:#fef3c7; color:#92400e; }
+.sbadge.npd_project { background:#fce7f3; color:#db2777; }
+.sbadge.npd_project::before { background:#db2777; }
+.sbadge.existing_project { background:#d1fae5; color:#065f46; }
+
+/* Status Dropdown */
+.status-dd-item:hover { background:var(--bg) !important; }
+.status-dd-item.active { font-weight:700; }
+.status-dd-wrap .btn-grid-action { display:flex; align-items:center; gap:.35rem; white-space:nowrap; }
+.sbadge.in_process::before { background:#f59e0b; }
+.sbadge.close      { background:#d1fae5; color:#065f46; }
+.sbadge.close::before { background:#10b981; }
+.sbadge.cancel     { background:#fee2e2; color:#991b1b; }
+.sbadge.cancel::before { background:#ef4444; }
+
+/* Avatar group */
+.av-group { display:flex; }
+.av { width:24px; height:24px; border-radius:50%; background:#6366f1; color:#fff; font-size:.58rem; font-weight:800; display:flex;align-items:center;justify-content:center; border:2px solid #fff; margin-left:-5px; }
+.av:first-child { margin-left:0; }
+.av-more { background:#e2e8f0; color:var(--text2); }
+
+/* View toggle */
+.view-toggle { display:flex; gap:3px; background:#f1f5f9; padding:3px; border-radius:8px; }
+.vt-btn { padding:5px 12px; border-radius:6px; border:none; background:none; font-size:.77rem; font-weight:700; cursor:pointer; color:var(--text2); transition:all .15s; display:flex; align-items:center; gap:4px; }
+.vt-btn.active { background:#fff; color:#2563eb; box-shadow:0 1px 4px rgba(0,0,0,.1); }
+
+/* Kanban */
+#kanbanView { display:none; margin-top:.5rem; }
+.kb-board { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; align-items:start; }
+.kb-col { background:#f8fafc; border-radius:12px; border:1px solid var(--border); min-height:200px; }
+.kb-col-hdr { padding:.7rem 1rem; border-radius:10px 10px 0 0; display:flex; align-items:center; justify-content:space-between; }
+.kb-col-hdr .kb-title { font-size:.75rem; font-weight:800; text-transform:uppercase; letter-spacing:.06em; }
+.kb-col-hdr .kb-count { font-size:.7rem; font-weight:700; padding:2px 8px; border-radius:20px; background:rgba(255,255,255,.35); }
+.kb-col[data-status="open"]       .kb-col-hdr { background:#e0e7ff; color:#3730a3; }
+.kb-col[data-status="in_process"] .kb-col-hdr { background:#fef3c7; color:#92400e; }
+.kb-col[data-status="close"]      .kb-col-hdr { background:#d1fae5; color:#065f46; }
+.kb-col[data-status="cancel"]     .kb-col-hdr { background:#fee2e2; color:#991b1b; }
+.kb-body { padding:.5rem; display:flex; flex-direction:column; gap:.4rem; min-height:100px; }
+.kb-card { background:#fff; border-radius:8px; border:1px solid var(--border); padding:.6rem .75rem; cursor:grab; transition:box-shadow .15s; }
+.kb-card:active { cursor:grabbing; }
+.kb-card.dragging { opacity:.4; transform:scale(.97); }
+.kb-body.drag-over { background:#dbeafe; border-radius:8px; outline:2px dashed #60a5fa; }
+.kb-card-code { font-size:.67rem; font-weight:700; color:#2563eb; font-family:monospace; margin-bottom:2px; }
+.kb-card-name { font-size:.79rem; font-weight:700; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.kb-card-co   { font-size:.7rem; color:var(--text2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:3px; }
+.kb-card-foot { display:flex; align-items:center; justify-content:space-between; margin-top:4px; }
+.kb-card-prod { font-size:.67rem; color:var(--text3); max-width:60%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.kb-empty { text-align:center; padding:1.5rem .5rem; color:var(--text3); font-size:.73rem; }
+
+/* lead name link */
+.entity-link { color:#2563eb; font-weight:600; text-decoration:none; }
+.entity-link:hover { text-decoration:underline; }
+
+/* ── Inline Edit ─────────────────────────────────────── */
+.ie-cell { cursor:pointer; position:relative; }
+.ie-cell:hover { background:rgba(37,99,235,.04); }
+.ie-view { display:flex; align-items:center; gap:5px; min-height:22px; }
+.ie-pencil { opacity:0; font-size:11px; color:#94a3b8; transition:opacity .15s; flex-shrink:0; }
+.ie-cell:hover .ie-pencil { opacity:1; }
+.ie-input-wrap { display:none; align-items:center; gap:4px; }
+.ie-input, .ie-select {
+  padding:3px 7px; border:1.5px solid #2563eb; border-radius:5px;
+  font-size:.8rem; font-family:inherit; color:var(--text);
+  background:#fff; outline:none; min-width:80px; max-width:180px;
+  box-shadow:0 0 0 3px rgba(37,99,235,.1);
+}
+.ie-select { cursor:pointer; }
+.ie-ok  { padding:3px 8px; border-radius:5px; border:none; background:#2563eb; color:#fff; font-size:.72rem; font-weight:700; cursor:pointer; }
+.ie-esc { padding:3px 7px; border-radius:5px; border:1px solid var(--border); background:#f8fafc; color:var(--text2); font-size:.72rem; cursor:pointer; }
+.ie-cell.ie-saving .ie-view { opacity:.4; }
+.ie-cell.ie-saved  { animation: ie-flash .5s ease; }
+@keyframes ie-flash { 0%,100%{background:transparent} 40%{background:rgba(16,185,129,.12)} }
+
+/* ═══════════════════════════════════════
+   MOBILE LEAD CARDS  (< 768px only)
+   ═══════════════════════════════════════ */
+.ld-cards { display:none; padding:8px 12px 16px; gap:10px; flex-direction:column; }
+.ld-card { background:#fff; border:1.5px solid #e8edf5; border-radius:16px; overflow:hidden; box-shadow:0 3px 12px rgba(30,58,95,0.07); }
+.ld-card-hdr { background:linear-gradient(135deg,#1e3a5f,#2d5a8e); color:#fff; padding:13px 14px 11px; display:flex; align-items:flex-start; gap:10px; }
+.ld-card-hdr-chk { margin-top:2px; flex-shrink:0; }
+.ld-card-hdr-info { flex:1; min-width:0; }
+.ld-card-name { font-size:0.95rem; font-weight:800; }
+.ld-card-company { font-size:0.75rem; opacity:0.75; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.ld-card-hdr-status { flex-shrink:0; }
+.ld-card-body { padding:12px 14px 4px; }
+.ld-card-grid { display:grid; grid-template-columns:1fr 1fr; gap:7px 14px; margin-bottom:10px; }
+.ld-card-field label { font-size:0.64rem; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.5px; display:block; margin-bottom:2px; }
+.ld-card-field span { font-size:0.81rem; color:#374151; font-weight:600; }
+.ld-card-product { background:#f0f9ff; border:1px solid #bae6fd; border-radius:8px; padding:8px 12px; margin-bottom:10px; }
+.ld-card-product label { font-size:0.64rem; font-weight:700; color:#0369a1; text-transform:uppercase; display:block; margin-bottom:2px; }
+.ld-card-product span { font-size:0.82rem; color:#0c4a6e; font-weight:700; }
+.ld-card-footer { display:flex; justify-content:space-between; align-items:center; padding:9px 14px; background:#f8fafc; border-top:1px solid #f1f5f9; }
+.ld-card-date { font-size:0.73rem; color:#94a3b8; }
+.ld-card-actions { display:flex; gap:6px; min-width:116px; justify-content:flex-end; }
+.ld-card-actions a, .ld-card-actions button { width:34px; height:34px; border-radius:8px; display:flex; align-items:center; justify-content:center; border:none; cursor:pointer; text-decoration:none; }
+.ld-action-view  { background:#eff6ff; color:#1d4ed8; }
+.ld-action-edit  { background:#f0fdf4; color:#166534; }
+.ld-action-del   { background:#fef2f2; color:#dc2626; }
+
+/* Status mini badges for cards */
+.ld-sbadge { padding:3px 10px; border-radius:100px; font-size:0.72rem; font-weight:700; display:inline-block; }
+.ld-sbadge.open       { background:rgba(255,255,255,0.2); color:#fff; border:1px solid rgba(255,255,255,0.35); }
+.ld-sbadge.in_process { background:#fef3c7; color:#92400e; }
+.ld-sbadge.close      { background:#d1fae5; color:#065f46; }
+.ld-sbadge.cancel     { background:#fee2e2; color:#991b1b; }
+
+@media (max-width:767px) {
+    .ld-cards   { display:flex; }
+    #listViewWrap .tbl-wrap { display:none; }
+    #listViewWrap .grid-footer .rows-selector { display:none; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ── Stat Strip — fully dynamic from DB ── -->
+{% set _total = total_count if total_count is defined else counts.values()|sum %}
+<div class="stat-strip" id="stat-strip-leads">
+    <a href="{{ url_for('crm.leads') }}" class="stat-item {{ 'active' if not status and not show_trash }}" style="--sc:#3b82f6;">
+      <div class="si-top">
+        <div class="stat-icon-box">📋</div>
+        <div class="stat-num">{{ _total }}</div>
+      </div>
+      <div class="stat-lbl">All</div>
+      <div class="si-bar"><span style="width:100%;"></span></div>
+    </a>
+    {% for ls in lead_statuses %}
+    <a href="{{ url_for('crm.leads', status=ls.name) }}"
+       class="stat-item {{ 'active' if status==ls.name }}"
+       style="--sc:{{ ls.color or '#3b82f6' }};">
+      <div class="si-top">
+        <div class="stat-icon-box">{% if ls.icon %}{{ ls.icon }}{% elif ls.name=="open" %}✉️{% elif ls.name=="in_process" %}⚙️{% elif ls.name=="close" %}✅{% elif ls.name=="cancel" %}❌{% else %}📌{% endif %}</div>
+        <div class="stat-num">{{ counts.get(ls.name, 0) }}</div>
+      </div>
+      <div class="stat-lbl">{{ ls.name.replace('_',' ')|title }}</div>
+      <div class="si-bar"><span style="width:{{ ((counts.get(ls.name, 0) / _total * 100)|round(0)|int) if _total else 0 }}%;"></span></div>
+    </a>
+    {% endfor %}
+  </div>
+
+<!-- ── Grid Card ── -->
+<div class="grid-card">
+
+  {% if show_trash %}
+  <div class="trash-banner">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+    Showing <strong>{{ leads|length }}</strong> deleted lead{{ 's' if leads|length != 1 else '' }} — records can be restored.
+    <a href="{{ url_for('crm.leads') }}" style="color:#92400e;font-weight:700;text-decoration:underline;">← Back to Leads</a>
+  </div>
+  {% endif %}
+
+  <!-- Toolbar -->
+  <div class="grid-toolbar">
+    {% if not show_trash and perm and perm.can_add %}
+    <a href="{{ url_for('crm.lead_add') }}" class="btn-add-new">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Add New
+    </a>
+    {% endif %}
+
+    <div class="grid-search-wrap" style="flex:1;min-width:160px;max-width:280px;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" class="grid-search-input" id="gSearchInput" placeholder="Global Search..." oninput="gridGlobalSearch(this.value)" style="width:100%;min-width:0;">
+    </div>
+
+    <!-- Status Dropdown -->
+    <div class="status-dd-wrap" style="position:relative;display:inline-block;">
+      <button class="btn-grid-action {{ 'active' if status }}"
+              onclick="toggleStatusDd()"
+              id="statusDdBtn"
+              style="{{ 'background:#eff6ff;color:#2563eb;border-color:#bfdbfe;' if status }}">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        {% if status %}
+          {% set _cur_icon = '' %}{% set _cur_label = '' %}
+          {% for ls in lead_statuses if ls.name == status %}{% set _cur_icon = ls.icon %}{% set _cur_label = ls.name.replace('_',' ')|title %}{% endfor %}
+          {% if _cur_label %}{{ _cur_icon }} {{ _cur_label }}{% elif status %}{{ status.replace('_',' ')|title }}{% endif %}
+        {% else %}Status{% endif %}
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-left:3px;"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="status-dd-menu" id="statusDdMenu" style="display:none;position:absolute;top:calc(100% + 6px);left:0;background:#fff;border:1px solid var(--border);border-radius:var(--r-lg);box-shadow:0 8px 24px rgba(0,0,0,.12);min-width:190px;z-index:200;overflow:hidden;">
+        <a href="{{ url_for('crm.leads') }}" class="status-dd-item {{ 'active' if not status and not show_trash }}"
+           style="display:flex;align-items:center;gap:.5rem;padding:.55rem .9rem;font-size:.83rem;font-weight:600;color:var(--text);text-decoration:none;transition:background .1s;">
+          <span style="width:18px;text-align:center;">📋</span> All Leads
+          <span style="margin-left:auto;font-size:.75rem;color:var(--text3);">{{ total_count if total_count is defined else counts.values()|sum }}</span>
+        </a>
+        <div style="height:1px;background:var(--border);margin:2px 0;"></div>
+        {% for ls in lead_statuses %}
+        <a href="{{ url_for('crm.leads', status=ls.name) }}"
+           class="status-dd-item {{ 'active' if status==ls.name }}"
+           style="display:flex;align-items:center;gap:.5rem;padding:.55rem .9rem;font-size:.83rem;font-weight:600;color:var(--text);text-decoration:none;transition:background .1s;{% if status==ls.name %}background:{{ ls.color }}15;{% endif %}">
+          <span style="width:18px;text-align:center;">{% if ls.icon %}{{ ls.icon }}{% elif ls.name=="open" %}✉️{% elif ls.name=="in_process" %}⚙️{% elif ls.name=="close" %}✅{% elif ls.name=="cancel" %}❌{% else %}📌{% endif %}</span>
+          <span style="{% if status==ls.name %}color:{{ ls.color }};{% endif %}">{{ ls.name.replace('_',' ')|title }}</span>
+          <span style="margin-left:auto;font-size:.75rem;font-weight:700;color:{{ ls.color }};">{{ counts.get(ls.name, 0) }}</span>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+
+    {% if can_view_deleted %}
+    <a href="{{ url_for('crm.leads', trash=1) }}"
+       class="btn-grid-action {{ 'active' if show_trash }}"
+       style="{{ 'background:#fef2f2;color:#dc2626;border-color:#fca5a5;' if show_trash }}">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+      Deleted
+      {% if deleted_count %}<span style="background:#dc2626;color:#fff;font-size:.6rem;font-weight:800;padding:1px 5px;border-radius:10px;margin-left:3px;">{{ deleted_count }}</span>{% endif %}
+    </a>
+    {% endif %}
+
+    <div class="grid-toolbar-right">
+      <button class="btn-grid-action danger" id="bulkDeleteBtn" style="display:none;" onclick="bulkDelete()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+        Delete
+      </button>
+
+      <!-- Filter / Sort buttons — Columns se pehle -->
+      {% set _fc = [search,source,category,p_range,city,date_from,date_to]|select|list|length %}
+      {% if can_filter %}
+      <button id="fsTabFilter" class="btn-grid-action {{ 'active' if _fc > 0 }}" onclick="toggleFsTab('filter','ld')" style="{{ 'background:#eff6ff;color:#2563eb;border-color:#bfdbfe;' if _fc > 0 }}">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+        Filter {% if _fc > 0 %}<span style="background:#2563eb;color:#fff;font-size:.65rem;font-weight:800;padding:1px 5px;border-radius:10px;margin-left:2px;">{{ _fc }}</span>{% endif %}
+      </button>
+      {% endif %}
+      {% if can_sort %}
+      <button id="fsTabSort" class="btn-grid-action {{ 'active' if sort_by != 'created_at' or sort_dir != 'desc' }}" onclick="toggleFsTab('sort','ld')" style="{{ 'background:#eff6ff;color:#2563eb;border-color:#bfdbfe;' if sort_by != 'created_at' or sort_dir != 'desc' }}">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+        Sort {% if sort_by != 'created_at' or sort_dir != 'desc' %}<span style="background:#2563eb;color:#fff;font-size:.65rem;font-weight:800;padding:1px 5px;border-radius:10px;margin-left:2px;">•</span>{% endif %}
+      </button>
+      {% endif %}
+
+      <div style="width:1px;height:18px;background:var(--border);margin:0 2px;"></div>
+
+      {% if can_columns %}
+      <div style="position:relative;">
+        <button class="btn-grid-action mobile-hide" onclick="toggleColPanel(event)">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+          Columns
+        </button>
+        <div id="colPanel" style="display:none;position:absolute;top:calc(100% + 6px);right:0;z-index:300;background:#fff;border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,.15);border:1px solid var(--border);padding:.9rem;width:240px;">
+          <div style="font-size:.75rem;font-weight:800;color:var(--text2);margin-bottom:.5rem;">Select Columns</div>
+          <div style="display:flex;flex-direction:column;gap:.3rem;max-height:260px;overflow-y:auto;">
+            {% for key, label in all_cols.items() %}
+            <label style="display:flex;align-items:center;gap:7px;font-size:.79rem;cursor:pointer;padding:2px 0;">
+              <input type="checkbox" value="{{ key }}" {{ 'checked' if key in grid_cols else '' }} style="accent-color:#2563eb;" onchange="colChanged()">
+              {{ label }}
+            </label>
+            {% endfor %}
+          </div>
+          <div style="margin-top:.65rem;display:flex;gap:.4rem;">
+            <button onclick="saveLeadCols()" style="flex:1;padding:5px;border-radius:7px;background:#2563eb;color:#fff;border:none;font-size:.77rem;font-weight:700;cursor:pointer;">Apply</button>
+            <button onclick="document.getElementById('colPanel').style.display='none'" style="padding:5px 10px;border-radius:7px;background:#f1f5f9;border:1px solid var(--border);font-size:.77rem;cursor:pointer;">✕</button>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+      <div class="view-toggle mobile-hide">
+        <button class="vt-btn active" id="btnList" onclick="switchView('list')">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+          List
+        </button>
+        <button class="vt-btn" id="btnKanban" onclick="switchView('kanban')">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          Kanban
+        </button>
+      </div>
+      {% if perm and perm.can_export %}
+      <button class="btn-grid-action mobile-hide" onclick="doExport('ld')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Export
+      </button>
+      {% endif %}
+      {% if perm and perm.can_import %}
+      <a href="{{ url_for('crm.lead_import') }}" class="btn-grid-action mobile-hide">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Import
+      </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Filter / Sort panel -->
+  {% set _fc = [search,source,category,p_range,city,date_from,date_to]|select|list|length %}
+
+  <div id="fsPanelFilter_ld" style="display:none;padding:12px 14px;border-bottom:0.5px solid var(--border);background:#fafbfc;overflow:visible;">
+    <div class="fs-grid" style="overflow:visible;">
+
+      <!-- Search -->
+      <div class="fs-field">
+        <label>Search</label>
+        <input type="text" id="ld_search" value="{{ search }}" placeholder="Name, company, mobile…" oninput="fsDebounce('ld')">
+      </div>
+
+      <!-- Source multi-select -->
+      <div class="fs-field">
+        <label>Source</label>
+        <div class="ms-wrap" id="ms_source">
+          <div class="ms-trigger" onclick="toggleMs('ms_source')">
+            <span class="ms-label" id="ms_source_lbl">All Sources</span>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="ms-dropdown" id="ms_source_dd">
+            <div class="ms-search"><input type="text" placeholder="Search…" oninput="msSearch(this,'ms_source_dd')"></div>
+            <div class="ms-options">
+              {% for s in all_sources %}
+              <label class="ms-opt"><input type="checkbox" value="{{ s }}" {{ 'checked' if s in (source or '').split(',') and source }} onchange="msChange('ms_source','ld_source','ld')"><span>{{ s }}</span></label>
+              {% endfor %}
+            </div>
+            <div class="ms-footer"><button onclick="msSelectAll('ms_source','ld_source','ld')">Select All</button><button onclick="msClearAll('ms_source','ld_source','ld')">Clear</button><button class="ms-apply" onclick="closeMs('ms_source',event)">Done</button></div>
+          </div>
+        </div>
+        <input type="hidden" id="ld_source" value="{{ source }}">
+      </div>
+
+      <!-- Category multi-select -->
+      <div class="fs-field">
+        <label>Category</label>
+        <div class="ms-wrap" id="ms_category">
+          <div class="ms-trigger" onclick="toggleMs('ms_category')">
+            <span class="ms-label" id="ms_category_lbl">All Categories</span>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="ms-dropdown" id="ms_category_dd">
+            <div class="ms-search"><input type="text" placeholder="Search…" oninput="msSearch(this,'ms_category_dd')"></div>
+            <div class="ms-options">
+              {% for c in all_categories %}
+              <label class="ms-opt"><input type="checkbox" value="{{ c }}" {{ 'checked' if c in (category or '').split(',') and category }} onchange="msChange('ms_category','ld_category','ld')"><span>{{ c }}</span></label>
+              {% endfor %}
+            </div>
+            <div class="ms-footer"><button onclick="msSelectAll('ms_category','ld_category','ld')">Select All</button><button onclick="msClearAll('ms_category','ld_category','ld')">Clear</button><button class="ms-apply" onclick="closeMs('ms_category',event)">Done</button></div>
+          </div>
+        </div>
+        <input type="hidden" id="ld_category" value="{{ category }}">
+      </div>
+
+      <!-- Product Range multi-select -->
+      <div class="fs-field">
+        <label>Product Range</label>
+        <div class="ms-wrap" id="ms_range">
+          <div class="ms-trigger" onclick="toggleMs('ms_range')">
+            <span class="ms-label" id="ms_range_lbl">All Ranges</span>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="ms-dropdown" id="ms_range_dd">
+            <div class="ms-search"><input type="text" placeholder="Search…" oninput="msSearch(this,'ms_range_dd')"></div>
+            <div class="ms-options">
+              {% for r in all_ranges %}
+              <label class="ms-opt"><input type="checkbox" value="{{ r }}" {{ 'checked' if r in (p_range or '').split(',') and p_range }} onchange="msChange('ms_range','ld_product_range','ld')"><span>{{ r }}</span></label>
+              {% endfor %}
+            </div>
+            <div class="ms-footer"><button onclick="msSelectAll('ms_range','ld_product_range','ld')">Select All</button><button onclick="msClearAll('ms_range','ld_product_range','ld')">Clear</button><button class="ms-apply" onclick="closeMs('ms_range',event)">Done</button></div>
+          </div>
+        </div>
+        <input type="hidden" id="ld_product_range" value="{{ p_range }}">
+      </div>
+
+      <!-- City multi-select -->
+      <div class="fs-field">
+        <label>City</label>
+        <div class="ms-wrap" id="ms_city">
+          <div class="ms-trigger" onclick="toggleMs('ms_city')">
+            <span class="ms-label" id="ms_city_lbl">All Cities</span>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="ms-dropdown" id="ms_city_dd">
+            <div class="ms-search"><input type="text" placeholder="Search…" oninput="msSearch(this,'ms_city_dd')"></div>
+            <div class="ms-options">
+              {% for c in all_cities %}
+              <label class="ms-opt"><input type="checkbox" value="{{ c }}" {{ 'checked' if c in (city or '').split(',') and city }} onchange="msChange('ms_city','ld_city','ld')"><span>{{ c }}</span></label>
+              {% endfor %}
+            </div>
+            <div class="ms-footer"><button onclick="msSelectAll('ms_city','ld_city','ld')">Select All</button><button onclick="msClearAll('ms_city','ld_city','ld')">Clear</button><button class="ms-apply" onclick="closeMs('ms_city',event)">Done</button></div>
+          </div>
+        </div>
+        <input type="hidden" id="ld_city" value="{{ city }}">
+      </div>
+
+      <!-- Period Selector -->
+      <div class="fs-field" style="min-width:160px; max-width:200px;">
+        <label>Period</label>
+        <div class="ms-wrap" id="ms_period">
+          <div class="ms-trigger" onclick="toggleMs('ms_period')">
+            <span class="ms-label {{ 'has-val' if date_from or date_to }}" id="ms_period_lbl">{{ 'Custom Range' if date_from or date_to else 'Select Period' }}</span>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="ms-dropdown" id="ms_period_dd" style="min-width:160px; max-width:180px;">
+            <div class="ms-options" style="padding:4px;">
+              {% for opt in [('','All'),('today','Today'),('yesterday','Yesterday'),('last7','Last 7 Days'),('last30','Last 30 Days'),('custom','Custom Range')] %}
+              <div class="ms-opt period-opt {{ 'active' if (loop.first and not date_from and not date_to) }}"
+                   data-val="{{ opt[0] }}" onclick="selectPeriod('{{ opt[0] }}')">
+                <span>{{ opt[1] }}</span>
+                {% if loop.first and not date_from and not date_to %}<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>{% endif %}
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+        <input type="hidden" id="ld_date_from" value="{{ date_from }}">
+        <input type="hidden" id="ld_date_to" value="{{ date_to }}">
+      </div>
+
+      <!-- Custom Date Range — from/to inputs with inline calendar -->
+      <div class="fs-field" id="customRangeWrap" style="{{ 'display:none;' if not (date_from or date_to) }}grid-column:span 2; position:relative;">
+        <label>Custom Range</label>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <input type="date" id="dp_from_display" name="date_from_fp" placeholder="From date" data-no-flatpickr
+                 value="{{ date_from|replace('-','/') if date_from else '' }}"
+                 style="padding:6px 10px; border:1.5px solid var(--border); border-radius:7px; font-size:.8rem; cursor:pointer; width:110px; outline:none; background:#fff;">
+          <span style="color:var(--text3); font-size:13px;">→</span>
+          <input type="date" id="dp_to_display" name="date_to_fp" placeholder="To date" data-no-flatpickr
+                 value="{{ date_to|replace('-','/') if date_to else '' }}"
+                 style="padding:6px 10px; border:1.5px solid var(--border); border-radius:7px; font-size:.8rem; cursor:pointer; width:110px; outline:none; background:#fff;">
+          <button id="dpClearBtn" onclick="clearDateRange()"
+                  style="display:{{ 'inline-flex' if date_from or date_to else 'none' }}; align-items:center; padding:5px 10px; border-radius:6px; border:1px solid #fca5a5; background:#fff5f5; color:#dc2626; font-size:11px; font-weight:700; cursor:pointer;">✕ Clear</button>
+        </div>
+        <!-- Calendar widget -->
+        <div id="dpCalendar" style="display:none; position:absolute; top:calc(100% + 4px); left:0; z-index:600; background:#fff; border:1.5px solid #e2e8f0; border-radius:12px; box-shadow:0 8px 32px rgba(0,0,0,.15); padding:.75rem; width:260px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:.5rem;">
+            <button onclick="dpNav(-1)" style="border:none; background:#f1f5f9; border-radius:6px; width:26px; height:26px; cursor:pointer; font-size:15px; display:flex; align-items:center; justify-content:center;">‹</button>
+            <span id="dpMonthLabel" style="font-size:.8rem; font-weight:700; color:var(--text);"></span>
+            <button onclick="dpNav(1)"  style="border:none; background:#f1f5f9; border-radius:6px; width:26px; height:26px; cursor:pointer; font-size:15px; display:flex; align-items:center; justify-content:center;">›</button>
+          </div>
+          <div style="display:grid; grid-template-columns:repeat(7,1fr); gap:2px; text-align:center;">
+            {% for d in ['Su','Mo','Tu','We','Th','Fr','Sa'] %}
+            <div style="font-size:.65rem; font-weight:700; color:#94a3b8; padding:3px 0;">{{ d }}</div>
+            {% endfor %}
+            <div id="dpDays" style="display:contents;"></div>
+          </div>
+          <div style="margin-top:.4rem; text-align:center;">
+            <span id="dpPickingLabel" style="font-size:.7rem; color:#2563eb; font-weight:600;"></span>
+          </div>
+        </div>
+      </div>
+
+
+
+    </div>
+
+    {% if search or source or category or p_range or city or date_from or date_to %}
+    <div style="display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.6rem;align-items:center;">
+      <span style="font-size:.68rem;color:var(--text3);font-weight:600;">Active:</span>
+      {% if search %}<span class="fs-chip">Search: {{ search }}<a onclick="fsClear('ld_search','ld')">×</a></span>{% endif %}
+      {% if source %}{% for sv in source.split(',') %}<span class="fs-chip">Source: {{ sv }}<a onclick="msRemoveOne('ms_source','ld_source','{{ sv }}','ld')">×</a></span>{% endfor %}{% endif %}
+      {% if category %}{% for cv in category.split(',') %}<span class="fs-chip">Category: {{ cv }}<a onclick="msRemoveOne('ms_category','ld_category','{{ cv }}','ld')">×</a></span>{% endfor %}{% endif %}
+      {% if p_range %}{% for rv in p_range.split(',') %}<span class="fs-chip">Range: {{ rv }}<a onclick="msRemoveOne('ms_range','ld_product_range','{{ rv }}','ld')">×</a></span>{% endfor %}{% endif %}
+      {% if city %}{% for ctv in city.split(',') %}<span class="fs-chip">City: {{ ctv }}<a onclick="msRemoveOne('ms_city','ld_city','{{ ctv }}','ld')">×</a></span>{% endfor %}{% endif %}
+      {% if date_from %}<span class="fs-chip">From: {{ date_from }}<a onclick="fsClear('ld_date_from','ld')">×</a></span>{% endif %}
+      {% if date_to %}<span class="fs-chip">To: {{ date_to }}<a onclick="fsClear('ld_date_to','ld')">×</a></span>{% endif %}
+    </div>
+    {% endif %}
+  </div>
+  <div id="fsPanelSort_ld" style="display:none;padding:10px 14px;border-bottom:0.5px solid var(--border);">
+    <div class="fs-grid" style="max-width:480px;">
+      <div class="fs-field"><label>Sort By</label><select id="ld_sort_by" onchange="fsSubmit('ld')"><option value="created_at" {{ 'selected' if sort_by=='created_at' }}>Created Date</option><option value="name" {{ 'selected' if sort_by=='name' }}>Name</option><option value="company" {{ 'selected' if sort_by=='company' }}>Company</option><option value="status" {{ 'selected' if sort_by=='status' }}>Status</option><option value="product_name" {{ 'selected' if sort_by=='product_name' }}>Product</option></select></div>
+      <div class="fs-field"><label>Direction</label><div style="display:flex;gap:.4rem;"><button id="ld_sortDirDesc" onclick="fsSetDir('ld','desc')" class="sort-dir-btn {{ 'active' if sort_dir=='desc' }}">↓ Newest</button><button id="ld_sortDirAsc" onclick="fsSetDir('ld','asc')" class="sort-dir-btn {{ 'active' if sort_dir=='asc' }}">↑ Oldest</button></div></div>
+    </div>
+  </div>
+  <form id="fsForm_ld" method="GET" style="display:none;">
+    <input type="hidden" name="status" id="ld_h_status" value="{{ status }}">
+    <input type="hidden" name="search" id="ld_h_search" value="{{ search }}">
+    <input type="hidden" name="source" id="ld_h_source" value="{{ source }}">
+    <input type="hidden" name="category" id="ld_h_category" value="{{ category }}">
+    <input type="hidden" name="product_range" id="ld_h_product_range" value="{{ p_range }}">
+    <input type="hidden" name="city" id="ld_h_city" value="{{ city }}">
+    <input type="hidden" name="date_from" id="ld_h_date_from" value="{{ date_from }}">
+    <input type="hidden" name="date_to" id="ld_h_date_to" value="{{ date_to }}">
+    <input type="hidden" name="sort_by" id="ld_h_sort_by" value="{{ sort_by }}">
+    <input type="hidden" name="sort_dir" id="ld_h_sort_dir" value="{{ sort_dir }}">
+  </form>
+
+  <!-- ═══ MOBILE CARDS (hidden on desktop via CSS) ═══ -->
+  <div class="ld-cards" id="ldMobileCards">
+    <!-- Select All row -->
+    <div style="display:flex;align-items:center;gap:10px;padding:4px 2px 6px;">
+      <input type="checkbox" id="mobileCheckAll" style="width:18px;height:18px;accent-color:#1e3a5f;cursor:pointer;"
+        onchange="document.querySelectorAll('.row-check-item').forEach(c=>c.checked=this.checked); document.getElementById('checkAll').checked=this.checked; updateBulkBtn();">
+      <label for="mobileCheckAll" style="font-size:0.83rem;color:#64748b;font-weight:600;cursor:pointer;">Select All</label>
+      <span id="mobileLeadCount" style="font-size:0.78rem;color:#94a3b8;margin-left:auto;">{{ leads|length }} lead{{ 's' if leads|length != 1 }}</span>
+    </div>
+    {% for l in leads %}
+    <div class="ld-card" id="ldcard-{{ l.id }}">
+      <div class="ld-card-hdr">
+        <div class="ld-card-hdr-chk">
+          <input type="checkbox" class="row-cb row-check-item" value="{{ l.id }}"
+            style="width:17px;height:17px;accent-color:#fff;cursor:pointer;"
+            onchange="updateBulkBtn(); var all=document.querySelectorAll('.row-check-item'), chk=document.querySelectorAll('.row-check-item:checked'); var ma=document.getElementById('mobileCheckAll'); if(ma){ma.indeterminate=chk.length>0&&chk.length<all.length; ma.checked=chk.length===all.length;}">
+        </div>
+        <div class="ld-card-hdr-info">
+          <div class="ld-card-name">
+            {% if perm and perm.can_view %}
+            <a href="{{ url_for('crm.lead_view', id=l.id) }}" style="color:#fff;text-decoration:none;">{{ l.contact_name }}</a>
+            {% else %}
+            <span style="color:#fff;">{{ l.contact_name }}</span>
+            {% endif %}
+          </div>
+          {% if l.company %}<div class="ld-card-company">🏢 {{ l.company }}</div>{% endif %}
+        </div>
+        <div class="ld-card-hdr-status">
+          {% set _st_color = '' %}
+          {% set _st_icon = '' %}
+          {% for ls in lead_statuses if ls.name == l.status %}
+            {% set _st_color = ls.color %}
+            {% set _st_icon = ls.icon if ls.icon else ("✉️" if ls.name=="open" else ("⚙️" if ls.name=="in_process" else ("✅" if ls.name=="close" else ("❌" if ls.name=="cancel" else "📌")))) %}
+          {% endfor %}
+          <span class="ld-sbadge {{ (l.status or 'open')|replace(' ','_')|lower }}"
+            {% if l.status not in ('open','in_process','close','cancel') and _st_color %}
+            style="background:{{ _st_color }}22;color:{{ _st_color }};border:1px solid {{ _st_color }}44;"
+            {% endif %}>{{ _st_icon }} {{ (l.status or 'open')|replace('_',' ')|title }}</span>
+        </div>
+      </div>
+      <div class="ld-card-body">
+        <div class="ld-card-grid">
+          <div class="ld-card-field">
+            <label>Date</label>
+            <span>{{ l.created_at.strftime('%d-%m-%Y') if l.created_at else '—' }}</span>
+          </div>
+          <div class="ld-card-field">
+            <label>Mobile</label>
+            <span>{{ l.phone or '—' }}</span>
+          </div>
+          <div class="ld-card-field">
+            <label>Source</label>
+            <span>{{ l.source or '—' }}</span>
+          </div>
+          <div class="ld-card-field">
+            <label>Follow Up</label>
+            <span>{{ l.follow_up_date.strftime('%d-%m-%Y') if l.follow_up_date else '—' }}</span>
+          </div>
+        </div>
+        {% if l.product_name %}
+        <div class="ld-card-product">
+          <label>Product</label>
+          <span>{{ l.product_name }}{% if l.category %} · {{ l.category }}{% endif %}</span>
+        </div>
+        {% endif %}
+      </div>
+      <div class="ld-card-footer">
+        <span class="ld-card-date">
+          {% set age = l.lead_age %}
+          {% if l.status in ('close','cancel') %}
+            <span style="background:#dcfce7;color:#166534;padding:2px 8px;border-radius:100px;font-size:0.72rem;font-weight:700;">{{ age }}d ✓</span>
+          {% elif age > 30 %}
+            <span style="background:#fee2e2;color:#dc2626;padding:2px 8px;border-radius:100px;font-size:0.72rem;font-weight:700;">{{ age }}d</span>
+          {% elif age > 15 %}
+            <span style="background:#fef9c3;color:#92400e;padding:2px 8px;border-radius:100px;font-size:0.72rem;font-weight:700;">{{ age }}d</span>
+          {% else %}
+            <span style="background:#eff6ff;color:#1d4ed8;padding:2px 8px;border-radius:100px;font-size:0.72rem;font-weight:700;">{{ age }}d</span>
+          {% endif %}
+        </span>
+        <div class="ld-card-actions">
+          {% if show_trash %}
+          {% if can_restore %}
+          <form method="POST" action="{{ url_for('crm.lead_restore', id=l.id) }}" style="display:inline;">
+            <button type="submit" style="background:#ede9fe;color:#5b21b6;width:auto;padding:6px 12px;border-radius:8px;border:none;font-size:0.75rem;font-weight:700;cursor:pointer;">♻️ Restore</button>
+          </form>
+          {% endif %}
+          {% if can_permanent_delete %}
+          <form method="POST" action="{{ url_for('crm.lead_permanent_delete', id=l.id) }}" style="display:inline;" onsubmit="return confirm('Permanently delete this lead? This cannot be undone!')">
+            <button type="submit" style="background:#fee2e2;color:#dc2626;width:auto;padding:6px 12px;border-radius:8px;border:none;font-size:0.75rem;font-weight:700;cursor:pointer;">🗑️ Delete Forever</button>
+          </form>
+          {% endif %}
+          {% else %}
+          {% if perm and perm.can_view %}
+          <a href="{{ url_for('crm.lead_view', id=l.id) }}" class="ld-action-view" title="View">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </a>
+          {% else %}
+          <span style="width:34px;height:34px;display:inline-block;flex-shrink:0;"></span>
+          {% endif %}
+          {% if perm and perm.can_edit %}
+          <a href="{{ url_for('crm.lead_edit', id=l.id) }}" class="ld-action-edit" title="Edit">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </a>
+          {% else %}
+          <span style="width:34px;height:34px;display:inline-block;flex-shrink:0;"></span>
+          {% endif %}
+          {% if perm and perm.can_delete %}
+          <form method="POST" action="{{ url_for('crm.lead_delete', id=l.id) }}" style="display:inline;">
+            <button type="submit" class="ld-action-del" title="Delete">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+            </button>
+          </form>
+          {% else %}
+          <span style="width:34px;height:34px;display:inline-block;flex-shrink:0;"></span>
+          {% endif %}
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% else %}
+    <div style="text-align:center;padding:3rem;color:#94a3b8;">
+      <div style="font-size:2rem;margin-bottom:8px;">📋</div>
+      <div style="font-weight:600;">No leads found</div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- LIST VIEW -->
+  <div id="listViewWrap" style="display:block;">
+    <div class="tbl-wrap">
+      <table id="leadsTable">
+        <thead>
+          <tr>
+            <th class="row-check"><input type="checkbox" class="row-cb" id="checkAll" onchange="toggleAll(this)"></th>
+            <th style="width:50px; color:#94a3b8;">#</th>
+            {% for col in grid_cols %}
+            <th class="sortable" onclick="colSort(this,'{{ col }}')">{{ all_cols.get(col, col) }} <span class="sort-ic"></span></th>
+            {% endfor %}
+            <th style="width:110px;text-align:right;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {#- can_inline_edit is passed from route (inline_edit sub-perm) -#}
+          {% for l in leads %}
+          <tr class="lead-row" data-id="{{ l.id }}"
+              data-search="{{ [l.contact_name, l.company or '', l.product_name or '', l.source or '', l.city or '', l.email or '', l.phone or '']|join(' ')|lower }}"
+              data-exp="{{ '||'.join([l.code or '', l.created_at.strftime('%d-%m-%Y') if l.created_at else '', l.contact_name or '', l.position or '', l.company or '', l.email or '', l.phone or '', l.alt_phone or '', l.website or '', l.city or '', l.state or '', l.source or '', l.product_name or '', l.category or '', l.product_range or '', (l.order_quantity or ''), (l.expected_value|string if l.expected_value else ''), l.priority or '', l.status or '', (l.follow_up_date.strftime('%d-%m-%Y') if l.follow_up_date else ''), (l.last_contact.strftime('%d-%m-%Y') if l.last_contact else ''), l.tags or '', l.lead_type or 'Quality', l.lead_age|string]) }}">
+            <td class="row-check"><input type="checkbox" class="row-cb row-check-item" value="{{ l.id }}" onchange="updateBulkBtn()"></td>
+            <td style="color:#94a3b8;font-size:11px;font-weight:600;">{{ loop.index }}</td>
+            {% for col in grid_cols %}
+            {% if col == 'created_at' %}
+            <td style="white-space:nowrap;">
+              {% if l.created_at %}
+              <div class="ld-date"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>{{ l.created_at.strftime('%d-%m-%Y') }}</div>
+              <span class="ld-time">{{ l.created_at.strftime('%I:%M %p') }}</span>
+              {% else %}—{% endif %}
+            </td>
+            {% elif col == 'name' %}
+            <td class="{{ 'ie-cell' if can_inline_edit else '' }}" data-field="contact_name" data-val="{{ l.contact_name or '' }}" data-type="text" {% if can_inline_edit %}onclick="ieActivate(this)"{% endif %}>
+              <div class="ie-view"><div class="ld-name-wrap">{% set _nm = (l.contact_name or '?').split() %}<span class="ld-avatar">{{ ((_nm[0][:1] ~ (_nm[1][:1] if _nm|length > 1 else _nm[0][1:2]))|upper) if _nm else '?' }}</span><div style="display:flex;flex-direction:column;min-width:0;">{% if perm and perm.can_view %}<a href="{{ url_for('crm.lead_view', id=l.id) }}" class="entity-link" onclick="event.stopPropagation()">{{ l.contact_name }}</a>{% else %}<span>{{ l.contact_name }}</span>{% endif %}{% if l.company %}<div class="ld-name-sub">{{ l.company }}</div>{% endif %}</div></div>{% if can_inline_edit %}<span class="ie-pencil">✎</span>{% endif %}</div>
+            </td>
+            {% elif col == 'company' %}
+            <td class="{{ 'ie-cell' if can_inline_edit else '' }}" data-field="company_name" data-val="{{ l.company or '' }}" data-type="text" {% if can_inline_edit %}onclick="ieActivate(this)"{% endif %}>
+              <div class="ie-view"><span>{{ l.company or '—' }}</span>{% if can_inline_edit %}<span class="ie-pencil">✎</span>{% endif %}</div>
+            </td>
+            {% elif col == 'email' %}
+            <td class="{{ 'ie-cell' if can_inline_edit else '' }}" data-field="email" data-val="{{ l.email or '' }}" data-type="text" {% if can_inline_edit %}onclick="ieActivate(this)"{% endif %}>
+              <div class="ie-view">{% if l.email %}<a href="mailto:{{ l.email }}" class="ld-mail" onclick="event.stopPropagation()">{{ l.email }}</a>{% else %}<span style="font-size:12px;color:var(--text2);">—</span>{% endif %}{% if can_inline_edit %}<span class="ie-pencil">✎</span>{% endif %}</div>
+            </td>
+            {% elif col == 'mobile' %}
+            <td class="{{ 'ie-cell' if can_inline_edit else '' }}" data-field="phone" data-val="{{ l.phone or '' }}" data-type="text" {% if can_inline_edit %}onclick="ieActivate(this)"{% endif %}>
+              <div class="ie-view"><span>{{ l.phone or '—' }}</span>{% if can_inline_edit %}<span class="ie-pencil">✎</span>{% endif %}</div>
+            </td>
+            {% elif col == 'product' %}
+            <td class="{{ 'ie-cell' if can_inline_edit else '' }}" data-field="product_name" data-val="{{ l.product_name or '' }}" data-type="text" {% if can_inline_edit %}onclick="ieActivate(this)"{% endif %}>
+              <div class="ie-view"><span>{{ l.product_name or '—' }}</span>{% if can_inline_edit %}<span class="ie-pencil">✎</span>{% endif %}</div>
+            </td>
+            {% elif col == 'category' %}
+            <td class="{{ 'ie-cell' if can_inline_edit else '' }}" data-field="category" data-val="{{ l.category or '' }}" data-type="select" data-opts="{{ lead_categories|map(attribute='name')|join('||') }}" {% if can_inline_edit %}onclick="ieActivate(this)"{% endif %}>
+              <div class="ie-view"><span style="font-size:12px;color:var(--text2);">{{ l.category or '—' }}</span>{% if can_inline_edit %}<span class="ie-pencil">✎</span>{% endif %}</div>
+            </td>
+            {% elif col == 'source' %}
+            <td class="{{ 'ie-cell' if can_inline_edit else '' }}" data-field="source" data-val="{{ l.source or '' }}" data-type="select" data-opts="{{ lead_sources|map(attribute='name')|join('||') }}" {% if can_inline_edit %}onclick="ieActivate(this)"{% endif %}>
+              <div class="ie-view"><span>{{ l.source or '—' }}</span>{% if can_inline_edit %}<span class="ie-pencil">✎</span>{% endif %}</div>
+            </td>
+            {% elif col == 'city' %}
+            <td class="{{ 'ie-cell' if can_inline_edit else '' }}" data-field="city" data-val="{{ l.city or '' }}" data-type="text" {% if can_inline_edit %}onclick="ieActivate(this)"{% endif %}>
+              <div class="ie-view"><span>{{ l.city or '—' }}</span>{% if can_inline_edit %}<span class="ie-pencil">✎</span>{% endif %}</div>
+            </td>
+            {% elif col == 'priority' %}
+            <td class="{{ 'ie-cell' if can_inline_edit else '' }}" data-field="priority" data-val="{{ l.priority or 'low' }}" data-type="select" data-opts="high||medium||low" {% if can_inline_edit %}onclick="ieActivate(this)"{% endif %}>
+              <div class="ie-view">
+                {% if l.priority == 'high' %}<span class="sbadge cancel">High</span>{% elif l.priority == 'medium' %}<span class="sbadge in_process">Med</span>{% else %}<span class="sbadge close">Low</span>{% endif %}
+                {% if can_inline_edit %}<span class="ie-pencil">✎</span>{% endif %}
+              </div>
+            </td>
+            {% elif col == 'expected_value' %}
+            <td style="font-size:12px;font-weight:600;">{{ '₹%.0f'|format(l.expected_value) if l.expected_value else '—' }}</td>
+            {% elif col == 'team' %}
+            <td>
+              {% set members = l.get_team_member_objects() %}
+              {% if members %}<div class="av-group">{% for m in members[:3] %}<div class="av" title="{{ m.full_name }}">{{ m.full_name[:2]|upper }}</div>{% endfor %}{% if members|length > 3 %}<div class="av av-more">+{{ members|length - 3 }}</div>{% endif %}</div>{% else %}<span style="color:var(--text3);">—</span>{% endif %}
+            </td>
+            {% elif col == 'follow_up' %}
+            <td style="font-size:12px;white-space:nowrap;">{{ l.follow_up_date.strftime('%d-%m-%Y') if l.follow_up_date else '—' }}</td>
+            {% elif col == 'status' %}
+            <td class="{{ 'ie-cell' if can_inline_edit else '' }}" data-field="status" data-val="{{ l.status or '' }}" data-type="select" data-opts="{{ lead_statuses|map(attribute='name')|join('||') }}" {% if can_inline_edit %}onclick="ieActivate(this)"{% endif %}>
+              <div class="ie-view">
+                <span class="sbadge {{ l.status }}">{{ l.status|replace('_',' ')|title if l.status else '—' }}</span>
+                {% if can_inline_edit %}<span class="ie-pencil">✎</span>{% endif %}
+              </div>
+            </td>
+            {% elif col == 'last_contact' %}
+            <td style="white-space:nowrap;">
+              {% set lc = l.last_contact or l.updated_at %}
+              {% if lc %}
+              <div class="ld-date"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>{{ lc.strftime('%d-%m-%Y') }}</div>
+              <span class="ld-time">{{ lc.strftime('%I:%M %p') }}</span>
+              {% else %}—{% endif %}
+            </td>
+            {% elif col == 'lead_age' %}
+            <td style="text-align:center;">
+              {% set age = l.lead_age %}
+              {% if l.status in ('close','cancel') %}
+                <span style="background:#dcfce7;color:#166534;padding:2px 8px;border-radius:100px;font-size:0.75rem;font-weight:700;">{{ age }}d ✓</span>
+              {% elif age > 30 %}
+                <span style="background:#fee2e2;color:#dc2626;padding:2px 8px;border-radius:100px;font-size:0.75rem;font-weight:700;">{{ age }}d</span>
+              {% elif age > 15 %}
+                <span style="background:#fef9c3;color:#92400e;padding:2px 8px;border-radius:100px;font-size:0.75rem;font-weight:700;">{{ age }}d</span>
+              {% else %}
+                <span style="background:#eff6ff;color:#1d4ed8;padding:2px 8px;border-radius:100px;font-size:0.75rem;font-weight:700;">{{ age }}d</span>
+              {% endif %}
+            </td>
+            {% elif col == 'lead_type' %}
+            <td class="{{ 'ie-cell' if can_inline_edit else '' }}" data-field="lead_type" data-val="{{ l.lead_type or 'Quality' }}" data-type="select" data-opts="Quality||Non-Quality" style="text-align:center;" {% if can_inline_edit %}onclick="ieActivate(this)"{% endif %}>
+              <div class="ie-view" style="justify-content:center;">
+                {% if l.lead_type == 'Non-Quality' %}
+                  <span class="ld-type-badge nonquality"><span class="tb-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></span>Non-Quality</span>
+                {% else %}
+                  <span class="ld-type-badge quality"><span class="tb-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="16 9.5 10.5 15 8 12.5"/></svg></span>Quality</span>
+                {% endif %}
+                {% if can_inline_edit %}<span class="ie-pencil">✎</span>{% endif %}
+              </div>
+            </td>
+            {% elif col == 'assigned_to' %}
+            <td style="font-size:12px;">{{ l.assigned_to or '—' }}</td>
+            {% endif %}
+            {% endfor %}
+            <td>
+              <div class="row-actions">
+                {% if show_trash %}
+                  {% if can_restore %}
+                  <form method="POST" action="{{ url_for('crm.lead_restore', id=l.id) }}" style="display:inline;" data-no-review>
+                    <button type="submit" class="ra-btn restore-btn" title="Restore">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.63"/></svg>
+                      Restore
+                    </button>
+                  </form>
+                  {% endif %}
+                  {% if can_permanent_delete %}
+                  <form method="POST" action="{{ url_for('crm.lead_permanent_delete', id=l.id) }}" style="display:inline;" data-no-review onsubmit="return confirm('Permanently delete this lead? This cannot be undone!')">
+                    <button type="submit" class="ra-btn danger" title="Delete Forever">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+                    </button>
+                  </form>
+                  {% endif %}
+                {% else %}
+                  {% if perm and perm.can_view %}
+                  <a href="{{ url_for('crm.lead_view', id=l.id) }}" class="ra-btn view" title="View">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  </a>
+                  {% else %}
+                  <span style="width:28px;height:28px;display:inline-block;flex-shrink:0;"></span>
+                  {% endif %}
+                  {% if perm and perm.can_edit %}
+                  <a href="{{ url_for('crm.lead_edit', id=l.id) }}" class="ra-btn edit" title="Edit">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                  </a>
+                  {% else %}
+                  <span style="width:28px;height:28px;display:inline-block;flex-shrink:0;"></span>
+                  {% endif %}
+                  {% if perm and perm.can_delete %}
+                  <form method="POST" action="{{ url_for('crm.lead_delete', id=l.id) }}" style="display:inline;" data-no-review>
+                    <button type="submit" class="ra-btn danger" title="Move to Trash">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+                    </button>
+                  </form>
+                  {% else %}
+                  <span style="width:28px;height:28px;display:inline-block;flex-shrink:0;"></span>
+                  {% endif %}{# end can_delete #}
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="{{ grid_cols|length + 3 }}">
+            <div class="grid-empty">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              <p>No leads found. {% if perm and perm.can_add %}<a href="{{ url_for('crm.lead_add') }}">Add first lead →</a>{% endif %}</p>
+            </div>
+          </td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Grid Footer -->
+    <div class="grid-footer">
+      <div class="rows-selector">
+        Show
+        <select id="rowCountSel" onchange="changeRowCount(this.value)">
+          <option value="10">10</option><option value="25" selected>25</option><option value="50">50</option><option value="9999">All</option>
+        </select>
+        rows &nbsp;·&nbsp; <span id="rowInfo" style="color:var(--text3);"></span>
+      </div>
+      <div id="gridPgn" class="grid-pgn"></div>
+    </div>
+  </div>
+
+</div><!-- /grid-card -->
+
+<!-- ── KANBAN VIEW ── -->
+<div id="kanbanView">
+  <div class="kb-board">
+    {% for stat, label, cnt in [('open','Open',counts.open),('in_process','In Process',counts.in_process),('close','Close',counts.close),('cancel','Cancel',counts.cancel)] %}
+    <div class="kb-col" data-status="{{ stat }}" id="kbCol_{{ stat }}">
+      <div class="kb-col-hdr">
+        <span class="kb-title">{{ label }}</span>
+        <span class="kb-count" id="kbCnt_{{ stat }}">{{ cnt }}</span>
+      </div>
+      <div class="kb-body" id="kbBody_{{ stat }}" ondragover="kbDragOver(event)" ondragleave="kbDragLeave(event)" ondrop="kbDrop(event,'{{ stat }}')">
+        {% set col_leads = leads | selectattr('status','eq',stat) | list %}
+        {% for l in col_leads %}
+        <div class="kb-card" draggable="true" data-id="{{ l.id }}" data-status="{{ l.status }}" ondragstart="kbDragStart(event)" ondragend="kbDragEnd(event)">
+          <div class="kb-card-code">{{ l.code or 'No Code' }}</div>
+          <div class="kb-card-name" title="{{ l.contact_name }}">{{ l.contact_name }}</div>
+          {% if l.company %}<div class="kb-card-co">🏢 {{ l.company }}</div>{% endif %}
+          <div class="kb-card-foot">
+            <span class="kb-card-prod">{{ l.product_name or '—' }}</span>
+            {% if perm and perm.can_view %}
+            <a href="{{ url_for('crm.lead_view', id=l.id) }}" style="font-size:.67rem;color:#2563eb;text-decoration:none;font-weight:600;" onclick="event.stopPropagation()">View →</a>
+            {% endif %}
+          </div>
+        </div>
+        {% else %}
+        <div class="kb-empty" id="kbEmpty_{{ stat }}">Drop leads here</div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<script>
+// ── Pagination ──
+var _allRows, _page=1, _pageSize=25;
+document.addEventListener('DOMContentLoaded', function(){
+  // Init rows first — all visible
+  _allRows = Array.from(document.querySelectorAll('#leadsTable tbody tr.lead-row'));
+  _allRows.forEach(function(r){ r.style.display='table-row'; });
+  renderPage();
+  // Then show list view
+  switchView('list');
+});
+
+function renderPage(){
+  var visible = _allRows.filter(function(r){ return !r.classList.contains('search-hidden'); });
+  var total=visible.length, pages=Math.max(1,Math.ceil(total/_pageSize));
+  _page=Math.min(_page,pages);
+  _allRows.forEach(function(r){ r.style.display='none'; });
+  var start=(_page-1)*_pageSize, end=_page*_pageSize;
+  visible.forEach(function(r,i){ r.style.display=(i>=start&&i<end)?'table-row':'none'; });
+  // info
+  var start=Math.min((_page-1)*_pageSize+1,total),end=Math.min(_page*_pageSize,total);
+  document.getElementById('rowInfo').textContent=total?`Showing ${start}–${end} of ${total}`:'No records';
+  // pagination btns
+  var pgn=document.getElementById('gridPgn'); pgn.innerHTML='';
+  if(pages<=1)return;
+  var addBtn=function(label,pg,active,disabled){
+    var b=document.createElement('button');b.className='pgn-btn'+(active?' active':'');b.disabled=disabled;b.textContent=label;
+    if(!disabled&&!active)b.onclick=function(){_page=pg;renderPage();};
+    pgn.appendChild(b);
+  };
+  addBtn('‹',_page-1,false,_page===1);
+  var start2=Math.max(1,_page-2),end2=Math.min(pages,_page+2);
+  if(start2>1){addBtn('1',1,false,false);if(start2>2)pgn.appendChild(Object.assign(document.createElement('span'),{textContent:'…',style:'padding:0 4px;color:var(--text3);font-size:12px;'}));}
+  for(var p=start2;p<=end2;p++)addBtn(p,p,p===_page,false);
+  if(end2<pages){if(end2<pages-1)pgn.appendChild(Object.assign(document.createElement('span'),{textContent:'…',style:'padding:0 4px;color:var(--text3);font-size:12px;'}));addBtn(pages,pages,false,false);}
+  addBtn('›',_page+1,false,_page===pages);
+}
+function changeRowCount(v){_pageSize=parseInt(v);_page=1;renderPage();}
+
+// ── Global Search ──
+function gridGlobalSearch(q){
+  var lq=q.toLowerCase();
+  _allRows.forEach(function(r){
+    var match=!lq||r.dataset.search.includes(lq);
+    r.classList.toggle('search-hidden',!match);
+  });
+  _page=1; renderPage();
+}
+
+// ── Checkbox bulk ──
+function toggleAll(cb){document.querySelectorAll('.row-check-item').forEach(c=>c.checked=cb.checked);updateBulkBtn();}
+function updateBulkBtn(){var n=document.querySelectorAll('.row-check-item:checked').length;var btn=document.getElementById('bulkDeleteBtn');if(btn){btn.style.display=n>0?'inline-flex':'none';}}
+function bulkDelete(){var ids=Array.from(document.querySelectorAll('.row-check-item:checked')).map(c=>c.value);if(!ids.length)return;if(!confirm('Delete '+ids.length+' leads?'))return;fetch('/crm/leads/bulk-delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ids:ids})}).then(()=>location.reload());}
+
+// ── Column sort ──
+var _sortDir={};
+function colSort(th,col){
+  var asc=_sortDir[col]!==true;_sortDir[col]=asc;
+  document.querySelectorAll('th.sortable').forEach(t=>{t.classList.remove('sort-asc','sort-desc');});
+  th.classList.add(asc?'sort-asc':'sort-desc');
+  var idx=Array.from(th.parentNode.children).indexOf(th);
+  var rows=Array.from(document.querySelectorAll('#leadsTable tbody tr.lead-row'));
+  rows.sort((a,b)=>{var av=(a.cells[idx]?.innerText||'').trim(),bv=(b.cells[idx]?.innerText||'').trim();return asc?av.localeCompare(bv,undefined,{numeric:true}):bv.localeCompare(av,undefined,{numeric:true});});
+  var tb=document.querySelector('#leadsTable tbody');rows.forEach(r=>tb.appendChild(r));
+  _page=1;renderPage();
+  // Filter panel open rakho — band mat hone do
+  var fPanel=document.getElementById('fsPanelFilter_ld');
+  if(fPanel && fPanel.style.display==='none'){
+    fPanel.style.display='block';
+    var fTab=document.getElementById('fsTabFilter');
+    if(fTab) fTab.classList.add('active');
+  }
+}
+
+// ── Column Customizer ──
+var _colPanelOpen=false;
+function toggleColPanel(e){e&&e.stopPropagation();_colPanelOpen=!_colPanelOpen;document.getElementById('colPanel').style.display=_colPanelOpen?'block':'none';}
+document.addEventListener('click',function(e){if(_colPanelOpen&&!document.getElementById('colPanel').contains(e.target)){document.getElementById('colPanel').style.display='none';_colPanelOpen=false;}});
+function colChanged(){}
+function saveLeadCols(){var checked=Array.from(document.querySelectorAll('#colPanel input:checked')).map(c=>c.value);if(!checked.length){alert('Select at least one column');return;}fetch('/crm/leads/grid-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cols:checked})}).then(r=>r.json()).then(d=>{if(d.success)location.reload();});}
+
+// ── Period Selector & Calendar Datepicker ──
+function selectPeriod(val){
+  var today=new Date(); today.setHours(0,0,0,0);
+  var fmt=function(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); };
+  var from='',to='';
+  if(val==='today'){ from=to=fmt(today); }
+  else if(val==='yesterday'){ var y=new Date(today); y.setDate(y.getDate()-1); from=to=fmt(y); }
+  else if(val==='last7'){ var s=new Date(today); s.setDate(s.getDate()-6); from=fmt(s); to=fmt(today); }
+  else if(val==='last30'){ var s2=new Date(today); s2.setDate(s2.getDate()-29); from=fmt(s2); to=fmt(today); }
+  else if(val==='custom'){
+    document.getElementById('customRangeWrap').style.display='';
+    var lbl=document.getElementById('ms_period_lbl'); lbl.textContent='Custom Range'; lbl.classList.add('has-val');
+    document.querySelectorAll('.period-opt').forEach(function(o){ o.classList.remove('active'); if(o.dataset.val===val) o.classList.add('active'); });
+    toggleMs('ms_period');
+    return;
+  }
+  document.getElementById('ld_date_from').value=from;
+  document.getElementById('ld_date_to').value=to;
+  var dpFrom=document.getElementById('dp_from_display'); if(dpFrom) dpFrom.value=from.replace(/-/g,'/');
+  var dpTo=document.getElementById('dp_to_display');     if(dpTo)   dpTo.value=to.replace(/-/g,'/');
+  var labels={'':'All','today':'Today','yesterday':'Yesterday','last7':'Last 7 Days','last30':'Last 30 Days','custom':'Custom Range'};
+  var lbl=document.getElementById('ms_period_lbl'); lbl.textContent=labels[val]||val; lbl.classList.toggle('has-val',!!val);
+  document.querySelectorAll('.period-opt').forEach(function(o){ o.classList.remove('active'); if(o.dataset.val===val) o.classList.add('active'); });
+  if(!val) document.getElementById('customRangeWrap').style.display='none';
+  toggleMs('ms_period');
+  if(val) fsSubmit('ld'); else { document.getElementById('ld_date_from').value=''; document.getElementById('ld_date_to').value=''; fsSubmit('ld'); }
+}
+
+// ── Datepicker ──
+var _dpMode='from', _dpFrom=null, _dpTo=null, _dpCur=new Date();
+
+function openDp(mode){
+  _dpMode=mode;
+  var fv=document.getElementById('ld_date_from').value, tv=document.getElementById('ld_date_to').value;
+  _dpFrom=fv?new Date(fv):null; _dpTo=tv?new Date(tv):null;
+  _dpCur=(mode==='from'&&_dpFrom)?new Date(_dpFrom):(mode==='to'&&_dpTo)?new Date(_dpTo):(mode==='to'&&_dpFrom)?new Date(_dpFrom):new Date();
+  var fd=document.getElementById('dp_from_display'), td=document.getElementById('dp_to_display');
+  if(fd) fd.style.borderColor=mode==='from'?'#2563eb':'var(--border)';
+  if(td) td.style.borderColor=mode==='to'?'#2563eb':'var(--border)';
+  document.getElementById('dpCalendar').style.display='block';
+  renderDpCal();
+}
+function dpNav(dir){ _dpCur=new Date(_dpCur.getFullYear(), _dpCur.getMonth()+dir, 1); renderDpCal(); }
+function renderDpCal(){
+  var months=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('dpMonthLabel').textContent=months[_dpCur.getMonth()]+' '+_dpCur.getFullYear();
+  var c=document.getElementById('dpDays'); c.innerHTML='';
+  var today=new Date(); today.setHours(0,0,0,0);
+  var first=new Date(_dpCur.getFullYear(),_dpCur.getMonth(),1);
+  var last=new Date(_dpCur.getFullYear(),_dpCur.getMonth()+1,0);
+  for(var i=0;i<first.getDay();i++){ var e=document.createElement('div'); e.style.cssText='padding:4px;'; c.appendChild(e); }
+  for(var d=1;d<=last.getDate();d++){
+    var dt=new Date(_dpCur.getFullYear(),_dpCur.getMonth(),d);
+    var cell=document.createElement('div');
+    cell.textContent=d;
+    cell.style.cssText='padding:4px 2px; border-radius:6px; font-size:.75rem; cursor:pointer; text-align:center; transition:background .1s;';
+    if(_dpMode==='to'&&_dpFrom&&dt<_dpFrom){ cell.style.cssText+='color:#cbd5e1; cursor:default;'; c.appendChild(cell); continue; }
+    var isFrom=_dpFrom&&dt.getTime()===_dpFrom.getTime();
+    var isTo=_dpTo&&dt.getTime()===_dpTo.getTime();
+    var inRange=_dpFrom&&_dpTo&&dt>_dpFrom&&dt<_dpTo;
+    if(isFrom||isTo) cell.style.cssText+='background:#2563eb; color:#fff; font-weight:700;';
+    else if(inRange) cell.style.cssText+='background:#dbeafe; color:#1d4ed8;';
+    else if(dt.getTime()===today.getTime()) cell.style.cssText+='font-weight:700; color:#2563eb;';
+    else { cell.onmouseover=function(){ this.style.background='#eff6ff'; }; cell.onmouseout=function(){ this.style.background=''; }; }
+    (function(date){ cell.onclick=function(){ dpPick(date); }; })(new Date(dt));
+    c.appendChild(cell);
+  }
+  document.getElementById('dpPickingLabel').textContent=_dpMode==='from'?'Select start date':'Select end date';
+}
+function dpPick(date){
+  var fmt=function(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); };
+  var fmtD=function(d){ return d.getFullYear()+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+String(d.getDate()).padStart(2,'0'); };
+  if(_dpMode==='from'){
+    _dpFrom=date; _dpTo=null;
+    document.getElementById('dp_from_display').value=fmtD(date);
+    document.getElementById('dp_to_display').value='';
+    document.getElementById('ld_date_to').value='';
+    var cb=document.getElementById('dpClearBtn'); if(cb) cb.style.display='inline-flex';
+    _dpMode='to';
+    document.getElementById('dp_from_display').style.borderColor='var(--border)';
+    document.getElementById('dp_to_display').style.borderColor='#2563eb';
+    renderDpCal();
+  } else {
+    // Agar _dpFrom null hai to pehle from set karo
+    if(!_dpFrom){ _dpFrom=date; document.getElementById('dp_from_display').value=fmtD(date); document.getElementById('ld_date_from').value=fmt(date); _dpMode='to'; renderDpCal(); return; }
+    if(date<_dpFrom){ _dpTo=_dpFrom; _dpFrom=date; } else _dpTo=date;
+    document.getElementById('dp_from_display').value=fmtD(_dpFrom);
+    document.getElementById('dp_to_display').value=fmtD(_dpTo);
+    document.getElementById('ld_date_from').value=fmt(_dpFrom);
+    document.getElementById('ld_date_to').value=fmt(_dpTo);
+    var lbl=document.getElementById('ms_period_lbl'); if(lbl){ lbl.textContent='Custom Range'; lbl.classList.add('has-val'); }
+    var cb=document.getElementById('dpClearBtn'); if(cb) cb.style.display='inline-flex';
+    document.getElementById('dpCalendar').style.display='none';
+    document.getElementById('dp_from_display').style.borderColor='var(--border)';
+    document.getElementById('dp_to_display').style.borderColor='var(--border)';
+    fsSubmit('ld');
+  }
+}
+function clearDateRange(){
+  _dpFrom=null; _dpTo=null;
+  ['ld_date_from','ld_date_to'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+  ['dp_from_display','dp_to_display'].forEach(function(id){ var el=document.getElementById(id); if(el){ el.value=''; el.style.borderColor='var(--border)'; } });
+  var lbl=document.getElementById('ms_period_lbl'); if(lbl){ lbl.textContent='Select Period'; lbl.classList.remove('has-val'); }
+  document.querySelectorAll('.period-opt').forEach(function(o){ o.classList.remove('active'); });
+  var cal=document.getElementById('dpCalendar'); if(cal) cal.style.display='none';
+  var cb=document.getElementById('dpClearBtn'); if(cb) cb.style.display='none';
+  document.getElementById('customRangeWrap').style.display='none';
+  fsSubmit('ld');
+}
+// Close calendar on outside click
+document.addEventListener('click',function(e){
+  var cal=document.getElementById('dpCalendar');
+  if(cal&&cal.style.display!=='none'&&!cal.contains(e.target)&&!e.target.id.startsWith('dp_')){
+    cal.style.display='none';
+    ['dp_from_display','dp_to_display'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.borderColor='var(--border)'; });
+  }
+});
+
+// ── Multi-Select Dropdown ──
+function toggleMs(wrapId){
+  var wrap = document.getElementById(wrapId);
+  var isOpen = wrap.classList.contains('open');
+  // Close all others
+  document.querySelectorAll('.ms-wrap.open').forEach(function(w){ w.classList.remove('open'); });
+  if(!isOpen) wrap.classList.add('open');
+}
+function closeMs(wrapId, e){
+  if(e) e.stopPropagation();
+  var wrap = document.getElementById(wrapId);
+  if(wrap) wrap.classList.remove('open');
+  // Apply filter when Done is clicked
+  fsSubmit('ld');
+}
+// Sirf trigger click pe dusre dropdowns band karo — outside click pe BAND NAHI hoga
+document.addEventListener('click', function(e){
+  var trigger = e.target.closest('.ms-trigger');
+  if(trigger) return; // toggleMs handle karega
+  // Koi aur ms-wrap element nahi hai to sab band karo (optional: remove this block to never close on outside)
+});
+function msSearch(inp, ddId){
+  var q = inp.value.toLowerCase();
+  document.querySelectorAll('#'+ddId+' .ms-opt').forEach(function(opt){
+    opt.style.display = opt.querySelector('span').textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+}
+function msChange(wrapId, hiddenId, pfx){
+  var checked = Array.from(document.querySelectorAll('#'+wrapId+' .ms-options input:checked')).map(function(c){ return c.value; });
+  document.getElementById(hiddenId).value = checked.join(',');
+  var lbl = document.getElementById(wrapId+'_lbl');
+  var defaults = {'ms_source':'All Sources','ms_category':'All Categories','ms_range':'All Ranges','ms_city':'All Cities'};
+  if(checked.length === 0){ lbl.textContent = defaults[wrapId]||'All'; lbl.classList.remove('has-val'); }
+  else if(checked.length === 1){ lbl.textContent = checked[0]; lbl.classList.add('has-val'); }
+  else { lbl.textContent = checked.length+' selected'; lbl.classList.add('has-val'); }
+  // NO auto-submit — apply only on Done click
+}
+function msSelectAll(wrapId, hiddenId, pfx){
+  document.querySelectorAll('#'+wrapId+' .ms-options input').forEach(function(c){ c.checked = true; });
+  msChange(wrapId, hiddenId, pfx);
+}
+function msClearAll(wrapId, hiddenId, pfx){
+  document.querySelectorAll('#'+wrapId+' .ms-options input').forEach(function(c){ c.checked = false; });
+  msChange(wrapId, hiddenId, pfx);
+  fsSubmit(pfx);
+}
+function msRemoveOne(wrapId, hiddenId, val, pfx){
+  var cb = document.querySelector('#'+wrapId+' .ms-options input[value="'+val+'"]');
+  if(cb) cb.checked = false;
+  msChange(wrapId, hiddenId, pfx);
+  fsSubmit(pfx);
+}
+// Init labels on page load
+document.addEventListener('DOMContentLoaded', function(){
+  [['ms_source','ld_source','All Sources'],['ms_category','ld_category','All Categories'],
+   ['ms_range','ld_product_range','All Ranges'],['ms_city','ld_city','All Cities']].forEach(function(item){
+    var val = document.getElementById(item[1]) ? document.getElementById(item[1]).value : '';
+    if(val){
+      var vals = val.split(',').filter(Boolean);
+      var lbl = document.getElementById(item[0]+'_lbl');
+      if(lbl){
+        lbl.textContent = vals.length===1 ? vals[0] : vals.length+' selected';
+        lbl.classList.add('has-val');
+        // Check matching checkboxes
+        vals.forEach(function(v){
+          var cb = document.querySelector('#'+item[0]+' .ms-options input[value="'+v+'"]');
+          if(cb) cb.checked = true;
+        });
+      }
+    }
+  });
+});
+
+// ── Filter / Sort Panel Toggle ──
+function toggleFsTab(tab, pfx){
+  var fPanel = document.getElementById('fsPanelFilter_'+pfx);
+  var sPanel = document.getElementById('fsPanelSort_'+pfx);
+  var fTab   = document.getElementById('fsTabFilter');
+  var sTab   = document.getElementById('fsTabSort');
+  if(tab==='filter'){
+    var isOpen = fPanel && fPanel.style.display!=='none';
+    if(fPanel) fPanel.style.display = isOpen ? 'none' : 'block';
+    if(sPanel) sPanel.style.display = 'none';
+    if(fTab)   fTab.classList.toggle('active', !isOpen);
+    if(sTab)   sTab.classList.remove('active');
+  } else {
+    var isOpen2 = sPanel && sPanel.style.display!=='none';
+    if(sPanel) sPanel.style.display = isOpen2 ? 'none' : 'block';
+    if(fPanel) fPanel.style.display = 'none';
+    if(sTab)   sTab.classList.toggle('active', !isOpen2);
+    if(fTab)   fTab.classList.remove('active');
+  }
+}
+
+// ── Filter Submit (debounced) ──
+var _fsTimer = null;
+function fsDebounce(pfx){ clearTimeout(_fsTimer); _fsTimer = setTimeout(function(){ fsSubmit(pfx); }, 400); }
+function fsSubmit(pfx){
+  var params = new URLSearchParams();
+  ['search','source','category','product_range','city','date_from','date_to','sort_by','sort_dir','status'].forEach(function(k){
+    var el = document.getElementById(pfx+'_'+k) || document.getElementById(pfx+'_h_'+k);
+    if(el && el.value && el.value.trim()) params.set(k, el.value.trim());
+  });
+  window.location.href = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+}
+function fsSetDir(pfx, dir){
+  var el = document.getElementById(pfx+'_sort_dir') || document.getElementById(pfx+'_h_sort_dir');
+  if(el) el.value = dir;
+  document.querySelectorAll('.sort-dir-btn').forEach(b=>b.classList.remove('active'));
+  var btn = document.getElementById(pfx+'_sortDir'+dir.charAt(0).toUpperCase()+dir.slice(1));
+  if(btn) btn.classList.add('active');
+  fsSubmit(pfx);
+}
+function fsClear(fieldId, pfx){ var el=document.getElementById(fieldId); if(el){el.value='';} fsSubmit(pfx); }
+
+// ── Export — Dark Navy Professional XLSX via ExcelJS ──
+function doExport(pfx){
+  if(typeof ExcelJS === 'undefined'){
+    var s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js';
+    s.onload = function(){ _doExportXLSX(); };
+    document.head.appendChild(s);
+  } else { _doExportXLSX(); }
+}
+
+async function _doExportXLSX(){
+  var headers = [
+    'Created Date',
+    'Code','Company','Contact Name','Position','Email',
+    'Mobile','Alt Mobile','Website',
+    'City','State','Country',
+    'Source','Product Name','Category','Product Range','Order Quantity',
+    'Expected Value','Priority','Status','Lead Type',
+    'Follow Up Date','Last Contact','Tags','Lead Age (Days)'
+  ];
+
+  var rows = [];
+  document.querySelectorAll('#leadsTable tbody tr.lead-row').forEach(function(tr){
+    var exp = tr.getAttribute('data-exp');
+    if(!exp) return;
+    var v = exp.split('||');
+    // v[0]=code, v[1]=created_at, v[2]=name, v[3]=position, v[4]=company
+    // v[5]=email, v[6]=mobile, v[7]=alt_mobile, v[8]=website
+    // v[9]=city, v[10]=state, v[11]=source, v[12]=product_name
+    // v[13]=category, v[14]=product_range, v[15]=order_qty
+    // v[16]=expected_value, v[17]=priority, v[18]=status
+    // v[19]=follow_up, v[20]=last_contact, v[21]=tags
+    // v[22]=lead_type, v[23]=lead_age
+    rows.push([
+      v[1]||'',
+      v[0]||'',  v[4]||'',  v[2]||'',  v[3]||'',  v[5]||'',
+      v[6]||'',  v[7]||'',  v[8]||'',
+      v[9]||'',  v[10]||'', '',
+      v[11]||'', v[12]||'', v[13]||'', v[14]||'', v[15]||'',
+      v[16]||'', v[17]||'', v[18]||'', v[22]||'Quality',
+      v[19]||'', v[20]||'', v[21]||'', v[23]||'0'
+    ]);
+  });
+
+  if(!rows.length){ alert('No data to export'); return; }
+
+  var wb = new ExcelJS.Workbook();
+  wb.creator = 'HCP ERP';
+  wb.created = new Date();
+
+  var ws = wb.addWorksheet('Leads', {
+    views: [{ state:'frozen', ySplit:1 }]
+  });
+
+  // Column widths
+  var colWidths = [14,10,24,20,16,34,14,14,24,14,16,12,18,24,18,18,14,16,12,14,14,14,14,22,12];
+  ws.columns = headers.map(function(h,i){
+    return { header: h, key: 'c'+i, width: colWidths[i] || 14 };
+  });
+
+  // ── Header row styling — dark navy ──
+  var hRow = ws.getRow(1);
+  hRow.height = 22;
+  hRow.eachCell(function(cell){
+    cell.fill   = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF1B2A4A' } };
+    cell.font   = { bold:true, color:{ argb:'FFFFFFFF' }, size:10, name:'Calibri' };
+    cell.alignment = { horizontal:'center', vertical:'middle' };
+    cell.border = {
+      top:   {style:'thin', color:{argb:'FF2D3F60'}},
+      bottom:{style:'medium',color:{argb:'FF2D3F60'}},
+      left:  {style:'thin', color:{argb:'FF2D3F60'}},
+      right: {style:'thin', color:{argb:'FF2D3F60'}}
+    };
+  });
+
+  // Status fill colors
+  var statusFill = {
+    'open':       { bg:'FFD1E8FF', fg:'FF1B4FA8' },
+    'in_process': { bg:'FFFFF3C4', fg:'FF7C4A00' },
+    'close':      { bg:'FFD1FAE5', fg:'FF065F46' },
+    'cancel':     { bg:'FFFEE2E2', fg:'FF991B1B' }
+  };
+
+  // ── Data rows ──
+  rows.forEach(function(rowData, ri){
+    var row = ws.addRow(rowData);
+    row.height = 18;
+    var isEven = (ri % 2 === 0);
+    var rowBg  = isEven ? 'FFFFFFFF' : 'FFEEF2F7';
+    var statusVal = (rowData[20]||'').toLowerCase().replace(/\s+/g,'_');
+
+    row.eachCell({ includeEmpty:true }, function(cell, colNum){
+      var bg = rowBg, fg = 'FF1E293B', bold = false;
+
+      // Code column (2) — navy bold
+      if(colNum === 2){ fg = 'FF1B3A6B'; bold = true; }
+
+      // Status column (20)
+      if(colNum === 20 && statusFill[statusVal]){
+        bg   = statusFill[statusVal].bg;
+        fg   = statusFill[statusVal].fg;
+        bold = true;
+      }
+
+      // Lead Type column (21)
+      if(colNum === 21){
+        var lt = (rowData[20]||'').toLowerCase();
+        if(lt === 'non-quality'){ bg='FFFEE2E2'; fg='FF991B1B'; bold=true; }
+        else { bg='FFD1FAE5'; fg='FF065F46'; bold=true; }
+      }
+
+      cell.fill   = { type:'pattern', pattern:'solid', fgColor:{ argb: bg } };
+      cell.font   = { color:{ argb: fg }, size:10, name:'Calibri', bold: bold };
+      cell.alignment = { vertical:'middle' };
+      cell.border = {
+        bottom:{ style:'thin', color:{ argb:'FFD1D9E6' } },
+        right: { style:'thin', color:{ argb:'FFD1D9E6' } },
+        left:  { style:'thin', color:{ argb:'FFD1D9E6' } }
+      };
+    });
+  });
+
+  // ── Summary sheet ──
+  var ws2 = wb.addWorksheet('Summary');
+  var today = new Date().toLocaleDateString('en-IN');
+  var statusCount = {};
+  rows.forEach(function(r){ var s=r[19]||'Unknown'; statusCount[s]=(statusCount[s]||0)+1; });
+
+  ws2.columns = [{width:24},{width:14}];
+  var titleRow = ws2.addRow(['HCP ERP — Leads Export', '']);
+  titleRow.getCell(1).font = {bold:true, size:13, color:{argb:'FF1B2A4A'}, name:'Calibri'};
+  ws2.addRow(['Date', today]);
+  ws2.addRow(['Total Leads', rows.length]);
+  ws2.addRow([]);
+  var shRow = ws2.addRow(['Status','Count']);
+  shRow.eachCell(function(cell){
+    cell.fill = {type:'pattern',pattern:'solid',fgColor:{argb:'FF1B2A4A'}};
+    cell.font = {bold:true,color:{argb:'FFFFFFFF'},name:'Calibri'};
+  });
+  Object.entries(statusCount).forEach(function(e){ ws2.addRow([e[0], e[1]]); });
+
+  // ── Download ──
+  var buf = await wb.xlsx.writeBuffer();
+  var blob = new Blob([buf], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'HCP_Leads_' + new Date().toISOString().slice(0,10) + '.xlsx';
+  a.click();
+}
+
+
+// ── Inline Edit Engine ────────────────────────────────
+var _ieActive = null;
+
+function ieActivate(cell) {
+  if (cell.classList.contains('ie-saving')) return;
+  if (_ieActive && _ieActive !== cell) ieCancel(_ieActive);
+  _ieActive = cell;
+
+  var field   = cell.dataset.field;
+  var val     = cell.dataset.val || '';
+  var type    = cell.dataset.type; // 'text' | 'select'
+  var opts    = (cell.dataset.opts || '').split('||').filter(Boolean);
+  var view    = cell.querySelector('.ie-view');
+  var wrap    = cell.querySelector('.ie-input-wrap');
+
+  if (!wrap) {
+    // Build input widget once
+    wrap = document.createElement('div');
+    wrap.className = 'ie-input-wrap';
+
+    var inp;
+    if (type === 'select') {
+      inp = document.createElement('select');
+      inp.className = 'ie-select';
+      // blank option
+      var blank = document.createElement('option'); blank.value=''; blank.textContent='— select —'; inp.appendChild(blank);
+      opts.forEach(function(o){
+        var opt = document.createElement('option'); opt.value = o; opt.textContent = o; inp.appendChild(opt);
+      });
+      inp.addEventListener('change', function(){ ieSave(cell); });
+      inp.addEventListener('keydown', function(e){ if(e.key==='Escape'){ e.stopPropagation(); ieCancel(cell); } });
+    } else {
+      inp = document.createElement('input');
+      inp.type = 'text';
+      inp.className = 'ie-input';
+      inp.addEventListener('keydown', function(e){
+        if(e.key==='Enter'){ e.preventDefault(); ieSave(cell); }
+        if(e.key==='Escape'){ e.stopPropagation(); ieCancel(cell); }
+      });
+      // OK + Esc buttons
+      var ok  = document.createElement('button'); ok.className='ie-ok';  ok.textContent='✓'; ok.type='button'; ok.onclick=function(e){e.stopPropagation();ieSave(cell);};
+      var esc = document.createElement('button'); esc.className='ie-esc'; esc.textContent='✕'; esc.type='button'; esc.onclick=function(e){e.stopPropagation();ieCancel(cell);};
+      wrap.appendChild(inp); wrap.appendChild(ok); wrap.appendChild(esc);
+      cell.appendChild(wrap);
+      inp.value = val;
+      view.style.display = 'none';
+      wrap.style.display = 'flex';
+      inp.focus(); inp.select();
+      return;
+    }
+    wrap.appendChild(inp);
+    cell.appendChild(wrap);
+  }
+
+  var inp2 = wrap.querySelector('input,select');
+  inp2.value = val;
+  view.style.display = 'none';
+  wrap.style.display = 'flex';
+  inp2.focus();
+}
+
+function ieCancel(cell) {
+  if (!cell) return;
+  var view = cell.querySelector('.ie-view');
+  var wrap = cell.querySelector('.ie-input-wrap');
+  if (view) view.style.display = 'flex';
+  if (wrap) wrap.style.display = 'none';
+  if (_ieActive === cell) _ieActive = null;
+}
+
+function ieSave(cell) {
+  var id    = cell.closest('tr').dataset.id;
+  var field = cell.dataset.field;
+  var inp   = cell.querySelector('input,select');
+  var val   = inp ? inp.value.trim() : '';
+  var view  = cell.querySelector('.ie-view');
+  var wrap  = cell.querySelector('.ie-input-wrap');
+
+  cell.classList.add('ie-saving');
+  if (wrap) wrap.style.display = 'none';
+  if (view) view.style.display = 'flex';
+
+  fetch('/crm/leads/'+id+'/inline-edit', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+    body: JSON.stringify({ field: field, value: val })
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(d) {
+    cell.classList.remove('ie-saving');
+    if (d.success) {
+      cell.dataset.val = val;
+      ieUpdateView(cell, field, val);
+      cell.classList.add('ie-saved');
+      setTimeout(function(){ cell.classList.remove('ie-saved'); }, 600);
+      showToast('Saved!', 'success', 1800);
+    } else {
+      showToast(d.error || 'Save failed', 'danger');
+      ieActivate(cell);
+    }
+  })
+  .catch(function(){
+    cell.classList.remove('ie-saving');
+    showToast('Network error', 'danger');
+  });
+  _ieActive = null;
+}
+
+function ieUpdateView(cell, field, val) {
+  var view = cell.querySelector('.ie-view');
+  if (!view) return;
+  var label = val || '—';
+
+  // Status badge
+  if (field === 'status') {
+    var cls = {'open':'open','in_process':'in_process','close':'close','cancel':'cancel'}[val] || '';
+    var txt = val ? val.replace(/_/g,' ').replace(/\w/g,function(c){return c.toUpperCase();}) : '—';
+    view.innerHTML = '<span class="sbadge '+cls+'">'+txt+'</span>{% if can_inline_edit %}<span class="ie-pencil">✎</span>{% endif %}';
+    return;
+  }
+  // Priority badge
+  if (field === 'priority') {
+    var pcls = val==='high'?'cancel':val==='medium'?'in_process':'close';
+    var ptxt = val ? val.charAt(0).toUpperCase()+val.slice(1) : '—';
+    view.innerHTML = '<span class="sbadge '+pcls+'">'+ptxt+'</span>{% if can_inline_edit %}<span class="ie-pencil">✎</span>{% endif %}';
+    return;
+  }
+  // Lead type badge (Quality / Non-Quality)
+  if (field === 'lead_type') {
+    var lstyle = val === 'Non-Quality'
+      ? 'background:#fee2e2;color:#dc2626;'
+      : 'background:#dcfce7;color:#166534;';
+    var ltxt = val === 'Non-Quality' ? '❌ Non-Quality' : '✅ Quality';
+    view.innerHTML = '<span style="'+lstyle+'padding:2px 10px;border-radius:100px;font-size:0.75rem;font-weight:700;">'+ltxt+'</span>{% if can_inline_edit %}<span class="ie-pencil">✎</span>{% endif %}';
+    return;
+  }
+  // contact_name keeps link
+  if (field === 'contact_name') {
+    var link = view.querySelector('a.entity-link');
+    if (link) { link.textContent = val || '—'; }
+    return;
+  }
+  // Generic: update first <span>
+  var sp = view.querySelector('span:not(.ie-pencil)');
+  if (sp) sp.textContent = label;
+  else view.innerHTML = '<span>'+label+'</span>{% if can_inline_edit %}<span class="ie-pencil">✎</span>{% endif %}';
+}
+
+// Close on outside click
+document.addEventListener('click', function(e){
+  if (_ieActive && !_ieActive.contains(e.target)) ieCancel(_ieActive);
+});
+
+// ── View Switch ──
+function switchView(v){
+  localStorage.setItem('leadsView', v);
+  var lw = document.getElementById('listViewWrap');
+  var kw = document.getElementById('kanbanView');
+  if(lw) lw.style.display = v==='list' ? 'block' : 'none';
+  if(kw) kw.style.display = v==='kanban' ? 'block' : 'none';
+  var bl = document.getElementById('btnList');
+  var bk = document.getElementById('btnKanban');
+  if(bl) bl.classList.toggle('active', v==='list');
+  if(bk) bk.classList.toggle('active', v==='kanban');
+}
+
+// ── Kanban DnD ──
+var _kbDrag=null,_kbClone=null,_kbOX=0,_kbOY=0;
+function kbDragStart(e){_kbDrag=e.currentTarget;_kbClone=_kbDrag.cloneNode(true);Object.assign(_kbClone.style,{position:'fixed',zIndex:9999,pointerEvents:'none',opacity:'.9',width:_kbDrag.offsetWidth+'px',borderRadius:'8px',boxShadow:'0 12px 32px rgba(0,0,0,.2)',transform:'rotate(2deg)'});document.body.appendChild(_kbClone);_kbOX=e.clientX-_kbDrag.getBoundingClientRect().left;_kbOY=e.clientY-_kbDrag.getBoundingClientRect().top;_kbClone.style.left=(e.clientX-_kbOX)+'px';_kbClone.style.top=(e.clientY-_kbOY)+'px';var g=document.createElement('div');g.style.cssText='width:1px;height:1px;position:fixed;top:-100px;';document.body.appendChild(g);e.dataTransfer.setDragImage(g,0,0);setTimeout(()=>document.body.removeChild(g),0);e.dataTransfer.setData('text/plain',_kbDrag.dataset.id);setTimeout(()=>{_kbDrag.style.opacity='.3';},0);}
+document.addEventListener('dragover',function(e){if(!_kbClone)return;_kbClone.style.left=(e.clientX-_kbOX)+'px';_kbClone.style.top=(e.clientY-_kbOY)+'px';});
+function kbDragEnd(e){if(_kbClone&&_kbClone.parentNode)_kbClone.parentNode.removeChild(_kbClone);_kbClone=null;if(_kbDrag)_kbDrag.style.opacity='';document.querySelectorAll('.kb-body').forEach(b=>b.classList.remove('drag-over'));_kbDrag=null;}
+function kbDragOver(e){e.preventDefault();e.currentTarget.classList.add('drag-over');}
+function kbDragLeave(e){if(!e.currentTarget.contains(e.relatedTarget))e.currentTarget.classList.remove('drag-over');}
+function kbDrop(e,newSt){e.preventDefault();e.currentTarget.classList.remove('drag-over');if(!_kbDrag)return;var card=_kbDrag,oldSt=card.dataset.status;if(oldSt===newSt)return;var id=card.dataset.id,tBody=document.getElementById('kbBody_'+newSt);card.style.opacity='0';setTimeout(function(){card.dataset.status=newSt;var emp=document.getElementById('kbEmpty_'+newSt);if(emp)emp.remove();tBody.insertBefore(card,tBody.firstChild);requestAnimationFrame(()=>{card.style.transition='opacity .2s';card.style.opacity='1';setTimeout(()=>card.style.transition='',220);});var ob=document.getElementById('kbBody_'+oldSt);if(ob&&!ob.querySelectorAll('.kb-card').length){var em=document.createElement('div');em.className='kb-empty';em.id='kbEmpty_'+oldSt;em.textContent='Drop leads here';ob.appendChild(em);}[{st:oldSt,d:-1},{st:newSt,d:1}].forEach(function(x){var kc=document.getElementById('kbCnt_'+x.st);if(kc)kc.textContent=parseInt(kc.textContent||0)+x.d;var sc=document.getElementById('scn_'+x.st);if(sc)sc.textContent=parseInt(sc.textContent||0)+x.d;});fetch('/crm/leads/'+id+'/update-status',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:newSt})}).then(r=>r.json()).then(d=>{if(!d.success)location.reload();}).catch(()=>location.reload());},140);}
+
+// ── Status Dropdown ──
+function toggleStatusDd() {
+    var menu = document.getElementById('statusDdMenu');
+    var isOpen = menu.style.display !== 'none';
+    menu.style.display = isOpen ? 'none' : 'block';
+}
+// Close on outside click
+document.addEventListener('click', function(e) {
+    var wrap = document.querySelector('.status-dd-wrap');
+    if (wrap && !wrap.contains(e.target)) {
+        var menu = document.getElementById('statusDdMenu');
+        if (menu) menu.style.display = 'none';
+    }
+});
+
+// Flatpickr for date range filter
+var _fpFrom = flatpickr('#dp_from_display', {
+  dateFormat: 'Y-m-d',
+  altInput: true, altFormat: 'd-m-Y',
+  allowInput: true,
+  locale: { firstDayOfWeek: 1 },
+  onChange: function(sel, dateStr) {
+    var hidden = document.getElementById('ld_date_from');
+    if (hidden) hidden.value = dateStr;
+    if (_fpTo) _fpTo.set('minDate', dateStr);
+  }
+});
+var _fpTo = flatpickr('#dp_to_display', {
+  dateFormat: 'Y-m-d',
+  altInput: true, altFormat: 'd-m-Y',
+  allowInput: true,
+  locale: { firstDayOfWeek: 1 },
+  onChange: function(sel, dateStr) {
+    var hidden = document.getElementById('ld_date_to');
+    if (hidden) hidden.value = dateStr;
+    if (_fpFrom) _fpFrom.set('maxDate', dateStr);
+  }
+});
+</script>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+
+(function(){
+  var sb=document.getElementById('ld_sort_by');
+  var fc={{ _fc }};
+  if(sb&&sb.value!=='created_at'){
+    var sPanel=document.getElementById('fsPanelSort_ld');
+    var sTab=document.getElementById('fsTabSort');
+    if(sPanel) sPanel.style.display='block';
+    if(sTab) sTab.classList.add('active');
+  } else if(fc>0){
+    var fPanel=document.getElementById('fsPanelFilter_ld');
+    var fTab=document.getElementById('fsTabFilter');
+    if(fPanel) fPanel.style.display='block';
+    if(fTab) fTab.classList.add('active');
+  }
+})();
+
+</script>
+{% endblock %}

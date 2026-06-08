@@ -1,0 +1,398 @@
+{% extends "base.html" %}
+{% block title %}UOM Master{% endblock %}
+{% block page_title %}UOM Master{% endblock %}
+{% block bread %}Masters / UOM Master{% endblock %}
+
+{% block extra_css %}
+<style>
+.uomp {
+    --u-accent: #2563eb;
+    --u-accent-2: #1d4ed8;
+    --u-soft: #eff6ff;
+    --u-bg: #f8fafc;
+    --u-text: #0f172a;
+    --u-text2: #334155;
+    --u-muted: #64748b;
+    --u-light: #94a3b8;
+    --u-border: #e2e8f0;
+    --u-border-l: #f1f5f9;
+    --u-danger: #dc2626;
+    --u-danger-bg: #fef2f2;
+    --u-success: #16a34a;
+    --u-success-bg: #f0fdf4;
+}
+.lucide-ic, .lucide-ic svg { width:1em; height:1em; vertical-align:-0.125em; }
+.uomp button { -webkit-tap-highlight-color: transparent; font-family:inherit; }
+
+/* ==== Main card ==== */
+.uom-card {
+    background:#fff;
+    border:1px solid var(--u-border);
+    border-radius:16px;
+    box-shadow:0 1px 2px rgba(15,23,42,.04), 0 10px 30px -22px rgba(15,23,42,.25);
+    overflow:hidden;
+    margin-bottom:1.2rem;
+}
+
+/* ==== Header bar ==== */
+.uom-hdr {
+    display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+    padding:16px 20px;
+    border-bottom:1px solid var(--u-border);
+    background:#fff;
+}
+.uom-hdr .hd-ic {
+    width:34px; height:34px; border-radius:10px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    background:var(--u-soft); color:var(--u-accent-2); font-size:1rem;
+}
+.uom-hdr h1 { font-size:1.15rem; font-weight:800; color:var(--u-text); letter-spacing:-0.02em; margin:0; }
+
+.uom-hdr-right { display:flex; gap:8px; align-items:center; margin-left:auto; flex-wrap:wrap; }
+.uom-search-wrap {
+    display:flex; align-items:center; gap:8px;
+    background:var(--u-bg);
+    border:1.5px solid var(--u-border);
+    border-radius:999px;
+    padding:0 16px; height:38px; width:240px; max-width:100%;
+    color:var(--u-light);
+    transition:all .18s;
+}
+.uom-search-wrap:focus-within {
+    background:#fff; border-color:var(--u-accent);
+    box-shadow:0 0 0 3px rgba(37,99,235,.12);
+}
+.uom-search-wrap input {
+    border:none; background:transparent; outline:none;
+    font-size:.84rem; color:var(--u-text); font-weight:500;
+    width:100%; font-family:inherit;
+}
+.uom-search-wrap input::placeholder { color:var(--u-light); }
+
+.btn-blue {
+    display:inline-flex; align-items:center; justify-content:center; gap:7px;
+    background:linear-gradient(180deg,#3b82f6,#1d4ed8);
+    color:#fff; padding:0 18px; border-radius:999px;
+    font-size:.8rem; font-weight:700; text-decoration:none;
+    height:38px; white-space:nowrap; border:none; cursor:pointer;
+    box-shadow:0 2px 8px rgba(37,99,235,.35), inset 0 1px 0 rgba(255,255,255,.25);
+    transition:all .18s;
+}
+.btn-blue:hover { transform:translateY(-1px); color:#fff; box-shadow:0 5px 16px rgba(37,99,235,.45); }
+.btn-blue:active { transform:translateY(0) scale(.97); }
+
+.btn-ghost {
+    display:inline-flex; align-items:center; justify-content:center; gap:6px;
+    background:#fff; color:var(--u-text2);
+    border:1.5px solid var(--u-border);
+    padding:0 14px; border-radius:999px;
+    font-size:.78rem; font-weight:650; cursor:pointer;
+    height:36px; white-space:nowrap; text-decoration:none;
+    transition:all .16s;
+}
+.btn-ghost .lucide-ic { color:var(--u-muted); transition:color .16s; }
+.btn-ghost:hover { border-color:#bfdbfe; color:var(--u-accent-2); background:var(--u-soft); }
+.btn-ghost:hover .lucide-ic { color:var(--u-accent-2); }
+.btn-ghost.back:hover { transform:translateX(-2px); }
+
+/* ==== Add form ==== */
+.uom-addbar {
+    padding:16px 20px;
+    background:var(--u-bg);
+    border-bottom:1px solid var(--u-border);
+}
+.uom-add-row { display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap; }
+.uom-add-row label {
+    font-size:.68rem; font-weight:800; color:var(--u-muted);
+    text-transform:uppercase; letter-spacing:.06em;
+    display:block; margin-bottom:6px;
+}
+.uom-add-row label span { font-weight:500; text-transform:none; letter-spacing:0; color:var(--u-light); }
+.uf {
+    height:38px; padding:0 13px;
+    border:1.5px solid var(--u-border); border-radius:9px;
+    font-size:.84rem; background:#fff; outline:none;
+    color:var(--u-text); font-family:inherit;
+    transition:border-color .15s, box-shadow .15s;
+}
+.uf:focus { border-color:var(--u-accent); box-shadow:0 0 0 3px rgba(37,99,235,.1); }
+select.uf { cursor:pointer; }
+
+/* ==== Table ==== */
+.m-table { width:100%; border-collapse:collapse; }
+.m-table th {
+    background:var(--u-bg);
+    color:var(--u-muted);
+    font-size:.66rem; font-weight:800;
+    text-transform:uppercase; letter-spacing:.07em;
+    padding:12px 14px; text-align:left;
+    border-bottom:1px solid var(--u-border);
+    white-space:nowrap;
+    position:sticky; top:0; z-index:5;
+}
+.m-table td {
+    padding:11px 14px; font-size:.83rem; color:var(--u-text);
+    border-bottom:1px solid var(--u-border-l); vertical-align:middle;
+}
+.m-table tbody tr { transition:background .12s; }
+.m-table tbody tr:hover td { background:#f8fbff; }
+.m-table tbody tr:last-child td { border-bottom:none; }
+
+.code-pill {
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-weight:800; font-size:.76rem; color:var(--u-accent-2);
+    background:var(--u-soft); padding:3px 10px; border-radius:7px;
+    letter-spacing:.03em;
+}
+
+/* status badges (dot style) */
+.badge-active, .badge-inactive {
+    padding:3px 11px; border-radius:999px;
+    font-size:.7rem; font-weight:800;
+    display:inline-flex; align-items:center; gap:5px;
+    cursor:pointer; transition:all .14s;
+}
+.badge-active::before, .badge-inactive::before { content:''; width:6px; height:6px; border-radius:50%; }
+.badge-active   { background:var(--u-success-bg); color:var(--u-success); border:1px solid #bbf7d0; }
+.badge-active::before { background:var(--u-success); }
+.badge-inactive { background:var(--u-border-l); color:var(--u-muted); border:1px solid var(--u-border); }
+.badge-inactive::before { background:var(--u-light); }
+.tog-btn { background:none; border:none; cursor:pointer; padding:0; }
+.tog-btn:hover .badge-active   { box-shadow:0 2px 6px rgba(22,163,74,.25); }
+.tog-btn:hover .badge-inactive { box-shadow:0 2px 6px rgba(100,116,139,.2); }
+
+/* action buttons */
+.act-wrap { display:inline-flex; gap:7px; align-items:center; }
+.act-btn {
+    width:30px; height:30px; border-radius:9px;
+    display:inline-flex; align-items:center; justify-content:center;
+    font-size:.85rem; cursor:pointer; border:1px solid transparent;
+    text-decoration:none; transition:all .14s;
+    background:none; padding:0;
+}
+.act-btn:active { transform:scale(.9); }
+.act-btn.edit { background:var(--u-soft); color:var(--u-accent-2); border-color:#bfdbfe; }
+.act-btn.edit:hover { background:#dbeafe; border-color:#93c5fd; box-shadow:0 2px 6px rgba(37,99,235,.2); }
+.act-btn.del { background:var(--u-danger-bg); color:var(--u-danger); border-color:#fecaca; }
+.act-btn.del:hover { background:#fee2e2; border-color:#fca5a5; box-shadow:0 2px 6px rgba(220,38,38,.2); }
+
+/* empty state */
+.uom-empty { text-align:center; padding:50px 20px; color:var(--u-light); }
+.uom-empty .lucide-ic { font-size:2rem; margin-bottom:8px; display:inline-block; }
+.uom-empty p { margin:6px 0 0; font-weight:600; font-size:.85rem; color:var(--u-muted); }
+
+/* ==== Edit modal ==== */
+.uom-modal-overlay {
+    display:none; position:fixed; inset:0;
+    background:rgba(15,23,42,.6); backdrop-filter:blur(4px);
+    z-index:1000; align-items:center; justify-content:center; padding:1rem;
+}
+.uom-modal {
+    background:#fff; border-radius:16px; width:100%; max-width:440px;
+    box-shadow:0 24px 60px -20px rgba(15,23,42,.45); overflow:hidden;
+}
+.uom-modal-hdr {
+    background:linear-gradient(135deg,#1e3a8a,#1d4ed8);
+    color:#fff; padding:14px 20px;
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+}
+.uom-modal-hdr .mt { font-weight:750; font-size:.95rem; display:flex; align-items:center; gap:8px; }
+.uom-modal-close {
+    width:30px; height:30px; border-radius:9px;
+    background:rgba(255,255,255,.15); border:none; color:#fff;
+    cursor:pointer; display:inline-flex; align-items:center; justify-content:center;
+    font-size:.85rem; transition:background .15s;
+}
+.uom-modal-close:hover { background:rgba(255,255,255,.28); }
+.uom-modal-body { padding:20px; display:flex; flex-direction:column; gap:14px; }
+.uom-modal-body label {
+    font-size:.68rem; font-weight:800; color:var(--u-muted);
+    text-transform:uppercase; letter-spacing:.06em;
+    display:block; margin-bottom:6px;
+}
+.uom-modal-body .uf { width:100%; }
+.uom-modal-foot {
+    padding:14px 20px; border-top:1px solid var(--u-border);
+    display:flex; justify-content:flex-end; gap:8px; background:var(--u-bg);
+}
+
+.tbl-scroll { overflow-x:auto; }
+.tbl-scroll::-webkit-scrollbar { height:9px; }
+.tbl-scroll::-webkit-scrollbar-thumb { background:var(--u-border); border-radius:99px; }
+
+@media (max-width:768px) {
+    .uom-hdr { padding:14px; }
+    .uom-hdr-right { margin-left:0; width:100%; }
+    .uom-search-wrap { flex:1; width:auto; }
+    .uom-add-row > div { flex:1; min-width:140px; }
+    .uom-add-row .uf { width:100% !important; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="uomp">
+
+<div class="uom-card">
+
+    {# == Header: icon + title + search + back == #}
+    <div class="uom-hdr">
+        <div class="hd-ic"><i data-lucide="ruler" class="lucide-ic"></i></div>
+        <h1>UOM Master</h1>
+        <div class="uom-hdr-right">
+            <form method="GET" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                <div class="uom-search-wrap">
+                    <i data-lucide="search" class="lucide-ic"></i>
+                    <input type="text" name="search" value="{{ search }}" placeholder="Search code or name...">
+                </div>
+                <button type="submit" class="btn-blue"><i data-lucide="search" class="lucide-ic"></i>Search</button>
+                {% if search %}
+                <a href="{{ url_for('masters.uom_master_list') }}" class="btn-ghost" title="Clear search"><i data-lucide="x" class="lucide-ic"></i></a>
+                {% endif %}
+            </form>
+            <a href="javascript:history.back()" class="btn-ghost back">
+                <i data-lucide="arrow-left" class="lucide-ic"></i>Back
+            </a>
+        </div>
+    </div>
+
+    {# == Add Form == #}
+    <div class="uom-addbar">
+        <form method="POST" action="{{ url_for('masters.uom_master_add') }}">
+            <div class="uom-add-row">
+                <div>
+                    <label>Code * <span>(e.g. ML, KG)</span></label>
+                    <input type="text" name="code" class="uf" required placeholder="ML" style="width:110px;text-transform:uppercase;font-family:'JetBrains Mono',monospace;">
+                </div>
+                <div>
+                    <label>Name *</label>
+                    <input type="text" name="name" class="uf" required placeholder="Millilitre" style="width:240px;">
+                </div>
+                <button type="submit" class="btn-blue"><i data-lucide="plus" class="lucide-ic"></i>Add UOM</button>
+            </div>
+        </form>
+    </div>
+
+    {# == Table == #}
+    <div style="padding:0;">
+        {% if items %}
+        <div class="tbl-scroll">
+        <table class="m-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Code</th>
+                    <th>Name</th>
+                    <th>Status</th>
+                    <th>Created At</th>
+                    <th>Modified At</th>
+                    <th style="text-align:right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td style="color:var(--u-light);font-size:.76rem;font-weight:650;">{{ loop.index }}</td>
+                    <td><span class="code-pill">{{ item.code }}</span></td>
+                    <td style="font-weight:650;">{{ item.name }}</td>
+                    <td>
+                        <button class="tog-btn" onclick="toggleUOM({{ item.id }}, this)" title="Click to toggle status">
+                            <span class="badge-{{ 'active' if item.status else 'inactive' }}">
+                                {{ 'Active' if item.status else 'Inactive' }}
+                            </span>
+                        </button>
+                    </td>
+                    <td style="font-size:.76rem;color:var(--u-muted);white-space:nowrap;">{{ item.created_at.strftime('%d-%m-%Y %H:%M') if item.created_at else '-' }}</td>
+                    <td style="font-size:.76rem;color:var(--u-muted);white-space:nowrap;">{{ item.modified_at.strftime('%d-%m-%Y %H:%M') if item.modified_at else '-' }}</td>
+                    <td style="text-align:right;">
+                        <div class="act-wrap">
+                            <button class="act-btn edit" title="Edit"
+                                    onclick="openEditModal({{ item.id }}, '{{ item.code }}', '{{ item.name | e }}', {{ '1' if item.status else '0' }})">
+                                <i data-lucide="pencil" class="lucide-ic"></i>
+                            </button>
+                            <form method="POST" action="{{ url_for('masters.uom_master_delete', id=item.id) }}" style="display:inline;"
+                                  onsubmit="return confirm('Delete {{ item.code }}?')">
+                                <button type="submit" class="act-btn del" title="Delete"><i data-lucide="trash-2" class="lucide-ic"></i></button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        </div>
+        {% else %}
+        <div class="uom-empty">
+            <i data-lucide="ruler" class="lucide-ic"></i>
+            <p>No UOM added yet</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{# == Edit Modal == #}
+<div id="editModal" class="uom-modal-overlay">
+    <div class="uom-modal">
+        <div class="uom-modal-hdr">
+            <span class="mt"><i data-lucide="pencil" class="lucide-ic"></i>Edit UOM</span>
+            <button type="button" class="uom-modal-close" onclick="document.getElementById('editModal').style.display='none'"><i data-lucide="x" class="lucide-ic"></i></button>
+        </div>
+        <form method="POST" id="editForm" action="">
+            <div class="uom-modal-body">
+                <div>
+                    <label>Code *</label>
+                    <input type="text" name="code" id="editCode" class="uf" required style="text-transform:uppercase;font-family:'JetBrains Mono',monospace;">
+                </div>
+                <div>
+                    <label>Name *</label>
+                    <input type="text" name="name" id="editName" class="uf" required>
+                </div>
+                <div>
+                    <label>Status</label>
+                    <select name="status" id="editStatus" class="uf">
+                        <option value="1">Active</option>
+                        <option value="0">Inactive</option>
+                    </select>
+                </div>
+            </div>
+            <div class="uom-modal-foot">
+                <button type="button" class="btn-ghost" onclick="document.getElementById('editModal').style.display='none'">Cancel</button>
+                <button type="submit" class="btn-blue">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+</div>
+
+<script>
+function openEditModal(id, code, name, status) {
+    document.getElementById('editForm').action = '/masters/uom-master/' + id + '/edit';
+    document.getElementById('editCode').value   = code;
+    document.getElementById('editName').value   = name;
+    document.getElementById('editStatus').value = status;
+    document.getElementById('editModal').style.display = 'flex';
+}
+document.getElementById('editModal').addEventListener('click', function(e){ if(e.target===this) this.style.display='none'; });
+function toggleUOM(id, btn) {
+    fetch('/masters/uom-master/' + id + '/toggle', {method:'POST'})
+        .then(r=>r.json()).then(d=>{
+            const span = btn.querySelector('span');
+            span.className = d.status ? 'badge-active' : 'badge-inactive';
+            span.textContent = d.status ? 'Active' : 'Inactive';
+        });
+}
+
+// == Lucide icons render ==
+(function(){
+  function drawIcons(){ if(window.lucide && window.lucide.createIcons) window.lucide.createIcons({attrs:{'stroke-width':1.9}}); }
+  if(window.lucide){ drawIcons(); }
+  else{
+    var s=document.createElement('script');
+    s.src='https://unpkg.com/lucide@latest';
+    s.onload=drawIcons;
+    document.head.appendChild(s);
+  }
+})();
+</script>
+{% endblock %}

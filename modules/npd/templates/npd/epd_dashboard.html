@@ -1,0 +1,327 @@
+{% extends "base.html" %}
+{% block title %}EPD Dashboard{% endblock %}
+{% block page_title %}EPD Dashboard{% endblock %}
+{% block bread %}EPD / Dashboard{% endblock %}
+{% block extra_css %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============ EPD DASHBOARD - PREMIUM ============ */
+.epd-page,.epd-page * { font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif; }
+
+/* -- Hero -- */
+.hdr{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.9rem;margin-bottom:1.1rem;}
+.hdr-left{display:flex;align-items:center;gap:14px;}
+.hdr-tile{width:48px;height:48px;border-radius:14px;flex-shrink:0;
+          background:linear-gradient(180deg,#34d399,#059669);color:#fff;
+          display:flex;align-items:center;justify-content:center;
+          box-shadow:0 4px 14px rgba(5,150,105,.35), inset 0 1px 0 rgba(255,255,255,.25);}
+.hdr-tile svg{width:24px;height:24px;}
+.hdr-h1{font-size:1.2rem;font-weight:900;letter-spacing:-.02em;margin:0;color:#1e293b;}
+.hdr-sub{font-size:.77rem;color:#94a3b8;margin-top:2px;font-weight:500;}
+
+/* -- Stat cards -- */
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:1.1rem;}
+@media(max-width:800px){.stat-row{grid-template-columns:repeat(2,1fr);}}
+.s-card{background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:16px 18px;display:flex;gap:13px;align-items:center;
+        box-shadow:0 1px 3px rgba(15,23,42,.05), 0 4px 16px rgba(15,23,42,.04);transition:transform .12s, box-shadow .12s;}
+.s-card:hover{transform:translateY(-2px);box-shadow:0 6px 22px rgba(15,23,42,.09);}
+.s-ic{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.s-ic svg{width:21px;height:21px;}
+.s-num{font-size:1.85rem;font-weight:900;line-height:1;font-family:'JetBrains Mono',monospace;letter-spacing:-.02em;}
+.s-lbl{font-size:.68rem;color:#94a3b8;margin-top:4px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;}
+
+/* -- Buttons (pills) -- */
+.npd-btn-new,.npd-btn-all{font-family:inherit;}
+
+/* -- Project table card -- */
+.proj-table-wrap{background:#fff;border:1px solid #e2e8f0;border-radius:16px;overflow:visible;
+                 box-shadow:0 1px 3px rgba(15,23,42,.05), 0 4px 16px rgba(15,23,42,.04);}
+.proj-table{width:100%;border-collapse:collapse;font-size:.82rem;}
+.proj-table th{font-size:10.5px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;
+               padding:11px 16px;border-bottom:2px solid #e2e8f0;text-align:left;background:#fff;white-space:nowrap;}
+.proj-table td{padding:12px 16px;border-bottom:1px solid #f1f5f9;color:#334155;vertical-align:middle;}
+.proj-table tbody tr{transition:background .12s;}
+.proj-table tbody tr:hover td{background:#f0fdf4;}
+.proj-table tbody tr:last-child td{border-bottom:none;}
+.badge{display:inline-block;padding:3px 11px;border-radius:99px;font-size:.71rem;font-weight:700;}
+.prog-wrap{background:#f1f5f9;border-radius:99px;height:6px;width:60px;overflow:hidden;}
+.prog-fill{height:100%;border-radius:99px;}
+
+/* -- Action dots menu -- */
+.act-wrap{position:relative;}
+.act-dots{width:30px;height:30px;border-radius:99px;border:1.5px solid #e2e8f0;background:#fff;cursor:pointer;
+          display:flex;align-items:center;justify-content:center;color:#64748b;transition:all .12s;}
+.act-dots:hover{background:#f0fdf4;border-color:#6ee7b7;color:#059669;}
+.act-dots svg{flex-shrink:0;}
+.act-menu{display:none;position:absolute;right:0;top:calc(100% + 4px);background:#fff;border:1.5px solid #e2e8f0;
+          border-radius:12px;box-shadow:0 12px 30px rgba(15,23,42,.14);min-width:170px;z-index:300;overflow:hidden;}
+.act-menu.open{display:block;}
+.act-item{display:flex;align-items:center;gap:9px;padding:9px 14px;font-size:.82rem;font-weight:600;color:#334155;
+          text-decoration:none;cursor:pointer;transition:background .1s;border:none;background:none;width:100%;text-align:left;font-family:inherit;}
+.act-item svg{flex-shrink:0;}
+.act-item:hover{background:#f8fafc;}
+.act-item.red{color:#dc2626;}
+.act-item.red:hover{background:#fef2f2;}
+.act-item form{margin:0;width:100%;}
+.act-divider{height:1px;background:#f1f5f9;margin:2px 0;}
+.act-menu form{margin:0;}
+
+/* -- Milestone completion bar -- */
+.epd-ms-bar{background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:14px 18px;margin-bottom:1.1rem;
+            display:flex;align-items:center;gap:1rem;box-shadow:0 1px 3px rgba(15,23,42,.05);}
+.epd-ms-bar .lbl{font-size:.8rem;font-weight:800;color:#1e293b;white-space:nowrap;display:flex;align-items:center;gap:7px;}
+.epd-ms-bar .lbl svg{color:#059669;flex-shrink:0;}
+.epd-ms-bar .pct{font-size:.85rem;font-weight:800;color:#059669;white-space:nowrap;font-family:'JetBrains Mono',monospace;}
+
+/* -- List header -- */
+.epd-list-hdr{padding:13px 18px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;}
+.epd-list-hdr .t{font-size:.88rem;font-weight:800;color:#1e293b;}
+.epd-list-hdr a{font-size:.78rem;color:#059669;font-weight:700;text-decoration:none;}
+
+.epd-empty{text-align:center;padding:48px 20px;color:#94a3b8;}
+.epd-empty .es-ic{width:60px;height:60px;border-radius:16px;margin:0 auto 12px;
+                  background:#ecfdf5;border:1px solid #bbf7d0;color:#34d399;
+                  display:flex;align-items:center;justify-content:center;}
+.code-link{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:.8rem;color:#059669;text-decoration:none;}
+
+/* === MOBILE ONLY === */
+@media(max-width: 767px) {
+    .npd-hdr-btns { display: grid !important; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; }
+    .npd-btn-new {
+        display: flex; align-items: center; justify-content: center; gap: 7px;
+        padding: 13px 10px; border-radius: 99px; font-size: 14px; font-weight: 700;
+        background: linear-gradient(180deg,#34d399,#059669); color: #fff; text-decoration: none;
+        box-shadow: 0 3px 10px rgba(5,150,105,.3); grid-column: 1 / -1;
+    }
+    .npd-btn-all {
+        display: flex; align-items: center; justify-content: center; gap: 7px;
+        padding: 11px 10px; border-radius: 99px; font-size: 13px; font-weight: 600;
+        border: 1.5px solid #e2e8f0; background: #fff; color: #475569;
+        text-decoration: none; grid-column: 1 / -1;
+    }
+    .proj-table-wrap .tbl-scroll { display: none !important; }
+    .mobile-proj-list { display: block !important; }
+    .m-proj-card {
+        padding: 14px 16px; border-bottom: 1px solid #f1f5f9;
+        display: flex; align-items: center; gap: 12px;
+        text-decoration: none; color: #334155;
+        -webkit-tap-highlight-color: transparent; transition: background .1s;
+    }
+    .m-proj-card:active { background: #f0fdf4; }
+    .m-proj-avatar {
+        width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0;
+        background: linear-gradient(135deg,#34d399,#059669);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 15px; font-weight: 800; color: #fff;
+    }
+    .m-proj-info { flex: 1; min-width: 0; }
+    .m-proj-name { font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .m-proj-meta { font-size: 11.5px; color: #94a3b8; margin-top: 2px; }
+    .m-proj-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+    .m-proj-age { font-size: 11px; color: #94a3b8; font-family:'JetBrains Mono',monospace; }
+}
+@media(min-width: 768px) {
+    .npd-hdr-btns { display: flex; gap: .5rem; flex-wrap: wrap; }
+    .npd-btn-new {
+        display: inline-flex; align-items: center; gap: 6px;
+        padding: 9px 18px; border-radius: 99px; font-size: 13px; font-weight: 700;
+        background: linear-gradient(180deg,#34d399,#059669); color: #fff; text-decoration: none; border: none;
+        box-shadow: 0 2px 8px rgba(5,150,105,.3), inset 0 1px 0 rgba(255,255,255,.2); transition: transform .12s, box-shadow .12s;
+    }
+    .npd-btn-new:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(5,150,105,.4), inset 0 1px 0 rgba(255,255,255,.2); }
+    .npd-btn-all {
+        display: inline-flex; align-items: center; gap: 6px;
+        padding: 8px 15px; border-radius: 99px; font-size: 12.5px; font-weight: 700;
+        border: 1.5px solid #bbf7d0; background: #fff; color: #047857; text-decoration: none; transition: all .12s;
+    }
+    .npd-btn-all:hover { background: #f0fdf4; border-color: #6ee7b7; }
+    .mobile-proj-list { display: none !important; }
+    .tbl-scroll { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="epd-page">
+
+<div class="hdr">
+    <div class="hdr-left">
+        <div class="hdr-tile">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+        </div>
+        <div>
+            <h1 class="hdr-h1">EPD - Existing Product Development</h1>
+            <div class="hdr-sub">All EPD projects overview</div>
+        </div>
+    </div>
+    <div class="npd-hdr-btns">
+        <a href="/npd/epd-new" class="npd-btn-new">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+            New EPD Project
+        </a>
+        <a href="/npd/epd-projects" class="npd-btn-all">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg>
+            All EPD Projects
+        </a>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="stat-row">
+    <div class="s-card">
+        <div class="s-ic" style="background:#ecfdf5;color:#059669;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></div>
+        <div><div class="s-num" style="color:#059669;">{{ total }}</div><div class="s-lbl">Total EPD</div></div>
+    </div>
+    <div class="s-card">
+        <div class="s-ic" style="background:#fefce8;color:#f59e0b;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg></div>
+        <div><div class="s-num" style="color:#f59e0b;">{{ active }}</div><div class="s-lbl">Active</div></div>
+    </div>
+    <div class="s-card">
+        <div class="s-ic" style="background:#f0fdf4;color:#22c55e;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.801 10A10 10 0 1 1 17 3.335"/><path d="m9 11 3 3L22 4"/></svg></div>
+        <div><div class="s-num" style="color:#22c55e;">{{ completed }}</div><div class="s-lbl">Completed</div></div>
+    </div>
+    <div class="s-card">
+        <div class="s-ic" style="background:#fef2f2;color:#ef4444;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg></div>
+        <div><div class="s-num" style="color:#ef4444;">{{ cancelled }}</div><div class="s-lbl">Cancelled</div></div>
+    </div>
+</div>
+
+<!-- Milestone Progress -->
+{% if ms_total %}
+<div class="epd-ms-bar">
+    <div class="lbl"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg> Milestone Completion</div>
+    <div style="flex:1;">
+        <div style="background:#f1f5f9;border-radius:99px;height:10px;overflow:hidden;">
+            <div style="height:100%;border-radius:99px;background:linear-gradient(90deg,#059669,#34d399);width:{{ ms_pct }}%;transition:width .6s;"></div>
+        </div>
+    </div>
+    <div class="pct">{{ ms_done }}/{{ ms_total }} ({{ ms_pct }}%)</div>
+</div>
+{% endif %}
+
+<!-- Project List -->
+<div class="proj-table-wrap">
+    <div class="epd-list-hdr">
+        <div class="t">Recent EPD Projects</div>
+        <a href="/npd/epd-projects">View all &rarr;</a>
+    </div>
+
+    {% if projects %}
+
+    {# -- MOBILE: Card List -- #}
+    <div class="mobile-proj-list">
+        {% for p in projects[:15] %}
+        {% set sel_ms = p.milestones|selectattr('is_selected')|list %}
+        {% set done_ms = sel_ms|selectattr('status','eq','approved')|list %}
+        {% set ms_pct2 = ((done_ms|length / sel_ms|length)*100)|round|int if sel_ms else 0 %}
+        <a href="/npd/projects/{{ p.id }}" class="m-proj-card">
+            <div class="m-proj-avatar">{{ p.product_name[0]|upper }}</div>
+            <div class="m-proj-info">
+                <div class="m-proj-name">{{ p.product_name }}</div>
+                <div class="m-proj-meta">
+                    {{ p.code }}
+                    {% if p.client_company or p.client_name %}
+                     &middot; {{ (p.client_company or p.client_name)[:20] }}
+                    {% endif %}
+                </div>
+                {% if sel_ms %}
+                <div style="margin-top:5px;display:flex;align-items:center;gap:6px;">
+                    <div style="flex:1;background:#f1f5f9;border-radius:99px;height:4px;max-width:80px;overflow:hidden;">
+                        <div style="height:100%;border-radius:99px;width:{{ ms_pct2 }}%;background:{% if ms_pct2==100 %}#22c55e{% else %}#059669{% endif %};"></div>
+                    </div>
+                    <span style="font-size:10px;color:#94a3b8;font-family:'JetBrains Mono',monospace;">{{ done_ms|length }}/{{ sel_ms|length }}</span>
+                </div>
+                {% endif %}
+            </div>
+            <div class="m-proj-right">
+                <span class="badge" style="background:{{ p.status_color }}22;color:{{ p.status_color }};font-size:10px;">{{ p.status_label }}</span>
+                <span class="m-proj-age">{{ p.project_age }}d</span>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+
+    {# -- DESKTOP: Table -- #}
+    <div class="tbl-scroll" style="overflow-x:auto;">
+        <table class="proj-table">
+            <thead><tr>
+                <th>Code</th><th>Product</th><th>Client</th><th>SC</th>
+                <th>Status</th><th style="text-align:center;">Milestones</th><th>Age</th><th></th>
+            </tr></thead>
+            <tbody>
+            {% for p in projects[:15] %}
+            {% set sel_ms = p.milestones|selectattr('is_selected')|list %}
+            {% set done_ms = sel_ms|selectattr('status','eq','approved')|list %}
+            {% set ms_pct2 = ((done_ms|length / sel_ms|length)*100)|round|int if sel_ms else 0 %}
+            <tr>
+                <td><a href="/npd/projects/{{ p.id }}" class="code-link">{{ p.code }}</a></td>
+                <td style="max-width:160px;"><div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ p.product_name }}">{{ p.product_name }}</div>
+                    {% if p.product_category %}<div style="font-size:.7rem;color:#94a3b8;">{{ p.product_category }}</div>{% endif %}</td>
+                <td style="font-size:.8rem;">{{ p.client_company or p.client_name or '-' }}</td>
+                <td style="font-size:.8rem;color:#64748b;">{{ p.sc_user.full_name if p.sc_user else '-' }}</td>
+                <td><span class="badge" style="background:{{ p.status_color }}22;color:{{ p.status_color }};">{{ p.status_label }}</span></td>
+                <td style="text-align:center;">
+                    {% if sel_ms %}
+                    <div style="font-size:.72rem;color:#94a3b8;margin-bottom:3px;font-family:'JetBrains Mono',monospace;">{{ done_ms|length }}/{{ sel_ms|length }}</div>
+                    <div class="prog-wrap" style="margin:0 auto;"><div class="prog-fill" style="width:{{ ms_pct2 }}%;background:{% if ms_pct2==100 %}#22c55e{% else %}#059669{% endif %};"></div></div>
+                    {% else %}-{% endif %}
+                </td>
+                <td style="font-size:.78rem;color:#94a3b8;font-family:'JetBrains Mono',monospace;">{{ p.project_age }}d</td>
+                <td>
+                    <div class="act-wrap">
+                        <button class="act-dots" onclick="toggleAct(this,event)"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg></button>
+                        <div class="act-menu">
+                            <a href="/npd/projects/{{ p.id }}/edit" class="act-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Edit</a>
+                            <div class="act-divider"></div>
+                            <form method="POST" action="/npd/projects/{{ p.id }}/status" onsubmit="return confirm('Mark complete?')">
+                                <input type="hidden" name="status" value="complete">
+                                <button type="submit" class="act-item" style="color:#22c55e;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.801 10A10 10 0 1 1 17 3.335"/><path d="m9 11 3 3L22 4"/></svg> Complete</button>
+                            </form>
+                            <form method="POST" action="/npd/projects/{{ p.id }}/status" onsubmit="return confirm('Cancel project?')">
+                                <input type="hidden" name="status" value="cancelled">
+                                <button type="submit" class="act-item red"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg> Cancel</button>
+                            </form>
+                            <div class="act-divider"></div>
+                            <form method="POST" action="/npd/projects/{{ p.id }}/delete" onsubmit="return confirm('Delete?')">
+                                <button type="submit" class="act-item red"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> Delete</button>
+                            </form>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% else %}
+    <div class="epd-empty">
+        <div class="es-ic"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></div>
+        <div style="font-weight:800;color:#475569;">No EPD Projects yet</div>
+        <a href="/npd/epd-new" style="color:#059669;font-weight:700;text-decoration:none;display:inline-block;margin-top:6px;">+ Create first EPD Project &rarr;</a>
+    </div>
+    {% endif %}
+</div>
+
+</div>{# end epd-page #}
+
+<script>
+function toggleAct(btn,e){
+  e.stopPropagation();e.preventDefault();
+  var m=btn.nextElementSibling;
+  var o=m.classList.contains('open');
+  document.querySelectorAll('.act-menu.open').forEach(function(x){x.classList.remove('open');});
+  if(!o){
+    var rect=btn.getBoundingClientRect();
+    m.style.position='fixed';
+    m.style.top=(rect.bottom+4)+'px';
+    m.style.right=(window.innerWidth-rect.right)+'px';
+    m.style.left='auto';
+    m.style.zIndex='9999';
+    m.classList.add('open');
+  }
+}
+document.addEventListener('click',function(){document.querySelectorAll('.act-menu.open').forEach(function(m){m.classList.remove('open');});});
+</script>
+{% endblock %}

@@ -1,0 +1,326 @@
+/* ============================================================
+   SIDEBAR - PREMIUM BLUE THEME (full redesign)
+   Replaces static/css/sidebar.css
+   Same class names & behaviors: .sb-open drawer, accordions,
+   nav groups, sub-submenus, preload transition suppression.
+   ============================================================ */
+
+:root {
+  --sb-w: 274px;
+  --sb-bg: #ffffff;
+  --sb-border: #e2e8f0;
+  --sb-txt: #334155;
+  --sb-txt-dim: #64748b;
+  --sb-txt-faint: #94a3b8;
+  --sb-hover-bg: #f1f5f9;
+  --sb-active-bg: linear-gradient(90deg, #eff6ff, #dbeafe66);
+  --sb-accent: #2563eb;
+  --sb-accent-deep: #1d4ed8;
+}
+
+/* -- Dark theme adjustments (black / blue / grey / orange) -- */
+[data-theme] {
+  --sb-bg: #16181d;
+  --sb-border: #262a33;
+  --sb-txt: #cbd5e1;
+  --sb-txt-dim: #8b94a3;
+  --sb-txt-faint: #5b6472;
+  --sb-hover-bg: #1f2330;
+  --sb-active-bg: linear-gradient(90deg, #1e2a4a, #1a233d99);
+}
+
+/* ============ SHELL ============ */
+.sidebar {
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  width: var(--sb-w);
+  background: var(--sb-bg);
+  border-right: 1px solid var(--sb-border);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(-102%);
+  transition: transform .28s cubic-bezier(.16, 1, .3, 1);
+  box-shadow: none;
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+}
+body.sb-open .sidebar {
+  transform: translateX(0);
+  box-shadow: 0 12px 48px rgba(2, 6, 23, .18);
+}
+/* ============ HIDE ON HOME PAGE ============ */
+body.is-home .sidebar { display: none !important; }
+body.is-home .overlay { display: none !important; }
+
+/* Preload: suppress every sidebar transition on first paint */
+body.sb-preload .sidebar,
+body.sb-preload .sidebar * { transition: none !important; }
+
+body.is-home .hbg { display: none !important; }
+
+/* Dark page overlay behind the drawer */
+.overlay {
+  position: fixed; inset: 0;
+  background: rgba(2, 6, 23, .45);
+  backdrop-filter: blur(2px);
+  opacity: 0; pointer-events: none;
+  transition: opacity .25s ease;
+  z-index: 999;
+}
+.overlay.open { opacity: 1; pointer-events: auto; }
+
+/* ============ BRAND ============ */
+.sb-brand {
+  display: flex; align-items: center; gap: 11px;
+  padding: 16px 18px 14px;
+  border-bottom: 1px solid var(--sb-border);
+  flex: 0 0 auto;
+  background: linear-gradient(180deg, var(--sb-bg), transparent);
+}
+.sb-logo {
+  width: 40px; height: 40px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, .3), inset 0 1px 0 rgba(255, 255, 255, .25);
+  overflow: hidden; flex: 0 0 40px;
+}
+.sb-logo img {
+  width: 26px; height: 26px; object-fit: contain;
+  filter: brightness(0) invert(1);
+}
+.sb-name {
+  font-size: 16px; font-weight: 800; color: var(--sb-txt);
+  letter-spacing: -.02em; line-height: 1.15;
+}
+.sb-name em {
+  font-style: normal;
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.sb-tag {
+  font-size: 10px; font-weight: 700; color: var(--sb-txt-faint);
+  text-transform: uppercase; letter-spacing: .12em; margin-top: 1px;
+}
+
+/* ============ NAV SCROLL AREA ============ */
+.sb-nav {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 10px 12px 28px;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+.sb-nav::-webkit-scrollbar { width: 5px; }
+.sb-nav::-webkit-scrollbar-track { background: transparent; }
+.sb-nav::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 99px; }
+.sb-nav::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+[data-theme] .sb-nav { scrollbar-color: #3a4150 transparent; }
+[data-theme] .sb-nav::-webkit-scrollbar-thumb { background: #3a4150; }
+
+/* ============ SECTIONS ============ */
+.sb-sec { margin-bottom: 6px; }
+.sb-sec-lbl {
+  font-size: 10px; font-weight: 800; color: var(--sb-txt-faint);
+  text-transform: uppercase; letter-spacing: .1em;
+  padding: 12px 10px 6px;
+  display: flex; align-items: center; gap: 6px;
+}
+.sb-sec-lbl i { font-size: 11px; }
+
+/* ============ NAV LINKS ============ */
+.nav-a {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 11px;
+  margin: 1px 0;
+  border-radius: 10px;
+  font-size: 13px; font-weight: 600;
+  color: var(--sb-txt-dim);
+  text-decoration: none;
+  position: relative;
+  transition: background .14s, color .14s;
+  line-height: 1.3;
+}
+.nav-a:hover { background: var(--sb-hover-bg); color: var(--sb-txt); }
+.nav-a .nav-ic {
+  width: 20px; flex: 0 0 20px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 14.5px; color: var(--sb-txt-faint);
+  transition: color .14s;
+}
+.nav-a:hover .nav-ic { color: var(--sb-accent); }
+.nav-a .nav-txt {
+  flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* Active link: blue tint + left accent bar */
+.nav-a.active {
+  background: var(--sb-active-bg);
+  color: var(--sb-accent-deep);
+  font-weight: 700;
+}
+.nav-a.active .nav-ic { color: var(--sb-accent); }
+.nav-a.active::before {
+  content: '';
+  position: absolute; left: 0; top: 7px; bottom: 7px;
+  width: 3.5px; border-radius: 99px;
+  background: linear-gradient(180deg, #3b82f6, #1d4ed8);
+  box-shadow: 0 0 8px rgba(37, 99, 235, .45);
+}
+
+/* Back link (module sidebars) */
+.nav-a.nav-back {
+  background: var(--sb-hover-bg);
+  color: var(--sb-txt);
+  font-weight: 700;
+  margin-bottom: 8px;
+  border: 1px dashed var(--sb-border);
+}
+.nav-a.nav-back:hover { border-color: #93c5fd; color: var(--sb-accent); background: #eff6ff; }
+[data-theme] .nav-a.nav-back:hover { background: #1e2a4a; }
+.nav-a.nav-back .nav-ic { color: inherit; }
+
+/* Secondary (indented) links */
+.nav-a.nav-sub { padding-left: 22px; font-size: 12.5px; }
+
+/* ============ ACCORDIONS (module groups) ============ */
+.sb-accordion { border-radius: 12px; }
+.sb-acc-hdr {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%;
+  padding: 10px 11px;
+  margin: 1px 0;
+  border: none; background: transparent;
+  border-radius: 10px;
+  font-size: 13px; font-weight: 700;
+  color: var(--sb-txt);
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  transition: background .14s, color .14s;
+}
+.sb-acc-hdr:hover { background: var(--sb-hover-bg); }
+.sb-acc-hdr:hover .sb-acc-ic { color: var(--sb-accent); }
+.sb-acc-ic {
+  width: 20px; flex: 0 0 20px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 14.5px; color: var(--sb-txt-faint);
+  transition: color .14s;
+}
+.sb-acc-lbl { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sb-acc-arrow {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px;
+  color: var(--sb-txt-faint);
+  transition: transform .22s cubic-bezier(.16, 1, .3, 1), color .14s;
+}
+.sb-acc-arrow svg { display: block; }
+
+/* Open state: header tinted, chevron rotates down */
+.sb-acc-hdr.open {
+  background: var(--sb-active-bg);
+  color: var(--sb-accent-deep);
+}
+.sb-acc-hdr.open .sb-acc-ic,
+.sb-acc-hdr.open .sb-acc-arrow { color: var(--sb-accent); }
+.sb-acc-hdr.open .sb-acc-arrow { transform: rotate(90deg); }
+
+/* Accordion body: collapsible, indented with guide line */
+.sb-acc-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height .3s cubic-bezier(.16, 1, .3, 1);
+  margin-left: 14px;
+  padding-left: 8px;
+  border-left: 1.5px solid var(--sb-border);
+}
+.sb-acc-body.open { max-height: 1600px; }
+.sb-acc-body .nav-a { font-size: 12.5px; padding: 8px 10px; }
+
+/* Sub-labels inside accordions (EPD, NPD Masters, Settings) */
+.sb-acc-sub-lbl {
+  font-size: 10px; font-weight: 800; color: var(--sb-txt-faint);
+  text-transform: uppercase; letter-spacing: .09em;
+  padding: 12px 10px 4px;
+  display: flex; align-items: center; gap: 6px;
+}
+.sb-acc-sub-lbl i { font-size: 11px; }
+
+/* ============ NAV GROUPS (Raw Material, PM, FG...) ============ */
+.nav-group-toggle {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%;
+  padding: 9px 11px;
+  margin: 1px 0;
+  border: none; background: transparent;
+  border-radius: 10px;
+  font-size: 12.5px; font-weight: 700;
+  color: var(--sb-txt-dim);
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  transition: background .14s, color .14s;
+}
+.nav-group-toggle:hover { background: var(--sb-hover-bg); color: var(--sb-txt); }
+.nav-group-toggle .nav-ic {
+  width: 20px; flex: 0 0 20px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 14px; color: var(--sb-txt-faint);
+  transition: color .14s;
+}
+.nav-group-toggle:hover .nav-ic { color: var(--sb-accent); }
+.nav-group-toggle .nav-txt { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nav-group-arrow {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 16px; height: 16px;
+  color: var(--sb-txt-faint);
+  transition: transform .22s cubic-bezier(.16, 1, .3, 1), color .14s;
+}
+.nav-group-arrow svg { display: block; }
+.nav-group-toggle.open {
+  color: var(--sb-accent-deep);
+  background: var(--sb-hover-bg);
+}
+.nav-group-toggle.open .nav-ic,
+.nav-group-toggle.open .nav-group-arrow { color: var(--sb-accent); }
+.nav-group-toggle.open .nav-group-arrow { transform: rotate(90deg); }
+
+/* Group submenu: collapsible + guide line */
+.nav-submenu {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height .3s cubic-bezier(.16, 1, .3, 1);
+  margin-left: 14px;
+  padding-left: 8px;
+  border-left: 1.5px solid var(--sb-border);
+}
+.nav-submenu.open { max-height: 1200px; }
+.nav-submenu .nav-a { font-size: 12.5px; padding: 7px 10px; }
+
+/* Nested level (PO / GRN sub-sub menus) */
+.nav-subgroup-toggle { font-size: 12px; }
+.nav-subsubmenu { margin-left: 12px; padding-left: 8px; }
+.nav-subsubmenu .nav-a { font-size: 12px; padding: 6px 9px; }
+.nav-subsubmenu .nav-ic { font-size: 12px; }
+
+/* Dot bullets in deepest level: style the middle-dot span cleanly */
+.nav-subsubmenu .nav-a .nav-ic {
+  color: var(--sb-txt-faint);
+  font-weight: 800;
+}
+.nav-subsubmenu .nav-a.active .nav-ic,
+.nav-subsubmenu .nav-a:hover .nav-ic { color: var(--sb-accent); }
+
+/* ============ RESPONSIVE ============ */
+@media (max-width: 768px) {
+  :root { --sb-w: 286px; }
+  .sidebar { width: var(--sb-w); }
+}
+
+@media print {
+  .sidebar, .overlay { display: none !important; }
+}
+
+

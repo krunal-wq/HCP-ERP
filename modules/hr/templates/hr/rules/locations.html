@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+{% block title %}Location Master{% endblock %}
+{% block page_title %}Location Master{% endblock %}
+{% block bread %}HR / Rules / Locations{% endblock %}
+
+{% block extra_css %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+.rule-page-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem;}
+.loc-table{width:100%;border-collapse:collapse;font-size:.83rem;}
+.loc-table th{font-size:.67rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;padding:.6rem 1rem;border-bottom:1px solid var(--border);background:#f8fafc;text-align:left;}
+.loc-table td{padding:.7rem 1rem;border-bottom:1px solid #f1f5f9;vertical-align:middle;}
+.loc-table tbody tr:hover td{background:#f8fafc;}
+.badge-active{background:#dcfce7;color:#16a34a;font-size:.65rem;font-weight:700;padding:2px 8px;border-radius:20px;}
+.badge-inactive{background:#fee2e2;color:#dc2626;font-size:.65rem;font-weight:700;padding:2px 8px;border-radius:20px;}
+.ra-btn2{padding:.28rem .75rem;border-radius:7px;font-size:.72rem;font-weight:700;cursor:pointer;border:1px solid var(--border);background:#fff;color:var(--text2);transition:all .12s;}
+.ra-btn2:hover{background:#f1f5f9;}
+.ra-btn2.danger{border-color:#fecaca;color:#dc2626;}
+.ra-btn2.danger:hover{background:#fee2e2;}
+.add-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center;padding:1rem;}
+.add-modal.open{display:flex;}
+.add-modal-box{background:#fff;border-radius:14px;width:560px;max-width:96vw;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2);}
+.add-modal-hdr{display:flex;align-items:center;justify-content:space-between;padding:.85rem 1.1rem;border-bottom:1px solid var(--border);background:#f8fafc;border-radius:14px 14px 0 0;}
+.add-modal-title{font-size:.9rem;font-weight:800;}
+.add-modal-body{padding:1rem 1.1rem;}
+.add-modal-footer{display:flex;gap:.5rem;justify-content:flex-end;padding:.75rem 1.1rem;border-top:1px solid var(--border);}
+.fg2{display:flex;flex-direction:column;gap:.25rem;margin-bottom:.65rem;}
+.fg2 label{font-size:.67rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;}
+.fg2 input,.fg2 select,.fg2 textarea{padding:.38rem .65rem;border:1.5px solid var(--border);border-radius:8px;font-size:.82rem;font-family:inherit;outline:none;transition:border .15s;}
+.fg2 input:focus,.fg2 select:focus,.fg2 textarea:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
+.fgrid2{display:grid;grid-template-columns:1fr 1fr;gap:.65rem;}
+.save-btn2{padding:.42rem 1.1rem;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:.82rem;font-weight:700;cursor:pointer;}
+.cancel-btn2{padding:.42rem .9rem;background:#f1f5f9;color:var(--text2);border:1px solid var(--border);border-radius:8px;font-size:.82rem;font-weight:600;cursor:pointer;}
+.flash-ok{background:#f0fdf4;border:1px solid #bbf7d0;color:#16a34a;border-radius:8px;padding:.55rem 1rem;font-size:.79rem;font-weight:600;margin-bottom:.9rem;}
+.flash-err{background:#fef2f2;border:1px solid #fecaca;color:#dc2626;border-radius:8px;padding:.55rem 1rem;font-size:.79rem;font-weight:600;margin-bottom:.9rem;}
+
+/* ===== PREMIUM (location master) ===== */
+body,.loc-table,.add-modal-box{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;}
+.rule-page-hdr h2{display:inline-flex;align-items:center;gap:7px;letter-spacing:-.01em;}
+
+/* add button */
+.btn-primary{border-radius:99px !important;background:linear-gradient(180deg,#3b82f6,#2563eb) !important;color:#fff !important;border:none !important;display:inline-flex;align-items:center;gap:7px;padding:.5rem 1.15rem !important;font-weight:700;box-shadow:0 2px 9px rgba(37,99,235,.3);transition:transform .12s,box-shadow .12s,filter .12s;}
+.btn-primary:hover{filter:brightness(1.04);transform:translateY(-1px);box-shadow:0 6px 18px rgba(37,99,235,.42);}
+
+/* card + table */
+.card{border:1px solid #e8edf3;border-radius:16px;box-shadow:0 1px 3px rgba(15,23,42,.05),0 6px 22px rgba(15,23,42,.04);overflow:hidden;}
+.loc-table th{color:#94a3b8;font-size:10px;font-weight:800;letter-spacing:.06em;border-bottom:2px solid #e2e8f0;background:#fbfcfe;}
+.loc-table td{border-bottom:1px solid #f1f5f9;}
+.loc-table tbody tr{transition:background .12s;}
+.loc-table tbody tr:hover td{background:#f0f7ff;}
+.loc-table td span[style*="monospace"]{font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,monospace !important;border-radius:7px;}
+.badge-active,.badge-inactive{border-radius:99px;padding:3px 10px;}
+
+/* action buttons */
+.ra-btn2{border-radius:99px;display:inline-flex;align-items:center;justify-content:center;gap:5px;border:1px solid #e2e8f0;transition:all .12s;}
+.ra-btn2:hover{background:#f1f5f9;transform:translateY(-1px);}
+.ra-btn2.danger{border-color:#fecaca;color:#dc2626;}
+.ra-btn2.danger:hover{background:#fee2e2;}
+
+/* modals */
+.add-modal{backdrop-filter:blur(2px);}
+.add-modal-box{border-radius:18px;box-shadow:0 24px 70px rgba(15,23,42,.28);}
+.add-modal-hdr{padding:1rem 1.1rem;border-bottom:1px solid #eef2f7;background:#fbfcfe;border-radius:18px 18px 0 0;}
+.add-modal-title{display:inline-flex;align-items:center;gap:7px;letter-spacing:-.01em;}
+.add-modal-footer{border-top:1px solid #eef2f7;}
+.fg2 input,.fg2 select,.fg2 textarea{border:1.5px solid #e2e8f0;border-radius:9px;transition:border-color .15s,box-shadow .15s;}
+.fg2 input:focus,.fg2 select:focus,.fg2 textarea:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.12);}
+
+/* footer buttons */
+.save-btn2{border-radius:99px;background:linear-gradient(180deg,#3b82f6,#2563eb);display:inline-flex;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(37,99,235,.3);transition:transform .12s,box-shadow .12s,filter .12s;}
+.save-btn2:hover{filter:brightness(1.04);transform:translateY(-1px);box-shadow:0 6px 16px rgba(37,99,235,.42);}
+.cancel-btn2{border-radius:99px;transition:background .14s;}
+.cancel-btn2:hover{background:#e2e8f0;}
+.add-modal-hdr .cancel-btn2{padding:.2rem .6rem;font-size:1.1rem;line-height:1;background:#fff;border:1px solid #e2e8f0;}
+.add-modal-hdr .cancel-btn2:hover{background:#fee2e2;color:#dc2626;border-color:#fecaca;}
+.ei{display:inline-block;}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="rule-page-hdr">
+  <div>
+    <h2 style="margin:0;font-size:1.15rem;font-weight:800;"><svg class="ei" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> Location Master</h2>
+    <div style="font-size:.72rem;color:var(--text3);">Manage company locations and branches</div>
+  </div>
+  <button class="btn-primary" onclick="document.getElementById('addLocModal').classList.add('open')"><svg class="ei" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add Location</button>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% for cat, msg in messages %}
+  <div class="{{ 'flash-ok' if cat=='success' else 'flash-err' }}">{% if cat=='success' %}<svg class="ei" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>{% else %}<svg class="ei" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>{% endif %} {{ msg }}</div>
+  {% endfor %}
+{% endwith %}
+
+<div class="card">
+  <div class="tbl-wrap">
+    <table class="loc-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Location Name</th>
+          <th>Code</th>
+          <th>City</th>
+          <th>State</th>
+          <th>Address</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for l in locations %}
+        <tr>
+          <td style="color:var(--text3);font-size:.75rem;">{{ loop.index }}</td>
+          <td style="font-weight:700;"><svg class="ei" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> {{ l.name }}</td>
+          <td><span style="background:#eff6ff;color:#1d4ed8;font-family:monospace;padding:2px 8px;border-radius:6px;font-size:.75rem;font-weight:700;">{{ l.code or '-' }}</span></td>
+          <td>{{ l.city or '-' }}</td>
+          <td>{{ l.state or '-' }}</td>
+          <td style="font-size:.75rem;color:var(--text2);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ l.address or '-' }}</td>
+          <td><span class="{{ 'badge-active' if l.is_active else 'badge-inactive' }}">{{ 'Active' if l.is_active else 'Inactive' }}</span></td>
+          <td>
+            <div style="display:flex;gap:.3rem;flex-wrap:wrap;">
+              <button class="ra-btn2" onclick="openEditLoc({{ l.id }},'{{ l.name }}','{{ l.code or '' }}','{{ l.city or '' }}','{{ l.state or '' }}','{{ (l.address or '')|replace("'","\\'") }}')"><svg class="ei" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg></button>
+              <form method="post" style="display:inline;" onsubmit="return confirm('Delete {{ l.name }}?')">
+                <input type="hidden" name="action" value="delete">
+                <input type="hidden" name="id" value="{{ l.id }}">
+                <button type="submit" class="ra-btn2 danger"><svg class="ei" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg></button>
+              </form>
+              <form method="post" style="display:inline;">
+                <input type="hidden" name="action" value="toggle">
+                <input type="hidden" name="id" value="{{ l.id }}">
+                <button type="submit" class="ra-btn2">{% if l.is_active %}<svg class="ei" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>{% else %}<svg class="ei" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><polygon points="6 4 20 12 6 20 6 4"/></svg>{% endif %}</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" style="text-align:center;padding:2.5rem;color:var(--text3);">No locations yet &mdash; add one</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Add Modal -->
+<div class="add-modal" id="addLocModal">
+  <div class="add-modal-box">
+    <div class="add-modal-hdr">
+      <span class="add-modal-title"><svg class="ei" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add Location</span>
+      <button class="cancel-btn2" onclick="document.getElementById('addLocModal').classList.remove('open')">&times;</button>
+    </div>
+    <form method="post">
+      <input type="hidden" name="action" value="add">
+      <div class="add-modal-body">
+        <div class="fgrid2">
+          <div class="fg2"><label>Location Name *</label><input type="text" name="name" placeholder="e.g. HCP OFFICE" required></div>
+          <div class="fg2"><label>Code *</label><input type="text" name="code" placeholder="e.g. OFFICE" maxlength="20" required></div>
+        </div>
+        <div class="fgrid2">
+          <div class="fg2"><label>City</label><input type="text" name="city" placeholder="Surat"></div>
+          <div class="fg2"><label>State</label><input type="text" name="state" placeholder="Gujarat"></div>
+        </div>
+        <div class="fg2"><label>Full Address</label><textarea name="address" rows="2" placeholder="Complete address..."></textarea></div>
+      </div>
+      <div class="add-modal-footer">
+        <button type="button" class="cancel-btn2" onclick="document.getElementById('addLocModal').classList.remove('open')">Cancel</button>
+        <button type="submit" class="save-btn2"><svg class="ei" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save Location</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="add-modal" id="editLocModal">
+  <div class="add-modal-box">
+    <div class="add-modal-hdr">
+      <span class="add-modal-title"><svg class="ei" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg> Edit Location</span>
+      <button class="cancel-btn2" onclick="document.getElementById('editLocModal').classList.remove('open')">&times;</button>
+    </div>
+    <form method="post">
+      <input type="hidden" name="action" value="edit">
+      <input type="hidden" name="id" id="edit_loc_id">
+      <div class="add-modal-body">
+        <div class="fgrid2">
+          <div class="fg2"><label>Location Name *</label><input type="text" name="name" id="edit_loc_name" required></div>
+          <div class="fg2"><label>Code *</label><input type="text" name="code" id="edit_loc_code" maxlength="20" required></div>
+        </div>
+        <div class="fgrid2">
+          <div class="fg2"><label>City</label><input type="text" name="city" id="edit_loc_city"></div>
+          <div class="fg2"><label>State</label><input type="text" name="state" id="edit_loc_state"></div>
+        </div>
+        <div class="fg2"><label>Full Address</label><textarea name="address" id="edit_loc_addr" rows="2"></textarea></div>
+      </div>
+      <div class="add-modal-footer">
+        <button type="button" class="cancel-btn2" onclick="document.getElementById('editLocModal').classList.remove('open')">Cancel</button>
+        <button type="submit" class="save-btn2"><svg class="ei" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Update</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function openEditLoc(id,name,code,city,state,addr){
+  document.getElementById('edit_loc_id').value=id;
+  document.getElementById('edit_loc_name').value=name;
+  document.getElementById('edit_loc_code').value=code;
+  document.getElementById('edit_loc_city').value=city;
+  document.getElementById('edit_loc_state').value=state;
+  document.getElementById('edit_loc_addr').value=addr;
+  document.getElementById('editLocModal').classList.add('open');
+}
+document.addEventListener('click',function(e){
+  ['addLocModal','editLocModal'].forEach(function(id){
+    var m=document.getElementById(id);
+    if(e.target===m) m.classList.remove('open');
+  });
+});
+</script>
+{% endblock %}

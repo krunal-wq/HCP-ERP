@@ -1,0 +1,1093 @@
+{% from 'macros/pagination.html' import render_pagination %}
+{% extends "base.html" %}
+{% block title %}Client Master - CRM{% endblock %}
+{% block page_title %}Client Master{% endblock %}
+{% block bread %}CRM / Client Master{% endblock %}
+
+{% block extra_css %}
+<style>
+  .clp {
+    --cl-accent: #2563eb;
+    --cl-accent-2: #1d4ed8;
+    --cl-soft: #eff6ff;
+    --cl-bg: #f8fafc;
+    --cl-card: #ffffff;
+    --cl-text: #0f172a;
+    --cl-text2: #334155;
+    --cl-muted: #64748b;
+    --cl-light: #94a3b8;
+    --cl-border: #e2e8f0;
+    --cl-border-l: #f1f5f9;
+    --cl-danger: #dc2626;
+    --cl-danger-bg: #fef2f2;
+    --cl-success: #16a34a;
+    --cl-success-bg: #f0fdf4;
+    --cl-r-sm: 9px;
+    --cl-r-md: 12px;
+    --cl-r-lg: 16px;
+  }
+
+  .lucide-ic, .lucide-ic svg { width:1em; height:1em; vertical-align:-0.125em; }
+  button { -webkit-tap-highlight-color: transparent; }
+
+  /* ==== Main Card ==== */
+  .grid-card {
+    background:var(--cl-card);
+    border-radius:var(--cl-r-lg);
+    border:1px solid var(--cl-border);
+    box-shadow:0 1px 2px rgba(15,23,42,.04), 0 10px 30px -22px rgba(15,23,42,.25);
+    overflow:hidden;
+  }
+
+  /* ==== Header bar (icon + title + search) ==== */
+  .cl-hdr {
+    display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+    padding:16px 20px;
+    border-bottom:1px solid var(--cl-border);
+    background:#fff;
+  }
+  .cl-hdr .hd-ic {
+    width:34px; height:34px; border-radius:10px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    background:var(--cl-soft); color:var(--cl-accent-2); font-size:1rem;
+  }
+  .cl-hdr h1 {
+    font-size:1.15rem; font-weight:800; color:var(--cl-text);
+    letter-spacing:-0.02em; margin:0;
+  }
+  .grid-search-wrap {
+    display:flex; align-items:center; gap:8px;
+    background:var(--cl-bg);
+    border:1.5px solid var(--cl-border);
+    border-radius:999px;
+    padding:0 16px;
+    transition:all .18s;
+    margin-left:auto;
+    width:300px;
+    max-width:30%; height:38px;
+    color:var(--cl-light);
+  }
+  .grid-search-wrap:focus-within {
+    background:#fff; border-color:var(--cl-accent);
+    box-shadow:0 0 0 3px rgba(37,99,235,.12);
+  }
+  .grid-search-input {
+    border:none; background:transparent; outline:none;
+    font-size:.84rem; color:var(--cl-text); font-weight:500;
+    width:100%; font-family:inherit;
+  }
+  .grid-search-input::placeholder { color:var(--cl-light); }
+
+  /* ==== Tabs row (pill tabs) + toolbar ==== */
+  .cl-tabsbar {
+    display:flex; align-items:center; flex-wrap:wrap; gap:10px;
+    padding:13px 20px;
+    border-bottom:1px solid var(--cl-border);
+    background:#fff;
+  }
+  .tab-pill {
+    display:inline-flex; align-items:center; gap:7px;
+    height:38px; padding:0 18px; border-radius:999px;
+    font-size:.82rem; font-weight:700; text-decoration:none;
+    border:1.5px solid var(--cl-border);
+    background:#fff; color:var(--cl-text2);
+    transition:all .16s; white-space:nowrap;
+  }
+  .tab-pill .lucide-ic { font-size:.95em; }
+  .tab-pill:hover { border-color:#bfdbfe; color:var(--cl-accent-2); }
+  .tab-pill .tcount {
+    font-size:.66rem; font-weight:800;
+    background:var(--cl-border-l); color:var(--cl-text2);
+    min-width:20px; height:20px; padding:0 7px;
+    border-radius:999px; display:inline-flex; align-items:center; justify-content:center;
+  }
+  .tab-pill.selected {
+    background:linear-gradient(180deg,#3b82f6,#1d4ed8);
+    color:#fff; border-color:transparent;
+    box-shadow:0 2px 8px rgba(37,99,235,.35), inset 0 1px 0 rgba(255,255,255,.25);
+  }
+  .tab-pill.selected .tcount { background:rgba(255,255,255,.25); color:#fff; }
+  .tab-pill.trash.selected {
+    background:linear-gradient(180deg,#ef4444,#dc2626);
+    box-shadow:0 2px 8px rgba(220,38,38,.35), inset 0 1px 0 rgba(255,255,255,.2);
+  }
+
+  .cl-tools { display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin-left:auto; }
+
+  .btn-add-new {
+    display:inline-flex; align-items:center; justify-content:center; gap:7px;
+    background:linear-gradient(180deg,#3b82f6,#1d4ed8);
+    color:#fff; padding:0 18px; border-radius:999px;
+    font-size:.82rem; font-weight:700; text-decoration:none;
+    height:38px; white-space:nowrap; flex-shrink:0;
+    box-shadow:0 2px 8px rgba(37,99,235,.35), inset 0 1px 0 rgba(255,255,255,.25);
+    transition:all .18s;
+  }
+  .btn-add-new:hover { transform:translateY(-1px); color:#fff; box-shadow:0 5px 16px rgba(37,99,235,.45); }
+  .btn-add-new:active { transform:translateY(0) scale(.97); }
+
+  .btn-grid-action {
+    display:inline-flex; align-items:center; justify-content:center; gap:6px;
+    background:#fff; color:var(--cl-text2);
+    border:1.5px solid var(--cl-border);
+    padding:0 14px; border-radius:999px;
+    font-size:.78rem; font-weight:650; cursor:pointer;
+    height:36px; white-space:nowrap; flex-shrink:0;
+    transition:all .16s; text-decoration:none; font-family:inherit;
+  }
+  .btn-grid-action .lucide-ic { color:var(--cl-muted); transition:color .16s; }
+  .btn-grid-action:hover { border-color:#bfdbfe; color:var(--cl-accent-2); background:var(--cl-soft); }
+  .btn-grid-action:hover .lucide-ic { color:var(--cl-accent-2); }
+  .btn-grid-action:active { transform:scale(.96); }
+  .btn-grid-action.active { background:var(--cl-soft); color:var(--cl-accent-2); border-color:#93c5fd; }
+  .btn-grid-action.active .lucide-ic { color:var(--cl-accent-2); }
+  .btn-grid-action.danger { color:var(--cl-danger); border-color:#fecaca; background:var(--cl-danger-bg); }
+  .btn-grid-action.danger .lucide-ic { color:var(--cl-danger); }
+  .btn-grid-action.danger:hover { background:#fee2e2; border-color:#fca5a5; }
+
+  .fcount {
+    background:var(--cl-accent); color:#fff;
+    font-size:.62rem; font-weight:800;
+    padding:2px 7px; border-radius:999px; margin-left:2px;
+  }
+
+  /* ==== Filter / Sort panels ==== */
+  .fs-panel {
+    padding:16px 20px; border-bottom:1px solid var(--cl-border);
+    background:var(--cl-bg); overflow:visible;
+  }
+  .fs-grid { display:flex; gap:14px; flex-wrap:wrap; overflow:visible; }
+  .fs-field { flex:1; min-width:200px; }
+  .fs-field > label {
+    font-size:.68rem; font-weight:800; color:var(--cl-muted);
+    text-transform:uppercase; letter-spacing:.06em;
+    display:block; margin-bottom:6px;
+  }
+  .fs-input, .ms-trigger {
+    width:100%; padding:9px 13px;
+    border:1.5px solid var(--cl-border); border-radius:var(--cl-r-sm);
+    background:#fff; font-size:.83rem; color:var(--cl-text);
+    outline:none; font-family:inherit;
+    transition:border-color .15s, box-shadow .15s;
+  }
+  .fs-input:focus { border-color:var(--cl-accent); box-shadow:0 0 0 3px rgba(37,99,235,.1); }
+  .ms-trigger { cursor:pointer; display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  .ms-trigger:hover { border-color:#bfdbfe; }
+  .ms-label { color:var(--cl-light); }
+  .ms-label.has-val { color:var(--cl-text); font-weight:600; }
+  .ms-wrap { position:relative; }
+  .ms-dropdown {
+    display:none; position:absolute; top:calc(100% + 6px); left:0; width:100%;
+    background:#fff; border:1px solid var(--cl-border);
+    border-radius:var(--cl-r-md); z-index:120;
+    box-shadow:0 12px 30px -12px rgba(15,23,42,.25);
+    overflow:hidden;
+  }
+  .ms-wrap.open .ms-dropdown { display:block !important; animation:clPop .16s ease; }
+  @keyframes clPop { from{opacity:0;transform:translateY(-4px);} to{opacity:1;transform:translateY(0);} }
+  .ms-search { padding:8px; border-bottom:1px solid var(--cl-border-l); }
+  .ms-search input {
+    width:100%; padding:7px 10px; border:1.5px solid var(--cl-border);
+    border-radius:7px; font-size:.8rem; outline:none; font-family:inherit;
+  }
+  .ms-search input:focus { border-color:var(--cl-accent); }
+  .ms-options { max-height:160px; overflow-y:auto; padding:4px 8px; }
+  .ms-opt {
+    display:flex; align-items:center; gap:8px; padding:5px 6px;
+    font-size:.82rem; cursor:pointer; border-radius:6px; color:var(--cl-text2);
+  }
+  .ms-opt:hover { background:var(--cl-bg); }
+  .ms-opt input { accent-color:var(--cl-accent); width:14px; height:14px; }
+  .ms-footer { padding:8px; border-top:1px solid var(--cl-border-l); display:flex; gap:5px; }
+  .ms-footer button {
+    flex:1; padding:6px; font-size:.72rem; font-weight:700; cursor:pointer;
+    background:var(--cl-bg); border:1px solid var(--cl-border); border-radius:7px;
+    color:var(--cl-text2); font-family:inherit; transition:all .14s;
+  }
+  .ms-footer button:hover { background:var(--cl-border-l); }
+  .ms-footer .ms-apply { background:var(--cl-accent); color:#fff; border-color:var(--cl-accent); }
+  .ms-footer .ms-apply:hover { background:var(--cl-accent-2); }
+
+  .sort-dir-btn.active {
+    background:var(--cl-soft); color:var(--cl-accent-2); border-color:#93c5fd;
+  }
+  .sort-dir-btn.active .lucide-ic { color:var(--cl-accent-2); }
+
+  .fs-chips { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; align-items:center; }
+  .fs-chips > span:first-child { font-size:.7rem; color:var(--cl-muted); font-weight:800; text-transform:uppercase; letter-spacing:.05em; }
+  .fs-chip {
+    background:var(--cl-soft); color:var(--cl-accent-2);
+    padding:4px 11px; border-radius:999px;
+    font-size:.74rem; font-weight:650;
+    display:inline-flex; align-items:center; gap:6px;
+    border:1px solid #bfdbfe; text-decoration:none;
+  }
+  .fs-chip a { cursor:pointer; font-weight:900; color:inherit; text-decoration:none; }
+  .fs-chip.clear { background:var(--cl-danger-bg); color:var(--cl-danger); border-color:#fecaca; }
+  .fs-chip.clear:hover { background:#fee2e2; }
+
+  /* ==== Trash banner ==== */
+  .trash-banner {
+    background:#fffbeb; border-bottom:1px solid #fde68a;
+    padding:11px 20px; font-size:.82rem; color:#92400e;
+    display:flex; align-items:center; gap:8px;
+  }
+  .trash-banner a { color:#b45309; font-weight:800; text-decoration:none; margin-left:auto; }
+  .trash-banner a:hover { text-decoration:underline; }
+
+  /* ==== Table ==== */
+  .tbl-wrap { overflow-x:auto; width:100%; }
+  #clientsTable { width:100%; border-collapse:collapse; text-align:left; }
+  #clientsTable th {
+    background:var(--cl-bg);
+    color:var(--cl-muted);
+    font-size:.68rem; font-weight:800;
+    text-transform:uppercase; letter-spacing:.07em;
+    padding:12px 16px;
+    border-bottom:1px solid var(--cl-border);
+    white-space:nowrap;
+    position:sticky; top:0; z-index:5;
+  }
+  #clientsTable th.sortable:hover { color:var(--cl-accent-2); }
+  .sort-ic { color:var(--cl-light); font-size:.8em; }
+  #clientsTable td {
+    padding:12px 16px; font-size:.83rem; color:var(--cl-text);
+    border-bottom:1px solid var(--cl-border-l); vertical-align:middle;
+  }
+  #clientsTable tbody tr { transition:background .12s; }
+  #clientsTable tbody tr:hover { background:#f8fbff; }
+  #clientsTable tbody tr:last-child td { border-bottom:none; }
+
+  code {
+    background:var(--cl-soft); color:var(--cl-accent-2);
+    padding:3px 9px; border-radius:7px;
+    font-size:.72rem !important; font-weight:800;
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    letter-spacing:.02em;
+  }
+  .sbadge {
+    padding:3px 11px !important; border-radius:999px !important;
+    font-size:.7rem !important; font-weight:800 !important;
+    display:inline-flex; align-items:center; gap:5px;
+  }
+  .sbadge::before { content:''; width:6px; height:6px; border-radius:50%; }
+  .sbadge.active   { background:var(--cl-success-bg) !important; color:var(--cl-success) !important; border:1px solid #bbf7d0; }
+  .sbadge.active::before { background:var(--cl-success); }
+  .sbadge.inactive { background:var(--cl-danger-bg) !important; color:var(--cl-danger) !important; border:1px solid #fecaca; }
+  .sbadge.inactive::before { background:var(--cl-danger); }
+
+  .brand-tag {
+    background:var(--cl-soft); color:var(--cl-accent-2);
+    padding:2px 9px; border-radius:999px;
+    font-size:.7rem; font-weight:700; border:1px solid #dbeafe;
+  }
+
+  .entity-link { color:var(--cl-text); font-weight:650; text-decoration:none; transition:color .15s; }
+  .entity-link:hover { color:var(--cl-accent); }
+  .row-cb { width:16px; height:16px; accent-color:var(--cl-accent); cursor:pointer; border-radius:4px; }
+
+  /* ==== Inline action icon buttons ==== */
+  .act-wrap { display:inline-flex; gap:7px; align-items:center; }
+  .act-btn {
+    width:30px; height:30px; border-radius:9px;
+    display:inline-flex; align-items:center; justify-content:center;
+    font-size:.85rem; cursor:pointer; border:1px solid transparent;
+    text-decoration:none; transition:all .14s;
+    background:none; padding:0; font-family:inherit;
+  }
+  .act-btn:active { transform:scale(.92); }
+  .act-btn.view { background:#ecfdf5; color:#059669; border-color:#a7f3d0; }
+  .act-btn.view:hover { background:#d1fae5; }
+  .act-btn.edit { background:var(--cl-soft); color:var(--cl-accent-2); border-color:#bfdbfe; }
+  .act-btn.edit:hover { background:#dbeafe; }
+  .act-btn.del { background:var(--cl-danger-bg); color:var(--cl-danger); border-color:#fecaca; }
+  .act-btn.del:hover { background:#fee2e2; }
+  /* NPD / EPD / Quote actions */
+  .act-btn.npd { background:#ede9fe; color:#7c3aed; border-color:#ddd6fe; }
+  .act-btn.npd:hover { background:#ddd6fe; }
+  .act-btn.epd { background:#cffafe; color:#0891b2; border-color:#a5f3fc; }
+  .act-btn.epd:hover { background:#a5f3fc; }
+  .act-btn.quote { background:#fef3c7; color:#b45309; border-color:#fde68a; }
+  .act-btn.quote:hover { background:#fde68a; }
+  .act-sep { width:1px; height:18px; background:var(--cl-border); flex-shrink:0; }
+
+  .btn-restore {
+    display:inline-flex; align-items:center; gap:6px;
+    height:30px; padding:0 13px; border-radius:999px;
+    background:var(--cl-success-bg); color:#059669;
+    border:1px solid #a7f3d0;
+    font-size:.74rem; font-weight:750; cursor:pointer;
+    font-family:inherit; transition:all .14s; white-space:nowrap;
+  }
+  .btn-restore:hover { background:#d1fae5; border-color:#6ee7b7; }
+  .btn-restore:active { transform:scale(.95); }
+
+  /* ==== Footer / pagination ==== */
+  .grid-footer {
+    display:flex; align-items:center; justify-content:space-between;
+    flex-wrap:wrap; gap:10px;
+    padding:13px 20px; border-top:1px solid var(--cl-border);
+    background:#fff; font-size:.78rem; color:var(--cl-muted);
+  }
+  #rowCountSel {
+    border:1.5px solid var(--cl-border); border-radius:7px;
+    padding:3px 8px; outline:none; font-family:inherit;
+    font-size:.76rem; font-weight:600; color:var(--cl-text2);
+    background:#fff; cursor:pointer;
+  }
+  .pgn-btn {
+    background:#fff; border:1.5px solid var(--cl-border);
+    min-width:32px; height:32px; padding:0 10px;
+    border-radius:9px; font-weight:700; font-size:.76rem;
+    color:var(--cl-muted); cursor:pointer; transition:all .15s;
+    font-family:inherit;
+  }
+  .pgn-btn:hover:not(:disabled):not(.active) { background:var(--cl-soft); color:var(--cl-accent-2); border-color:#bfdbfe; }
+  .pgn-btn.active {
+    background:linear-gradient(180deg,#3b82f6,#1d4ed8);
+    color:#fff; border-color:transparent;
+    box-shadow:0 2px 6px rgba(37,99,235,.35);
+  }
+  .pgn-btn:disabled { opacity:.4; cursor:not-allowed; }
+
+  /* ==== Columns panel ==== */
+  #colPanel {
+    position:absolute; top:calc(100% + 8px); right:0; z-index:300;
+    background:#fff; border-radius:var(--cl-r-md);
+    box-shadow:0 14px 34px -14px rgba(15,23,42,.35);
+    border:1px solid var(--cl-border); padding:14px; width:240px;
+  }
+  #colPanel .cp-title { font-size:.74rem; font-weight:800; color:var(--cl-text); margin-bottom:10px; text-transform:uppercase; letter-spacing:.05em; }
+  #colPanel label {
+    display:flex; align-items:center; gap:8px;
+    font-size:.8rem; color:var(--cl-text2); cursor:pointer;
+    padding:5px 6px; border-radius:7px;
+  }
+  #colPanel label:hover { background:var(--cl-bg); }
+  #colPanel input[type=checkbox] { accent-color:var(--cl-accent); width:14px; height:14px; }
+  .cp-apply {
+    flex:1; padding:8px; border-radius:8px;
+    background:linear-gradient(180deg,#3b82f6,#1d4ed8); color:#fff;
+    border:none; font-size:.78rem; font-weight:700; cursor:pointer; font-family:inherit;
+  }
+  .cp-cancel {
+    padding:8px 12px; border-radius:8px; background:var(--cl-bg);
+    color:var(--cl-text2); border:1px solid var(--cl-border);
+    font-size:.78rem; font-weight:700; cursor:pointer; font-family:inherit;
+  }
+
+  /* ==== Mobile cards ==== */
+  .cl-card {
+    background:#fff; border-radius:var(--cl-r-md);
+    border:1px solid var(--cl-border); margin:12px;
+    box-shadow:0 1px 3px rgba(15,23,42,.06); overflow:hidden;
+  }
+  .cl-card-hdr {
+    background:linear-gradient(135deg,#1e3a8a,#1d4ed8);
+    color:#fff; padding:14px 16px;
+    display:flex; gap:12px; align-items:flex-start;
+  }
+  .cl-card-name a, .cl-card-name span { font-size:.95rem; font-weight:750; color:#fff; }
+  .cl-card-company { font-size:.76rem; color:#bfdbfe; margin-top:3px; }
+  .cl-card-code { background:rgba(255,255,255,.18) !important; color:#fff !important; }
+  .cl-card-body { padding:14px 16px; background:#fff; }
+  .cl-card-field label {
+    font-size:.64rem; text-transform:uppercase; letter-spacing:.06em;
+    color:var(--cl-muted); font-weight:800; display:block; margin-bottom:2px;
+  }
+  .cl-card-field span { font-size:.83rem; font-weight:550; color:var(--cl-text); }
+  .cl-card-footer {
+    padding:10px 16px; background:var(--cl-bg);
+    border-top:1px solid var(--cl-border);
+    display:flex; justify-content:space-between; align-items:center;
+    flex-wrap:wrap; gap:8px;
+  }
+
+  .cl-empty { padding:50px 20px; text-align:center; color:var(--cl-light); }
+  .cl-empty .lucide-ic { font-size:2rem; margin-bottom:8px; display:inline-block; }
+  .cl-empty p { margin:6px 0 0; font-weight:600; font-size:.85rem; color:var(--cl-muted); }
+
+  .tbl-wrap::-webkit-scrollbar, .ms-options::-webkit-scrollbar { height:9px; width:8px; }
+  .tbl-wrap::-webkit-scrollbar-thumb, .ms-options::-webkit-scrollbar-thumb {
+    background:var(--cl-border); border-radius:99px;
+  }
+
+  /* ==== Responsive ==== */
+  @media (min-width:769px) { #clMobileCards { display:none; } }
+  @media (max-width:768px) {
+    .tbl-wrap, .grid-footer { display:none; }
+    .cl-hdr { padding:14px; }
+    .grid-search-wrap { margin-left:0; width:100%; order:5; }
+    .cl-tabsbar { flex-direction:column; align-items:stretch; padding:14px; }
+    .cl-tools { justify-content:flex-start; margin-left:0; width:100%; }
+    .btn-add-new { width:100%; }
+    .fs-field { min-width:100%; }
+  }
+</style>
+{% endblock %}
+{% block content %}
+<div class="clp">
+
+{# FIX: default toolbar capability flags to TRUE when route doesn't pass them.
+   Pehle ye undefined hone par Sort/Columns/Filter buttons gayab ho jate the. #}
+{% set can_filter  = can_filter  if can_filter  is defined else true %}
+{% set can_sort    = can_sort    if can_sort    is defined else true %}
+{% set can_columns = can_columns if can_columns is defined else true %}
+
+{% set _fc = [search,city,state,status_f]|select|list|length %}
+{% set _active_n = active_count if active_count is defined else (clients|length if not show_trash else none) %}
+{% set _deleted_n = deleted_count if deleted_count else (clients|length if show_trash else 0) %}
+
+<div class="grid-card">
+
+  {# -- Header bar: icon + title + search -- #}
+  <div class="cl-hdr">
+    <div class="hd-ic"><i data-lucide="users" class="lucide-ic"></i></div>
+    <h1>Client Master</h1>
+    <div class="grid-search-wrap">
+      <i data-lucide="search" class="lucide-ic"></i>
+      <input type="text" class="grid-search-input" id="gSearchInput" placeholder="Search name, company, city..." oninput="gridGlobalSearch(this.value)">
+    </div>
+  </div>
+
+  {% if show_trash %}
+  <div class="trash-banner">
+    <i data-lucide="trash-2" class="lucide-ic"></i>
+    Showing <strong>{{ clients|length }}</strong> deleted client{{ 's' if clients|length != 1 else '' }} - records can be restored.
+    <a href="{{ url_for('crm.clients') }}">&#8592; Back to Clients</a>
+  </div>
+  {% endif %}
+
+  {# -- Tabs (pill style with counts) + toolbar -- #}
+  <div class="cl-tabsbar">
+    <a href="{{ url_for('crm.clients') }}" class="tab-pill {{ 'selected' if not show_trash }}">
+      <i data-lucide="users" class="lucide-ic"></i>Active
+      {% if _active_n is not none %}<span class="tcount">{{ _active_n }}</span>{% endif %}
+    </a>
+    {% if can_view_deleted %}
+    <a href="{{ url_for('crm.clients', trash=1) }}" class="tab-pill trash {{ 'selected' if show_trash }}">
+      <i data-lucide="trash-2" class="lucide-ic"></i>Deleted
+      <span class="tcount">{{ _deleted_n }}</span>
+    </a>
+    {% endif %}
+
+    <div class="cl-tools">
+      {% if not show_trash %}
+      {% if perm and perm.can_add %}
+      <a href="{{ url_for('crm.client_add') }}" class="btn-add-new">
+        <i data-lucide="plus" class="lucide-ic"></i>Add Client
+      </a>
+      {% endif %}
+      {% endif %}
+
+      {% if can_filter %}
+      <button id="fsTabFilter" class="btn-grid-action {{ 'active' if _fc > 0 }}" onclick="toggleFsTab('filter')">
+        <i data-lucide="funnel" class="lucide-ic"></i>
+        Filter {% if _fc > 0 %}<span class="fcount">{{ _fc }}</span>{% endif %}
+      </button>
+      {% endif %}
+
+      {% if can_sort %}
+      <button id="fsTabSort" class="btn-grid-action {{ 'active' if sort_by != 'created_at' or sort_dir != 'desc' }}" onclick="toggleFsTab('sort')">
+        <i data-lucide="arrow-down-up" class="lucide-ic"></i>
+        Sort
+      </button>
+      {% endif %}
+
+      {% if can_columns %}
+      <div style="position:relative;">
+        <button class="btn-grid-action" onclick="toggleColPanel(event)">
+          <i data-lucide="sliders-horizontal" class="lucide-ic"></i>
+          Columns
+        </button>
+        <div id="colPanel" style="display:none;">
+          <div class="cp-title">Display Columns</div>
+          <div style="display:flex;flex-direction:column;gap:2px;max-height:260px;overflow-y:auto;">
+            {% for key, label in all_cols.items() %}
+            <label>
+              <input type="checkbox" value="{{ key }}" {{ 'checked' if key in grid_cols else '' }} onchange="colChanged()">
+              {{ label }}
+            </label>
+            {% endfor %}
+          </div>
+          <div style="margin-top:12px;display:flex;gap:6px;">
+            <button onclick="saveClientCols()" class="cp-apply">Apply</button>
+            <button onclick="document.getElementById('colPanel').style.display='none'" class="cp-cancel">Cancel</button>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      {% if not show_trash %}
+      <button class="btn-grid-action danger" id="bulkDeleteBtn" style="display:none;" onclick="bulkDelete()">
+        <i data-lucide="trash-2" class="lucide-ic"></i>Delete
+      </button>
+      {% endif %}
+
+      {% if perm and perm.can_export %}
+      <button class="btn-grid-action" onclick="doExport()">
+        <i data-lucide="download" class="lucide-ic"></i>Export
+      </button>
+      {% endif %}
+
+      {% if perm and perm.can_import %}
+      <a href="{{ url_for('crm.client_import') }}" class="btn-grid-action">
+        <i data-lucide="upload" class="lucide-ic"></i>Import
+      </a>
+      {% endif %}
+    </div>
+  </div>
+
+  {# -- FILTER panel -- #}
+  <div id="fsPanelFilter_cl" class="fs-panel" style="display:{% if _fc > 0 %}block{% else %}none{% endif %};">
+    <div class="fs-grid">
+      <div class="fs-field">
+        <label>Keyword</label>
+        <input type="text" class="fs-input" id="cl_search" value="{{ search }}" placeholder="Name, company, email..." oninput="fsDebounce()">
+      </div>
+
+      <div class="fs-field">
+        <label>City</label>
+        <div class="ms-wrap" id="ms_cl_city">
+          <div class="ms-trigger" onclick="toggleMs('ms_cl_city')">
+            <span class="ms-label {{ 'has-val' if city }}" id="ms_cl_city_lbl">
+              {%- if city -%}{{ city }}{%- else -%}All Cities{%- endif -%}
+            </span>
+            <i data-lucide="chevron-down" class="lucide-ic"></i>
+          </div>
+          <div class="ms-dropdown">
+            <div class="ms-search"><input type="text" placeholder="Search cities..." oninput="msSearch(this,'ms_cl_city')"></div>
+            <div class="ms-options">
+              {% for c in all_cities %}
+              <label class="ms-opt">
+                <input type="checkbox" value="{{ c }}" {{ 'checked' if c in (city or '').split(',') and city }} onchange="msChange('ms_cl_city','cl_city','All Cities')">
+                <span>{{ c }}</span>
+              </label>
+              {% endfor %}
+            </div>
+            <div class="ms-footer">
+              <button type="button" onclick="msSelectAll('ms_cl_city','cl_city','All Cities')">All</button>
+              <button type="button" onclick="msClearAll('ms_cl_city','cl_city','All Cities')">Clear</button>
+              <button type="button" class="ms-apply" onclick="closeMs('ms_cl_city')">Done</button>
+            </div>
+          </div>
+        </div>
+        <input type="hidden" id="cl_city" value="{{ city }}">
+      </div>
+
+      <div class="fs-field">
+        <label>State</label>
+        <div class="ms-wrap" id="ms_cl_state">
+          <div class="ms-trigger" onclick="toggleMs('ms_cl_state')">
+            <span class="ms-label {{ 'has-val' if state }}" id="ms_cl_state_lbl">
+              {%- if state -%}{{ state }}{%- else -%}All States{%- endif -%}
+            </span>
+            <i data-lucide="chevron-down" class="lucide-ic"></i>
+          </div>
+          <div class="ms-dropdown">
+            <div class="ms-search"><input type="text" placeholder="Search states..." oninput="msSearch(this,'ms_cl_state')"></div>
+            <div class="ms-options">
+              {% for s in all_states %}
+              <label class="ms-opt">
+                <input type="checkbox" value="{{ s }}" {{ 'checked' if s in (state or '').split(',') and state }} onchange="msChange('ms_cl_state','cl_state','All States')">
+                <span>{{ s }}</span>
+              </label>
+              {% endfor %}
+            </div>
+            <div class="ms-footer">
+              <button type="button" onclick="msSelectAll('ms_cl_state','cl_state','All States')">All</button>
+              <button type="button" onclick="msClearAll('ms_cl_state','cl_state','All States')">Clear</button>
+              <button type="button" class="ms-apply" onclick="closeMs('ms_cl_state')">Done</button>
+            </div>
+          </div>
+        </div>
+        <input type="hidden" id="cl_state" value="{{ state }}">
+      </div>
+    </div>
+
+    {% if search or city or state or status_f %}
+    <div class="fs-chips">
+      <span>Filters:</span>
+      {% if search %}<span class="fs-chip">Search: {{ search }}<a onclick="chipClear('cl_search')">×</a></span>{% endif %}
+      <a href="{{ url_for('crm.clients') }}" class="fs-chip clear">× Clear All</a>
+    </div>
+    {% endif %}
+  </div>
+
+  {# -- SORT panel (FIX: ye panel pehle missing tha, isliye Sort button kuch nahi karta tha) -- #}
+  <div id="fsPanelSort_cl" class="fs-panel" style="display:none;">
+    <div class="fs-grid">
+      <div class="fs-field">
+        <label>Sort By</label>
+        <select class="fs-input" id="cl_sort_by_sel" onchange="fsSortBy(this.value)">
+          <option value="created_at">Created Date</option>
+          <option value="contact_name">Contact Name</option>
+          <option value="company_name">Company</option>
+          <option value="code">Client Code</option>
+          <option value="city">City</option>
+          <option value="state">State</option>
+        </select>
+      </div>
+      <div class="fs-field">
+        <label>Direction</label>
+        <div style="display:flex;gap:8px;">
+          <button type="button" class="btn-grid-action sort-dir-btn" id="cl_sortDirAsc" onclick="fsSetDir('asc')">
+            <i data-lucide="arrow-up-narrow-wide" class="lucide-ic"></i>Ascending (A-Z / Oldest)
+          </button>
+          <button type="button" class="btn-grid-action sort-dir-btn" id="cl_sortDirDesc" onclick="fsSetDir('desc')">
+            <i data-lucide="arrow-down-wide-narrow" class="lucide-ic"></i>Descending (Z-A / Newest)
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <form id="fsForm_cl" method="GET" style="display:none;">
+    <input type="hidden" id="cl_h_search"      name="search"      value="{{ search }}">
+    <input type="hidden" id="cl_h_city"        name="city"        value="{{ city }}">
+    <input type="hidden" id="cl_h_state"       name="state"       value="{{ state }}">
+    <input type="hidden" id="cl_h_status_f"    name="status_f"    value="{{ status_f }}">
+    <input type="hidden" id="cl_h_sort_by"     name="sort_by"     value="{{ sort_by }}">
+    <input type="hidden" id="cl_h_sort_dir"    name="sort_dir"    value="{{ sort_dir }}">
+  </form>
+
+  <div class="cl-cards" id="clMobileCards">
+    {% for c in clients %}
+    <div class="cl-card" id="clcard-{{ c.id }}">
+      <div class="cl-card-hdr">
+        <input type="checkbox" class="row-cb row-check-item" value="{{ c.id }}" onchange="updateBulkBtn();" style="margin-top:3px; flex-shrink:0;">
+        <div class="cl-card-hdr-info" style="flex:1;">
+          <div class="cl-card-name">
+            {% if perm and perm.can_view %}<a href="{{ url_for('crm.client_view', id=c.id) }}" style="color:#fff;text-decoration:none;">{{ c.contact_name }}</a>{% else %}<span style="color:#fff;">{{ c.contact_name }}</span>{% endif %}
+          </div>
+          {% if c.company_name %}<div class="cl-card-company">{{ c.company_name }}</div>{% endif %}
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+          <code class="cl-card-code">{{ c.code }}</code>
+        </div>
+      </div>
+      <div class="cl-card-body">
+         <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div class="cl-card-field"><label>Mobile</label><span>{{ c.mobile or '-' }}</span></div>
+          <div class="cl-card-field"><label>City</label><span>{{ c.city or '-' }}</span></div>
+          <div class="cl-card-field" style="grid-column:span 2;"><label>Email</label><span style="word-break:break-all;">{{ c.email or '-' }}</span></div>
+        </div>
+      </div>
+      <div class="cl-card-footer">
+        <span style="font-size:.72rem;color:var(--cl-light);font-weight:650;">{{ c.created_at.strftime('%d %b %Y') if c.created_at else '-' }}</span>
+        <div class="act-wrap">
+          {% if show_trash %}
+          <form method="POST" action="{{ url_for('crm.client_restore', id=c.id) }}" onsubmit="return confirm('Restore {{ c.contact_name }}?')" style="display:inline;">
+            <button type="submit" class="btn-restore" title="Restore"><i data-lucide="rotate-ccw" class="lucide-ic"></i>Restore</button>
+          </form>
+          {% else %}
+          {% if sub_perms.create_npd %}<button type="button" class="act-btn npd" title="Create NPD Project" onclick="clientAction('create_npd', {{ c.id }}, this)"><i data-lucide="flask-conical" class="lucide-ic"></i></button>{% endif %}
+          {% if sub_perms.create_epd %}{% if sub_perms.create_epd %}<button type="button" class="act-btn epd" title="Create EPD Project" onclick="clientAction('create_epd', {{ c.id }}, this)"><i data-lucide="package" class="lucide-ic"></i></button>{% endif %}{% endif %}
+          {% if sub_perms.npd_quote %}<button type="button" class="act-btn quote" title="Send NPD Quote" onclick="clientAction('npd_quote', {{ c.id }}, this)"><i data-lucide="send" class="lucide-ic"></i></button>{% endif %}
+          {% if sub_perms.create_npd or sub_perms.create_epd or sub_perms.npd_quote %}<span class="act-sep"></span>{% endif %}
+          {% if perm and perm.can_view %}
+          <a href="{{ url_for('crm.client_view', id=c.id) }}" class="act-btn view" title="View"><i data-lucide="eye" class="lucide-ic"></i></a>
+          {% endif %}
+          {% if perm and perm.can_edit %}
+          <a href="{{ url_for('crm.client_edit', id=c.id) }}" class="act-btn edit" title="Edit"><i data-lucide="pencil" class="lucide-ic"></i></a>
+          {% endif %}
+          {% if perm and perm.can_delete %}
+          <form method="POST" action="{{ url_for('crm.client_delete', id=c.id) }}" onsubmit="return confirm('Move {{ c.contact_name }} to trash?')" style="display:inline;">
+            <button type="submit" class="act-btn del" title="Delete"><i data-lucide="trash-2" class="lucide-ic"></i></button>
+          </form>
+          {% endif %}
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="tbl-wrap">
+    <table id="clientsTable">
+      <thead>
+        <tr>
+          <th style="width:40px;"><input type="checkbox" class="row-cb" id="checkAll" onchange="toggleAll(this)"></th>
+          <th style="width:40px;">#</th>
+          {% for col in grid_cols %}
+          <th class="sortable" onclick="colSort(this,'{{ col }}')" style="cursor:pointer;">
+            <div style="display:flex; align-items:center; gap:5px;">
+              {{ all_cols.get(col, col) }}
+              <span class="sort-ic"><i data-lucide="chevrons-up-down" class="lucide-ic"></i></span>
+            </div>
+          </th>
+          {% endfor %}
+          <th style="width:230px; text-align:right;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in clients %}
+        <tr class="client-row" data-id="{{ c.id }}" data-search="{{ [c.contact_name, c.company_name or '', c.mobile or '', c.email or '', c.city or '', c.state or '']|join(' ')|lower }}">
+          <td><input type="checkbox" class="row-cb row-check-item" value="{{ c.id }}" onchange="updateBulkBtn()"></td>
+          <td style="color:var(--cl-light); font-weight:650;">{{ loop.index }}</td>
+
+          {% for col in grid_cols %}
+          {% if col == 'code' %}
+          <td><code>{{ c.code }}</code></td>
+          {% elif col == 'created_at' %}
+          <td style="color:var(--cl-muted);">{{ c.created_at.strftime('%d %b %Y') if c.created_at else '-' }}</td>
+          {% elif col == 'contact_name' %}
+          <td>
+            {% if perm and perm.can_view %}<a href="{{ url_for('crm.client_view', id=c.id) }}" class="entity-link">{{ c.contact_name }}</a>{% else %}<span style="font-weight:650;">{{ c.contact_name }}</span>{% endif %}
+          </td>
+          {% elif col == 'company_name' %}
+          <td style="color:var(--cl-muted); font-weight:500;">{{ c.company_name or '-' }}</td>
+          {% elif col == 'mobile' %}
+          <td>{{ c.mobile or '-' }}</td>
+          {% elif col == 'email' %}
+          <td style="color:var(--cl-muted);">{{ c.email or '-' }}</td>
+          {% elif col == 'city' %}
+          <td>{{ c.city or '-' }}</td>
+          {% elif col == 'state' %}
+          <td>{{ c.state or '-' }}</td>
+          {% elif col == 'gstin' %}
+          <td style="font-family:monospace; color:var(--cl-muted);">{{ c.gstin or '-' }}</td>
+          {% elif col == 'website' %}
+          <td>{% if c.website %}<a href="{{ c.website }}" target="_blank" style="color:var(--cl-accent);text-decoration:none;">{{ c.website|truncate(24) }}</a>{% else %}-{% endif %}</td>
+          {% elif col == 'brands' %}
+          <td>
+            <div style="display:flex;gap:4px;flex-wrap:wrap;">
+            {% for b in c.brands %}<span class="brand-tag">{{ b.brand_name }}</span>{% else %}<span style="color:var(--cl-muted);">-</span>{% endfor %}
+            </div>
+          </td>
+          {% elif col == 'status' %}
+          <td>
+            {% if c.status == 'active' %}
+              <span class="sbadge active">Active</span>
+            {% else %}
+              <span class="sbadge inactive">Inactive</span>
+            {% endif %}
+          </td>
+          {% endif %}
+          {% endfor %}
+
+          <td style="text-align:right;">
+            <div class="act-wrap">
+              {% if show_trash %}
+              <form method="POST" action="{{ url_for('crm.client_restore', id=c.id) }}" onsubmit="return confirm('Restore {{ c.contact_name }}?')" style="display:inline;">
+                <button type="submit" class="btn-restore" title="Restore Client"><i data-lucide="rotate-ccw" class="lucide-ic"></i>Restore</button>
+              </form>
+              {% else %}
+              {% if sub_perms.create_npd %}<button type="button" class="act-btn npd" title="Create NPD Project" onclick="clientAction('create_npd', {{ c.id }}, this)"><i data-lucide="flask-conical" class="lucide-ic"></i></button>{% endif %}
+              {% if sub_perms.create_epd %}{% if sub_perms.create_epd %}<button type="button" class="act-btn epd" title="Create EPD Project" onclick="clientAction('create_epd', {{ c.id }}, this)"><i data-lucide="package" class="lucide-ic"></i></button>{% endif %}{% endif %}
+              {% if sub_perms.npd_quote %}<button type="button" class="act-btn quote" title="Send NPD Quote" onclick="clientAction('npd_quote', {{ c.id }}, this)"><i data-lucide="send" class="lucide-ic"></i></button>{% endif %}
+              {% if sub_perms.create_npd or sub_perms.create_epd or sub_perms.npd_quote %}<span class="act-sep"></span>{% endif %}
+              {% if perm and perm.can_view %}
+              <a href="{{ url_for('crm.client_view', id=c.id) }}" class="act-btn view" title="View Client"><i data-lucide="eye" class="lucide-ic"></i></a>
+              {% endif %}
+              {% if perm and perm.can_edit %}
+              <a href="{{ url_for('crm.client_edit', id=c.id) }}" class="act-btn edit" title="Edit Client"><i data-lucide="pencil" class="lucide-ic"></i></a>
+              {% endif %}
+              {% if perm and perm.can_delete %}
+              <form method="POST" action="{{ url_for('crm.client_delete', id=c.id) }}" onsubmit="return confirm('Move {{ c.contact_name }} to trash?')" style="display:inline;">
+                <button type="submit" class="act-btn del" title="Delete Client"><i data-lucide="trash-2" class="lucide-ic"></i></button>
+              </form>
+              {% endif %}
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="{{ grid_cols|length + 3 }}">
+          <div class="cl-empty">
+            <i data-lucide="users" class="lucide-ic"></i>
+            <p>No clients found.</p>
+          </div>
+        </td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="grid-footer">
+    <div style="font-weight:550;">
+      Show <select id="rowCountSel" onchange="changeRowCount(this.value)"><option value="10">10</option><option value="25" selected>25</option><option value="50">50</option></select> rows &nbsp;|&nbsp; <span id="rowInfo"></span>
+    </div>
+    <div id="gridPgn" style="display:flex; gap:5px;"></div>
+  </div>
+</div>
+
+</div>
+
+<script>
+// ================================================================
+// NPD / EPD ACTION URLS - apne actual routes ke hisaab se yahan
+// sirf ye 3 lines adjust karo. {id} client id se replace hota hai.
+// ================================================================
+var NPD_ACTION_URLS = {
+  create_npd: '/npd/npd-projects?client_id={id}&action=create',
+  create_epd: '/npd/epd-projects?client_id={id}&action=create',
+  npd_quote:  '/crm/clients/{id}/send-npd-quote'
+};
+function clientAction(kind, id, btn){
+  var u = NPD_ACTION_URLS[kind];
+  if(!u){ alert('Action URL configured nahi hai: ' + kind); return; }
+  window.location.href = u.replace('{id}', id);
+}
+
+// ================================================================
+// EXPORT - FIX: doExport() pehle define hi nahi tha, isliye
+// Export button click pe kuch nahi hota tha. Current filters ke
+// saath export route open karta hai. Route alag ho to URL badlo.
+// ================================================================
+function doExport(){
+  var params = new URLSearchParams();
+  var ids = { search:'cl_search', city:'cl_city', state:'cl_state' };
+  Object.keys(ids).forEach(function(k){
+    var el = document.getElementById(ids[k]);
+    if(el && el.value && el.value.trim()) params.set(k, el.value.trim());
+  });
+  var sb = document.getElementById('cl_h_sort_by');
+  var sd = document.getElementById('cl_h_sort_dir');
+  if(sb && sb.value) params.set('sort_by', sb.value);
+  if(sd && sd.value) params.set('sort_dir', sd.value);
+  {% if show_trash %}params.set('trash','1');{% endif %}
+  window.open('/crm/clients/export' + (params.toString() ? '?' + params.toString() : ''), '_blank');
+}
+
+// -- Pagination --------------------------------------------------
+var _allRows, _page=1, _pageSize=25;
+document.addEventListener('DOMContentLoaded', function(){
+  _allRows = Array.from(document.querySelectorAll('#clientsTable tbody tr.client-row'));
+  _allRows.forEach(function(r){ r.style.display='table-row'; });
+  renderPage();
+  initMsLabels();
+  initSortUI();
+});
+function renderPage(){
+  var visible=_allRows.filter(function(r){return r.style.display!=='none'&&!r.classList.contains('search-hidden');});
+  var total=visible.length, pages=Math.max(1,Math.ceil(total/_pageSize));
+  _page=Math.min(_page,pages);
+  visible.forEach(function(r,i){ r.style.display=(i>=(_page-1)*_pageSize&&i<_page*_pageSize)?'table-row':'none'; });
+  var start=Math.min((_page-1)*_pageSize+1,total), end=Math.min(_page*_pageSize,total);
+  document.getElementById('rowInfo').textContent=total?'Showing '+start+'-'+end+' of '+total:'No records';
+  var pgn=document.getElementById('gridPgn'); pgn.innerHTML='';
+  if(pages<=1)return;
+  function addBtn(label,pg,active,disabled){var b=document.createElement('button');b.className='pgn-btn'+(active?' active':'');b.disabled=disabled;b.textContent=label;if(!disabled&&!active)b.onclick=function(){_page=pg;renderPage();};pgn.appendChild(b);}
+  addBtn('<',_page-1,false,_page===1);
+  var s2=Math.max(1,_page-2),e2=Math.min(pages,_page+2);
+  if(s2>1){addBtn('1',1,false,false);if(s2>2){var sp=document.createElement('span');sp.textContent='...';sp.style.cssText='padding:0 4px;color:var(--cl-light);font-size:12px;align-self:center;';pgn.appendChild(sp);}}
+  for(var p=s2;p<=e2;p++)addBtn(p,p,p===_page,false);
+  if(e2<pages){if(e2<pages-1){var sp2=document.createElement('span');sp2.textContent='...';sp2.style.cssText='padding:0 4px;color:var(--cl-light);font-size:12px;align-self:center;';pgn.appendChild(sp2);}addBtn(pages,pages,false,false);}
+  addBtn('>',_page+1,false,_page===pages);
+}
+function changeRowCount(v){ _pageSize=parseInt(v); _page=1; renderPage(); }
+
+// -- Global instant search --------------------------------------
+function gridGlobalSearch(q){
+  var lq=q.toLowerCase();
+  _allRows.forEach(function(r){var m=!lq||r.dataset.search.includes(lq);r.classList.toggle('search-hidden',!m);r.style.display=m?'table-row':'none';});
+  _page=1; renderPage();
+}
+
+// -- Column sort (header click - client side) --------------------
+var _sortDir={};
+function colSort(th,col){
+  var asc=_sortDir[col]!==true; _sortDir[col]=asc;
+  document.querySelectorAll('th.sortable').forEach(function(t){t.classList.remove('sort-asc','sort-desc');});
+  th.classList.add(asc?'sort-asc':'sort-desc');
+  var rows=Array.from(document.querySelectorAll('#clientsTable tbody tr.client-row'));
+  rows.sort(function(a,b){var av=(a.cells[_colIndex(th)]?a.cells[_colIndex(th)].innerText:'').trim(),bv=(b.cells[_colIndex(th)]?b.cells[_colIndex(th)].innerText:'').trim();return asc?av.localeCompare(bv,undefined,{numeric:true}):bv.localeCompare(av,undefined,{numeric:true});});
+  var tb=document.querySelector('#clientsTable tbody'); rows.forEach(function(r){tb.appendChild(r);});
+  _page=1; renderPage();
+}
+function _colIndex(th){ return Array.from(th.parentNode.children).indexOf(th); }
+
+// -- Bulk actions ------------------------------------------------
+function toggleAll(cb){ document.querySelectorAll('.row-check-item').forEach(function(c){c.checked=cb.checked;}); updateBulkBtn(); }
+function updateBulkBtn(){ var n=document.querySelectorAll('.row-check-item:checked').length; var btn=document.getElementById('bulkDeleteBtn'); if(btn){ btn.style.display=n>0?'inline-flex':'none'; } }
+function bulkDelete(){
+  var ids=Array.from(document.querySelectorAll('.row-check-item:checked')).map(function(c){return c.value;});
+  if(!ids.length)return; if(!confirm('Delete '+ids.length+' client(s)?'))return;
+  var btn=document.getElementById('bulkDeleteBtn'); if(btn){btn.disabled=true;btn.style.opacity='.6';}
+  fetch('/crm/clients/bulk-delete',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest'},
+    body:JSON.stringify({ids:ids})
+  }).then(function(r){
+    return r.json().catch(function(){ return {success:r.ok}; });
+  }).then(function(d){
+    if(d && d.success){ location.reload(); }
+    else{
+      alert('Delete failed: '+((d&&d.error)||'server error'));
+      if(btn){btn.disabled=false;btn.style.opacity='1';}
+    }
+  }).catch(function(){
+    alert('Delete failed: network/server error');
+    if(btn){btn.disabled=false;btn.style.opacity='1';}
+  });
+}
+
+// -- Filter/Sort panel toggle ------------------------------------
+function toggleFsTab(tab){
+  var fp=document.getElementById('fsPanelFilter_cl'), sp=document.getElementById('fsPanelSort_cl');
+  var fb=document.getElementById('fsTabFilter'), sb=document.getElementById('fsTabSort');
+  if(tab==='filter'){
+    var open=fp&&fp.style.display!=='none';
+    if(fp) fp.style.display=open?'none':'block';
+    if(sp) sp.style.display='none';
+    if(fb) fb.classList.toggle('active',!open);
+    if(sb) sb.classList.remove('active');
+  } else {
+    var open2=sp&&sp.style.display!=='none';
+    if(sp) sp.style.display=open2?'none':'block';
+    if(fp) fp.style.display='none';
+    if(sb) sb.classList.toggle('active',!open2);
+    if(fb) fb.classList.remove('active');
+  }
+}
+
+// -- Filter / Sort submit ----------------------------------------
+// FIX: map pehle galat IDs (cl_sort_by, cl_status_f) padh raha tha
+// jo page pe exist hi nahi karte the - isliye sort kabhi apply
+// nahi hota tha. Ab hidden form fields (cl_h_*) use hote hain.
+var _fsTimer=null;
+function fsDebounce(){ clearTimeout(_fsTimer); _fsTimer=setTimeout(fsSubmit,400); }
+function fsSubmit(){
+  var params=new URLSearchParams();
+  var map={search:'cl_search',city:'cl_city',state:'cl_state',status_f:'cl_h_status_f',sort_by:'cl_h_sort_by',sort_dir:'cl_h_sort_dir'};
+  Object.keys(map).forEach(function(k){
+    var el=document.getElementById(map[k]);
+    if(el&&el.value&&el.value.trim()) params.set(k,el.value.trim());
+  });
+  {% if show_trash %}params.set('trash','1');{% endif %}
+  window.location.href=window.location.pathname+(params.toString()?'?'+params.toString():'');
+}
+function fsSortBy(v){
+  var h=document.getElementById('cl_h_sort_by');
+  if(h) h.value=v;
+  fsSubmit();
+}
+function fsSetDir(dir){
+  var h=document.getElementById('cl_h_sort_dir');
+  if(h) h.value=dir;
+  document.querySelectorAll('.sort-dir-btn').forEach(function(b){b.classList.remove('active');});
+  var btn=document.getElementById('cl_sortDir'+dir.charAt(0).toUpperCase()+dir.slice(1));
+  if(btn) btn.classList.add('active');
+  fsSubmit();
+}
+// Current sort state ko UI mein reflect karo (page load pe)
+function initSortUI(){
+  var curBy='{{ sort_by or "created_at" }}';
+  var curDir='{{ sort_dir or "desc" }}';
+  var sel=document.getElementById('cl_sort_by_sel');
+  if(sel){
+    var has=Array.from(sel.options).some(function(o){return o.value===curBy;});
+    if(has) sel.value=curBy;
+  }
+  var btn=document.getElementById('cl_sortDir'+(curDir==='asc'?'Asc':'Desc'));
+  if(btn) btn.classList.add('active');
+}
+
+// -- Multi-select helpers ----------------------------------------
+function toggleMs(wrapId){
+  var all=document.querySelectorAll('.ms-wrap.open');
+  all.forEach(function(w){if(w.id!==wrapId)w.classList.remove('open');});
+  document.getElementById(wrapId).classList.toggle('open');
+}
+function msSearch(inp,wrapId){
+  var q=inp.value.toLowerCase();
+  document.querySelectorAll('#'+wrapId+' .ms-opt').forEach(function(opt){
+    opt.style.display=opt.querySelector('span').textContent.toLowerCase().includes(q)?'':'none';
+  });
+}
+function msChange(wrapId,hiddenId,defaultLabel){
+  var checked=Array.from(document.querySelectorAll('#'+wrapId+' .ms-options input:checked'));
+  var vals=checked.map(function(c){return c.value;});
+  var h=document.getElementById(hiddenId); if(h)h.value=vals.join(',');
+  var lbl=document.getElementById(wrapId+'_lbl');
+  if(lbl){
+    if(!vals.length){lbl.textContent=defaultLabel;lbl.classList.remove('has-val');}
+    else if(vals.length===1){lbl.textContent=checked[0].closest('.ms-opt').querySelector('span').textContent.trim();lbl.classList.add('has-val');}
+    else{lbl.textContent=vals.length+' selected';lbl.classList.add('has-val');}
+  }
+}
+function msSelectAll(wrapId,hiddenId,defaultLabel){
+  document.querySelectorAll('#'+wrapId+' .ms-options input').forEach(function(c){c.checked=true;});
+  msChange(wrapId,hiddenId,defaultLabel);
+}
+function msClearAll(wrapId,hiddenId,defaultLabel){
+  document.querySelectorAll('#'+wrapId+' .ms-options input').forEach(function(c){c.checked=false;});
+  var h=document.getElementById(hiddenId); if(h)h.value='';
+  var lbl=document.getElementById(wrapId+'_lbl'); if(lbl){lbl.textContent=defaultLabel;lbl.classList.remove('has-val');}
+  fsSubmit();
+}
+function closeMs(wrapId){
+  document.getElementById(wrapId).classList.remove('open');
+  fsSubmit();
+}
+function msRemoveOne(wrapId,hiddenId,val,defaultLabel){
+  var cb=document.querySelector('#'+wrapId+' .ms-options input[value="'+val+'"]');
+  if(cb)cb.checked=false;
+  msChange(wrapId,hiddenId,defaultLabel);
+  fsSubmit();
+}
+function chipClear(fieldId){ var el=document.getElementById(fieldId); if(el)el.value=''; fsSubmit(); }
+document.addEventListener('click',function(e){
+  if(!e.target.closest('.ms-wrap')&&!e.target.closest('.ms-trigger'))
+    document.querySelectorAll('.ms-wrap.open').forEach(function(w){w.classList.remove('open');});
+});
+// Init ms labels from current filter values
+function initMsLabels(){
+  var cfg=[
+    ['ms_cl_city','cl_city','All Cities'],
+    ['ms_cl_state','cl_state','All States'],
+    ['ms_cl_sf','cl_h_status_f','All Status']
+  ];
+  cfg.forEach(function(item){
+    var val=document.getElementById(item[1])?document.getElementById(item[1]).value:'';
+    if(val){
+      var vals=val.split(',').filter(Boolean);
+      var lbl=document.getElementById(item[0]+'_lbl');
+      if(lbl){
+        lbl.textContent=vals.length===1?vals[0]:vals.length+' selected';
+        lbl.classList.add('has-val');
+        vals.forEach(function(v){
+          var cb=document.querySelector('#'+item[0]+' .ms-options input[value="'+v+'"]');
+          if(cb)cb.checked=true;
+        });
+      }
+    }
+  });
+}
+
+// -- Column panel ------------------------------------------------
+function toggleColPanel(e){
+  e.stopPropagation();
+  var p=document.getElementById('colPanel');
+  p.style.display=p.style.display==='none'?'block':'none';
+}
+document.addEventListener('click',function(e){
+  var p=document.getElementById('colPanel');
+  if(p&&p.style.display!=='none'&&!p.contains(e.target)&&!e.target.closest('[onclick*="toggleColPanel"]'))
+    p.style.display='none';
+});
+function colChanged(){}
+function saveClientCols(){
+  var cols=Array.from(document.querySelectorAll('#colPanel input[type=checkbox]:checked')).map(function(c){return c.value;});
+  if(!cols.length){alert('Select at least 1 column.');return;}
+  fetch('/crm/clients/grid-config',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest'},
+    body:JSON.stringify({cols:cols})
+  }).then(function(r){return r.json();}).then(function(d){if(d.success)location.reload();});
+}
+
+// -- Lucide icons render --
+(function(){
+  function drawIcons(){ if(window.lucide && window.lucide.createIcons) window.lucide.createIcons({attrs:{'stroke-width':1.9}}); }
+  if(window.lucide){ drawIcons(); }
+  else{
+    var s=document.createElement('script');
+    s.src='https://unpkg.com/lucide@latest';
+    s.onload=drawIcons;
+    document.head.appendChild(s);
+  }
+})();
+</script>
+{% endblock %}

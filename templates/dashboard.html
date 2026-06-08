@@ -1,0 +1,274 @@
+    {% extends "base.html" %}
+    {% block title %}Home — HCP ERP{% endblock %}
+    {% block page_title %}Home{% endblock %}
+    {% block bread %}Home{% endblock %}
+
+    {% block extra_css %}
+    <style>
+    /* ═══════════════ HCP Portal Home — 2026 Bento Grid UI ═══════════════ */
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+    .home-wrap {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 30px 24px 80px;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    /* ── Hero Section (Ultra Clean) ── */
+    .hero-sec { margin-bottom: 48px; }
+    .greeting {
+        font-size: clamp(32px, 4vw, 42px);
+        font-weight: 800;
+        color: #09090b;
+        letter-spacing: -0.03em;
+        line-height: 1.1;
+        margin: 0 0 12px 0;
+    }
+    .greeting .nm {
+        background: linear-gradient(135deg, #4f46e5 0%, #ec4899 100%);
+        -webkit-background-clip: text; background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    .date-badge {
+        display: inline-flex; align-items: center; gap: 8px;
+        padding: 8px 16px; background: #ffffff;
+        border-radius: 100px; font-size: 14px; font-weight: 600;
+        color: #52525b; border: 1px solid #e4e4e7;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+
+    /* ── Section Headers ── */
+    .sec-wrap { margin-bottom: 40px; }
+    .sec-title {
+        font-size: 14px; font-weight: 800; color: #18181b;
+        display: flex; align-items: center; gap: 10px; margin-bottom: 20px;
+        text-transform: uppercase; letter-spacing: 0.1em;
+    }
+    .sec-title .indicator { width: 10px; height: 10px; border-radius: 50%; }
+
+    /* ── Bento Grid ── */
+    .bento-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+    }
+
+    /* ── 2026 Bento Card ── */
+    .b-card {
+        position: relative;
+        background: #ffffff;
+        border: 1px solid #e4e4e7;
+        border-radius: 28px; /* High radius for modern feel */
+        padding: 28px;
+        text-decoration: none;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.01);
+    }
+    .b-card:hover {
+        border-color: var(--card-color);
+        box-shadow: 0 20px 40px -10px rgba(0,0,0,0.08);
+        transform: translateY(-5px);
+    }
+
+    /* Hover Accent Gradient Line at Top */
+    .b-card::before {
+        content: ""; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+        background: var(--card-color); opacity: 0; transition: opacity 0.3s ease;
+    }
+    .b-card:hover::before { opacity: 1; }
+
+    /* Icon Area */
+    .bc-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
+    .bc-icon {
+        width: 54px; height: 54px; border-radius: 16px;
+        display: flex; align-items: center; justify-content: center; font-size: 24px;
+        background: var(--card-bg); color: var(--card-color);
+        transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .b-card:hover .bc-icon { transform: scale(1.15) rotate(5deg); }
+
+    /* Text Content */
+    .bc-cat { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.12em; color: #a1a1aa; margin-bottom: 10px; }
+    .bc-title { font-size: 19px; font-weight: 700; color: #09090b; margin: 0 0 10px 0; letter-spacing: -0.02em; }
+    .bc-desc { font-size: 14.5px; color: #71717a; line-height: 1.6; margin: 0; font-weight: 500; flex: 1; }
+
+    /* Micro-Interaction Arrow */
+    .bc-arrow {
+        position: absolute; bottom: 28px; right: 28px; width: 36px; height: 36px;
+        border-radius: 50%; background: #f4f4f5; display: flex; align-items: center; justify-content: center;
+        color: #a1a1aa; opacity: 0; transform: translate(-15px, 15px); transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+    .b-card:hover .bc-arrow { opacity: 1; transform: translate(0, 0); background: var(--card-color); color: #fff; }
+    /* Using basic SVG for arrow to ensure it always loads */
+    .bc-arrow svg { width: 16px; height: 16px; stroke-width: 2.5; }
+
+    /* Live Pulse Badge */
+    .bc-live {
+        display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px;
+        background: #ecfdf5; border-radius: 20px; border: 1px solid #d1fae5;
+        font-size: 12px; font-weight: 700; color: #059669;
+    }
+    .bc-live .pulse {
+        width: 6px; height: 6px; background: #10b981; border-radius: 50%;
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+        0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+        70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+        100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+
+    @media (max-width: 768px){
+        .bento-grid { grid-template-columns: 1fr; }
+        .b-card { padding: 24px; border-radius: 24px; }
+    }
+
+    /* 🟢 DARK MODE FIXES FOR HOME.HTML 🟢 */
+    [data-theme="dark"] .greeting,
+    [data-theme="dark"] .sec-title,
+    [data-theme="dark"] .bc-title {
+        color: var(--text-main) !important; /* White color for headings */
+    }
+
+    [data-theme="dark"] .date-badge {
+        background: var(--surface-color);
+        color: var(--text-muted);
+        border-color: var(--border-color);
+    }
+
+    [data-theme="dark"] .bc-desc,
+    [data-theme="dark"] .bc-cat,
+    [data-theme="dark"] .home-sub {
+        color: var(--text-muted) !important; /* Light grey for descriptions */
+    }
+
+    [data-theme="dark"] .b-card {
+        background: var(--surface-color) !important;
+        border-color: var(--border-color) !important;
+    }
+
+    [data-theme="dark"] .bc-arrow {
+        background: var(--border-color);
+        color: var(--text-main);
+    }
+    </style>
+    {% endblock %}
+
+    {% block content %}
+    {# ── permission flags ── #}
+    {% set role = current_user.role if current_user.is_authenticated else '' %}
+    {% set p_crm      = (get_perm('crm') and get_perm('crm').can_view and get_module_active('crm')) %}
+    {% set p_packing  = (get_perm('packing') and get_perm('packing').can_view and get_module_active('packing')) %}
+    {# Procurement cards — each category gated by its own module permission #}
+    {% set p_rm       = (role == 'admin' or (get_perm('purchase_rm') and get_perm('purchase_rm').can_view)) %}
+    {% set p_pm       = (role == 'admin' or (get_perm('purchase_pm') and get_perm('purchase_pm').can_view)) %}
+    {% set p_fg       = (role == 'admin' or (get_perm('purchase_fg') and get_perm('purchase_fg').can_view)) %}
+    {% set p_proc     = (role == 'admin' or (get_perm('procurement') and get_perm('procurement').can_view)) %}
+    {% set p_purchase = (p_rm or p_pm or p_fg or p_proc) %}
+    {% set p_qc       = (role == 'admin' or (get_perm('qc') and get_perm('qc').can_view)) %}
+    {% set p_rms      = (role == 'admin' or (get_perm('raw_material_sample') and get_perm('raw_material_sample').can_view)) %}
+    {% set p_rd       = (get_perm('rd') and get_perm('rd').can_view) %}
+    {% set p_npd      = ((get_perm('npd') and get_perm('npd').can_view) or role == 'admin') %}
+    {% set p_epd      = ((get_perm('epd') and get_perm('epd').can_view) or role == 'admin') %}
+    {% set p_hr       = (get_perm('hr') and get_perm('hr').can_view) %}
+    {% set p_masters  = (get_perm('masters') and get_perm('masters').can_view) %}
+    {% set p_admin    = (role == 'admin' or (get_perm('user_mgmt') and get_perm('user_mgmt').can_view)) %}
+
+    {# ── 2026 Macro Design ── #}
+    {% macro mcard(cat, title, desc, url, icon, color, bg, live=false) %}
+      <a class="b-card" href="{{ url }}" style="--card-color: {{ color }}; --card-bg: {{ bg }};">
+        <div class="bc-head">
+          <div class="bc-icon"><i class="bi {{ icon }}"></i></div>
+          {% if live %}
+          <div class="bc-live"><div class="pulse"></div>Live</div>
+          {% endif %}
+        </div>
+        <div class="bc-cat">{{ cat }}</div>
+        <h3 class="bc-title">{{ title }}</h3>
+        <p class="bc-desc">{{ desc }}</p>
+
+        <div class="bc-arrow">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
+        </div>
+      </a>
+    {% endmacro %}
+
+    <div class="home-wrap">
+
+      <div class="hero-sec">
+        <h1 class="greeting">Welcome, <span class="nm">{{ current_user.full_name or 'User' }}</span></h1>
+
+      </div>
+
+      {# ════ SALES ════ #}
+      {% if p_crm %}
+      <div class="sec-wrap">
+        <div class="sec-title"><div class="indicator" style="background:#06b6d4;"></div> Sales &amp; CRM</div>
+        <div class="bento-grid">
+          {{ mcard('SALES', 'CRM Dashboard', 'Manage leads, clients, quotations & leaderboard rankings.', '/crm/dashboard', 'bi-graph-up-arrow', '#06b6d4', '#ecfeff', true) }}
+        </div>
+      </div>
+      {% endif %}
+    
+      {# ════ OPERATIONS ════ #}
+      {% if p_packing or p_purchase or p_qc %}
+      <div class="sec-wrap">
+        <div class="sec-title"><div class="indicator" style="background:#3b82f6;"></div> Operations Hub</div>
+        <div class="bento-grid">
+          {% if p_packing %}{{ mcard('PACKING', 'Packing Entry', 'Sample receipt log with date, brand, product, batch & MRP details.', '/packing', 'bi-box-seam', '#f97316', '#ffedd5', true) }}{% endif %}
+          {% if p_rm %}{{ mcard('PROCUREMENT', 'Raw Material', 'RM item master, supplier directory, PO, GRN & live stock ledger.', '/material?item_type=RM', 'bi-droplet-half', '#3b82f6', '#eff6ff') }}{% endif %}
+          {% if p_pm %}{{ mcard('PROCUREMENT', 'Packing Material', 'PM item master, PO, GRN, Bill of Materials & stock.', '/material?item_type=PM', 'bi-archive', '#8b5cf6', '#f5f3ff') }}{% endif %}
+          {% if p_fg %}{{ mcard('PROCUREMENT', 'Finished Goods', 'Manage FG item master & live finished goods inventory.', '/material?item_type=FG', 'bi-check2-square', '#10b981', '#ecfdf5') }}{% endif %}
+          {% if p_proc %}{{ mcard('PROCUREMENT', 'Procurement', 'Shared setup: item masters, ship locations, PO terms & company settings.', '/material/masters', 'bi-sliders2', '#0d9488', '#f0fdfa') }}{% endif %}
+          {% if p_qc %}{{ mcard('QUALITY CONTROL', 'Quality Control(QC)', 'Review RM & PM TRS, approvals, COA & quality status tracking.', '/qc/dashboard', 'bi-clipboard2-check', '#0ea5e9', '#f0f9ff') }}{% endif %}
+        </div>
+      </div>
+      {% endif %}
+
+      {# ════ R&D / NPD / EPD ════ #}
+      {# NPD uses `npd` module, EPD uses `epd` module — fully independent permissions. #}
+      {% if p_rd or p_npd or p_epd %}
+      <div class="sec-wrap">
+        <div class="sec-title"><div class="indicator" style="background:#d946ef;"></div> Research &amp; Development</div>
+        <div class="bento-grid">
+          {% if p_rd %}{{ mcard('INNOVATION', 'R&D Labs', 'Track projects, trials, samples ready & log documentation.', '/rd/dashboard', 'bi-search-heart', '#f43f5e', '#fff1f2') }}{% endif %}
+          {% if p_npd %}{{ mcard('PRODUCT', 'NPD', 'New product development tracking, milestones, samples & fees.', '/npd/npd-dashboard', 'bi-lightbulb', '#eab308', '#fefce8') }}{% endif %}
+          {% if p_epd %}{{ mcard('PRODUCT', 'EPD', 'Existing product development projects & milestone tracking.', '/npd/epd-dashboard', 'bi-box-seam', '#059669', '#ecfdf5') }}{% endif %}
+        </div>
+      </div>
+      {% endif %}
+
+      {# ════ PEOPLE ════ #}
+      {% if p_hr %}
+      <div class="sec-wrap">
+        <div class="sec-title"><div class="indicator" style="background:#14b8a6;"></div> People & Team</div>
+        <div class="bento-grid">
+          {{ mcard('HUMAN RESOURCES', 'HR Management', 'Manage employees, contractors, live attendance & payroll.', '/hr/employees/dashboard', 'bi-people', '#ec4899', '#fdf2f8') }}
+        </div>
+      </div>
+      {% endif %}
+
+      {# ════ SETTINGS ════ #}
+      {% if p_masters or p_admin %}
+      <div class="sec-wrap">
+        <div class="sec-title"><div class="indicator" style="background:#64748b;"></div> System Settings</div>
+        <div class="bento-grid">
+          {% if p_masters %}{{ mcard('SETUP', 'Data Masters', 'Configure category, UOM & HSN code master data.', '/masters/category-master', 'bi-sliders2', '#6366f1', '#eef2ff') }}{% endif %}
+          {% if p_admin %}{{ mcard('ADMINISTRATION', 'Security & Admin', 'System approvals, user role permissions & audit logs.', 'admin/acp', 'bi-shield-lock', '#64748b', '#f8fafc') }}{% endif %}
+        </div>
+      </div>
+      {% endif %}
+
+    </div>
+
+    <script>
+    (function(){
+      var dt = document.getElementById('todayDate');
+      if (dt) dt.textContent = new Date().toLocaleDateString('en-IN', {weekday: 'long', day: 'numeric', month: 'short', year: 'numeric'});
+    })();
+    </script>
+    {% endblock %}

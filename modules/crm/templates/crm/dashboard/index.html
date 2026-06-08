@@ -1,0 +1,364 @@
+{% extends "base.html" %}
+{% block title %}CRM Dashboard{% endblock %}
+{% block page_title %}CRM Dashboard{% endblock %}
+{% block bread %}CRM / Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+.main{ background:
+  radial-gradient(120% 55% at 0% 0%, #f3f0fc 0%, rgba(243,240,252,0) 55%),
+  radial-gradient(120% 60% at 100% 20%, #fdeef4 0%, rgba(253,238,244,0) 50%),
+  #f7f7fb !important; }
+.dash{ max-width:1700px; margin:0 auto; padding:8px 4px 50px; color:#1e1b2e; }
+
+/* header */
+.dh{ display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:12px; margin:2px 0 20px; }
+.dh-title{ font-size:23px; font-weight:800; letter-spacing:-.025em; margin:0; }
+.dh-sub{ font-size:13px; color:#9b95a6; margin-top:3px; }
+.dh-tools{ display:flex; gap:9px; align-items:center; flex-wrap:wrap; }
+.dh-pill{ display:inline-flex; align-items:center; gap:8px; background:#fff; border:1px solid #e8e6ef; border-radius:11px; padding:8px 13px; font-size:12.5px; font-weight:600; color:#4a4560; text-decoration:none; }
+.dh-pill .bi{ color:#8b86a0; }
+.dh-primary{ background:linear-gradient(135deg,#7c3aed,#6366f1); color:#fff; border:none; box-shadow:0 7px 18px rgba(99,102,241,.30); }
+.dh-select{ font-family:'Inter',sans-serif; font-size:13px; font-weight:600; color:#4a4560; background:#fff; border:1px solid #e8e6ef; border-radius:11px; padding:9px 30px 9px 13px; cursor:pointer; appearance:none; -webkit-appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%239b95a6' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 12px center; }
+.dh-date{ font-family:'Inter',sans-serif; font-size:12.5px; color:#4a4560; background:#fff; border:1px solid #e8e6ef; border-radius:10px; padding:8px 10px; }
+.kpi{ cursor:pointer; text-decoration:none; }
+.kpi:hover{ box-shadow:0 10px 24px rgba(76,29,149,.12); transform:translateY(-2px); transition:transform .15s, box-shadow .15s; }
+
+/* cards shared */
+.panel{ background:#fff; border:1px solid #efeef3; border-radius:18px; box-shadow:0 2px 12px rgba(30,27,46,.04); padding:18px 18px 16px; }
+.panel-h{ display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+.panel-t{ font-size:15px; font-weight:700; letter-spacing:-.01em; }
+.mini-sel{ font-size:11.5px; color:#8b86a0; border:1px solid #ececf2; border-radius:8px; padding:4px 9px; background:#fafafe; }
+
+/* KPI row */
+.kpi-grid{ display:grid; grid-template-columns:repeat(6,1fr); gap:14px; margin-bottom:16px; }
+.kpi{ background:#fff; border:1px solid #efeef3; border-radius:16px; padding:15px 16px; display:flex; align-items:center; gap:13px; box-shadow:0 2px 12px rgba(30,27,46,.04); }
+.kpi-ic{ width:44px; height:44px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:19px; }
+.kpi-l{ font-size:11px; font-weight:600; color:#9b95a6; }
+.kpi-n{ font-size:23px; font-weight:800; letter-spacing:-.02em; line-height:1.15; }
+.k-lav{background:#f1edfe;color:#7c3aed;} .k-blue{background:#e7f0fe;color:#2563eb;} .k-green{background:#e7f8ef;color:#16a34a;} .k-amber{background:#fef3e2;color:#ea580c;} .k-pink{background:#fde9f3;color:#db2777;} .k-rose{background:#fde7ea;color:#e11d48;}
+
+/* layout rows */
+.row3{ display:grid; grid-template-columns:1fr 1.25fr 1fr; gap:16px; margin-bottom:16px; }
+.row3b{ display:grid; grid-template-columns:1fr 1.1fr 1.1fr; gap:16px; margin-bottom:16px; }
+.quick-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+
+/* funnel */
+.fn{ display:flex; gap:16px; }
+.fn-bars{ flex:1; display:flex; flex-direction:column; align-items:center; gap:7px; padding-top:4px; }
+.fn-bar{ height:30px; border-radius:7px; min-width:36%; display:flex; align-items:center; justify-content:center; color:#fff; font-size:11.5px; font-weight:700; }
+.fn-leg{ flex:1; display:flex; flex-direction:column; gap:9px; justify-content:center; }
+.fn-li{ display:flex; align-items:center; gap:8px; font-size:12.5px; }
+.fn-dot{ width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+.fn-li .nm{ color:#3a3550; font-weight:600; }
+.fn-li .vl{ margin-left:auto; color:#9b95a6; font-weight:600; }
+
+/* donut legend */
+.dn-wrap{ display:flex; align-items:center; gap:14px; }
+.dn-c{ width:150px; height:150px; flex-shrink:0; position:relative; }
+.dn-c canvas{ position:absolute; inset:0; width:100%!important; height:100%!important; }
+.line-box{ position:relative; height:170px; width:100%; }
+.bar-box{ position:relative; height:240px; width:100%; }
+.line-box canvas{ position:absolute; inset:0; width:100%!important; height:100%!important; }
+.dn-center{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+.dn-center .big{ font-size:20px; font-weight:800; } .dn-center .sm{ font-size:10.5px; color:#9b95a6; }
+.dn-leg{ flex:1; display:flex; flex-direction:column; gap:8px; }
+.dn-li{ display:flex; align-items:center; gap:8px; font-size:12px; }
+.dn-li .nm{ color:#3a3550; font-weight:600; } .dn-li .vl{ margin-left:auto; color:#9b95a6; }
+
+/* agents */
+.ag{ display:flex; align-items:center; gap:11px; margin-bottom:13px; }
+.ag-av{ width:34px; height:34px; border-radius:50%; flex-shrink:0; background:linear-gradient(135deg,#7c3aed,#6366f1); color:#fff; font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center; }
+.ag-mid{ flex:1; min-width:0; }
+.ag-nm{ font-size:12.5px; font-weight:600; color:#2a2640; }
+.ag-track{ height:6px; background:#f1eff6; border-radius:6px; margin-top:5px; overflow:hidden; }
+.ag-fill{ height:100%; border-radius:6px; background:linear-gradient(90deg,#8b5cf6,#6366f1); }
+.ag-val{ font-size:12.5px; font-weight:700; color:#2a2640; white-space:nowrap; }
+
+/* activities */
+.act{ display:flex; gap:11px; margin-bottom:14px; }
+.act-ic{ width:32px; height:32px; border-radius:9px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:14px; background:#eef7f0; color:#16a34a; }
+.act-b{ flex:1; min-width:0; }
+.act-t{ font-size:12.5px; font-weight:700; color:#2a2640; }
+.act-d{ font-size:11.5px; color:#9b95a6; }
+.act-w{ font-size:10.5px; color:#b7b2c2; white-space:nowrap; }
+
+/* quick cards */
+.qk{ background:#fff; border:1px solid #efeef3; border-radius:16px; padding:15px 16px; box-shadow:0 2px 12px rgba(30,27,46,.04); }
+.qk-top{ display:flex; align-items:center; gap:11px; }
+.qk-ic{ width:40px; height:40px; border-radius:11px; display:flex; align-items:center; justify-content:center; font-size:17px; }
+.qk-l{ font-size:11.5px; color:#9b95a6; font-weight:600; } .qk-n{ font-size:21px; font-weight:800; letter-spacing:-.02em; }
+.qk-link{ font-size:11.5px; font-weight:600; color:#6d5fe6; text-decoration:none; margin-top:10px; display:inline-block; }
+.qk-link:hover{ text-decoration:underline; }
+
+@media(max-width:1100px){ .kpi-grid{grid-template-columns:repeat(2,1fr)} .row3,.row3b{grid-template-columns:1fr} .quick-grid{grid-template-columns:repeat(2,1fr)} }
+@media(max-width:560px){ .kpi-grid,.quick-grid{grid-template-columns:1fr} }
+</style>
+{% endblock %}
+
+{% block content %}
+{% set analytics = analytics if analytics is defined else {} %}
+{% set kpi = analytics.get('kpi', {}) %}
+{% set pipeline = analytics.get('pipeline', []) %}
+{% set agents = analytics.get('agents', []) %}
+{% set recent = analytics.get('recent', []) %}
+{% set deal_status = analytics.get('deal_status', []) %}
+{% set fname = (current_user.full_name or 'there').split()[0] %}
+{% set amax = (agents|map(attribute='value')|max) if agents else 1 %}
+{% set src_total = (analytics.get('sources', [])|sum(attribute='value')) or 0 %}
+{% set range_total = (analytics.get('product_range', [])|sum(attribute='value')) or 0 %}
+{% set deal_total = (deal_status|sum(attribute='value')) or 0 %}
+
+<div class="dash">
+
+  <!-- HEADER -->
+  <div class="dh">
+    <div>
+      <h1 class="dh-title">CRM Dashboard</h1>
+      <div class="dh-sub">Welcome back, {{ fname }}! Here's what's happening with your CRM.</div>
+    </div>
+    <div class="dh-tools">
+      <select id="periodSel" class="dh-select" onchange="onPeriodChange()">
+        <option value="all"          {{ 'selected' if period=='all' else '' }}>All Time</option>
+        <option value="today"        {{ 'selected' if period=='today' else '' }}>Today</option>
+        <option value="yesterday"    {{ 'selected' if period=='yesterday' else '' }}>Yesterday</option>
+        <option value="last_7_days"  {{ 'selected' if period=='last_7_days' else '' }}>Last 7 Days</option>
+        <option value="last_30_days" {{ 'selected' if period=='last_30_days' else '' }}>Last 30 Days</option>
+        <option value="custom"       {{ 'selected' if period=='custom' else '' }}>Custom Date</option>
+      </select>
+      <span id="customRange" style="display:{{ 'inline-flex' if period=='custom' else 'none' }}; gap:6px; align-items:center;">
+        <input type="date" id="dFrom" class="dh-date" value="{{ cust_from }}">
+        <span style="color:#9b95a6;">–</span>
+        <input type="date" id="dTo" class="dh-date" value="{{ cust_to }}">
+        <button type="button" class="dh-pill dh-primary" onclick="applyCustom()" style="cursor:pointer;">Apply</button>
+      </span>
+    </div>
+  </div>
+
+  <!-- KPI ROW -->
+  <div class="kpi-grid">
+    <a class="kpi" href="/crm/leads"><div class="kpi-ic k-lav"><i class="bi bi-people-fill"></i></div><div><div class="kpi-l">Total Leads</div><div class="kpi-n">{{ "{:,}".format(lead_counts.get('total',0)) }}</div></div></a>
+    <a class="kpi" href="/crm/leads?status=open"><div class="kpi-ic k-blue"><i class="bi bi-briefcase-fill"></i></div><div><div class="kpi-l">Open Leads</div><div class="kpi-n">{{ "{:,}".format(lead_counts.get('open',0) + lead_counts.get('in_process',0)) }}</div></div></a>
+    <a class="kpi" href="/crm/leads?status=close"><div class="kpi-ic k-green"><i class="bi bi-trophy-fill"></i></div><div><div class="kpi-l">Closed Leads</div><div class="kpi-n">{{ "{:,}".format(lead_counts.get('close',0)) }}</div></div></a>
+    <a class="kpi" href="/crm/leads?status=cancel"><div class="kpi-ic k-rose"><i class="bi bi-x-octagon-fill"></i></div><div><div class="kpi-l">Cancelled Leads</div><div class="kpi-n">{{ "{:,}".format(lead_counts.get('cancel',0)) }}</div></div></a>
+    <a class="kpi" href="/crm/leads?status=close"><div class="kpi-ic k-amber"><i class="bi bi-currency-rupee"></i></div><div><div class="kpi-l">Total Revenue</div><div class="kpi-n">&#8377;0</div></div></a>
+    <a class="kpi" href="/crm/leads"><div class="kpi-ic k-pink"><i class="bi bi-pie-chart-fill"></i></div><div><div class="kpi-l">Conversion Rate</div><div class="kpi-n">{{ ((lead_counts.get('close',0) / lead_counts.get('total',1) * 100)|round(1)) if lead_counts.get('total',0) else 0 }}%</div></div></a>
+  </div>
+
+  <!-- ROW: Leads over time · Product range · Quality · NPD vs EPD -->
+  <div class="row3" style="grid-template-columns:1.4fr 1fr 1fr 1fr;">
+    <div class="panel">
+      <div class="panel-h"><span class="panel-t">Leads Over Time</span><span class="mini-sel">Last 7 days</span></div>
+      <div class="line-box"><canvas id="leadsLine"></canvas></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-h"><span class="panel-t">Product Range</span></div>
+      <div class="dn-wrap">
+        <div class="dn-c"><canvas id="rangeDonut"></canvas><div class="dn-center"><span class="big">{{ "{:,}".format(range_total) }}</span><span class="sm">Total</span></div></div>
+        <div class="dn-leg">
+          {% for r in analytics.get('product_range', []) %}<div class="dn-li"><span class="fn-dot" style="background:{{ r.color }}"></span><span class="nm">{{ r.label }}</span><span class="vl">{{ ((r.value/range_total*100)|round)|int if range_total else 0 }}% ({{ r.value }})</span></div>{% endfor %}
+          {% if not analytics.get('product_range') %}<div class="dn-li"><span class="nm" style="color:#b7b2c2">No product range data yet</span></div>{% endif %}
+        </div>
+      </div>
+    </div>
+
+    {% set ltype = analytics.get('lead_type', []) %}
+    {% set ltype_total = (ltype|sum(attribute='value')) or 0 %}
+    <div class="panel">
+      <div class="panel-h"><span class="panel-t">Quality vs Non-Quality</span></div>
+      <div class="dn-wrap">
+        <div class="dn-c"><canvas id="qualDonut"></canvas><div class="dn-center"><span class="big">{{ "{:,}".format(ltype_total) }}</span><span class="sm">Total</span></div></div>
+        <div class="dn-leg">
+          {% for q in ltype %}<div class="dn-li"><span class="fn-dot" style="background:{{ q.color }}"></span><span class="nm">{{ q.label }}</span><span class="vl">{{ ((q.value/ltype_total*100)|round)|int if ltype_total else 0 }}% ({{ q.value }})</span></div>{% endfor %}
+          {% if not ltype_total %}<div class="dn-li"><span class="nm" style="color:#b7b2c2">No lead-type data yet</span></div>{% endif %}
+        </div>
+      </div>
+    </div>
+
+    {% set ne = analytics.get('npd_epd', []) %}
+    {% set ne_total = (ne|sum(attribute='value')) or 0 %}
+    <div class="panel">
+      <div class="panel-h"><span class="panel-t">NPD vs EPD Leads</span></div>
+      <div class="dn-wrap">
+        <div class="dn-c"><canvas id="npdDonut"></canvas><div class="dn-center"><span class="big">{{ "{:,}".format(ne_total) }}</span><span class="sm">Total</span></div></div>
+        <div class="dn-leg">
+          {% for x in ne %}<div class="dn-li"><span class="fn-dot" style="background:{{ x.color }}"></span><span class="nm">{{ x.label }}</span><span class="vl">{{ ((x.value/ne_total*100)|round)|int if ne_total else 0 }}% ({{ x.value }})</span></div>{% endfor %}
+          {% if not ne_total %}<div class="dn-li"><span class="nm" style="color:#b7b2c2">No NPD/EPD data yet</span></div>{% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROW: Source Wise · Category Wise · Last 7 Days (bar charts) -->
+  <div class="row3" style="grid-template-columns:1fr 1fr 1fr;">
+    <div class="panel">
+      <div class="panel-h"><span class="panel-t">Source Wise</span></div>
+      <div class="bar-box"><canvas id="srcBar"></canvas></div>
+    </div>
+    <div class="panel">
+      <div class="panel-h"><span class="panel-t">Category Wise</span></div>
+      <div class="bar-box"><canvas id="catBar"></canvas></div>
+    </div>
+    <div class="panel">
+      <div class="panel-h"><span class="panel-t">Last 7 Days</span></div>
+      <div class="bar-box"><canvas id="weekBar"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ROW: Deal status · Top agents · Recent activities -->
+  <div class="row3b">
+    <div class="panel">
+      <div class="panel-h"><span class="panel-t">Deal Status</span></div>
+      <div class="dn-wrap">
+        <div class="dn-c"><canvas id="dealDonut"></canvas><div class="dn-center"><span class="big">{{ "{:,}".format(deal_total) }}</span><span class="sm">Total Deals</span></div></div>
+        <div class="dn-leg">
+          {% for d in deal_status %}<div class="dn-li"><span class="fn-dot" style="background:{{ d.color }}"></span><span class="nm">{{ d.label }}</span><span class="vl">{{ ((d.value/deal_total*100)|round)|int if deal_total else 0 }}% ({{ d.value }})</span></div>{% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-h"><span class="panel-t">Top Performing Agents</span></div>
+      {% for a in agents %}
+      <div class="ag">
+        <div class="ag-av">{{ (a.name or 'U')[0]|upper }}</div>
+        <div class="ag-mid"><div class="ag-nm">{{ a.name }}</div><div class="ag-track"><div class="ag-fill" style="width:{{ ((a.value/amax*100)|round)|int if amax else 0 }}%"></div></div></div>
+        <div class="ag-val">&#8377;{{ "{:,.0f}".format(a.value) }}</div>
+      </div>
+      {% endfor %}
+      {% if not agents %}<div style="font-size:12.5px;color:#b7b2c2;padding:8px 0;">No assigned-lead data yet.</div>{% endif %}
+    </div>
+
+    <div class="panel">
+      <div class="panel-h"><span class="panel-t">Recent Activities</span></div>
+      {% for a in recent %}
+      <div class="act">
+        <div class="act-ic"><i class="bi bi-plus-circle-fill"></i></div>
+        <div class="act-b"><div class="act-t">{{ a.title }}</div><div class="act-d">{{ a.desc }}</div></div>
+        <div class="act-w">{{ a.when.strftime('%d %b %H:%M') if a.when else '' }}</div>
+      </div>
+      {% endfor %}
+      {% if not recent %}<div style="font-size:12.5px;color:#b7b2c2;padding:8px 0;">No recent activity.</div>{% endif %}
+    </div>
+  </div>
+
+  <!-- QUICK CARDS -->
+  <div class="quick-grid">
+    <div class="qk"><div class="qk-top"><div class="qk-ic k-lav"><i class="bi bi-telephone"></i></div><div><div class="qk-l">Pending Follow-ups</div><div class="qk-n">{{ analytics.get('pending_followups',0) }}</div></div></div><a class="qk-link" href="/crm/leads">View follow-ups &rarr;</a></div>
+    <div class="qk"><div class="qk-top"><div class="qk-ic k-green"><i class="bi bi-person-plus"></i></div><div><div class="qk-l">Unassigned Leads</div><div class="qk-n">{{ analytics.get('unassigned_leads',0) }}</div></div></div><a class="qk-link" href="/crm/leads">View leads &rarr;</a></div>
+    <div class="qk"><div class="qk-top"><div class="qk-ic k-blue"><i class="bi bi-link-45deg"></i></div><div><div class="qk-l">Leads Linked with Client</div><div class="qk-n">{{ analytics.get('leads_with_client',0) }}</div></div></div><a class="qk-link" href="/crm/clients">View clients &rarr;</a></div>
+  </div>
+
+</div>
+
+<script id="crm-data" type="application/json">{{ {'week': analytics.get('week', []), 'sources': analytics.get('sources', []), 'deal_status': analytics.get('deal_status', []), 'categories': analytics.get('categories', []), 'lead_type': analytics.get('lead_type', []), 'product_range': analytics.get('product_range', []), 'npd_epd': analytics.get('npd_epd', [])} | tojson }}</script>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function onPeriodChange(){
+  var v = document.getElementById('periodSel').value;
+  if (v === 'custom'){ document.getElementById('customRange').style.display = 'inline-flex'; return; }
+  window.location = '/crm/dashboard?period=' + encodeURIComponent(v);
+}
+function applyCustom(){
+  var f = document.getElementById('dFrom').value, t = document.getElementById('dTo').value;
+  var u = '/crm/dashboard?period=custom';
+  if (f) u += '&from=' + encodeURIComponent(f);
+  if (t) u += '&to='   + encodeURIComponent(t);
+  window.location = u;
+}
+// Link the two date pickers: "To" cannot be earlier than "From"
+function linkCrmDates(tries){
+  tries = tries || 0;
+  var fromEl = document.getElementById('dFrom');
+  var toEl   = document.getElementById('dTo');
+  if (!fromEl || !toEl) return;
+  var fpFrom = fromEl._flatpickr, fpTo = toEl._flatpickr;
+  if (!fpFrom || !fpTo){ if (tries < 30) setTimeout(function(){ linkCrmDates(tries+1); }, 100); return; }
+  // apply on initial load if a from-date is already chosen
+  if (fpFrom.selectedDates && fpFrom.selectedDates[0]) fpTo.set('minDate', fpFrom.selectedDates[0]);
+  // hook future changes
+  try { fpFrom.config.onChange.push(function(sel){ if (sel[0]) fpTo.set('minDate', sel[0]); }); }
+  catch(e){ fpFrom.set('onChange', function(sel){ if (sel[0]) fpTo.set('minDate', sel[0]); }); }
+}
+document.addEventListener('DOMContentLoaded', function(){ linkCrmDates(0); });
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+(function(){
+  var data = {};
+  try { data = JSON.parse(document.getElementById('crm-data').textContent || '{}'); } catch(e){ data = {}; }
+  if (typeof Chart === 'undefined') return;
+  Chart.defaults.font.family = "'Inter', sans-serif";
+  Chart.defaults.plugins.legend.display = false;
+
+  // Leads over time — area line
+  var wk = data.week || [];
+  var lc = document.getElementById('leadsLine');
+  if (lc) {
+    var ctx = lc.getContext('2d');
+    var g = ctx.createLinearGradient(0,0,0,150);
+    g.addColorStop(0,'rgba(124,58,237,.28)'); g.addColorStop(1,'rgba(124,58,237,0)');
+    new Chart(ctx, { type:'line', data:{ labels: wk.map(function(d){return d.day;}),
+      datasets:[{ data: wk.map(function(d){return d.count;}), borderColor:'#7c3aed', backgroundColor:g,
+        fill:true, tension:.4, pointRadius:3, pointBackgroundColor:'#7c3aed', borderWidth:2 }]},
+      options:{ responsive:true, maintainAspectRatio:false,
+        scales:{ y:{ beginAtZero:true, grid:{color:'#f1eff6'}, ticks:{color:'#b7b2c2',font:{size:10}} },
+                 x:{ grid:{display:false}, ticks:{color:'#b7b2c2',font:{size:10}} } } } });
+  }
+
+  function donut(id, arr){
+    var el = document.getElementById(id); if(!el) return;
+    new Chart(el, { type:'doughnut',
+      data:{ labels: arr.map(function(x){return x.label;}),
+        datasets:[{ data: arr.map(function(x){return x.value;}),
+          backgroundColor: arr.map(function(x){return x.color;}), borderWidth:0, cutout:'70%' }]},
+      options:{ responsive:true, maintainAspectRatio:false } });
+  }
+  donut('rangeDonut', data.product_range || []);
+  donut('dealDonut', data.deal_status || []);
+  donut('qualDonut', data.lead_type || []);
+  donut('npdDonut', data.npd_epd || []);
+
+  var noGrid = { grid:{display:false}, ticks:{color:'#9b95a6',font:{size:10}} };
+  var yGrid  = { beginAtZero:true, grid:{color:'#f1eff6'}, ticks:{color:'#9b95a6',font:{size:10},precision:0} };
+
+  // Source Wise — vertical bars (per-source colour)
+  var sb = document.getElementById('srcBar');
+  if (sb) {
+    var src = data.sources || [];
+    new Chart(sb, { type:'bar',
+      data:{ labels: src.map(function(x){return x.label;}),
+        datasets:[{ data: src.map(function(x){return x.value;}),
+          backgroundColor: src.map(function(x){return x.color || '#3b82f6';}),
+          borderRadius:5, maxBarThickness:46 }]},
+      options:{ responsive:true, maintainAspectRatio:false,
+        scales:{ y:yGrid, x:noGrid } } });
+  }
+
+  // Category Wise — horizontal bars
+  var cb = document.getElementById('catBar');
+  if (cb) {
+    var cat = data.categories || [];
+    new Chart(cb, { type:'bar', data:{ labels: cat.map(function(x){return x.label;}),
+        datasets:[{ data: cat.map(function(x){return x.value;}),
+          backgroundColor:'#7c3aed', borderRadius:5, maxBarThickness:22 }]},
+      options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false,
+        scales:{ x:yGrid, y:{ grid:{display:false}, ticks:{color:'#6b6679',font:{size:11}} } } } });
+  }
+
+  // Last 7 Days — vertical bars
+  var wb = document.getElementById('weekBar');
+  if (wb) {
+    var wkb = data.week || [];
+    new Chart(wb, { type:'bar', data:{ labels: wkb.map(function(d){return d.dow || d.day;}),
+        datasets:[{ data: wkb.map(function(d){return d.count;}),
+          backgroundColor:'#10b981', borderRadius:5, maxBarThickness:38 }]},
+      options:{ responsive:true, maintainAspectRatio:false,
+        scales:{ y:yGrid, x:noGrid } } });
+  }
+})();
+</script>
+{% endblock %}

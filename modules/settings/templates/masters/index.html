@@ -1,0 +1,254 @@
+{% extends "base.html" %}
+{% block title %}Lead Masters{% endblock %}
+{% block page_title %}Lead Masters{% endblock %}
+{% block bread %}CRM / Masters{% endblock %}
+
+{% block extra_css %}
+<style>
+:root {
+    --premium-bg: #f8fafc;
+    --card-bg: #ffffff;
+    --text-main: #0f172a;
+    --text-muted: #475569;
+    --text-light: #94a3b8;
+    --border-soft: #e2e8f0;
+    --border-lighter: #f1f5f9;
+    --primary: #2563eb;
+    --primary-hover: #1d4ed8;
+    --primary-light: #eff6ff;
+    --danger: #dc2626;
+    --danger-bg: #fef2f2;
+    --success: #10b981;
+    --success-bg: #ecfdf5;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-pill: 9999px;
+    --shadow-soft: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.03);
+}
+
+* { box-sizing: border-box; }
+svg { flex-shrink: 0; }
+.lucide-ic, .lucide-ic svg { width:1em; height:1em; vertical-align:-0.125em; }
+
+/* == Header == */
+.page-hdr {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 2rem; flex-wrap: wrap; gap: 16px;
+}
+.hdr-left { display: flex; align-items: center; gap: 16px; }
+.hdr-icon {
+    width: 48px; height: 48px; background: var(--primary-light); color: var(--primary);
+    border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center;
+    border: 1px solid #bfdbfe; flex-shrink: 0; font-size: 1.3rem;
+}
+.hdr-info h1 {
+    font-size: 1.5rem; font-weight: 800; color: var(--text-main);
+    letter-spacing: -0.03em; margin: 0 0 4px 0;
+}
+.hdr-info p { color: var(--text-muted); font-size: 0.9rem; font-weight: 500; margin: 0; }
+
+.btn-outline {
+    display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+    padding: 9px 18px; border-radius: var(--radius-pill); font-size: 0.85rem; font-weight: 650;
+    background: #fff; border: 1.5px solid var(--border-soft); color: var(--text-main);
+    text-decoration: none; transition: all 0.18s; box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    white-space: nowrap;
+}
+.btn-outline .lucide-ic { color: var(--text-muted); transition: color .18s; }
+.btn-outline:hover {
+    background: var(--primary-light); border-color: #bfdbfe; color: var(--primary-hover);
+    transform: translateX(-2px);
+}
+.btn-outline:hover .lucide-ic { color: var(--primary-hover); }
+
+/* == Main Grid == */
+.master-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; align-items: start; }
+
+/* == Cards == */
+.master-card {
+    background: var(--card-bg); border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-soft); border: 1px solid var(--border-soft);
+    overflow: hidden; display: flex; flex-direction: column;
+}
+.master-card-hdr {
+    padding: 16px 20px; display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid var(--border-soft); background: #f8fafc;
+}
+.hdr-title-wrap { display: flex; align-items: center; gap: 10px; }
+.hdr-svg-box { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: #fff; border: 1px solid var(--border-soft); }
+.master-hdr-title { font-size: 1.05rem; font-weight: 800; color: var(--text-main); }
+.item-count { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; background: var(--premium-bg); padding: 4px 10px; border-radius: var(--radius-pill); border: 1px solid var(--border-soft); }
+
+/* == List Rows == */
+.master-list-body { flex: 1; min-height: 200px; display: flex; flex-direction: column; }
+.master-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 20px; border-bottom: 1px solid var(--border-lighter);
+    transition: background 0.2s;
+}
+.master-row:hover { background: #f8fbff; }
+.master-row.inactive { opacity: 0.6; }
+.master-row.inactive .master-name { text-decoration: line-through; color: var(--text-light); }
+.color-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1); }
+.master-icon { width: 28px; height: 28px; border-radius: 6px; background: var(--premium-bg); display: flex; align-items: center; justify-content: center; font-size: 0.9rem; color: var(--text-muted); border: 1px solid var(--border-soft); }
+.master-name { flex: 1; font-size: 0.9rem; font-weight: 700; color: var(--text-main); }
+.master-order { font-size: 0.75rem; color: var(--text-light); font-weight: 600; font-family: 'JetBrains Mono', monospace; }
+
+/* == Premium Action Buttons == */
+.row-actions { display: flex; gap: 7px; opacity: 0; transform: translateX(4px); transition: opacity .18s, transform .18s; }
+.master-row:hover .row-actions { opacity: 1; transform: translateX(0); }
+.row-btn {
+    width: 30px; height: 30px; border-radius: 9px;
+    display: inline-flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.15s; padding: 0;
+    font-size: 0.85rem;
+}
+.row-btn:active { transform: scale(.9); }
+.row-btn-edit {
+    background: var(--primary-light); color: var(--primary-hover);
+    border: 1px solid #bfdbfe;
+}
+.row-btn-edit:hover { background: #dbeafe; border-color: #93c5fd; box-shadow: 0 2px 6px rgba(37,99,235,.2); }
+.row-btn-del {
+    background: var(--danger-bg); color: var(--danger);
+    border: 1px solid #fecaca;
+}
+.row-btn-del:hover { background: #fee2e2; border-color: #fca5a5; box-shadow: 0 2px 6px rgba(220,38,38,.2); }
+.row-btn-toggle { background: var(--premium-bg); color: var(--text-muted); border: 1px solid var(--border-soft); }
+.row-btn-toggle:hover { background: var(--border-lighter); color: var(--text-main); }
+
+/* Touch devices: actions hamesha visible */
+@media (hover: none) {
+    .row-actions { opacity: 1; transform: none; }
+}
+
+/* == Add Form == */
+.add-form-wrap { padding: 16px 20px; background: var(--premium-bg); border-top: 1px solid var(--border-soft); border-radius: 0 0 var(--radius-lg) var(--radius-lg); }
+.add-form-row { display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap; }
+.input-col { flex: 1; min-width: 140px; display: flex; flex-direction: column; }
+.fi { height: 40px; padding: 0 14px; border: 1.5px solid var(--border-soft); border-radius: var(--radius-sm); font-size: 0.85rem; background: #fff; width: 100%; outline: none; transition: border-color .15s, box-shadow .15s; }
+.fi:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
+.add-form-submit {
+    height: 40px; padding: 0 16px; background: var(--text-main); color: #fff;
+    border: none; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 700; cursor: pointer;
+}
+
+/* == Edit Modal == */
+.edit-modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.6);
+    backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center; padding: 1rem;
+}
+.edit-modal-overlay.show { display: flex; }
+.edit-modal { background: #fff; border-radius: var(--radius-lg); width: 100%; max-width: 440px; overflow: hidden; box-shadow: 0 24px 60px -20px rgba(15,23,42,.45); }
+.modal-hdr { padding: 18px 24px; border-bottom: 1px solid var(--border-soft); display: flex; align-items: center; justify-content: space-between; }
+.modal-title { font-size: 1.1rem; font-weight: 800; margin: 0; }
+.modal-close {
+    width: 32px; height: 32px; border-radius: 9px;
+    background: var(--premium-bg); border: 1px solid var(--border-soft);
+    color: var(--text-muted); cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 0.85rem; transition: all .15s;
+}
+.modal-close:hover { background: var(--danger-bg); border-color: #fecaca; color: var(--danger); }
+.modal-body { padding: 24px; }
+.modal-foot { padding: 16px 24px; background: var(--premium-bg); display: flex; gap: 12px; justify-content: flex-end; }
+.btn-save { padding: 10px 18px; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 600; background: var(--primary); color: #fff; border: none; cursor: pointer; }
+.btn-save:hover { background: var(--primary-hover); }
+.btn-cancel { padding: 10px 18px; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 600; background: #fff; border: 1px solid var(--border-soft); cursor: pointer; }
+.btn-cancel:hover { background: var(--border-lighter); }
+
+@media(max-width:900px){ .master-grid { grid-template-columns: 1fr; } }
+@media(max-width:560px){
+    .page-hdr { align-items: stretch; }
+    .page-hdr .btn-outline { width: 100%; order: 5; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-hdr">
+    <div class="hdr-left">
+        <div class="hdr-icon">
+            <i data-lucide="settings" class="lucide-ic"></i>
+        </div>
+        <div class="hdr-info">
+            <h1>Lead Masters</h1>
+            <p>Manage dropdown values for the Lead form</p>
+        </div>
+    </div>
+    <a href="javascript:history.back()" class="btn-outline">
+        <i data-lucide="arrow-left" class="lucide-ic"></i>
+        Back
+    </a>
+</div>
+
+<div class="master-grid">
+    {% for mtype, items in data.items() %}
+    {% set labels = {'status':'Lead Status','source':'Lead Source','category':'Lead Category','range':'Product Range'} %}
+
+    <div class="master-card">
+        <div class="master-card-hdr">
+            <span class="master-hdr-title">{{ labels[mtype] }}</span>
+            <span class="item-count">{{ items|length }} items</span>
+        </div>
+        <div class="master-list-body">
+            {% for item in items %}
+            <div class="master-row">
+                <span class="master-name">{{ item.name }}</span>
+                <div class="row-actions">
+                    <button class="row-btn row-btn-edit" title="Edit" onclick="openEdit('{{ mtype }}',{{ item.id }},'{{ item.name }}',{{ item.is_active|lower }})"><i data-lucide="pencil" class="lucide-ic"></i></button>
+                    <form method="POST" action="{{ url_for('masters.delete', mtype=mtype, id=item.id) }}" style="display:inline;" onsubmit="return confirm('Delete?')">
+                        <button type="submit" class="row-btn row-btn-del" title="Delete"><i data-lucide="trash-2" class="lucide-ic"></i></button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="edit-modal-overlay" id="editModal">
+    <div class="edit-modal">
+        <div class="modal-hdr">
+            <h3 class="modal-title">Edit Item</h3>
+            <button class="modal-close" onclick="closeEdit()"><i data-lucide="x" class="lucide-ic"></i></button>
+        </div>
+        <form id="editForm" method="POST">
+            <div class="modal-body">
+                <input type="text" name="name" id="editName" class="fi" required>
+                <label style="margin-top:10px; display:flex; align-items:center; gap:8px;">
+                    <input type="checkbox" name="is_active" id="editActive"> Active
+                </label>
+            </div>
+            <div class="modal-foot">
+                <button type="button" class="btn-cancel" onclick="closeEdit()">Cancel</button>
+                <button type="submit" class="btn-save">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openEdit(mtype, id, name, isActive) {
+    document.getElementById('editForm').action = '/masters/' + mtype + '/' + id + '/edit';
+    document.getElementById('editName').value = name;
+    document.getElementById('editActive').checked = isActive;
+    document.getElementById('editModal').classList.add('show');
+}
+function closeEdit() { document.getElementById('editModal').classList.remove('show'); }
+
+// == Lucide icons render ==
+(function(){
+  function drawIcons(){ if(window.lucide && window.lucide.createIcons) window.lucide.createIcons({attrs:{'stroke-width':1.9}}); }
+  if(window.lucide){ drawIcons(); }
+  else{
+    var s=document.createElement('script');
+    s.src='https://unpkg.com/lucide@latest';
+    s.onload=drawIcons;
+    document.head.appendChild(s);
+  }
+})();
+</script>
+{% endblock %}

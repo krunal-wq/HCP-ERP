@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+{% block title %}Late & Absent Report{% endblock %}
+{% block page_title %}Late & Absent Report{% endblock %}
+{% block bread %}HR / Attendance / Late & Absent{% endblock %}
+
+{% block extra_css %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+.type-tabs { display:flex; gap:.4rem; margin-bottom:1.2rem; flex-wrap:wrap; }
+.type-tab { padding:.4rem 1rem; border-radius:20px; font-size:.76rem; font-weight:700;
+            text-decoration:none; border:1px solid var(--border); color:var(--text3); background:#fff; }
+.type-tab.active-late     { background:#fef9c3; color:#ca8a04; border-color:#fde68a; }
+.type-tab.active-absent   { background:#fee2e2; color:#dc2626; border-color:#fecaca; }
+.type-tab.active-mispunch { background:#eff6ff; color:#2563eb; border-color:#bfdbfe; }
+
+.sum-row { display:flex; gap:.7rem; flex-wrap:wrap; margin-bottom:1.1rem; }
+.sum-chip { padding:.3rem .85rem; border-radius:20px; font-size:.72rem; font-weight:700;
+            border:1px solid; display:inline-flex; align-items:center; gap:.3rem; }
+.sc-green  { background:#f0fdf4; color:#16a34a; border-color:#bbf7d0; }
+.sc-red    { background:#fef2f2; color:#dc2626; border-color:#fecaca; }
+.sc-yellow { background:#fefce8; color:#ca8a04; border-color:#fde68a; }
+.sc-blue   { background:#eff6ff; color:#2563eb; border-color:#bfdbfe; }
+
+.rep-tbl { width:100%; border-collapse:collapse; font-size:.8rem; }
+.rep-tbl th { text-align:left; padding:.48rem .85rem; font-size:.65rem; font-weight:700;
+              color:var(--text3); text-transform:uppercase; letter-spacing:.07em;
+              border-bottom:2px solid var(--border); background:#f8fafc; white-space:nowrap; }
+.rep-tbl td { padding:.55rem .85rem; border-bottom:1px solid #f1f5f9; vertical-align:middle; }
+.rep-tbl tr:hover td { background:#f8fafc; }
+
+.late-badge { display:inline-block; padding:2px 8px; border-radius:20px;
+              font-size:.68rem; font-weight:700; background:#fef9c3; color:#ca8a04; }
+.late-high  { background:#fee2e2; color:#dc2626; }
+
+/* ===== PREMIUM (late & absent) ===== */
+body,.rep-tbl,.type-tab,.sum-chip{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;}
+
+/* type tabs */
+.type-tab{border:1px solid #e2e8f0;border-radius:99px;font-weight:700;padding:.45rem 1.1rem;display:inline-flex;align-items:center;gap:6px;transition:all .14s;}
+.type-tab:hover{background:#f8fafc;transform:translateY(-1px);box-shadow:0 2px 8px rgba(15,23,42,.06);}
+.type-tab.active-late{background:#fef9c3;color:#ca8a04;border-color:#fde68a;box-shadow:0 2px 8px rgba(202,138,4,.18);}
+.type-tab.active-absent{background:#fee2e2;color:#dc2626;border-color:#fecaca;box-shadow:0 2px 8px rgba(220,38,38,.18);}
+.type-tab.active-mispunch{background:#eff6ff;color:#2563eb;border-color:#bfdbfe;box-shadow:0 2px 8px rgba(37,99,235,.18);}
+
+/* summary chips */
+.sum-chip{border-radius:99px;display:inline-flex;align-items:center;gap:6px;}
+
+/* filter bar form controls */
+form[method="get"] input,form[method="get"] select{border:1.5px solid #e2e8f0 !important;border-radius:9px !important;transition:border-color .15s,box-shadow .15s;}
+form[method="get"] input:focus,form[method="get"] select:focus{outline:none;border-color:#2563eb !important;box-shadow:0 0 0 3px rgba(37,99,235,.12);}
+form[method="get"] button[type="submit"]{border-radius:99px !important;background:linear-gradient(180deg,#3b82f6,#2563eb) !important;display:inline-flex;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(37,99,235,.3);transition:transform .12s,box-shadow .12s,filter .12s;padding:.48rem 1.1rem !important;}
+form[method="get"] button[type="submit"]:hover{filter:brightness(1.04);transform:translateY(-1px);box-shadow:0 5px 16px rgba(37,99,235,.42);}
+
+/* table */
+.rep-tbl th{color:#94a3b8;letter-spacing:.06em;border-bottom:2px solid #e2e8f0;background:#fbfcfe;font-size:10px;font-weight:800;}
+.rep-tbl td{border-bottom:1px solid #f1f5f9;}
+.rep-tbl tbody tr{transition:background .12s;}
+.rep-tbl tr:hover td{background:#f0f7ff;}
+.rep-tbl [style*="monospace"]{font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,monospace !important;letter-spacing:.01em;}
+.late-badge{border-radius:99px;padding:3px 10px;}
+.ei{display:inline-block;}
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem;">
+  <div>
+    <h2 style="margin:0;font-size:1.15rem;font-weight:800;">Late Comers & Absent Report</h2>
+    <div style="font-size:.72rem;color:var(--text3);">{{ filter_date.strftime('%A, %d %B %Y') }}</div>
+  </div>
+  <a href="/hr/attendance" style="padding:.35rem .85rem;background:#f8fafc;border:1px solid var(--border);border-radius:8px;font-size:.76rem;font-weight:600;color:var(--text);text-decoration:none;"><svg class="ei" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><polyline points="15 18 9 12 15 6"/></svg> Dashboard</a>
+</div>
+
+{# Filter bar #}
+<div style="background:#fff;border:1px solid var(--border);border-radius:12px;
+            padding:.85rem 1.1rem;margin-bottom:1rem;box-shadow:0 1px 4px rgba(0,0,0,.04);">
+  <form method="get" style="display:flex;gap:.7rem;flex-wrap:wrap;align-items:flex-end;">
+    <div>
+      <label style="font-size:.68rem;font-weight:700;color:var(--text3);display:block;margin-bottom:.2rem;">DATE</label>
+      <input type="date" name="date" value="{{ report_date }}"
+             style="padding:.38rem .7rem;border:1px solid var(--border);border-radius:8px;font-size:.81rem;">
+    </div>
+    <div>
+      <label style="font-size:.68rem;font-weight:700;color:var(--text3);display:block;margin-bottom:.2rem;">DEPARTMENT</label>
+      <select name="dept" style="padding:.38rem .7rem;border:1px solid var(--border);border-radius:8px;font-size:.81rem;">
+        <option value="">All</option>
+        {% for d in departments %}
+        <option value="{{ d }}" {{ 'selected' if dept_filter==d }}>{{ d }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <input type="hidden" name="type" value="{{ report_type }}">
+    <button type="submit" style="padding:.38rem .9rem;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:.81rem;font-weight:600;cursor:pointer;">
+      <svg class="ei" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> Filter
+    </button>
+  </form>
+</div>
+
+{# Type Tabs #}
+<div class="type-tabs">
+  <a href="?date={{ report_date }}&type=late&dept={{ dept_filter }}"
+     class="type-tab {{ 'active-late' if report_type=='late' }}">
+     <svg class="ei" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Late Comers <span style="background:rgba(0,0,0,.08);padding:1px 7px;border-radius:10px;margin-left:.3rem;">{{ late_count }}</span>
+  </a>
+  <a href="?date={{ report_date }}&type=absent&dept={{ dept_filter }}"
+     class="type-tab {{ 'active-absent' if report_type=='absent' }}">
+     <svg class="ei" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg> Absent <span style="background:rgba(0,0,0,.08);padding:1px 7px;border-radius:10px;margin-left:.3rem;">{{ summary.get('Absent',0) }}</span>
+  </a>
+  <a href="?date={{ report_date }}&type=mispunch&dept={{ dept_filter }}"
+     class="type-tab {{ 'active-mispunch' if report_type=='mispunch' }}">
+     <svg class="ei" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> MIS-PUNCH <span style="background:rgba(0,0,0,.08);padding:1px 7px;border-radius:10px;margin-left:.3rem;">{{ summary.get('MIS-PUNCH',0) }}</span>
+  </a>
+</div>
+
+{# Summary chips #}
+<div class="sum-row">
+  <span class="sum-chip sc-green"><svg class="ei" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Present: {{ summary.get('Present',0) }}</span>
+  <span class="sum-chip sc-red"><svg class="ei" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg> Absent: {{ summary.get('Absent',0) }}</span>
+  <span class="sum-chip sc-yellow"><svg class="ei" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Late: {{ late_count }}</span>
+  <span class="sum-chip sc-blue"><svg class="ei" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> MIS-PUNCH: {{ summary.get('MIS-PUNCH',0) }}</span>
+</div>
+
+{# Table #}
+<div style="background:#fff;border:1px solid var(--border);border-radius:14px;
+            box-shadow:0 1px 6px rgba(0,0,0,.05);overflow:hidden;">
+  <div style="padding:.85rem 1.1rem;border-bottom:1px solid var(--border);
+              display:flex;align-items:center;justify-content:space-between;">
+    <span style="font-size:.69rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);">
+      {% if report_type=='late' %}<svg class="ei" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Late Comers
+      {% elif report_type=='absent' %}<svg class="ei" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg> Absent Employees
+      {% else %}<svg class="ei" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> MIS-PUNCH Employees{% endif %}
+    </span>
+    <span style="font-size:.74rem;color:var(--text3);">{{ records|length }} records</span>
+  </div>
+  <div style="overflow-x:auto;">
+  <table class="rep-tbl">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Employee</th>
+        <th>Code</th>
+        <th>Department</th>
+        {% if report_type == 'late' %}
+        <th>Punch IN</th>
+        <th>Late By</th>
+        <th>Punch OUT</th>
+        <th>Hours</th>
+        {% elif report_type == 'absent' %}
+        <th>Status</th>
+        <th>Contact</th>
+        {% else %}
+        <th>Punch Time</th>
+        <th>Direction</th>
+        {% endif %}
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for rec in records %}
+      <tr>
+        <td style="color:var(--text3);font-size:.71rem;">{{ loop.index }}</td>
+        <td>
+          <div style="font-weight:600;font-size:.81rem;">
+            {{ rec.employee.first_name + ' ' + rec.employee.last_name if rec.employee else '-' }}
+          </div>
+          <div style="font-size:.68rem;color:var(--text3);">{{ rec.employee.designation if rec.employee else '' }}</div>
+        </td>
+        <td style="font-family:monospace;font-size:.77rem;font-weight:700;color:var(--blue);">
+          {{ rec.employee_code }}
+        </td>
+        <td style="font-size:.77rem;">{{ rec.employee.department if rec.employee else '-' }}</td>
+
+        {% if report_type == 'late' %}
+        <td>
+          <span style="font-family:monospace;font-size:.8rem;font-weight:700;color:#dc2626;">
+            {{ rec.punch_in.strftime('%I:%M %p') if rec.punch_in else '-' }}
+          </span>
+        </td>
+        <td>
+          <span class="late-badge {{ 'late-high' if rec._late_min > 60 }}">
+            +{{ rec._late_min }} min
+          </span>
+        </td>
+        <td style="font-family:monospace;font-size:.79rem;color:#2563eb;font-weight:600;">
+          {{ rec.punch_out.strftime('%I:%M %p') if rec.punch_out else '-' }}
+        </td>
+        <td style="font-weight:700;font-size:.79rem;">{{ rec.working_hours_display }}</td>
+
+        {% elif report_type == 'absent' %}
+        <td><span style="background:#fee2e2;color:#dc2626;padding:2px 9px;border-radius:20px;font-size:.67rem;font-weight:700;">Absent</span></td>
+        <td style="font-size:.77rem;color:var(--text3);">
+          {{ rec.employee.mobile if rec.employee else '-' }}
+        </td>
+
+        {% else %}
+        <td style="font-family:monospace;font-size:.79rem;font-weight:600;">
+          {{ rec.punch_in.strftime('%I:%M %p') if rec.punch_in else '-' }}
+        </td>
+        <td><span style="background:#fef9c3;color:#ca8a04;padding:2px 9px;border-radius:20px;font-size:.67rem;font-weight:700;">
+          {{ 'IN Only' if rec.punch_in and not rec.punch_out else 'OUT Only' if rec.punch_out else '?' }}
+        </span></td>
+        {% endif %}
+
+        <td>
+          <a href="/hr/attendance/{{ rec.id }}/edit"
+             style="font-size:.74rem;color:#2563eb;font-weight:600;text-decoration:none;"><svg class="ei" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg> Edit</a>
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="9" style="text-align:center;padding:2.5rem;color:var(--text3);">
+          <div style="margin-bottom:.5rem;"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+          No records &mdash; all good!
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+{% endblock %}

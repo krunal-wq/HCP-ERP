@@ -1,0 +1,456 @@
+{% extends "base.html" %}
+{% block title %}HSN Code Master{% endblock %}
+{% block page_title %}HSN Code Master{% endblock %}
+{% block bread %}Masters / HSN Code Master{% endblock %}
+
+{% block extra_css %}
+<style>
+.hsnp {
+    --h-accent: #2563eb;
+    --h-accent-2: #1d4ed8;
+    --h-soft: #eff6ff;
+    --h-bg: #f8fafc;
+    --h-text: #0f172a;
+    --h-text2: #334155;
+    --h-muted: #64748b;
+    --h-light: #94a3b8;
+    --h-border: #e2e8f0;
+    --h-border-l: #f1f5f9;
+    --h-danger: #dc2626;
+    --h-danger-bg: #fef2f2;
+    --h-success: #16a34a;
+    --h-success-bg: #f0fdf4;
+}
+.lucide-ic, .lucide-ic svg { width:1em; height:1em; vertical-align:-0.125em; }
+.hsnp button { -webkit-tap-highlight-color: transparent; font-family:inherit; }
+
+/* ==== Main card ==== */
+.hsn-card {
+    background:#fff;
+    border:1px solid var(--h-border);
+    border-radius:16px;
+    box-shadow:0 1px 2px rgba(15,23,42,.04), 0 10px 30px -22px rgba(15,23,42,.25);
+    overflow:hidden;
+    margin-bottom:1.2rem;
+}
+
+/* ==== Header bar: icon + title + search ==== */
+.hsn-hdr {
+    display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+    padding:16px 20px;
+    border-bottom:1px solid var(--h-border);
+    background:#fff;
+}
+.hsn-hdr .hd-ic {
+    width:34px; height:34px; border-radius:10px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    background:var(--h-soft); color:var(--h-accent-2); font-size:1rem;
+}
+.hsn-hdr h1 { font-size:1.15rem; font-weight:800; color:var(--h-text); letter-spacing:-0.02em; margin:0; }
+
+.hsn-search { display:flex; gap:8px; align-items:center; margin-left:auto; flex-wrap:wrap; }
+.hsn-search-wrap {
+    display:flex; align-items:center; gap:8px;
+    background:var(--h-bg);
+    border:1.5px solid var(--h-border);
+    border-radius:999px;
+    padding:0 16px; height:38px; width:280px; max-width:100%;
+    color:var(--h-light);
+    transition:all .18s;
+}
+.hsn-search-wrap:focus-within {
+    background:#fff; border-color:var(--h-accent);
+    box-shadow:0 0 0 3px rgba(37,99,235,.12);
+}
+.hsn-search-wrap input {
+    border:none; background:transparent; outline:none;
+    font-size:.84rem; color:var(--h-text); font-weight:500;
+    width:100%; font-family:inherit;
+}
+.hsn-search-wrap input::placeholder { color:var(--h-light); }
+
+.btn-blue {
+    display:inline-flex; align-items:center; justify-content:center; gap:7px;
+    background:linear-gradient(180deg,#3b82f6,#1d4ed8);
+    color:#fff; padding:0 18px; border-radius:999px;
+    font-size:.8rem; font-weight:700; text-decoration:none;
+    height:38px; white-space:nowrap; border:none; cursor:pointer;
+    box-shadow:0 2px 8px rgba(37,99,235,.35), inset 0 1px 0 rgba(255,255,255,.25);
+    transition:all .18s;
+}
+.btn-blue:hover { transform:translateY(-1px); color:#fff; box-shadow:0 5px 16px rgba(37,99,235,.45); }
+.btn-blue:active { transform:translateY(0) scale(.97); }
+
+.btn-ghost {
+    display:inline-flex; align-items:center; justify-content:center; gap:6px;
+    background:#fff; color:var(--h-text2);
+    border:1.5px solid var(--h-border);
+    padding:0 14px; border-radius:999px;
+    font-size:.78rem; font-weight:650; cursor:pointer;
+    height:36px; white-space:nowrap; text-decoration:none;
+    transition:all .16s;
+}
+.btn-ghost:hover { border-color:#bfdbfe; color:var(--h-accent-2); background:var(--h-soft); }
+
+/* ==== Add form ==== */
+.hsn-addbar {
+    padding:16px 20px;
+    background:var(--h-bg);
+    border-bottom:1px solid var(--h-border);
+}
+.hsn-add-row { display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap; }
+.hsn-add-row label {
+    font-size:.68rem; font-weight:800; color:var(--h-muted);
+    text-transform:uppercase; letter-spacing:.06em;
+    display:block; margin-bottom:6px;
+}
+.hf {
+    height:38px; padding:0 13px;
+    border:1.5px solid var(--h-border); border-radius:9px;
+    font-size:.84rem; background:#fff; outline:none;
+    color:var(--h-text); font-family:inherit;
+    transition:border-color .15s, box-shadow .15s;
+}
+.hf:focus { border-color:var(--h-accent); box-shadow:0 0 0 3px rgba(37,99,235,.1); }
+select.hf { cursor:pointer; }
+.hsn-hint { margin-top:10px; font-size:.74rem; color:var(--h-light); font-weight:500; }
+
+/* ==== Table ==== */
+.m-table { width:100%; border-collapse:collapse; }
+.m-table th {
+    background:var(--h-bg);
+    color:var(--h-muted);
+    font-size:.66rem; font-weight:800;
+    text-transform:uppercase; letter-spacing:.07em;
+    padding:12px 14px; text-align:left;
+    border-bottom:1px solid var(--h-border);
+    white-space:nowrap;
+    position:sticky; top:0; z-index:5;
+}
+.m-table td {
+    padding:11px 14px; font-size:.83rem; color:var(--h-text);
+    border-bottom:1px solid var(--h-border-l); vertical-align:middle;
+}
+.m-table tbody tr { transition:background .12s; }
+.m-table tbody tr:hover td { background:#f8fbff; }
+.m-table tbody tr:last-child td { border-bottom:none; }
+
+.hsn-code {
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-weight:800; font-size:.78rem; color:var(--h-accent-2);
+    background:var(--h-soft); padding:3px 9px; border-radius:7px;
+    letter-spacing:.02em;
+}
+.gst-badge {
+    background:#fef3c7; color:#92400e; border:1px solid #fde68a;
+    padding:2px 9px; border-radius:999px; font-size:.74rem; font-weight:800;
+}
+.rate-cell { text-align:right; font-size:.8rem; color:var(--h-text2); font-variant-numeric:tabular-nums; }
+
+/* status badges (dot style) */
+.badge-active, .badge-inactive {
+    padding:3px 11px; border-radius:999px;
+    font-size:.7rem; font-weight:800;
+    display:inline-flex; align-items:center; gap:5px;
+    cursor:pointer; transition:all .14s;
+}
+.badge-active::before, .badge-inactive::before { content:''; width:6px; height:6px; border-radius:50%; }
+.badge-active   { background:var(--h-success-bg); color:var(--h-success); border:1px solid #bbf7d0; }
+.badge-active::before { background:var(--h-success); }
+.badge-inactive { background:var(--h-border-l); color:var(--h-muted); border:1px solid var(--h-border); }
+.badge-inactive::before { background:var(--h-light); }
+.tog-btn { background:none; border:none; cursor:pointer; padding:0; }
+.tog-btn:hover .badge-active   { box-shadow:0 2px 6px rgba(22,163,74,.25); }
+.tog-btn:hover .badge-inactive { box-shadow:0 2px 6px rgba(100,116,139,.2); }
+
+/* action buttons */
+.act-wrap { display:inline-flex; gap:7px; align-items:center; }
+.act-btn {
+    width:30px; height:30px; border-radius:9px;
+    display:inline-flex; align-items:center; justify-content:center;
+    font-size:.85rem; cursor:pointer; border:1px solid transparent;
+    text-decoration:none; transition:all .14s;
+    background:none; padding:0;
+}
+.act-btn:active { transform:scale(.9); }
+.act-btn.edit { background:var(--h-soft); color:var(--h-accent-2); border-color:#bfdbfe; }
+.act-btn.edit:hover { background:#dbeafe; border-color:#93c5fd; box-shadow:0 2px 6px rgba(37,99,235,.2); }
+.act-btn.del { background:var(--h-danger-bg); color:var(--h-danger); border-color:#fecaca; }
+.act-btn.del:hover { background:#fee2e2; border-color:#fca5a5; box-shadow:0 2px 6px rgba(220,38,38,.2); }
+
+/* empty state */
+.hsn-empty { text-align:center; padding:50px 20px; color:var(--h-light); }
+.hsn-empty .lucide-ic { font-size:2rem; margin-bottom:8px; display:inline-block; }
+.hsn-empty p { margin:6px 0 0; font-weight:600; font-size:.85rem; color:var(--h-muted); }
+
+/* ==== Edit modal ==== */
+.hsn-modal-overlay {
+    display:none; position:fixed; inset:0;
+    background:rgba(15,23,42,.6); backdrop-filter:blur(4px);
+    z-index:1000; align-items:center; justify-content:center; padding:1rem;
+}
+.hsn-modal {
+    background:#fff; border-radius:16px; width:100%; max-width:480px;
+    box-shadow:0 24px 60px -20px rgba(15,23,42,.45); overflow:hidden;
+}
+.hsn-modal-hdr {
+    background:linear-gradient(135deg,#1e3a8a,#1d4ed8);
+    color:#fff; padding:14px 20px;
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+}
+.hsn-modal-hdr .mt { font-weight:750; font-size:.95rem; display:flex; align-items:center; gap:8px; }
+.hsn-modal-close {
+    width:30px; height:30px; border-radius:9px;
+    background:rgba(255,255,255,.15); border:none; color:#fff;
+    cursor:pointer; display:inline-flex; align-items:center; justify-content:center;
+    font-size:.85rem; transition:background .15s;
+}
+.hsn-modal-close:hover { background:rgba(255,255,255,.28); }
+.hsn-modal-body { padding:20px; display:flex; flex-direction:column; gap:14px; }
+.hsn-modal-body label {
+    font-size:.68rem; font-weight:800; color:var(--h-muted);
+    text-transform:uppercase; letter-spacing:.06em;
+    display:block; margin-bottom:6px;
+}
+.hsn-modal-body .hf { width:100%; }
+.hsn-note {
+    background:var(--h-success-bg); border:1px solid #bbf7d0;
+    border-radius:9px; padding:9px 13px;
+    font-size:.78rem; color:#166534; font-weight:550;
+    display:flex; align-items:center; gap:8px;
+}
+.hsn-modal-foot {
+    padding:14px 20px; border-top:1px solid var(--h-border);
+    display:flex; justify-content:flex-end; gap:8px; background:var(--h-bg);
+}
+
+.tbl-scroll { overflow-x:auto; }
+.tbl-scroll::-webkit-scrollbar { height:9px; }
+.tbl-scroll::-webkit-scrollbar-thumb { background:var(--h-border); border-radius:99px; }
+
+@media (max-width:768px) {
+    .hsn-hdr { padding:14px; }
+    .hsn-search { margin-left:0; width:100%; }
+    .hsn-search-wrap { width:100%; }
+    .hsn-add-row > div { flex:1; min-width:140px; }
+    .hsn-add-row .hf { width:100% !important; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="hsnp">
+
+<div class="hsn-card">
+
+    {# == Header: icon + title + search == #}
+    <div class="hsn-hdr">
+        <div class="hd-ic"><i data-lucide="hash" class="lucide-ic"></i></div>
+        <h1>HSN Code Master</h1>
+        <form method="GET" class="hsn-search">
+            <div class="hsn-search-wrap">
+                <i data-lucide="search" class="lucide-ic"></i>
+                <input type="text" name="search" value="{{ search }}" placeholder="Search HSN code or description...">
+            </div>
+            <button type="submit" class="btn-blue"><i data-lucide="search" class="lucide-ic"></i>Search</button>
+            {% if search %}
+            <a href="{{ url_for('masters.hsn_master_list') }}" class="btn-ghost" title="Clear search"><i data-lucide="x" class="lucide-ic"></i></a>
+            {% endif %}
+        </form>
+    </div>
+
+    {# == Add Form == #}
+    <div class="hsn-addbar">
+        <form method="POST" action="{{ url_for('masters.hsn_master_add') }}">
+            <div class="hsn-add-row">
+                <div>
+                    <label>HSN Code *</label>
+                    <input type="text" name="hsn_code" class="hf" required placeholder="33049910" style="width:130px;font-family:'JetBrains Mono',monospace;">
+                </div>
+                <div>
+                    <label>Description</label>
+                    <input type="text" name="description" class="hf" placeholder="Face cream, lotions..." style="width:260px;">
+                </div>
+                <div>
+                    <label>GST Rate % *</label>
+                    <select name="gst_rate" class="hf" style="width:110px;" id="gstRateAdd" onchange="updateRatesAdd()">
+                        <option value="0">0%</option>
+                        <option value="0.1">0.1%</option>
+                        <option value="0.25">0.25%</option>
+                        <option value="3">3%</option>
+                        <option value="5">5%</option>
+                        <option value="12">12%</option>
+                        <option value="18" selected>18%</option>
+                        <option value="28">28%</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Cess %</label>
+                    <input type="number" name="cess" class="hf" value="0" min="0" step="0.01" style="width:90px;">
+                </div>
+                <button type="submit" class="btn-blue"><i data-lucide="plus" class="lucide-ic"></i>Add HSN</button>
+            </div>
+            <div class="hsn-hint">
+                CGST / SGST (intra-state) = GST / 2 &nbsp;|&nbsp; IGST (inter-state) = Full GST &mdash; auto-calculated on save
+            </div>
+        </form>
+    </div>
+
+    {# == Table == #}
+    <div style="padding:0;">
+        {% if items %}
+        <div class="tbl-scroll">
+        <table class="m-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>HSN Code</th>
+                    <th>Description</th>
+                    <th style="text-align:right;">GST %</th>
+                    <th style="text-align:right;">CGST %</th>
+                    <th style="text-align:right;">SGST %</th>
+                    <th style="text-align:right;">IGST %</th>
+                    <th style="text-align:right;">Cess %</th>
+                    <th>Status</th>
+                    <th>Created At</th>
+                    <th>Modified At</th>
+                    <th style="text-align:right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td style="color:var(--h-light);font-size:.76rem;font-weight:650;">{{ loop.index }}</td>
+                    <td><span class="hsn-code">{{ item.hsn_code }}</span></td>
+                    <td style="max-width:200px;color:var(--h-text2);">{{ item.description or '-' }}</td>
+                    <td style="text-align:right;"><span class="gst-badge">{{ item.gst_rate|int if item.gst_rate == item.gst_rate|int else item.gst_rate }}%</span></td>
+                    <td class="rate-cell">{{ item.cgst }}%</td>
+                    <td class="rate-cell">{{ item.sgst }}%</td>
+                    <td class="rate-cell">{{ item.igst }}%</td>
+                    <td class="rate-cell">{{ item.cess or 0 }}%</td>
+                    <td>
+                        <button class="tog-btn" onclick="toggleHSN({{ item.id }}, this)" title="Click to toggle status">
+                            <span class="badge-{{ 'active' if item.status else 'inactive' }}">
+                                {{ 'Active' if item.status else 'Inactive' }}
+                            </span>
+                        </button>
+                    </td>
+                    <td style="font-size:.76rem;color:var(--h-muted);white-space:nowrap;">{{ item.created_at.strftime('%d-%m-%Y %H:%M') if item.created_at else '-' }}</td>
+                    <td style="font-size:.76rem;color:var(--h-muted);white-space:nowrap;">{{ item.modified_at.strftime('%d-%m-%Y %H:%M') if item.modified_at else '-' }}</td>
+                    <td style="text-align:right;">
+                        <div class="act-wrap">
+                            <button class="act-btn edit" title="Edit"
+                                    onclick="openEditModal({{ item.id }}, '{{ item.hsn_code }}', '{{ (item.description or '') | e }}', {{ item.gst_rate }}, {{ item.cess or 0 }}, {{ '1' if item.status else '0' }})">
+                                <i data-lucide="pencil" class="lucide-ic"></i>
+                            </button>
+                            <form method="POST" action="{{ url_for('masters.hsn_master_delete', id=item.id) }}" style="display:inline;"
+                                  onsubmit="return confirm('Delete HSN {{ item.hsn_code }}?')">
+                                <button type="submit" class="act-btn del" title="Delete"><i data-lucide="trash-2" class="lucide-ic"></i></button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        </div>
+        {% else %}
+        <div class="hsn-empty">
+            <i data-lucide="hash" class="lucide-ic"></i>
+            <p>No HSN codes added yet</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{# == Edit Modal == #}
+<div id="editModal" class="hsn-modal-overlay">
+    <div class="hsn-modal">
+        <div class="hsn-modal-hdr">
+            <span class="mt"><i data-lucide="pencil" class="lucide-ic"></i>Edit HSN Code</span>
+            <button type="button" class="hsn-modal-close" onclick="document.getElementById('editModal').style.display='none'"><i data-lucide="x" class="lucide-ic"></i></button>
+        </div>
+        <form method="POST" id="editForm" action="">
+            <div class="hsn-modal-body">
+                <div>
+                    <label>HSN Code *</label>
+                    <input type="text" name="hsn_code" id="editHsn" class="hf" required style="font-family:'JetBrains Mono',monospace;">
+                </div>
+                <div>
+                    <label>Description</label>
+                    <input type="text" name="description" id="editDesc" class="hf">
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <div>
+                        <label>GST Rate %</label>
+                        <select name="gst_rate" id="editGst" class="hf">
+                            <option value="0">0%</option>
+                            <option value="0.1">0.1%</option>
+                            <option value="0.25">0.25%</option>
+                            <option value="3">3%</option>
+                            <option value="5">5%</option>
+                            <option value="12">12%</option>
+                            <option value="18">18%</option>
+                            <option value="28">28%</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>Cess %</label>
+                        <input type="number" name="cess" id="editCess" class="hf" min="0" step="0.01">
+                    </div>
+                </div>
+                <div class="hsn-note">
+                    <i data-lucide="lightbulb" class="lucide-ic"></i>
+                    CGST, SGST, IGST will be auto-calculated on save
+                </div>
+                <div>
+                    <label>Status</label>
+                    <select name="status" id="editStatus" class="hf">
+                        <option value="1">Active</option>
+                        <option value="0">Inactive</option>
+                    </select>
+                </div>
+            </div>
+            <div class="hsn-modal-foot">
+                <button type="button" class="btn-ghost" onclick="document.getElementById('editModal').style.display='none'">Cancel</button>
+                <button type="submit" class="btn-blue">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+</div>
+
+<script>
+function openEditModal(id, code, desc, gst, cess, status) {
+    document.getElementById('editForm').action = '/masters/hsn-master/' + id + '/edit';
+    document.getElementById('editHsn').value    = code;
+    document.getElementById('editDesc').value   = desc;
+    document.getElementById('editGst').value    = gst;
+    document.getElementById('editCess').value   = cess;
+    document.getElementById('editStatus').value = status;
+    document.getElementById('editModal').style.display = 'flex';
+}
+document.getElementById('editModal').addEventListener('click', function(e){ if(e.target===this) this.style.display='none'; });
+function toggleHSN(id, btn) {
+    fetch('/masters/hsn-master/' + id + '/toggle', {method:'POST'})
+        .then(r=>r.json()).then(d=>{
+            const span = btn.querySelector('span');
+            span.className = d.status ? 'badge-active' : 'badge-inactive';
+            span.textContent = d.status ? 'Active' : 'Inactive';
+        });
+}
+
+// == Lucide icons render ==
+(function(){
+  function drawIcons(){ if(window.lucide && window.lucide.createIcons) window.lucide.createIcons({attrs:{'stroke-width':1.9}}); }
+  if(window.lucide){ drawIcons(); }
+  else{
+    var s=document.createElement('script');
+    s.src='https://unpkg.com/lucide@latest';
+    s.onload=drawIcons;
+    document.head.appendChild(s);
+  }
+})();
+</script>
+{% endblock %}

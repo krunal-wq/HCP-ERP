@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% block title %}Comp Off Rules{% endblock %}
+{% block page_title %}Comp Off Rules{% endblock %}
+{% block bread %}HR / Rules / Comp Off Rules{% endblock %}
+{% block extra_css %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+.rule-page-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem;}
+.rule-table{width:100%;border-collapse:collapse;font-size:.83rem;}
+.rule-table th{font-size:.67rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;padding:.6rem 1rem;border-bottom:1px solid var(--border);background:#f8fafc;text-align:left;}
+.rule-table td{padding:.7rem 1rem;border-bottom:1px solid #f1f5f9;vertical-align:middle;}
+.rule-table tbody tr:hover td{background:#f8fafc;}
+.badge-active{background:#dcfce7;color:#16a34a;font-size:.65rem;font-weight:700;padding:2px 8px;border-radius:20px;}
+.badge-inactive{background:#fee2e2;color:#dc2626;font-size:.65rem;font-weight:700;padding:2px 8px;border-radius:20px;}
+.add-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center;padding:1rem;}
+.add-modal.open{display:flex;}
+.add-modal-box{background:#fff;border-radius:14px;width:620px;max-width:96vw;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2);}
+.add-modal-hdr{display:flex;align-items:center;justify-content:space-between;padding:.85rem 1.1rem;border-bottom:1px solid var(--border);background:#f8fafc;border-radius:14px 14px 0 0;}
+.add-modal-body{padding:1rem 1.1rem;}
+.add-modal-footer{display:flex;gap:.5rem;justify-content:flex-end;padding:.75rem 1.1rem;border-top:1px solid var(--border);}
+.fg2{display:flex;flex-direction:column;gap:.25rem;margin-bottom:.65rem;}
+.fg2 label{font-size:.67rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;}
+.fg2 input,.fg2 select,.fg2 textarea{padding:.38rem .65rem;border:1.5px solid var(--border);border-radius:8px;font-size:.82rem;font-family:inherit;outline:none;transition:border .15s;}
+.fg2 input:focus,.fg2 select:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
+.fgrid2{display:grid;grid-template-columns:1fr 1fr;gap:.65rem;}
+.fgrid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.65rem;}
+.save-btn2{padding:.42rem 1.1rem;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:.82rem;font-weight:700;cursor:pointer;}
+.cancel-btn2{padding:.42rem .9rem;background:#f1f5f9;color:var(--text2);border:1px solid var(--border);border-radius:8px;font-size:.82rem;font-weight:600;cursor:pointer;}
+.del-btn2{padding:.28rem .75rem;border-radius:7px;font-size:.72rem;font-weight:700;cursor:pointer;border:1px solid #fecaca;background:#fff;color:#dc2626;}
+.del-btn2:hover{background:#fee2e2;}
+.flash-ok{background:#f0fdf4;border:1px solid #bbf7d0;color:#16a34a;border-radius:8px;padding:.55rem 1rem;font-size:.79rem;font-weight:600;margin-bottom:.9rem;}
+.flash-err{background:#fef2f2;border:1px solid #fecaca;color:#dc2626;border-radius:8px;padding:.55rem 1rem;font-size:.79rem;font-weight:600;margin-bottom:.9rem;}
+.check-row{display:flex;align-items:center;gap:.4rem;font-size:.82rem;}
+.check-row input{width:15px;height:15px;accent-color:#2563eb;}
+
+/* ===== PREMIUM (rule master) ===== */
+body,.rule-table,.add-modal-box{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;}
+.rule-page-hdr h2{display:inline-flex;align-items:center;gap:7px;letter-spacing:-.01em;}
+.btn-primary{border-radius:99px !important;background:linear-gradient(180deg,#3b82f6,#2563eb) !important;color:#fff !important;border:none !important;display:inline-flex;align-items:center;gap:7px;padding:.5rem 1.15rem !important;font-weight:700;box-shadow:0 2px 9px rgba(37,99,235,.3);transition:transform .12s,box-shadow .12s,filter .12s;}
+.btn-primary:hover{filter:brightness(1.04);transform:translateY(-1px);box-shadow:0 6px 18px rgba(37,99,235,.42);}
+.card{border:1px solid #e8edf3;border-radius:16px;box-shadow:0 1px 3px rgba(15,23,42,.05),0 6px 22px rgba(15,23,42,.04);overflow:hidden;}
+.rule-table th{color:#94a3b8;font-size:10px;font-weight:800;letter-spacing:.06em;border-bottom:2px solid #e2e8f0;background:#fbfcfe;}
+.rule-table td{border-bottom:1px solid #f1f5f9;}
+.rule-table tbody tr{transition:background .12s;}
+.rule-table tbody tr:hover td{background:#f0f7ff;}
+.badge-active,.badge-inactive{border-radius:99px;padding:3px 10px;}
+.rule-table form button[type="submit"]:not(.del-btn2){border-radius:99px !important;display:inline-flex;align-items:center;transition:all .12s;}
+.rule-table form button[type="submit"]:not(.del-btn2):hover{background:#eff6ff !important;border-color:#bfdbfe !important;transform:translateY(-1px);}
+.del-btn2{border-radius:99px;display:inline-flex;align-items:center;gap:5px;transition:all .12s;}
+.del-btn2:hover{background:#fee2e2;transform:translateY(-1px);}
+.add-modal{backdrop-filter:blur(2px);}
+.add-modal-box{border-radius:18px;box-shadow:0 24px 70px rgba(15,23,42,.28);}
+.add-modal-hdr{padding:1rem 1.1rem;border-bottom:1px solid #eef2f7;background:#fbfcfe;border-radius:18px 18px 0 0;}
+.add-modal-hdr span{display:inline-flex;align-items:center;gap:7px;letter-spacing:-.01em;}
+.add-modal-footer{border-top:1px solid #eef2f7;}
+.fg2 input,.fg2 select,.fg2 textarea{border:1.5px solid #e2e8f0;border-radius:9px;transition:border-color .15s,box-shadow .15s;}
+.fg2 input:focus,.fg2 select:focus,.fg2 textarea:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.12);}
+.save-btn2{border-radius:99px;background:linear-gradient(180deg,#3b82f6,#2563eb);display:inline-flex;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(37,99,235,.3);transition:transform .12s,box-shadow .12s,filter .12s;}
+.save-btn2:hover{filter:brightness(1.04);transform:translateY(-1px);box-shadow:0 6px 16px rgba(37,99,235,.42);}
+.cancel-btn2{border-radius:99px;transition:background .14s;}
+.cancel-btn2:hover{background:#e2e8f0;}
+.add-modal-hdr .cancel-btn2{padding:.2rem .6rem;font-size:1.1rem;line-height:1;background:#fff;border:1px solid #e2e8f0;}
+.add-modal-hdr .cancel-btn2:hover{background:#fee2e2;color:#dc2626;border-color:#fecaca;}
+.ei{display:inline-block;}
+</style>
+{% endblock %}
+{% block content %}
+<div class="rule-page-hdr">
+  <div>
+    <h2 style="margin:0;font-size:1.15rem;font-weight:800;"><svg class="ei" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"/><path d="M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> Comp Off Rules</h2>
+    <div style="font-size:.72rem;color:var(--text3);">Configure rules by location and shift</div>
+  </div>
+  <button class="btn-primary" onclick="document.getElementById('addModal').classList.add('open')"><svg class="ei" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add Rule</button>
+</div>
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% for cat, msg in messages %}
+  <div class="{{ 'flash-ok' if cat=='success' else 'flash-err' }}">{% if cat=='success' %}<svg class="ei" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>{% else %}<svg class="ei" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>{% endif %} {{ msg }}</div>
+  {% endfor %}
+{% endwith %}
+<div class="card">
+  <div class="tbl-wrap">
+    <table class="rule-table">
+      <thead>
+        <tr>
+          <th>#</th><th>Rule Name</th><th>Location</th><th>Shift</th><th>Emp Type</th><th>Status</th><th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rules %}
+        <tr>
+          <td style="color:var(--text3);font-size:.75rem;">{{ loop.index }}</td>
+          <td style="font-weight:700;"><svg class="ei" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"/><path d="M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> {{ r.name }}</td>
+          <td>{{ r.location.name if r.location else '- All -' }}</td>
+          <td>{{ r.shift.name if r.shift else '- All -' }}</td>
+          <td>{{ r.employee_type or '- All -' }}</td>
+          <td><span class="{{ 'badge-active' if r.is_active else 'badge-inactive' }}">{{ 'Active' if r.is_active else 'Inactive' }}</span></td>
+          <td>
+            <div style="display:flex;gap:.3rem;">
+              <form method="post" style="display:inline;" onsubmit="return confirm('Delete?')">
+                <input type="hidden" name="action" value="delete">
+                <input type="hidden" name="id" value="{{ r.id }}">
+                <button type="submit" class="del-btn2"><svg class="ei" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg> Delete</button>
+              </form>
+              <form method="post" style="display:inline;">
+                <input type="hidden" name="action" value="toggle">
+                <input type="hidden" name="id" value="{{ r.id }}">
+                <button type="submit" style="padding:.28rem .75rem;border-radius:7px;font-size:.72rem;font-weight:700;cursor:pointer;border:1px solid var(--border);background:#fff;color:var(--text2);">{% if r.is_active %}<svg class="ei" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>{% else %}<svg class="ei" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><polygon points="6 4 20 12 6 20 6 4"/></svg>{% endif %}</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" style="text-align:center;padding:2.5rem;color:var(--text3);"><svg class="ei" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"/><path d="M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> No rules yet &mdash; add one</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Add Rule Modal -->
+<div class="add-modal" id="addModal">
+  <div class="add-modal-box">
+    <div class="add-modal-hdr">
+      <span style="font-size:.9rem;font-weight:800;"><svg class="ei" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add Comp Off Rules</span>
+      <button class="cancel-btn2" onclick="document.getElementById('addModal').classList.remove('open')">&times;</button>
+    </div>
+    <form method="post">
+      <input type="hidden" name="action" value="add">
+      <div class="add-modal-body">
+        <div class="fg2"><label>Rule Name *</label><input type="text" name="name" placeholder="Rule name" required></div>
+        <div class="fgrid3">
+          <div class="fg2"><label>Location</label>
+            <select name="location_id">
+              <option value="">&mdash; All Locations &mdash;</option>
+              {% for l in locations %}<option value="{{ l.id }}">{{ l.name }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="fg2"><label>Shift</label>
+            <select name="shift_id">
+              <option value="">&mdash; All Shifts &mdash;</option>
+              {% for s in shifts %}<option value="{{ s.id }}">{{ s.name }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="fg2"><label>Employee Type</label>
+            <input type="text" name="employee_type" placeholder="Leave blank for all">
+          </div>
+        </div>
+        {% include 'hr/rules/_comp_off_fields.html' ignore missing %}
+        <div class="fg2" style="margin-top:.5rem;"><label>Notes</label><textarea name="notes" rows="2" placeholder="Any notes..."></textarea></div>
+      </div>
+      <div class="add-modal-footer">
+        <button type="button" class="cancel-btn2" onclick="document.getElementById('addModal').classList.remove('open')">Cancel</button>
+        <button type="submit" class="save-btn2"><svg class="ei" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save Rule</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+document.addEventListener('click',function(e){
+  var m=document.getElementById('addModal');
+  if(e.target===m) m.classList.remove('open');
+});
+</script>
+{% endblock %}

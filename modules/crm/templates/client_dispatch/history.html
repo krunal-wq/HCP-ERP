@@ -1,0 +1,502 @@
+{% extends "base.html" %}
+{% block title %}Client Dispatch History{% endblock %}
+{% block page_title %}Client Dispatch History{% endblock %}
+{% block bread %}NPD / Client Dispatch / History{% endblock %}
+
+{% block extra_css %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============ CLIENT DISPATCH HISTORY - PREMIUM ============ */
+.cdh-page * { font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif; }
+
+.cdh-card{
+   background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:8px;
+   box-shadow:0 1px 3px rgba(15,23,42,.05), 0 4px 16px rgba(15,23,42,.04);overflow:hidden;
+}
+
+/* ---- Toolbar ---- */
+.cdh-toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;}
+.cdh-back{font-size:.78rem;color:#7c3aed;text-decoration:none;font-weight:700;
+          display:inline-flex;align-items:center;gap:6px;
+          padding:7px 16px;border:1.5px solid #ddd6fe;border-radius:99px;
+          background:#fff;transition:all .12s;box-shadow:0 1px 2px rgba(15,23,42,.04);}
+.cdh-back:hover{background:#f5f3ff;border-color:#c4b5fd;transform:translateY(-1px);}
+.cdh-back svg{flex-shrink:0;}
+.cdh-count{font-size:.82rem;color:#64748b;font-weight:600;}
+.cdh-count strong{color:#7c3aed;font-weight:800;}
+
+/* ---- Table ---- */
+.cdh-tbl{width:100%;border-collapse:collapse;font-size:.83rem;}
+.cdh-tbl th{padding:11px 12px;background:#fff;border-bottom:2px solid #e2e8f0;
+            text-align:left;font-size:10.5px;text-transform:uppercase;color:#94a3b8;
+            font-weight:800;letter-spacing:.06em;white-space:nowrap;}
+.cdh-tbl td{padding:12px;border-bottom:1px solid #f1f5f9;vertical-align:top;color:#334155;}
+.cdh-tbl tbody tr{transition:background .12s;}
+.cdh-tbl tbody tr:hover{background:#faf5ff;}
+.cdh-tbl tbody tr:last-child td{border-bottom:none;}
+
+.cdh-token{font-weight:700;color:#7c3aed;font-size:.8rem;font-family:'JetBrains Mono',monospace;}
+.cdh-codes{font-size:.74rem;color:#64748b;font-family:'JetBrains Mono',monospace;margin-top:2px;}
+.cdh-mini{font-size:.7rem;color:#94a3b8;margin-top:2px;}
+.cdh-yes{color:#16a34a;font-weight:700;}
+.cdh-no{color:#94a3b8;}
+.cdh-notify-line{display:flex;align-items:center;gap:5px;margin-bottom:3px;font-size:.78rem;}
+.cdh-notify-line .cdh-mini-ic{color:#a78bfa;flex-shrink:0;}
+
+/* ---- Mini inline icons ---- */
+.cdh-mini-ic{display:inline-flex;align-items:center;justify-content:center;
+             width:15px;height:15px;vertical-align:-3px;flex-shrink:0;}
+
+/* ---- Action buttons (pills) ---- */
+.cdh-act-grp{display:flex;flex-direction:column;gap:6px;}
+.cdh-act-btn{padding:6px 12px;border-radius:99px;font-size:.74rem;font-weight:700;
+             cursor:pointer;background:#fff;transition:all .12s;text-align:center;
+             font-family:inherit;display:inline-flex;align-items:center;justify-content:center;gap:5px;}
+.cdh-act-btn svg{flex-shrink:0;}
+.cdh-act-btn:disabled{opacity:.5;cursor:not-allowed;}
+.cdh-act-btn.email{border:1.5px solid #ddd6fe;color:#6d28d9;}
+.cdh-act-btn.email:hover{background:#f5f3ff;border-color:#c4b5fd;transform:translateY(-1px);}
+.cdh-act-btn.wa{border:1.5px solid #6ee7b7;color:#047857;}
+.cdh-act-btn.wa:hover{background:#f0fdf4;border-color:#34d399;transform:translateY(-1px);}
+.cdh-revert-btn{padding:6px 12px;background:#fff;border:1.5px solid #fca5a5;color:#b91c1c;
+                border-radius:99px;font-size:.74rem;font-weight:700;cursor:pointer;transition:all .12s;
+                font-family:inherit;display:inline-flex;align-items:center;justify-content:center;gap:5px;}
+.cdh-revert-btn svg{flex-shrink:0;}
+.cdh-revert-btn:hover{background:#fef2f2;border-color:#f87171;transform:translateY(-1px);}
+.cdh-revert-btn:disabled{opacity:.5;cursor:not-allowed;}
+
+/* ---- Confirmation / Success Modal ---- */
+.cdh-mod-ov{position:fixed;inset:0;background:rgba(15,23,42,.55);display:none;
+            align-items:center;justify-content:center;z-index:9999;animation:cdhFadeIn .15s ease-out;
+            backdrop-filter:blur(2px);}
+.cdh-mod-ov.open{display:flex;}
+@keyframes cdhFadeIn{from{opacity:0;}to{opacity:1;}}
+@keyframes cdhSlideIn{from{transform:translateY(-16px) scale(.96);opacity:0;}
+                       to  {transform:translateY(0) scale(1);opacity:1;}}
+@keyframes cdhSpin{to{transform:rotate(360deg);}}
+.cdh-spin{animation:cdhSpin .7s linear infinite;}
+.cdh-mod{background:#fff;border-radius:16px;width:min(440px,92vw);
+         box-shadow:0 20px 50px rgba(15,23,42,.25);overflow:hidden;
+         animation:cdhSlideIn .2s ease-out;}
+.cdh-mod-hd{padding:20px 24px 12px;display:flex;align-items:center;gap:12px;}
+.cdh-mod-ic{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;
+            justify-content:center;flex-shrink:0;}
+.cdh-mod-ic svg{width:24px;height:24px;}
+.cdh-mod-ic.warn{background:#fef3c7;color:#d97706;}
+.cdh-mod-ic.ok{background:#dcfce7;color:#16a34a;}
+.cdh-mod-ic.err{background:#fee2e2;color:#dc2626;}
+.cdh-mod-ic.info{background:#ede9fe;color:#7c3aed;}
+.cdh-mod-ic.busy{background:#ede9fe;color:#7c3aed;}
+.cdh-mod-ttl{font-size:1.05rem;font-weight:800;color:#0f172a;margin:0;line-height:1.3;}
+.cdh-mod-bd{padding:0 24px 18px;font-size:.88rem;color:#374151;line-height:1.55;}
+.cdh-mod-bd strong{color:#0f172a;}
+.cdh-mod-bd .cdh-warn-line{
+   margin-top:10px;padding:8px 12px;background:#fff7ed;border-left:3px solid #f59e0b;
+   border-radius:0 6px 6px 0;font-size:.8rem;color:#9a3412;
+}
+.cdh-mod-bd .cdh-success-stat{
+   margin-top:10px;padding:12px 16px;background:#f0fdf4;border:1px solid #bbf7d0;
+   border-radius:12px;font-size:.83rem;color:#065f46;
+}
+.cdh-mod-bd .cdh-success-stat .row{display:flex;justify-content:space-between;padding:3px 0;}
+.cdh-mod-bd .cdh-success-stat .row strong{font-family:'JetBrains Mono',monospace;}
+.cdh-mod-ft{padding:14px 24px 20px;display:flex;justify-content:flex-end;gap:8px;
+            background:#fafbfc;border-top:1px solid #f1f5f9;}
+.cdh-mod-btn{padding:9px 20px;border-radius:99px;font-size:.85rem;font-weight:700;
+             cursor:pointer;border:1.5px solid #e2e8f0;background:#fff;color:#374151;
+             transition:all .12s;display:inline-flex;align-items:center;gap:6px;text-decoration:none;}
+.cdh-mod-btn:hover{background:#f3f4f6;}
+.cdh-mod-btn.danger{background:linear-gradient(180deg,#ef4444,#b91c1c);color:#fff;border-color:transparent;
+                    box-shadow:0 2px 8px rgba(239,68,68,.3), inset 0 1px 0 rgba(255,255,255,.2);}
+.cdh-mod-btn.danger:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(239,68,68,.4), inset 0 1px 0 rgba(255,255,255,.2);}
+.cdh-mod-btn.primary{background:linear-gradient(180deg,#8b5cf6,#6d28d9);color:#fff;border-color:transparent;
+                     box-shadow:0 2px 8px rgba(124,58,237,.3), inset 0 1px 0 rgba(255,255,255,.2);}
+.cdh-mod-btn.primary:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(124,58,237,.4), inset 0 1px 0 rgba(255,255,255,.2);}
+.cdh-mod-btn.wa-btn-link{background:linear-gradient(180deg,#25d366,#1ea952);color:#fff;border-color:transparent;
+                         box-shadow:0 2px 8px rgba(37,211,102,.3), inset 0 1px 0 rgba(255,255,255,.2);}
+.cdh-mod-btn.wa-btn-link:hover{transform:translateY(-1px);}
+.cdh-mod-btn:disabled{opacity:.6;cursor:not-allowed;}
+
+@media(max-width:767px){
+  .cdh-tbl th,.cdh-tbl td{padding:9px 8px;}
+  .cdh-card{padding:4px;}
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="cdh-page">
+
+<!-- Reusable modal container -->
+<div class="cdh-mod-ov" id="cdh-modal" onclick="if(event.target===this)closeCdhModal()">
+  <div class="cdh-mod">
+    <div class="cdh-mod-hd">
+      <div class="cdh-mod-ic warn" id="cdh-mod-ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></div>
+      <h3 class="cdh-mod-ttl" id="cdh-mod-ttl">Confirm</h3>
+    </div>
+    <div class="cdh-mod-bd" id="cdh-mod-bd"></div>
+    <div class="cdh-mod-ft" id="cdh-mod-ft"></div>
+  </div>
+</div>
+
+<div class="cdh-toolbar">
+  <a href="{{ url_for('client_dispatch.index') }}" class="cdh-back">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+    Back to Dispatch
+  </a>
+  <div class="cdh-count" id="cdh-count"></div>
+</div>
+
+<div class="cdh-card">
+  <div id="cdh-tbl-wrap">
+    <div style="padding:24px;text-align:center;color:#94a3b8;">Loading...</div>
+  </div>
+</div>
+
+</div>{# end cdh-page #}
+
+<script>
+const CDH_URL = '{{ url_for("client_dispatch.api_history") }}';
+
+// -- Premium inline SVG icons (replaces OS emoji for consistent look) --
+const CDH_SVG = {
+  mail   : '<span class="cdh-mini-ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg></span>',
+  chat   : '<span class="cdh-mini-ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg></span>',
+  mailBtn: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>',
+  waBtn  : '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>',
+  revert : '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5a5.5 5.5 0 0 1-5.5 5.5H11"/></svg>',
+  spin   : '<svg class="cdh-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>',
+};
+
+// Modal status icon (premium, keyed by status class)
+function cdhIconSvg(kind) {
+  var open = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">';
+  if (kind === 'ok')   return open + '<path d="M20 6 9 17l-5-5"/></svg>';
+  if (kind === 'err')  return open + '<path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>';
+  if (kind === 'info') return open + '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>';
+  if (kind === 'busy') return '<svg class="cdh-spin" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>';
+  return open + '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>';
+}
+
+async function loadHistory() {
+  const wrap = document.getElementById('cdh-tbl-wrap');
+  try {
+    const r = await fetch(CDH_URL);
+    const d = await r.json();
+    if (!d.success) throw new Error(d.error || 'Failed');
+
+    document.getElementById('cdh-count').innerHTML = '<strong>' + d.dispatches.length + '</strong> dispatch' + (d.dispatches.length !== 1 ? 'es' : '');
+
+    if (!d.dispatches.length) {
+      wrap.innerHTML = '<div style="padding:36px;text-align:center;color:#94a3b8;">No client dispatches yet.</div>';
+      return;
+    }
+
+    wrap.innerHTML = `
+      <table class="cdh-tbl">
+        <thead>
+          <tr>
+            <th>Token</th>
+            <th>Project</th>
+            <th>Client</th>
+            <th>Samples</th>
+            <th>Tracking</th>
+            <th>Notify</th>
+            <th>Dispatched</th>
+            <th style="width:130px;">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${d.dispatches.map(r => `
+            <tr id="cdh-row-${r.id}">
+              <td>
+                <div class="cdh-token">${escapeHtml(r.token_no)}</div>
+                <div class="cdh-mini">${escapeHtml(r.dispatched_by)}</div>
+              </td>
+              <td>
+                <strong>${escapeHtml(r.project_code)}</strong>
+                <div class="cdh-mini">${escapeHtml(r.product_name)}</div>
+              </td>
+              <td>${escapeHtml(r.client_name)}</td>
+              <td>
+                <div><strong>${r.item_count}</strong> sample${r.item_count !== 1 ? 's' : ''}</div>
+                <div class="cdh-codes">${escapeHtml(r.sample_codes)}</div>
+              </td>
+              <td>
+                ${r.courier_name ? '<div>' + escapeHtml(r.courier_name) + '</div>' : ''}
+                ${r.tracking_no ? '<div class="cdh-mini">' + escapeHtml(r.tracking_no) + '</div>' : ''}
+                ${(!r.courier_name && !r.tracking_no) ? '<span class="cdh-no">-</span>' : ''}
+              </td>
+              <td>
+                <div class="cdh-notify-line">${CDH_SVG.mail} ${r.email_sent_at ? '<span class="cdh-yes">' + escapeHtml(r.email_sent_at) + '</span>' : '<span class="cdh-no">not sent</span>'}</div>
+                ${r.email_sent_to ? '<div class="cdh-mini">' + escapeHtml(r.email_sent_to) + '</div>' : ''}
+                <div class="cdh-notify-line">${CDH_SVG.chat} ${r.whatsapp_sent ? '<span class="cdh-yes">opened</span>' : '<span class="cdh-no">no</span>'}</div>
+              </td>
+              <td>${escapeHtml(r.dispatched_at)}</td>
+              <td>
+                <div class="cdh-act-grp">
+                  <button class="cdh-act-btn email"
+                          onclick='openEmailDialog(${JSON.stringify(r)})'>
+                    ${CDH_SVG.mailBtn} Email
+                  </button>
+                  <button class="cdh-act-btn wa"
+                          onclick='openWhatsApp(${r.id}, "${escapeHtml(r.token_no)}")'>
+                    ${CDH_SVG.waBtn} WhatsApp
+                  </button>
+                  <button class="cdh-revert-btn"
+                          onclick="revertDispatch(${r.id}, '${escapeHtml(r.token_no)}', ${r.item_count})">
+                    ${CDH_SVG.revert} Revert
+                  </button>
+                </div>
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  } catch (err) {
+    wrap.innerHTML = '<div style="padding:36px;text-align:center;color:#dc2626;">Failed: ' + escapeHtml(err.message) + '</div>';
+  }
+}
+
+function escapeHtml(s) {
+  if (s == null) return '';
+  return String(s).replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+
+// -- Send Email - shows email-input modal, then triggers send --
+function openEmailDialog(row) {
+  const defaultEmail = row.email_sent_to || row.client_email || '';
+  const alreadySent  = row.email_sent_at ? `<div class="cdh-warn-line">Previously sent to <strong>${escapeHtml(row.email_sent_to)}</strong> at ${escapeHtml(row.email_sent_at)}. Sending again will overwrite that record.</div>` : '';
+  openCdhModal({
+    iconClass: 'info',
+    title: 'Send Email - ' + row.token_no,
+    body: `
+      <div style="font-size:.85rem;">
+        Sending samples list + tracking details to client.<br>
+        <strong>${escapeHtml(row.project_code)}</strong> - ${escapeHtml(row.product_name)}
+      </div>
+      ${alreadySent}
+      <div style="margin-top:14px;">
+        <label style="display:block;font-size:.7rem;font-weight:800;color:#6b21a8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;">CLIENT EMAIL</label>
+        <input type="email" id="cdh-email-input" value="${escapeHtml(defaultEmail)}"
+               style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:.85rem;outline:none;font-family:inherit;box-sizing:border-box;"
+               placeholder="client@example.com">
+      </div>
+    `,
+    footer: `
+      <button class="cdh-mod-btn" onclick="closeCdhModal()">Cancel</button>
+      <button class="cdh-mod-btn primary" id="cdh-email-send-btn" onclick="doSendEmail(${row.id})">${CDH_SVG.mailBtn} Send Email</button>
+    `,
+  });
+}
+
+async function doSendEmail(cid) {
+  const input = document.getElementById('cdh-email-input');
+  const email = input ? input.value.trim() : '';
+  if (!email) {
+    input.focus(); input.style.borderColor = '#dc2626';
+    return;
+  }
+  const btn = document.getElementById('cdh-email-send-btn');
+  if (btn) { btn.disabled = true; btn.innerHTML = CDH_SVG.spin + ' Sending...'; }
+
+  try {
+    const r = await fetch('/client-dispatch/api/' + cid + '/send-email', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({to_email: email}),
+    });
+    const rawText = await r.text();
+    let d;
+    try { d = JSON.parse(rawText); }
+    catch (e) {
+      console.error('Non-JSON:', rawText.slice(0, 300));
+      throw new Error('Server returned HTML (HTTP ' + r.status + ')');
+    }
+    if (!d.success) throw new Error(d.error || 'Send failed');
+
+    openCdhModal({
+      iconClass: 'ok',
+      title: 'Email sent successfully',
+      body: `
+        Email delivered to <strong>${escapeHtml(d.email_sent_to)}</strong>.
+        <div class="cdh-success-stat">
+          <div class="row"><span>Sent at:</span><strong>${escapeHtml(d.email_sent_at)}</strong></div>
+        </div>
+        <div style="margin-top:10px;font-size:.8rem;color:#6b7280;">
+          Refresh the page to see the updated Email status in the row.
+        </div>
+      `,
+      footer: '<button class="cdh-mod-btn primary" onclick="closeCdhModal();loadHistory();">OK</button>',
+    });
+  } catch (err) {
+    openCdhModal({
+      iconClass: 'err',
+      title: 'Email send failed',
+      body: '<strong>Reason:</strong> ' + escapeHtml(err.message) +
+            '<div class="cdh-warn-line">Check Mail server config / try again later.</div>',
+      footer: '<button class="cdh-mod-btn primary" onclick="closeCdhModal()">Close</button>',
+    });
+  }
+}
+
+// -- Open WhatsApp - fetches pre-filled URL and opens new tab --
+async function openWhatsApp(cid, token) {
+  openCdhModal({
+    iconClass: 'busy',
+    title: 'Preparing WhatsApp message...',
+    body: 'Building pre-filled text for ' + escapeHtml(token) + '.',
+    footer: '<button class="cdh-mod-btn" disabled>Working...</button>',
+  });
+
+  try {
+    const r = await fetch('/client-dispatch/api/' + cid + '/whatsapp-url');
+    const d = await r.json();
+    if (!d.success) throw new Error(d.error || 'Failed');
+
+    const finalUrl = d.wa_web_url || d.wa_url;
+    const phoneInfo = d.phone
+      ? `Phone <strong>+${escapeHtml(d.phone)}</strong> will be auto-selected.`
+      : `<strong>No phone number saved</strong> - WhatsApp's contact picker will open so you can pick the recipient.`;
+
+    openCdhModal({
+      iconClass: 'ok',
+      title: 'Open WhatsApp Web',
+      body: `
+        Click below to open WhatsApp Web with the message pre-filled.
+        <div style="margin:10px 0;font-size:.83rem;">${phoneInfo}</div>
+        <details style="margin-top:8px;">
+          <summary style="font-size:.78rem;color:#7c3aed;cursor:pointer;font-weight:700;">Preview message</summary>
+          <pre style="font-size:.75rem;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px;margin-top:6px;white-space:pre-wrap;font-family:inherit;color:#374151;">${escapeHtml(d.text)}</pre>
+        </details>
+      `,
+      footer: `
+        <button class="cdh-mod-btn" onclick="closeCdhModal()">Close</button>
+        <a class="cdh-mod-btn wa-btn-link" href="${finalUrl}" target="_blank" rel="noopener"
+           onclick="setTimeout(()=>{closeCdhModal();loadHistory();},300);">
+          ${CDH_SVG.waBtn} Open WhatsApp
+        </a>
+      `,
+    });
+  } catch (err) {
+    openCdhModal({
+      iconClass: 'err',
+      title: 'Failed to build WhatsApp message',
+      body: '<strong>Reason:</strong> ' + escapeHtml(err.message),
+      footer: '<button class="cdh-mod-btn primary" onclick="closeCdhModal()">Close</button>',
+    });
+  }
+}
+
+// -- Modal helpers --
+function openCdhModal({icon, iconClass, title, body, footer}) {
+  document.getElementById('cdh-mod-ic').innerHTML = cdhIconSvg(iconClass || 'warn');
+  document.getElementById('cdh-mod-ic').className = 'cdh-mod-ic ' + (iconClass || 'warn');
+  document.getElementById('cdh-mod-ttl').textContent = title || 'Confirm';
+  document.getElementById('cdh-mod-bd').innerHTML = body || '';
+  document.getElementById('cdh-mod-ft').innerHTML = footer || '';
+  document.getElementById('cdh-modal').classList.add('open');
+}
+function closeCdhModal() {
+  document.getElementById('cdh-modal').classList.remove('open');
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeCdhModal();
+});
+
+// -- Revert a dispatch - full modal flow --
+function revertDispatch(cid, token, itemCount) {
+  // Step 1: Confirmation modal
+  openCdhModal({
+    iconClass: 'warn',
+    title: 'Revert dispatch ' + token + '?',
+    body: `
+      <strong>${itemCount}</strong> sample${itemCount !== 1 ? 's' : ''} will go back to "Approved" state.<br>
+      Project status will reset to <strong>"Approved By Office"</strong>.
+      <div class="cdh-warn-line">
+        Email already sent to client cannot be unsent. Only the database record will be reverted.
+      </div>
+    `,
+    footer: `
+      <button class="cdh-mod-btn" onclick="closeCdhModal()">Cancel</button>
+      <button class="cdh-mod-btn danger" onclick="doRevert(${cid}, '${escapeHtml(token)}', ${itemCount})">Yes, Revert</button>
+    `,
+  });
+}
+
+async function doRevert(cid, token, itemCount) {
+  // Step 2: Show busy state inside modal
+  openCdhModal({
+    iconClass: 'busy',
+    title: 'Reverting ' + token + '...',
+    body: 'Please wait while we undo this dispatch.',
+    footer: '<button class="cdh-mod-btn" disabled>Working...</button>',
+  });
+
+  const row = document.getElementById('cdh-row-' + cid);
+
+  try {
+    const r = await fetch('/client-dispatch/api/' + cid + '/revert', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+    });
+    const rawText = await r.text();
+    let d;
+    try {
+      d = JSON.parse(rawText);
+    } catch (e) {
+      console.error('Non-JSON response:', rawText.slice(0, 300));
+      throw new Error('Server returned HTML (HTTP ' + r.status + ').');
+    }
+    if (!d.success) throw new Error(d.error || 'Revert failed');
+
+    // Step 3: Animate row out + update count
+    if (row) {
+      row.style.transition = 'opacity .3s, background .3s';
+      row.style.background = '#fef2f2';
+      row.style.opacity = '0.4';
+      setTimeout(() => { if (row.parentNode) row.parentNode.removeChild(row); }, 350);
+    }
+    const countEl = document.getElementById('cdh-count');
+    if (countEl) {
+      const m = countEl.textContent.match(/(\d+)/);
+      if (m) {
+        const newCnt = Math.max(0, parseInt(m[1], 10) - 1);
+        countEl.innerHTML = '<strong>' + newCnt + '</strong> dispatch' + (newCnt !== 1 ? 'es' : '');
+      }
+    }
+
+    // Step 4: Success modal
+    openCdhModal({
+      iconClass: 'ok',
+      title: 'Reverted successfully',
+      body: `
+        Dispatch <strong>${escapeHtml(token)}</strong> has been undone.
+        <div class="cdh-success-stat">
+          <div class="row"><span>Samples returned:</span><strong>${d.samples_returned}</strong></div>
+          <div class="row"><span>Project status:</span><strong>Approved By Office</strong></div>
+          <div class="row"><span>Available for re-dispatch:</span><strong>Yes</strong></div>
+        </div>
+      `,
+      footer: '<button class="cdh-mod-btn primary" onclick="closeCdhModal()">OK</button>',
+    });
+
+  } catch (err) {
+    // Error modal
+    openCdhModal({
+      iconClass: 'err',
+      title: 'Revert failed',
+      body: '<strong>Reason:</strong> ' + escapeHtml(err.message || 'Unknown error') +
+            '<div class="cdh-warn-line">No changes were made. You can try again.</div>',
+      footer: '<button class="cdh-mod-btn primary" onclick="closeCdhModal()">Close</button>',
+    });
+  }
+}
+
+document.addEventListener('DOMContentLoaded', loadHistory);
+</script>
+{% endblock %}

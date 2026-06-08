@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pay Slip - {{ emp.full_name }} - {{ period_label }}</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: #eceff3;
+    font-family: Arial, Helvetica, "Segoe UI", sans-serif;
+    color: #1a1a1a;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* ---- on-screen toolbar (hidden in print) ---- */
+  .toolbar {
+    max-width: 1000px;
+    margin: 18px auto 0;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 0 6px;
+  }
+  .tb-btn { border: 0; cursor: pointer; font: 600 13px/1 Arial, sans-serif;
+            padding: 9px 18px; border-radius: 8px;
+            display: inline-flex; align-items: center; gap: 7px; }
+  .tb-print { background: #2563eb; color: #fff; }
+  .tb-back  { background: #fff; color: #334155; border: 1px solid #cbd5e1; }
+  .tb-btn svg { width: 15px; height: 15px; }
+
+  /* ---- sheet ---- */
+  .sheet {
+    max-width: 1000px; background: #fff;
+    margin: 14px auto 40px; padding: 26px 30px 20px;
+    border: 1px solid #d4d9e0; box-shadow: 0 6px 22px rgba(15,23,42,.10);
+  }
+
+  /* ---- header: logo top-right, company text right-aligned ---- */
+  .co-head { display: flex; justify-content: flex-end; align-items: flex-start; }
+  .co-logo { width: 60px; height: 60px; object-fit: contain; margin-bottom: 4px; }
+  .co-text { text-align: right; }
+  .co-name { font-size: 16px; font-weight: 700; color: #1f4e79; letter-spacing: .2px; }
+  .co-addr { font-size: 10.5px; font-weight: 700; color: #1f4e79; margin-top: 2px; line-height: 1.4; }
+
+  table { border-collapse: collapse; width: 100%; }
+  td, th { border: 1px solid #333; padding: 5px 9px; font-size: 12px; vertical-align: middle; }
+
+  /* title band */
+  .band-title td { background: #f4b084; font-weight: 700; text-align: center;
+                   font-size: 13.5px; padding: 7px; }
+  .gap { height: 12px; border: 0; }
+
+  /* info grid */
+  .info { table-layout: fixed; }
+  .info .lbl { width: 16%; }
+  .info .col { width: 3%; text-align: center; }
+  .info .val { width: 31%; text-align: center; }
+  .info .val.b { font-weight: 700; }
+
+  /* earnings / deductions */
+  .ded { table-layout: fixed; }
+  .ded col.e1 { width: 26%; } .ded col.e2 { width: 14%; } .ded col.e3 { width: 14%; }
+  .ded col.e4 { width: 26%; } .ded col.e5 { width: 20%; }
+  .ded th { font-weight: 700; background: #fff; }
+  .ded .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .ded .tot td { font-weight: 700; background: #f6f8fb; }
+  .ded .netrow td { font-weight: 700; }
+  .ded .words td { font-weight: 700; font-size: 12px; }
+
+  .foot { text-align: center; font-style: italic; font-weight: 700;
+          font-size: 11.5px; color: #222; padding: 18px 6px 2px; }
+
+  @media print {
+    body { background: #fff; }
+    .toolbar { display: none !important; }
+    .sheet { box-shadow: none; border: 0; margin: 0 auto; max-width: none; padding: 4px; }
+    @page { size: A4 portrait; margin: 12mm; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="toolbar">
+    <button class="tb-btn tb-back" onclick="history.back()" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+      Back
+    </button>
+    <button class="tb-btn tb-print" onclick="window.print()" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+      Print / Save PDF
+    </button>
+  </div>
+
+  <div class="sheet">
+
+    <!-- ===== Company header (logo top-right) ===== -->
+    <div class="co-head">
+      <div class="co-text">
+        <img class="co-logo" src="{{ url_for('static', filename='images/icons/hcp-logo.png') }}" alt="HCP"><br>
+        <span class="co-name">{{ company_name }}</span>
+        <div class="co-addr">{{ company_addr | replace('\n', '<br>') | safe }}</div>
+      </div>
+    </div>
+
+    <!-- ===== Title band ===== -->
+    <table style="margin-top:10px">
+      <tr class="band-title"><td>Pay Slip for the Period of {{ period_label }}</td></tr>
+    </table>
+
+    <!-- ===== Employee info ===== -->
+    <table class="info" style="margin-top:0;border-top:0">
+      <tr>
+        <td class="lbl">Employee Name</td><td class="col">:</td><td class="val b">{{ emp.full_name }}</td>
+        <td class="lbl">Bank Name</td><td class="col">:</td><td class="val">{{ emp.bank_name or '-' }}</td>
+      </tr>
+      <tr>
+        <td class="lbl">Employee ID</td><td class="col">:</td><td class="val">{{ emp.employee_code or emp.employee_id or '-' }}</td>
+        <td class="lbl">Account Number</td><td class="col">:</td><td class="val">{{ emp.bank_account_number or '-' }}</td>
+      </tr>
+      <tr>
+        <td class="lbl">Date of Joining</td><td class="col">:</td><td class="val">{{ doj }}</td>
+        <td class="lbl">Branch Name</td><td class="col">:</td><td class="val">{{ emp.bank_branch or '-' }}</td>
+      </tr>
+      <tr>
+        <td class="lbl">Location</td><td class="col">:</td><td class="val">{{ emp.location or '-' }}</td>
+        <td class="lbl">IFSC Code</td><td class="col">:</td><td class="val">{{ emp.bank_ifsc or '-' }}</td>
+      </tr>
+      <tr>
+        <td class="lbl">Department</td><td class="col">:</td><td class="val">{{ emp.department or '-' }}</td>
+        <td class="lbl">Worked Days</td><td class="col">:</td><td class="val">{{ '%g'|format(worked_days) }}</td>
+      </tr>
+      <tr>
+        <td class="lbl">Designation</td><td class="col">:</td><td class="val">{{ emp.designation or '-' }}</td>
+        <td class="lbl"></td><td class="col"></td><td class="val"></td>
+      </tr>
+      <tr>
+        <td class="lbl">Leave Balance</td><td class="col">:</td><td class="val">{{ lv_bal }}</td>
+        <td class="lbl">Leave Taken</td><td class="col">:</td><td class="val">{{ lv_taken }}</td>
+      </tr>
+    </table>
+
+    <!-- ===== Earnings / Deductions ===== -->
+    <table class="ded" style="margin-top:12px">
+      <colgroup><col class="e1"><col class="e2"><col class="e3"><col class="e4"><col class="e5"></colgroup>
+      <tr>
+        <th>Earnings</th><th class="num">Actual</th><th class="num">Earned</th>
+        <th>Deductions</th><th class="num">Amount</th>
+      </tr>
+
+      {% set rows = [earnings|length, deductions|length]|max %}
+      {% for i in range(rows) %}
+      <tr>
+        {% if i < earnings|length %}
+          <td>{{ earnings[i][0] }}</td>
+          <td class="num">{{ fmt(earnings[i][1]) if earnings[i][1] is not none else '-' }}</td>
+          <td class="num">{{ fmt(earnings[i][2]) if earnings[i][2] is not none else '-' }}</td>
+        {% else %}<td></td><td></td><td></td>{% endif %}
+
+        {% if i < deductions|length %}
+          <td>{{ deductions[i][0] }}</td>
+          <td class="num">{{ fmt(deductions[i][1]) if deductions[i][1] else '-' }}</td>
+        {% else %}<td></td><td></td>{% endif %}
+      </tr>
+      {% endfor %}
+
+      <tr class="tot">
+        <td>Total Earnings</td>
+        <td class="num">{{ fmt(gross_actual) }}</td>
+        <td class="num">{{ fmt(gross_payable) }}</td>
+        <td>Total Deductions</td>
+        <td class="num">{{ fmt(total_ded) }}</td>
+      </tr>
+
+      <tr class="netrow">
+        <td colspan="4">Net Pay (Rounded)</td>
+        <td class="num">{{ '{:,}'.format(net) }}</td>
+      </tr>
+      <tr class="words">
+        <td colspan="5">(in Words)&nbsp;&nbsp;{{ net_words }}</td>
+      </tr>
+    </table>
+
+    <div class="foot">** This is a system generated payslip does not require any signature and seal.**</div>
+  </div>
+
+  <script>
+    // ?print=1 -> seedha Save-as-PDF dialog (Download Slip)
+    if (new URLSearchParams(location.search).get('print') === '1') {
+      window.addEventListener('load', function () {
+        setTimeout(function () { window.print(); }, 350);
+      });
+    }
+  </script>
+
+</body>
+</html>

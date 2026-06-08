@@ -1,0 +1,446 @@
+{% extends 'base.html' %}
+
+{% block title %}Milestone Master - HCP ERP{% endblock %}
+{% block page_title %}Milestone Master{% endblock %}
+{% block bread %}NPD / Milestone Master{% endblock %}
+
+{% block extra_css %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============ MILESTONE MASTER - PREMIUM ============ */
+.mm-page * { font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif; }
+
+.mm-layout{display:grid;grid-template-columns:1fr 400px;gap:18px;align-items:start;}
+@media(max-width:980px){.mm-layout{grid-template-columns:1fr;}}
+
+/* ---- Header ---- */
+.mm-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;}
+.mm-hdr-left{display:flex;align-items:center;gap:13px;}
+.mm-hdr-tile{width:44px;height:44px;border-radius:13px;flex-shrink:0;
+             background:linear-gradient(180deg,#8b5cf6,#6d28d9);color:#fff;
+             display:flex;align-items:center;justify-content:center;
+             box-shadow:0 2px 8px rgba(124,58,237,.3), inset 0 1px 0 rgba(255,255,255,.2);}
+.mm-h1{font-size:1.3rem;font-weight:900;letter-spacing:-.02em;margin:0;color:#1e293b;}
+.mm-sub{font-size:12.5px;color:#94a3b8;margin:3px 0 0;font-weight:500;}
+.mm-count{font-size:12px;color:#64748b;font-weight:600;}
+.mm-count strong{color:#7c3aed;font-weight:800;}
+.saving-indicator{display:none;align-items:center;gap:6px;font-size:12px;color:#7c3aed;font-weight:700;
+                  background:#f5f3ff;border:1px solid #ddd6fe;padding:5px 12px;border-radius:99px;}
+.saving-indicator svg{flex-shrink:0;}
+@keyframes mmspin{to{transform:rotate(360deg);}}
+.mm-spin{animation:mmspin .7s linear infinite;}
+
+/* ---- Cards ---- */
+.card,.form-card{background:#fff;border:1px solid #e2e8f0;border-radius:16px;overflow:hidden;
+                 box-shadow:0 1px 3px rgba(15,23,42,.05), 0 4px 16px rgba(15,23,42,.04);}
+.card-hdr,.form-card-hdr{display:flex;align-items:center;justify-content:space-between;
+                         padding:14px 18px;border-bottom:1px solid #e2e8f0;background:#fff;}
+.card-title,.form-card-title{font-size:.92rem;font-weight:800;color:#1e293b;display:flex;align-items:center;gap:8px;}
+.form-card-title svg{color:#7c3aed;flex-shrink:0;}
+
+/* ---- Milestone rows ---- */
+#msList{padding:10px;}
+.ms-row{display:flex;align-items:center;gap:11px;padding:11px 13px;border:1.5px solid #eef2f7;
+        border-radius:12px;margin-bottom:8px;background:#fff;transition:all .12s;cursor:default;}
+.ms-row:hover{border-color:#e2e8f0;box-shadow:0 2px 10px rgba(15,23,42,.06);}
+.ms-row.inactive{opacity:.55;background:#fafafa;}
+.ms-row.dragging{opacity:.4;border-color:#c4b5fd;}
+.ms-row.drag-over{border-top:3px solid #7c3aed;background:#faf5ff;}
+.ms-drag-handle{color:#cbd5e1;cursor:grab;flex-shrink:0;display:inline-flex;align-items:center;}
+.ms-drag-handle:active{cursor:grabbing;}
+.ms-drag-handle:hover{color:#a78bfa;}
+.sort-order-badge{width:24px;height:24px;flex-shrink:0;border-radius:99px;background:#f5f3ff;
+                  color:#7c3aed;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:.72rem;
+                  display:flex;align-items:center;justify-content:center;border:1px solid #ede9fe;}
+.ms-icon{width:34px;height:34px;flex-shrink:0;border-radius:10px;background:#faf5ff;border:1px solid #ede9fe;
+         display:flex;align-items:center;justify-content:center;font-size:1.05rem;line-height:1;}
+.ms-info{flex:1;min-width:0;}
+.ms-title{font-size:.86rem;font-weight:700;color:#1e293b;}
+.ms-meta{display:flex;align-items:center;gap:7px;margin-top:4px;flex-wrap:wrap;}
+.ms-type{font-size:10.5px;color:#64748b;font-family:'JetBrains Mono',monospace;font-weight:600;
+         background:#f1f5f9;padding:2px 8px;border-radius:99px;}
+.ms-badge{font-size:10px;font-weight:700;padding:2px 9px;border-radius:99px;}
+.ms-badge.both{background:#ede9fe;color:#6d28d9;}
+.ms-badge.npd{background:#dbeafe;color:#1e40af;}
+.ms-badge.existing{background:#fef3c7;color:#92400e;}
+.mm-flag{font-size:10px;font-weight:700;display:inline-flex;align-items:center;gap:3px;}
+.mm-flag.mand{color:#dc2626;}
+.mm-flag.def{color:#16a34a;}
+.mm-flag svg{flex-shrink:0;}
+
+/* ---- Toggle switch ---- */
+.toggle-sw{position:relative;display:inline-block;width:38px;height:22px;flex-shrink:0;cursor:pointer;}
+.toggle-sw input{opacity:0;width:0;height:0;}
+.toggle-slider{position:absolute;inset:0;background:#cbd5e1;border-radius:99px;transition:.2s;}
+.toggle-slider:before{content:'';position:absolute;height:16px;width:16px;left:3px;top:3px;
+                      background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2);}
+.toggle-sw input:checked + .toggle-slider{background:linear-gradient(180deg,#8b5cf6,#6d28d9);}
+.toggle-sw input:checked + .toggle-slider:before{transform:translateX(16px);}
+
+/* ---- Action buttons (circular) ---- */
+.ms-actions{display:flex;gap:6px;flex-shrink:0;align-items:center;}
+.ms-actions form{margin:0;}
+.ms-btn{width:30px;height:30px;border-radius:99px;border:1.5px solid #e2e8f0;background:#fff;
+        cursor:pointer;display:inline-flex;align-items:center;justify-content:center;
+        color:#64748b;transition:all .12s;padding:0;}
+.ms-btn:hover{transform:translateY(-1px);}
+.ms-btn svg{flex-shrink:0;}
+.ms-btn.edit{border-color:#ddd6fe;color:#6d28d9;}
+.ms-btn.edit:hover{background:#f5f3ff;border-color:#c4b5fd;}
+.ms-btn.danger{border-color:#fecaca;color:#dc2626;}
+.ms-btn.danger:hover{background:#fef2f2;border-color:#f87171;}
+
+/* ---- Empty state ---- */
+.mm-empty{text-align:center;padding:48px 20px;color:#94a3b8;}
+.mm-empty .es-icon{width:60px;height:60px;border-radius:16px;margin:0 auto 12px;
+                   background:#f5f3ff;border:1px solid #ede9fe;color:#a78bfa;
+                   display:flex;align-items:center;justify-content:center;}
+
+/* ---- Form ---- */
+.form-card-body{padding:18px;}
+.form-inline{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.form-row{margin-bottom:14px;}
+.form-label{display:block;font-size:.7rem;font-weight:800;color:#6b21a8;text-transform:uppercase;
+            letter-spacing:.05em;margin-bottom:6px;}
+.form-label span{text-transform:none;letter-spacing:0;}
+.form-input,.form-textarea,.form-select{
+    width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:10px;
+    font-size:.85rem;background:#fff;color:#1e293b;outline:none;font-family:inherit;font-weight:500;
+    box-sizing:border-box;transition:border-color .12s, box-shadow .12s;
+    box-shadow:0 1px 2px rgba(15,23,42,.03);
+}
+.form-input:focus,.form-textarea:focus,.form-select:focus{border-color:#c4b5fd;box-shadow:0 0 0 3px rgba(124,58,237,.1);}
+.form-input::placeholder,.form-textarea::placeholder{color:#cbd5e1;}
+.form-textarea{min-height:70px;resize:vertical;}
+.form-select{appearance:none;-webkit-appearance:none;
+             background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237c3aed' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+             background-repeat:no-repeat;background-position:right 12px center;padding-right:34px;cursor:pointer;}
+.form-check-row{display:flex;align-items:center;gap:9px;font-size:.83rem;color:#374151;font-weight:500;
+                padding:9px 0;cursor:pointer;}
+.form-check-row input[type=checkbox]{width:17px;height:17px;accent-color:#7c3aed;cursor:pointer;flex-shrink:0;}
+
+/* ---- Submit buttons (pills) ---- */
+.btn-submit{width:100%;margin-top:8px;padding:11px;border:none;border-radius:99px;cursor:pointer;
+            background:linear-gradient(180deg,#8b5cf6,#6d28d9);color:#fff;font-size:.88rem;font-weight:700;
+            font-family:inherit;display:inline-flex;align-items:center;justify-content:center;gap:7px;
+            box-shadow:0 2px 8px rgba(124,58,237,.3), inset 0 1px 0 rgba(255,255,255,.2);transition:transform .12s, box-shadow .12s;}
+.btn-submit:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(124,58,237,.4), inset 0 1px 0 rgba(255,255,255,.2);}
+.btn-submit svg{flex-shrink:0;}
+.btn-cancel{width:100%;margin-top:8px;padding:10px;border:1.5px solid #e2e8f0;border-radius:99px;cursor:pointer;
+            background:#fff;color:#64748b;font-size:.85rem;font-weight:700;font-family:inherit;transition:all .12s;}
+.btn-cancel:hover{background:#f8fafc;border-color:#cbd5e1;}
+.mm-cancel-top{display:inline-flex;align-items:center;gap:5px;padding:5px 13px;border-radius:99px;
+               border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-size:.76rem;font-weight:700;
+               cursor:pointer;font-family:inherit;transition:all .12s;}
+.mm-cancel-top:hover{background:#f8fafc;border-color:#cbd5e1;}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mm-page">
+
+{# -- Page Header -- #}
+<div class="mm-hdr">
+    <div class="mm-hdr-left">
+        <div class="mm-hdr-tile">
+            <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+        </div>
+        <div>
+            <h1 class="mm-h1">Milestone Master</h1>
+            <p class="mm-sub">Manage milestone templates used when creating NPD / EPD projects. Drag to reorder.</p>
+        </div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;">
+        <span class="mm-count"><strong>{{ templates|length }}</strong> milestones</span>
+        <span class="saving-indicator" id="savingInd">
+            <svg class="mm-spin" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+            Saving order...
+        </span>
+    </div>
+</div>
+
+<div class="mm-layout">
+
+    {# == LEFT - Milestone List == #}
+    <div>
+        <div class="card">
+            <div class="card-hdr">
+                <span class="card-title">All Milestone Templates</span>
+                <span style="font-size:11.5px;color:#94a3b8;">Drag rows to reorder</span>
+            </div>
+
+            <div id="msList">
+                {% if templates %}
+                    {% for t in templates %}
+                    <div class="ms-row {% if not t.is_active %}inactive{% endif %}"
+                         data-id="{{ t.id }}" draggable="true">
+                        <span class="ms-drag-handle">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>
+                        </span>
+                        <span class="sort-order-badge" id="sort_{{ t.id }}">{{ loop.index }}</span>
+                        <span class="ms-icon">{% if t.icon %}{{ t.icon }}{% else %}&#128204;{% endif %}</span>
+                        <div class="ms-info">
+                            <div class="ms-title">{{ t.title }}</div>
+                            <div class="ms-meta">
+                                <span class="ms-type">{{ t.milestone_type }}</span>
+                                <span class="ms-badge {{ t.applies_to }}">
+                                    {% if t.applies_to == 'both' %}NPD + EPD
+                                    {% elif t.applies_to == 'npd' %}NPD only
+                                    {% else %}EPD only{% endif %}
+                                </span>
+                                {% if t.is_mandatory %}<span class="mm-flag mand"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Mandatory</span>{% endif %}
+                                {% if t.default_selected %}<span class="mm-flag def"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Default ON</span>{% endif %}
+                            </div>
+                        </div>
+
+                        {# Toggle Active #}
+                        <label class="toggle-sw" title="{{ 'Active' if t.is_active else 'Inactive' }}">
+                            <input type="checkbox" {% if t.is_active %}checked{% endif %}
+                                   onchange="toggleActive({{ t.id }}, this)">
+                            <span class="toggle-slider"></span>
+                        </label>
+
+                        <div class="ms-actions">
+                            <button class="ms-btn edit" title="Edit" onclick="openEdit({{ t.id }}, {
+                                milestone_type: {{ t.milestone_type|tojson }},
+                                title: {{ t.title|tojson }},
+                                description: {{ (t.description or '')|tojson }},
+                                icon: {{ (t.icon or '')|tojson }},
+                                applies_to: {{ t.applies_to|tojson }},
+                                default_selected: {{ 'true' if t.default_selected else 'false' }},
+                                is_mandatory: {{ 'true' if t.is_mandatory else 'false' }},
+                                is_active: {{ 'true' if t.is_active else 'false' }},
+                                sort_order: {{ t.sort_order or 0 }}
+                            })">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                            </button>
+                            <form action="/npd/milestone-master/{{ t.id }}/delete" method="POST" style="margin:0;">
+                                <button type="submit" class="ms-btn danger" title="Delete"
+                                        onclick="return confirm('Delete \'{{ t.title }}\'?')">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                <div class="mm-empty">
+                    <div class="es-icon">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg>
+                    </div>
+                    <div style="font-size:13px;">No milestone templates yet. Add one using the form &rarr;</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {# == RIGHT - Add / Edit Form == #}
+    <div>
+        <div class="form-card">
+            <div class="form-card-hdr">
+                <span class="form-card-title" id="formTitle">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                    Add Milestone
+                </span>
+                <button class="mm-cancel-top" id="cancelEditBtn" style="display:none;" onclick="resetForm()">&times; Cancel</button>
+            </div>
+            <div class="form-card-body">
+                <form id="msForm" method="POST" action="/npd/milestone-master/add">
+
+                    {# Hidden for edit #}
+                    <input type="hidden" name="_method" value="POST">
+
+                    <div class="form-inline">
+                        <div class="form-row">
+                            <label class="form-label">Icon <span style="color:#94a3b8;font-weight:500;">(emoji)</span></label>
+                            <input type="text" name="icon" id="f_icon" class="form-input"
+                                   placeholder="&#128204;" maxlength="5" value="&#128204;" style="font-size:18px;text-align:center;">
+                        </div>
+                        <div class="form-row">
+                            <label class="form-label">Sort Order</label>
+                            <input type="number" name="sort_order" id="f_sort" class="form-input"
+                                   placeholder="0" min="0" value="{{ templates|length + 1 }}">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <label class="form-label">Milestone Type <span style="color:#dc2626;">*</span>
+                            <span style="color:#94a3b8;font-weight:500;"> (snake_case, unique)</span></label>
+                        <input type="text" name="milestone_type" id="f_type" class="form-input"
+                               placeholder="e.g. artwork_approval" required>
+                    </div>
+
+                    <div class="form-row">
+                        <label class="form-label">Title <span style="color:#dc2626;">*</span></label>
+                        <input type="text" name="title" id="f_title" class="form-input"
+                               placeholder="e.g. Artwork / Design" required>
+                    </div>
+
+                    <div class="form-row">
+                        <label class="form-label">Description <span style="color:#94a3b8;font-weight:500;">(optional)</span></label>
+                        <textarea name="description" id="f_desc" class="form-textarea"
+                                  placeholder="Brief description of this milestone..."></textarea>
+                    </div>
+
+                    <div class="form-row">
+                        <label class="form-label">Applies To</label>
+                        <select name="applies_to" id="f_applies" class="form-select">
+                            <option value="both">Both NPD &amp; EPD</option>
+                            <option value="npd">NPD Only</option>
+                            <option value="existing">EPD Only</option>
+                        </select>
+                    </div>
+
+                    <div class="form-row" style="margin-bottom:4px;">
+                        <label class="form-check-row">
+                            <input type="checkbox" name="default_selected" id="f_default" checked>
+                            Selected by default when creating new project
+                        </label>
+                        <label class="form-check-row">
+                            <input type="checkbox" name="is_mandatory" id="f_mandatory">
+                            Mandatory (cannot be deselected)
+                        </label>
+                        <label class="form-check-row">
+                            <input type="checkbox" name="is_active" id="f_active" checked>
+                            Active
+                        </label>
+                    </div>
+
+                    <button type="submit" class="btn-submit" id="submitBtn">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                        Add Milestone
+                    </button>
+                    <button type="button" class="btn-cancel" id="cancelEditBtn2" style="display:none;" onclick="resetForm()">Cancel Edit</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{# -- Hidden edit form (for action URL switching) -- #}
+<div id="editUrlHelper" style="display:none;"></div>
+
+</div>{# end mm-page #}
+
+<script>
+// Premium icon markup reused in JS (form title / submit button)
+var MM_IC = {
+  add  : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>',
+  addBtn: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>',
+  edit : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>',
+  save : '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/></svg>',
+};
+var MM_ICON_DEFAULT = '\uD83D\uDCCC';  // pin emoji default for icon field
+
+// ================================================
+// EDIT - populate form with existing data
+// ================================================
+function openEdit(id, t) {
+    document.getElementById('formTitle').innerHTML = MM_IC.edit + ' Edit Milestone';
+    document.getElementById('msForm').action = '/npd/milestone-master/' + id + '/edit';
+    document.getElementById('f_icon').value    = t.icon || MM_ICON_DEFAULT;
+    document.getElementById('f_sort').value    = t.sort_order || 0;
+    document.getElementById('f_type').value    = t.milestone_type || '';
+    document.getElementById('f_title').value   = t.title || '';
+    document.getElementById('f_desc').value    = t.description || '';
+    document.getElementById('f_applies').value = t.applies_to || 'both';
+    document.getElementById('f_default').checked  = t.default_selected;
+    document.getElementById('f_mandatory').checked = t.is_mandatory;
+    document.getElementById('f_active').checked    = t.is_active;
+    document.getElementById('submitBtn').innerHTML = MM_IC.save + ' Save Changes';
+    document.getElementById('cancelEditBtn').style.display  = '';
+    document.getElementById('cancelEditBtn2').style.display = '';
+    // Scroll to form
+    document.querySelector('.form-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function resetForm() {
+    document.getElementById('formTitle').innerHTML = MM_IC.add + ' Add Milestone';
+    document.getElementById('msForm').action = '/npd/milestone-master/add';
+    document.getElementById('msForm').reset();
+    document.getElementById('submitBtn').innerHTML = MM_IC.addBtn + ' Add Milestone';
+    document.getElementById('cancelEditBtn').style.display  = 'none';
+    document.getElementById('cancelEditBtn2').style.display = 'none';
+}
+
+// ================================================
+// TOGGLE ACTIVE - AJAX
+// ================================================
+function toggleActive(id, checkbox) {
+    fetch('/npd/milestone-master/' + id + '/toggle', { method: 'POST' })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                const row = document.querySelector('[data-id="' + id + '"]');
+                if (row) row.classList.toggle('inactive', !data.is_active);
+            }
+        })
+        .catch(() => { checkbox.checked = !checkbox.checked; });
+}
+
+// ================================================
+// DRAG & DROP - Reorder
+// ================================================
+let dragSrc = null;
+
+document.querySelectorAll('.ms-row').forEach(row => {
+    row.addEventListener('dragstart', e => {
+        dragSrc = row;
+        row.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+    });
+    row.addEventListener('dragend', e => {
+        row.classList.remove('dragging');
+        document.querySelectorAll('.ms-row').forEach(r => r.classList.remove('drag-over'));
+        saveOrder();
+    });
+    row.addEventListener('dragover', e => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        document.querySelectorAll('.ms-row').forEach(r => r.classList.remove('drag-over'));
+        if (row !== dragSrc) row.classList.add('drag-over');
+    });
+    row.addEventListener('drop', e => {
+        e.preventDefault();
+        if (dragSrc && dragSrc !== row) {
+            const list = document.getElementById('msList');
+            const rows = [...list.querySelectorAll('.ms-row')];
+            const srcIdx = rows.indexOf(dragSrc);
+            const dstIdx = rows.indexOf(row);
+            if (srcIdx < dstIdx) {
+                list.insertBefore(dragSrc, row.nextSibling);
+            } else {
+                list.insertBefore(dragSrc, row);
+            }
+            updateSortBadges();
+        }
+        row.classList.remove('drag-over');
+    });
+});
+
+function updateSortBadges() {
+    document.querySelectorAll('#msList .ms-row').forEach((row, i) => {
+        const badge = document.getElementById('sort_' + row.dataset.id);
+        if (badge) badge.textContent = i + 1;
+    });
+}
+
+function saveOrder() {
+    const ids = [...document.querySelectorAll('#msList .ms-row')].map(r => parseInt(r.dataset.id));
+    const ind = document.getElementById('savingInd');
+    ind.style.display = 'inline-flex';
+    fetch('/npd/milestone-master/reorder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids })
+    })
+    .then(r => r.json())
+    .then(() => { ind.style.display = 'none'; })
+    .catch(() => { ind.style.display = 'none'; });
+}
+</script>
+
+{% endblock %}

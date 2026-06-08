@@ -1,0 +1,473 @@
+{% extends "base.html" %}
+{% block title %}Employee Leaderboard{% endblock %}
+{% block page_title %}Employee Leaderboard{% endblock %}
+{% block bread %}CRM / Leaderboard{% endblock %}
+
+{% block extra_css %}
+<style>
+:root {
+    --premium-bg: #f8fafc;
+    --card-bg: #ffffff;
+    --text-main: #0f172a;
+    --text-muted: #475569;
+    --text-light: #94a3b8;
+    --border-soft: #e2e8f0;
+    --border-lighter: #f1f5f9;
+    --primary: #2563eb;
+    --primary-hover: #1d4ed8;
+    --primary-light: #eff6ff;
+    --danger: #ef4444;
+    --danger-bg: #fef2f2;
+    --success: #10b981;
+    --success-bg: #ecfdf5;
+    --warning: #f59e0b;
+    --warning-bg: #fffbeb;
+
+    --rank1-color: #d97706; --rank1-bg: #fffbeb; --rank1-border: #fde68a;
+    --rank2-color: #475569; --rank2-bg: #f8fafc; --rank2-border: #e2e8f0;
+    --rank3-color: #b45309; --rank3-bg: #fff7ed; --rank3-border: #fed7aa;
+
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-pill: 9999px;
+    --shadow-soft: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.03);
+    --shadow-hover: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.04);
+}
+
+* { box-sizing: border-box; }
+
+svg { flex-shrink: 0; }
+
+/* ── Main Layout & Header ── */
+.page-hdr {
+    margin-bottom: 1.5rem; display: flex; align-items: center; gap: 12px;
+}
+.page-hdr-icon {
+    width: 42px; height: 42px; background: var(--warning-bg); color: var(--warning);
+    border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center;
+}
+.page-hdr-title { font-size: 1.5rem; font-weight: 800; color: var(--text-main); margin: 0; }
+.page-hdr-sub { font-size: 0.85rem; color: var(--text-muted); font-weight: 500; margin-top: 2px; }
+
+/* ── Filters ── */
+.lb-filters {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 1.5rem;
+    background: #fff; padding: 12px 16px; border-radius: var(--radius-md);
+    border: 1px solid var(--border-soft); box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+}
+.filter-wrap { position: relative; display: flex; align-items: center; flex: 1; min-width: 160px; max-width: 240px; }
+.filter-icon { position: absolute; left: 12px; color: var(--text-light); pointer-events: none; }
+.lb-select {
+    font-size: 0.85rem; padding: 9px 12px 9px 36px; border: 1px solid var(--border-soft);
+    border-radius: var(--radius-pill); outline: none; background: var(--premium-bg);
+    color: var(--text-main); cursor: pointer; width: 100%; transition: all 0.2s;
+    font-family: 'Inter', sans-serif; font-weight: 500; appearance: none;
+}
+.lb-select:hover { border-color: #cbd5e1; }
+.lb-select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); background: #fff; }
+.filter-arrow { position: absolute; right: 14px; color: var(--text-light); pointer-events: none; }
+
+.lb-period-badge {
+    font-size: 0.8rem; color: var(--primary); background: var(--primary-light);
+    padding: 6px 12px; border-radius: var(--radius-pill); font-weight: 700; white-space: nowrap;
+    border: 1px solid #bfdbfe; display: flex; align-items: center; gap: 6px;
+}
+.total-badge { font-size: 0.85rem; color: var(--text-muted); font-weight: 600; white-space: nowrap; margin-left: auto; }
+
+/* ── Layout Grid ── */
+.lb-layout { display: grid; grid-template-columns: 1fr 420px; gap: 1.5rem; align-items: start; }
+
+/* ── Leaderboard Cards ── */
+.lb-card {
+    background: #fff; border: 1px solid var(--border-soft); border-radius: var(--radius-lg);
+    padding: 16px; margin-bottom: 12px; transition: all 0.2s; cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; align-items: center; gap: 16px;
+}
+.lb-card:hover { box-shadow: var(--shadow-hover); border-color: #cbd5e1; transform: translateY(-1px); }
+.lb-card:active { transform: scale(0.99); }
+
+.lb-card.rank-1 { border-color: var(--rank1-border); background: linear-gradient(to right, var(--rank1-bg), #fff); }
+.lb-card.rank-2 { border-color: var(--rank2-border); background: linear-gradient(to right, var(--rank2-bg), #fff); }
+.lb-card.rank-3 { border-color: var(--rank3-border); background: linear-gradient(to right, var(--rank3-bg), #fff); }
+
+.lb-rank { font-size: 1.5rem; width: 40px; text-align: center; flex-shrink: 0; display: flex; justify-content: center; }
+.lb-avatar {
+    width: 48px; height: 48px; border-radius: 50%; background: var(--primary-light); color: var(--primary);
+    display: flex; align-items: center; justify-content: center; font-size: 1rem; font-weight: 800;
+    flex-shrink: 0; border: 2px solid #bfdbfe;
+}
+.lb-card.rank-1 .lb-avatar { background: var(--warning-bg); color: var(--warning); border-color: var(--rank1-border); }
+.lb-card.rank-2 .lb-avatar { background: #f1f5f9; color: var(--text-muted); border-color: var(--rank2-border); }
+.lb-card.rank-3 .lb-avatar { background: #ffedd5; color: #c2410c; border-color: var(--rank3-border); }
+
+.lb-info { flex: 1; min-width: 0; }
+.lb-name { font-size: 1.05rem; font-weight: 800; color: var(--text-main); margin-bottom: 6px; }
+.lb-stats-wrap { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+.stat-pill {
+    background: #f1f5f9; border-radius: 6px; padding: 4px 8px; font-size: 0.75rem;
+    font-weight: 600; color: var(--text-muted); display: inline-flex; align-items: center; gap: 4px;
+    border: 1px solid #e2e8f0;
+}
+.stat-pill svg { width: 12px; height: 12px; color: var(--text-light); }
+.lb-slabs { display: flex; gap: 4px; flex-wrap: wrap; }
+.slab-pill { font-size: 0.65rem; font-weight: 700; padding: 2px 8px; border-radius: 4px; color: #fff; }
+
+.lb-score { text-align: right; flex-shrink: 0; }
+.lb-pts { font-size: 1.8rem; font-weight: 900; line-height: 1; letter-spacing: -0.02em; }
+.lb-pts-lbl { font-size: 0.65rem; color: var(--text-light); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 4px; }
+
+/* ── Detail Panel (Desktop) ── */
+.lb-detail-panel { position: sticky; top: 1.5rem; }
+.lb-detail-panel.hidden { display: none; }
+.detail-card {
+    background: #fff; border-radius: var(--radius-lg); border: 1px solid var(--border-soft);
+    box-shadow: var(--shadow-soft); overflow: hidden;
+}
+.detail-hdr {
+    background: #fdfdfe; border-bottom: 1px solid var(--border-soft); padding: 16px 20px;
+    display: flex; align-items: center; justify-content: space-between;
+}
+.detail-title { font-size: 1.1rem; font-weight: 800; color: var(--text-main); display: flex; align-items: center; gap: 8px; }
+.detail-close {
+    background: var(--premium-bg); border: none; color: var(--text-muted); width: 28px; height: 28px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;
+}
+.detail-close:hover { background: var(--border-soft); color: var(--text-main); }
+
+/* ── Content inside detail panel ── */
+.score-box { background: #f8fafc; border: 1px solid var(--border-soft); border-radius: var(--radius-md); padding: 16px; text-align: center; flex: 1; }
+.score-lbl { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+.score-val { font-size: 1.8rem; font-weight: 900; }
+
+.sec-lbl { font-size: 0.7rem; font-weight: 800; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+.sec-lbl::after { content: ''; flex: 1; height: 1px; background: var(--border-lighter); }
+
+.action-pill-lg {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    border-radius: var(--radius-sm); padding: 10px; min-width: 65px; border: 1px solid;
+    background: #fff; transition: all 0.2s; flex: 1;
+}
+.action-pill-lg svg { width: 16px; height: 16px; margin-bottom: 6px; }
+.action-pill-lg .val { font-size: 1rem; font-weight: 800; line-height: 1; margin-bottom: 2px; }
+.action-pill-lg .lbl { font-size: 0.65rem; font-weight: 600; color: var(--text-muted); }
+
+/* ── Progress Slabs ── */
+.slab-row { margin-bottom: 10px; }
+.slab-info { display: flex; justify-content: space-between; font-size: 0.75rem; margin-bottom: 4px; font-weight: 600; }
+.slab-bar-bg { background: var(--border-soft); border-radius: 999px; height: 6px; overflow: hidden; }
+.slab-bar-fill { height: 100%; border-radius: 999px; transition: width 0.5s ease-out; }
+
+/* ── Table ── */
+.leads-tbl { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.leads-tbl th { background: var(--premium-bg); padding: 10px 14px; text-align: left; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); border-bottom: 1px solid var(--border-soft); white-space: nowrap; }
+.leads-tbl td { padding: 10px 14px; border-bottom: 1px solid var(--border-lighter); vertical-align: middle; }
+.leads-tbl tr:hover td { background: #fdfdfe; }
+
+.empty-state { text-align: center; padding: 4rem 2rem; color: var(--text-muted); }
+.empty-state svg { width: 48px; height: 48px; color: var(--border-soft); margin-bottom: 12px; }
+.empty-state h3 { font-size: 1.1rem; font-weight: 700; color: var(--text-main); margin: 0 0 4px; }
+
+/* ── Mobile Bottom Sheet ── */
+.lb-mobile-detail { display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.6); backdrop-filter: blur(4px); z-index: 1000; align-items: flex-end; justify-content: center; }
+.lb-mobile-detail.show { display: flex; animation: fadeIn 0.2s; }
+.lb-mobile-sheet { background: #fff; border-radius: 24px 24px 0 0; width: 100%; max-height: 90vh; overflow-y: auto; box-shadow: 0 -8px 40px rgba(0,0,0,0.15); animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+.lb-sheet-hdr { background: #fff; padding: 16px 20px; border-bottom: 1px solid var(--border-soft); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; border-radius: 24px 24px 0 0; }
+
+@keyframes slideUp { from { opacity: 0; transform: translateY(100%); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+@media (max-width: 768px) {
+    .lb-layout { grid-template-columns: 1fr; display: block; }
+    .lb-detail-panel { display: none !important; }
+    .lb-filters { padding: 10px; gap: 8px; }
+    .filter-wrap { max-width: 100%; }
+    .lb-card { padding: 14px; gap: 12px; }
+    .lb-rank { font-size: 1.3rem; width: 32px; }
+    .lb-avatar { width: 42px; height: 42px; font-size: 0.9rem; }
+    .lb-pts { font-size: 1.5rem; }
+    .total-badge { width: 100%; text-align: left; margin-left: 0; margin-top: 4px; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-hdr">
+    <div class="page-hdr-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path></svg>
+    </div>
+    <div>
+        <h1 class="page-hdr-title">Employee Leaderboard</h1>
+        <div class="page-hdr-sub">Track performance and closed leads</div>
+    </div>
+</div>
+
+<div class="lb-filters">
+    <div class="filter-wrap">
+        <svg class="filter-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+        <select id="periodSel" class="lb-select" onchange="loadLeaderboard()">
+            <option value="today">Today</option>
+            <option value="this_week">This Week</option>
+            <option value="this_month" selected>This Month</option>
+            <option value="last_month">Last Month</option>
+            <option value="last_3_months">Last 3 Months</option>
+            <option value="last_6_months">Last 6 Months</option>
+            <option value="this_year">This Year</option>
+            <option value="last_year">Last Year</option>
+        </select>
+        <svg class="filter-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+    </div>
+
+    <div class="filter-wrap">
+        <svg class="filter-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+        <select id="empSel" class="lb-select" onchange="loadLeaderboard()">
+            <option value="">All Employees</option>
+            {% for u in all_users %}
+            <option value="{{ u.id }}">{{ u.full_name }}</option>
+            {% endfor %}
+        </select>
+        <svg class="filter-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+    </div>
+
+    <div id="periodLabel" class="lb-period-badge">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+        <span>Loading...</span>
+    </div>
+    <div id="totalBadge" class="total-badge"></div>
+</div>
+
+<div class="lb-layout">
+    <div>
+        <div id="lbLoading" class="empty-state">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation:spin 1s linear infinite;"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>
+            <h3>Loading Leaderboard</h3>
+        </div>
+        <div id="lbList" style="display:none;"></div>
+        <div id="lbEmpty" class="empty-state" style="display:none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline></svg>
+            <h3>No contribution data yet</h3>
+            <p>Start working on leads to appear on the leaderboard!</p>
+        </div>
+    </div>
+
+    <div id="empDetail" class="lb-detail-panel hidden">
+        <div class="detail-card">
+            <div class="detail-hdr">
+                <div class="detail-title" id="detailName">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--primary);"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                    <span>Employee Detail</span>
+                </div>
+                <button class="detail-close" onclick="closeDetail()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+            </div>
+            <div id="detailContent"></div>
+        </div>
+    </div>
+</div>
+
+<div id="lbMobileDetail" class="lb-mobile-detail">
+    <div class="lb-mobile-sheet">
+        <div class="lb-sheet-hdr">
+            <div class="detail-title" id="mDetailName">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--primary);"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                <span></span>
+            </div>
+            <button class="detail-close" onclick="closeDetail()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+        </div>
+        <div id="mDetailContent"></div>
+    </div>
+</div>
+
+<script>
+const svgMedal1 = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--warning)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline></svg>`;
+const svgMedal2 = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline></svg>`;
+const svgMedal3 = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#c2410c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline></svg>`;
+const svgChat = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>`;
+const svgCheck = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`;
+const svgRefresh = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>`;
+const svgActivity = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>`;
+
+const svgPillComment = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>`;
+const svgPillEdit = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`;
+const svgPillStatus = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>`;
+const svgPillFollow = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>`;
+const svgPillBell = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>`;
+
+let _lbData = null;
+
+document.getElementById('lbMobileDetail').addEventListener('click', function(e) {
+    if (e.target === this) closeDetail();
+});
+
+function buildDetailHTML(emp, leads) {
+    const pills = [
+        {icon: svgPillComment, label:'Comments',  val:emp.comments,       color:'#3b82f6', bg:'#eff6ff', border:'#bfdbfe'},
+        {icon: svgPillEdit,    label:'Edits',     val:emp.edits,          color:'#8b5cf6', bg:'#f5f3ff', border:'#ddd6fe'},
+        {icon: svgPillStatus,  label:'Status',    val:emp.status_changes, color:'#10b981', bg:'#f0fdf4', border:'#bbf7d0'},
+        {icon: svgPillFollow,  label:'Follow Up', val:emp.follow_ups,     color:'#f59e0b', bg:'#fffbeb', border:'#fde68a'},
+        {icon: svgPillBell,    label:'Reminders', val:emp.reminders,      color:'#06b6d4', bg:'#ecfeff', border:'#a5f3fc'},
+    ];
+
+    const slabs = [
+        {key:'slab1', label:'1–7 days',   color:'#0d9488'},
+        {key:'slab2', label:'8–14 days',  color:'#2563eb'},
+        {key:'slab3', label:'15–21 days', color:'#7c3aed'},
+        {key:'slab4', label:'22–28 days', color:'#d97706'},
+        {key:'slab5', label:'29+ days',   color:'#94a3b8'},
+    ];
+    const maxSlab = Math.max(...slabs.map(s => emp[s.key]||0), 1);
+
+    const leadsHTML = !leads.length
+        ? '<div class="empty-state" style="padding:2rem 1rem;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg><h3>No closed leads</h3><p>in this period</p></div>'
+        : `<div style="overflow-x:auto;"><table class="leads-tbl">
+            <thead><tr><th>Lead</th><th>Company</th><th>Days</th><th>Closed On</th><th></th></tr></thead>
+            <tbody>${leads.map(l => `
+                <tr>
+                    <td><div style="font-weight:700;color:var(--text-main);">${l.name||'—'}</div><div style="font-size:0.72rem;color:var(--text-light);font-family:monospace;">${l.code}</div></td>
+                    <td style="color:var(--text-muted);font-weight:500;">${l.company||'—'}</td>
+                    <td><span style="font-weight:800;background:${l.age<=7?'#ccfbf1':l.age<=14?'#dbeafe':l.age<=21?'#f3e8ff':l.age<=28?'#fef3c7':'#f1f5f9'};color:${l.age<=7?'#0f766e':l.age<=14?'#1d4ed8':l.age<=21?'#7e22ce':l.age<=28?'#b45309':'#475569'};padding:2px 8px;border-radius:999px;font-size:0.7rem;">${l.age} days</span></td>
+                    <td style="font-size:0.78rem;color:var(--text-muted);font-weight:500;">${l.closed}</td>
+                    <td><a href="/crm/leads/${l.id}" target="_blank" style="font-size:0.75rem;font-weight:700;color:var(--primary);background:var(--primary-light);padding:4px 10px;border-radius:6px;text-decoration:none;display:inline-block;transition:background 0.2s;">View</a></td>
+                </tr>`).join('')}
+            </tbody></table></div>`;
+
+    return `
+        <div style="padding:20px;border-bottom:1px solid var(--border-soft);">
+            <div style="display:flex;gap:12px;margin-bottom:20px;">
+                <div class="score-box" style="border-color:#c7d2fe;background:#f5f3ff;">
+                    <div class="score-lbl" style="color:#6366f1;">Total Points</div>
+                    <div class="score-val" style="color:#4f46e5;">${emp.total_pts}</div>
+                </div>
+                <div class="score-box" style="border-color:#bbf7d0;background:#f0fdf4;">
+                    <div class="score-lbl" style="color:#10b981;">Leads Closed</div>
+                    <div class="score-val" style="color:#059669;">${emp.closes}</div>
+                </div>
+            </div>
+
+            <div class="sec-lbl">Action Breakdown</div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                ${pills.map(p => `
+                    <div class="action-pill-lg" style="background:${p.bg};border-color:${p.border};color:${p.color};">
+                        ${p.icon}
+                        <div class="val">${p.val}</div>
+                        <div class="lbl">${p.label}</div>
+                    </div>`).join('')}
+            </div>
+        </div>
+
+        <div style="padding:20px;border-bottom:1px solid var(--border-soft);">
+            <div class="sec-lbl">Close Slab Distribution</div>
+            ${slabs.map(s => {
+                const cnt = emp[s.key] || 0;
+                const pct = Math.round((cnt/maxSlab)*100);
+                return `<div class="slab-row">
+                    <div class="slab-info">
+                        <span style="color:${s.color};">${s.label}</span>
+                        <span style="color:var(--text-main);">${cnt} ${cnt===1?'close':'closes'}</span>
+                    </div>
+                    <div class="slab-bar-bg">
+                        <div class="slab-bar-fill" style="background:${s.color};width:${pct}%;"></div>
+                    </div>
+                </div>`;
+            }).join('')}
+        </div>
+
+        <div style="padding:20px;">
+            <div class="sec-lbl">Closed Leads Overview</div>
+            ${leadsHTML}
+        </div>`;
+}
+
+async function loadLeaderboard() {
+    const period = document.getElementById('periodSel').value;
+    const empId  = document.getElementById('empSel').value;
+    const url    = `/crm/api/leaderboard-data?period=${period}&emp_id=${empId}`;
+
+    document.getElementById('lbLoading').style.display = 'block';
+    document.getElementById('lbList').style.display    = 'none';
+    document.getElementById('lbEmpty').style.display   = 'none';
+    closeDetail();
+
+    try {
+        const res = await fetch(url);
+        const d   = await res.json();
+        _lbData   = d;
+
+        document.getElementById('periodLabel').querySelector('span').textContent = d.period_label;
+        document.getElementById('totalBadge').textContent  = d.leaderboard.length + ' employee' + (d.leaderboard.length!==1?'s':'');
+        document.getElementById('lbLoading').style.display = 'none';
+
+        if (!d.leaderboard.length) {
+            document.getElementById('lbEmpty').style.display = 'block';
+            return;
+        }
+
+        const medals    = [svgMedal1, svgMedal2, svgMedal3];
+        const rankClass = ['rank-1','rank-2','rank-3'];
+        const ptColors  = ['var(--warning)','var(--text-muted)','#c2410c'];
+
+        document.getElementById('lbList').innerHTML = d.leaderboard.map(e => `
+            <div class="lb-card ${rankClass[e.rank-1]||''}" onclick="showDetail(${e.user_id})">
+                <div class="lb-rank">${medals[e.rank-1] || `<span style="font-weight:800;color:var(--text-light);font-size:1.2rem;">#${e.rank}</span>`}</div>
+                <div class="lb-avatar">${e.name.substring(0,2).toUpperCase()}</div>
+                <div class="lb-info">
+                    <div class="lb-name">${e.name}</div>
+                    <div class="lb-stats-wrap">
+                        <span class="stat-pill" title="Comments">${svgChat} ${e.comments}</span>
+                        <span class="stat-pill" title="Leads Closed">${svgCheck} ${e.closes}</span>
+                        <span class="stat-pill" title="Status Changes">${svgRefresh} ${e.status_changes}</span>
+                        <span class="stat-pill" title="Total Actions">${svgActivity} ${e.total_actions}</span>
+                    </div>
+                    <div class="lb-slabs">
+                        ${['slab1','slab2','slab3','slab4','slab5'].map((s,i) => {
+                            const cols = ['#0d9488','#2563eb','#7c3aed','#d97706','#94a3b8'];
+                            const cnt = e[s] || 0;
+                            return cnt > 0 ? `<span class="slab-pill" style="background:${cols[i]};">${['1-7','8-14','15-21','22-28','29+'][i]}d: ${cnt}</span>` : '';
+                        }).join('')}
+                    </div>
+                </div>
+                <div class="lb-score">
+                    <div class="lb-pts" style="color:${ptColors[e.rank-1]||'var(--primary)'};">${e.total_pts}</div>
+                    <div class="lb-pts-lbl">Points</div>
+                </div>
+            </div>`).join('');
+
+        document.getElementById('lbList').style.display = 'block';
+
+        if (empId && d.leaderboard.length === 1) {
+            showDetail(d.leaderboard[0].user_id);
+        }
+
+    } catch(e) { console.error(e); }
+}
+
+function showDetail(userId) {
+    if (!_lbData) return;
+    const emp = _lbData.leaderboard.find(e => e.user_id === userId);
+    if (!emp) return;
+    const leads = _lbData.leads || [];
+    const html  = buildDetailHTML(emp, leads);
+    const nameText = emp.name;
+
+    if (window.innerWidth >= 768) {
+        document.getElementById('detailName').querySelector('span').textContent = nameText;
+        document.getElementById('detailContent').innerHTML = html;
+        document.getElementById('empDetail').classList.remove('hidden');
+    } else {
+        document.getElementById('mDetailName').querySelector('span').textContent = nameText;
+        document.getElementById('mDetailContent').innerHTML = html;
+        document.getElementById('lbMobileDetail').classList.add('show');
+    }
+}
+
+function closeDetail() {
+    document.getElementById('empDetail').classList.add('hidden');
+    document.getElementById('lbMobileDetail').classList.remove('show');
+}
+
+loadLeaderboard();
+</script>
+<style>
+/* Addition for spinner animation used in JS */
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+{% endblock %}

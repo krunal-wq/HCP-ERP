@@ -1,0 +1,561 @@
+{% extends "base.html" %}
+{% block title %}{{ employee.full_name }}{% endblock %}
+{% block page_title %}Employee Profile{% endblock %}
+{% block bread %}HR / Employees / {{ employee.employee_code }}{% endblock %}
+
+{% block extra_css %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============ EMPLOYEE PROFILE - PREMIUM ============ */
+.empv-page,.empv-page * { font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif; }
+.empv-page .page-hdr{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.9rem;margin-bottom:1.25rem;}
+.empv-page h1{font-size:1.25rem;font-weight:900;letter-spacing:-.02em;color:#1e293b;}
+
+/* tabs */
+.vw-tabs{display:flex;gap:4px;border-bottom:2px solid #e2e8f0;margin-bottom:1.25rem;overflow-x:auto;}
+.vw-tab{padding:9px 16px;font-size:.78rem;font-weight:700;color:#64748b;border:none;background:none;cursor:pointer;
+        border-bottom:3px solid transparent;margin-bottom:-2px;white-space:nowrap;border-radius:10px 10px 0 0;
+        transition:all .15s;display:inline-flex;align-items:center;gap:6px;}
+.vw-tab svg{color:#94a3b8;transition:color .15s;}
+.vw-tab:hover{color:#2563eb;background:#eff6ff;}
+.vw-tab:hover svg{color:#2563eb;}
+.vw-tab.active{color:#2563eb;border-bottom-color:#2563eb;background:#eff6ff;}
+.vw-tab.active svg{color:#2563eb;}
+.vw-pane{display:none;}.vw-pane.active{display:block;}
+
+/* field rows */
+.vf{display:flex;padding:8px 0;border-bottom:1px solid #f1f5f9;align-items:flex-start;}
+.vf:last-child{border-bottom:none;}
+.vl{width:165px;font-size:.72rem;color:#94a3b8;font-weight:700;flex-shrink:0;padding-top:2px;text-transform:uppercase;letter-spacing:.02em;}
+.vv{font-size:.83rem;font-weight:600;color:#334155;flex:1;}
+
+/* cards */
+.vcard{background:#fff;border-radius:16px;border:1px solid #e2e8f0;padding:18px 20px;margin-bottom:16px;
+       box-shadow:0 1px 3px rgba(15,23,42,.05), 0 4px 16px rgba(15,23,42,.04);}
+.vcard:last-child{margin-bottom:0;}
+.vcard-hdr{font-size:.74rem;font-weight:800;color:#475569;text-transform:uppercase;letter-spacing:.06em;
+           padding-bottom:11px;margin-bottom:13px;border-bottom:1.5px solid #eef2f7;display:flex;align-items:center;gap:8px;}
+.vcard-hdr svg{color:#2563eb;flex-shrink:0;}
+
+/* salary rows */
+.sal-row-v{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f1f5f9;}
+.sal-row-v:last-child{border-bottom:none;}
+.sal-row-v span:last-child{font-family:'JetBrains Mono',monospace;}
+
+/* docs */
+.doc-view-item{display:flex;align-items:center;gap:.75rem;padding:11px 14px;background:#f8fafc;border-radius:12px;border:1px solid #e2e8f0;margin-bottom:8px;}
+
+/* buttons -> pills */
+.empv-page .btn-primary{background:linear-gradient(180deg,#3b82f6,#2563eb);color:#fff;border:none;border-radius:99px;
+        font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:8px 16px;text-decoration:none;
+        box-shadow:0 2px 8px rgba(37,99,235,.3), inset 0 1px 0 rgba(255,255,255,.2);transition:transform .12s, box-shadow .12s;}
+.empv-page .btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(37,99,235,.4), inset 0 1px 0 rgba(255,255,255,.2);}
+.empv-page .btn-outline{background:#fff;color:#475569;border:1.5px solid #e2e8f0;border-radius:99px;font-weight:700;
+        cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:8px 16px;text-decoration:none;transition:all .12s;}
+.empv-page .btn-outline:hover{background:#f8fafc;border-color:#cbd5e1;}
+.empv-page .btn-primary svg,.empv-page .btn-outline svg{flex-shrink:0;}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="empv-page">
+<div class="page-hdr">
+    <div style="display:flex;align-items:center;gap:1rem;">
+        {% if employee.profile_photo %}
+        <img src="{{ employee.profile_photo }}" style="width:58px;height:58px;border-radius:50%;object-fit:cover;border:3px solid var(--blue);" alt="">
+        {% else %}
+        <span style="width:58px;height:58px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#3b82f6);color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.3rem;font-weight:800;">{{ employee.full_name[:2]|upper }}</span>
+        {% endif %}
+        <div>
+            <h1 style="font-size:1.25rem;margin:0;">{{ employee.full_name }}
+                {% if employee.status == 'active' %}<span style="background:#dcfce7;color:#166534;padding:2px 9px;border-radius:99px;font-size:.68rem;font-weight:800;vertical-align:middle;margin-left:.4rem;">Active</span>
+                {% elif employee.status == 'terminated' %}<span style="background:#fee2e2;color:#991b1b;padding:2px 9px;border-radius:99px;font-size:.68rem;font-weight:800;vertical-align:middle;margin-left:.4rem;">Terminated</span>
+                {% else %}<span style="background:#f1f5f9;color:#64748b;padding:2px 9px;border-radius:99px;font-size:.68rem;font-weight:800;vertical-align:middle;margin-left:.4rem;">{{ employee.status|title }}</span>{% endif %}
+                {% if employee.is_probation %}<span style="background:#fef3c7;color:#d97706;padding:2px 9px;border-radius:99px;font-size:.68rem;font-weight:800;vertical-align:middle;margin-left:.3rem;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Probation</span>{% endif %}
+            </h1>
+            <p style="font-size:.78rem;color:var(--text3);margin:.2rem 0 0;">{{ employee.employee_code }} &nbsp;&middot;&nbsp; {{ employee.designation or '-' }} &nbsp;&middot;&nbsp; {{ employee.department or '-' }}</p>
+        </div>
+    </div>
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+        {% if perm.can_edit %}<a href="{{ url_for('hr.emp_edit', id=employee.id) }}" class="btn-primary" style="font-size:.82rem;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Edit</a>{% endif %}
+        <a href="{{ url_for('hr.emp_export_single', id=employee.id) }}" class="btn-outline" style="font-size:.82rem;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg> Export Excel</a>
+        <a href="{{ url_for('hr.emp_id_card', id=employee.id) }}" target="_blank" class="btn-outline" style="font-size:.82rem;background:#f0fdf4;border-color:#86efac;color:#166534;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em"><rect width="18" height="14" x="3" y="5" rx="2"/><circle cx="8" cy="12" r="2"/><path d="M14 10h4"/><path d="M14 14h4"/></svg> ID Card</a>
+        <a href="{{ url_for('hr.employees') }}" class="btn-outline" style="font-size:.82rem;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg> Back</a>
+    </div>
+</div>
+
+<div class="vw-tabs">
+    <button class="vw-tab active" onclick="vwTab('vt1',this)"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Basic Info</button>
+    <button class="vw-tab" onclick="vwTab('vt2',this)"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em"><rect width="16" height="20" x="4" y="2" rx="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M12 6h.01"/><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/></svg> Professional</button>
+    {% if sub_perms.kyc_details %}<button class="vw-tab" onclick="vwTab('vt3',this)"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em"><rect width="18" height="14" x="3" y="5" rx="2"/><circle cx="8" cy="12" r="2"/><path d="M14 10h4"/><path d="M14 14h4"/></svg> Personal & KYC</button>{% endif %}
+    {% if sub_perms.bank_details %}<button class="vw-tab" onclick="vwTab('vt4',this)"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em"><line x1="3" x2="21" y1="22" y2="22"/><line x1="6" x2="6" y1="18" y2="11"/><line x1="10" x2="10" y1="18" y2="11"/><line x1="14" x2="14" y1="18" y2="11"/><line x1="18" x2="18" y1="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg> Bank Details</button>{% endif %}
+    {% if sub_perms.salary_details %}<button class="vw-tab" onclick="vwTab('vt5',this)"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg> Salary</button>{% endif %}
+    <button class="vw-tab" onclick="vwTab('vt6',this)"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg> Education</button>
+    {% if sub_perms.documents %}<button class="vw-tab" onclick="vwTab('vt7',this)"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> Documents</button>{% endif %}
+</div>
+
+<!-- TAB 1: BASIC INFO -->
+<div class="vw-pane active" id="vt1">
+<div style="display:grid;grid-template-columns:1fr 1fr 210px;gap:1rem;">
+    <div>
+        <div class="vcard">
+            <div class="vcard-hdr"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Basic Information</div>
+            {% for l,v in [
+                ('Employee Code', employee.employee_code),
+                ('Employee ID (Biometric)', employee.employee_id),
+                ('First Name', employee.first_name),('Middle Name', employee.middle_name),('Last Name', employee.last_name),
+                ('Mobile', employee.mobile),('Email', employee.email),('Gender', employee.gender),
+                ('Date of Birth', employee.date_of_birth.strftime('%d %b %Y') if employee.date_of_birth else None),
+                ('Blood Group', employee.blood_group),('Marital Status', employee.marital_status),
+                ('Marriage Anniversary', employee.marriage_anniversary.strftime('%d %b %Y') if employee.marriage_anniversary else None),
+                ('Spouse Name', employee.spouse_name if employee.marital_status == 'Married' else None),
+                ('No. of Children', employee.number_of_children if employee.marital_status and employee.marital_status != 'Single' else None),
+            ] %}
+            <div class="vf"><span class="vl">{{ l }}</span><span class="vv">{{ v or '-' }}</span></div>
+            {% endfor %}
+        </div>
+        <div class="vcard">
+            <div class="vcard-hdr"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> Family &amp; Contact</div>
+            {% for l,v in [
+                ("Father's Name", employee.father_name),
+                ("Mother's Name", employee.mother_name),
+                ('Alternate Mobile', employee.alternate_mobile),
+                ('Personal Email', employee.personal_email),
+            ] %}
+            <div class="vf"><span class="vl">{{ l }}</span><span class="vv">{{ v or '-' }}</span></div>
+            {% endfor %}
+        </div>
+    </div>
+    <div>
+        <div class="vcard">
+            <div class="vcard-hdr"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg> Current Address</div>
+            {% for l,v in [('Address',employee.address),('City',employee.city),('State',employee.state),('Country',employee.country),('ZIP / Pin Code',employee.zip_code)] %}
+            <div class="vf"><span class="vl">{{ l }}</span><span class="vv">{{ v or '-' }}</span></div>
+            {% endfor %}
+        </div>
+        <div class="vcard">
+            <div class="vcard-hdr"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> Permanent Address
+                {% if employee.same_as_current_addr %}<span style="font-size:.62rem;color:#16a34a;font-weight:700;background:#dcfce7;padding:1px 7px;border-radius:99px;margin-left:.4rem;">Same as Current</span>{% endif %}
+            </div>
+            {% for l,v in [
+                ('Address', employee.permanent_address),
+                ('City', employee.permanent_city),
+                ('State', employee.permanent_state),
+                ('Country', employee.permanent_country),
+                ('ZIP / Pin Code', employee.permanent_zip),
+            ] %}
+            <div class="vf"><span class="vl">{{ l }}</span><span class="vv">{{ v or '-' }}</span></div>
+            {% endfor %}
+        </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:1rem;">
+        {% if employee.profile_photo %}
+        <div class="vcard" style="text-align:center;padding:1rem;">
+            <div class="vcard-hdr" style="justify-content:center;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg> Photo</div>
+            <img src="{{ employee.profile_photo }}" style="width:130px;height:130px;border-radius:12px;object-fit:cover;border:2px solid var(--border);">
+        </div>
+        {% endif %}
+        {% if employee.qr_code_base64 %}
+        <div class="vcard" style="text-align:center;padding:1rem;">
+            <div class="vcard-hdr" style="justify-content:center;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/><path d="M14 14h3v3h-3z"/><path d="M20 14v.01"/><path d="M14 20v.01"/><path d="M20 20v.01"/></svg> QR Code</div>
+            <img src="{{ employee.qr_code_base64 }}" style="width:130px;height:130px;border:2px solid var(--border);border-radius:10px;">
+            <div style="font-size:.72rem;font-weight:800;color:var(--blue);margin-top:.4rem;">{{ employee.employee_code }}</div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+</div>
+
+<!-- TAB 2: PROFESSIONAL -->
+<div class="vw-pane" id="vt2">
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+    <div>
+        <div class="vcard">
+            <div class="vcard-hdr"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em"><rect width="16" height="20" x="4" y="2" rx="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M12 6h.01"/><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/></svg> Employment Details</div>
+            {% for l,v in [
+                ('Department',employee.department),('Designation',employee.designation),('Employee Type',employee.employee_type),
+                ('Location',employee.location),('Pay Grade',employee.pay_grade),('Grade Level',employee.grade_level),
+                ('Date of Joining',employee.date_of_joining.strftime('%d %b %Y') if employee.date_of_joining else None),
+                ('Confirmation Date',employee.confirmation_date.strftime('%d %b %Y') if employee.confirmation_date else None),
+                ('Probation End Date',employee.probation_end_date.strftime('%d %b %Y') if employee.probation_end_date else None),
+                ('Reports To (Manager)', employee.manager_emp.full_name if employee.manager_emp else None),
+                ('Rehire Eligible', 'Yes' if employee.rehire_eligible else 'No'),
+                ('Attendance Code', employee.attendance_code),
+                ('Leave Policy', employee.leave_policy),
+                ('Is Contractor','Yes' if employee.is_contractor else 'No'),
+                ('Contractor', employee.contractor_rel.company_name if employee.is_contractor and employee.contractor_rel else None),
+            ] %}
+            <div class="vf"><span class="vl">{{ l }}</span><span class="vv">{{ v or '-' }}</span></div>
+            {% endfor %}
+        </div>
+        <div class="vcard">
+            <div class="vcard-hdr"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/></svg> Flags</div>
+            {% for l,v in [
+                ('Is Block', 'Yes' if employee.is_block else 'No'),
+                ('Is Late',  'Yes' if employee.is_late  else 'No'),
+                ('Is Probation', 'Yes' if employee.is_probation else 'No'),
+                ('Overtime Eligible','Yes' if employee.overtime_eligible else 'No'),
+            ] %}
+            <div class="vf"><span class="vl">{{ l }}</span><span class="vv">{{ v }}</span></div>
+            {% endfor %}
+        </div>
+    </div>
+    <div>
+        <div class="vcard">
+            <div class="vcard-hdr"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> Work Settings</div>
+            {% for l,v in [
+                ('Shift',employee.shift),
+                ('Work Hours/Day',(employee.work_hours_per_day|string+' hrs') if employee.work_hours_per_day else None),
+                ('Weekly Off',employee.weekly_off),
+                ('Notice Period',(employee.notice_period_days|string+' days') if employee.notice_period_days is not none else None),
+                ('Probation Period',(employee.probation_period_months|string+' months') if employee.probation_period_months is not none else None),
+            ] %}
+            <div class="vf"><span class="vl">{{ l }}</span><span class="vv">{{ v or '-' }}</span></div>
+            {% endfor %}
+        </div>
+        <div class="vcard">
+            <div class="vcard-hdr"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg> Leave Balances</div>
+            {% for l,v in [
+                ('Casual Leave (CL)', employee.casual_leave_balance if employee.casual_leave_balance is not none else 0),
+                ('Sick Leave (SL)',   employee.sick_leave_balance   if employee.sick_leave_balance   is not none else 0),
+                ('Paid Leave (PL)',   employee.paid_leave_balance   if employee.paid_leave_balance   is not none else 0),
+            ] %}
+            <div class="vf"><span class="vl">{{ l }}</span><span class="vv">{{ v }}</span></div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+{# -- System Access + Exit Details (full-width row, two cols) ------------ #}
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem;">
+    <div class="vcard">
+        <div class="vcard-hdr"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg> System Access</div>
+        <div class="vf"><span class="vl">Official Email</span><span class="vv">{{ employee.official_email or '-' }}</span></div>
+    </div>
+    <div class="vcard">
+        <div class="vcard-hdr"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg> Exit Details</div>
+        {% for l,v in [
+            ('Resignation Date', employee.resignation_date.strftime('%d %b %Y') if employee.resignation_date else None),
+            ('Last Working Date', employee.last_working_date.strftime('%d %b %Y') if employee.last_working_date else None),
+            ('Exit Interview Done', 'Yes' if employee.exit_interview_done else 'No'),
+            ('F&F Settlement Status', employee.ff_settlement_status),
+            ('F&F Amount', ('\u20b9 '+'{:,.0f}'.format(employee.ff_settlement_amount)) if employee.ff_settlement_amount else None),
+            ('F&F Payment Date', employee.ff_settlement_date.strftime('%d %b %Y') if employee.ff_settlement_date else None),
+            ('Exit Interview Notes', employee.exit_interview_notes),
+        ] %}
+        <div class="vf"><span class="vl">{{ l }}</span><span class="vv">{{ v or '-' }}</span></div>
+        {% endfor %}
+    </div>
+</div>
+
+{# -- Social Profiles + Remark (full-width row) ------------------------- #}
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem;">
+    <div class="vcard">
+        <div class="vcard-hdr"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg> Social Profiles</div>
+        <div class="vf"><span class="vl">LinkedIn</span><span class="vv">
+            {% if employee.linkedin %}<a href="{{ employee.linkedin }}" target="_blank" rel="noopener" style="color:var(--blue);text-decoration:none;">{{ employee.linkedin }}</a>{% else %}-{% endif %}
+        </span></div>
+        <div class="vf"><span class="vl">Facebook</span><span class="vv">
+            {% if employee.facebook %}<a href="{{ employee.facebook }}" target="_blank" rel="noopener" style="color:var(--blue);text-decoration:none;">{{ employee.facebook }}</a>{% else %}-{% endif %}
+        </span></div>
+    </div>
+    <div class="vcard">
+        <div class="vcard-hdr"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v5h5"/><line x1="9" x2="15" y1="13" y2="13"/><line x1="9" x2="13" y1="17" y2="17"/></svg> Remark</div>
+        <div style="font-size:.83rem;color:var(--text);line-height:1.5;white-space:pre-wrap;">{{ employee.remark or '-' }}</div>
+    </div>
+</div>
+</div>
+
+<!-- TAB 3: KYC -->
+<div class="vw-pane" id="vt3">
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+    <div>
+        <div class="vcard">
+            <div class="vcard-hdr"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em"><rect width="18" height="14" x="3" y="5" rx="2"/><circle cx="8" cy="12" r="2"/><path d="M14 10h4"/><path d="M14 14h4"/></svg> Identity & KYC</div>
+            {% for l,v in [
+                ('Nationality',employee.nationality),('Religion',employee.religion),('Caste',employee.caste),
+                ('Differently Abled','Yes' if employee.physically_handicapped else 'No'),
+                ('Handicap Details', employee.handicap_details if employee.physically_handicapped else None),
+                ('Aadhaar Number',employee.aadhar_number),('PAN Number',employee.pan_number),
+                ('Election Card No.',employee.election_card_no),
+                ('UAN Number',employee.uan_number),('ESIC Number',employee.esic_number),
+            ] %}
+            <div class="vf"><span class="vl">{{ l }}</span><span class="vv">{{ v or '-' }}</span></div>
+            {% endfor %}
+        </div>
+        <div class="vcard">
+            <div class="vcard-hdr"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em"><path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></svg> Travel Documents</div>
+            {% for l,v in [
+                ('Passport No.',employee.passport_number),
+                ('Passport Expiry',employee.passport_expiry.strftime('%d %b %Y') if employee.passport_expiry else None),
+                ('Driving License',employee.driving_license),
+                ('DL Expiry',employee.dl_expiry.strftime('%d %b %Y') if employee.dl_expiry else None),
+            ] %}
+            <div class="vf"><span class="vl">{{ l }}</span><span class="vv">{{ v or '-' }}</span></div>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="vcard">
+        <div class="vcard-hdr"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em"><circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 4.24 4.24"/><path d="m14.83 9.17 4.24-4.24"/><path d="m14.83 14.83 4.24 4.24"/><path d="m9.17 14.83-4.24 4.24"/><circle cx="12" cy="12" r="4"/></svg> Emergency Contact</div>
+        {% for l,v in [('Name',employee.emergency_name),('Relation',employee.emergency_relation),('Phone',employee.emergency_phone),('Address',employee.emergency_address)] %}
+        <div class="vf"><span class="vl">{{ l }}</span><span class="vv">{{ v or '-' }}</span></div>
+        {% endfor %}
+    </div>
+</div>
+{# -- Family Details (full-width below the two-column grid) ----------- #}
+{% set _fam = employee.family_details_json|from_json if employee.family_details_json else [] %}
+<div class="vcard" style="margin-top:1rem;">
+    <div class="vcard-hdr"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> Family Details</div>
+    {% if _fam and _fam|length > 0 %}
+    <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;font-size:.78rem;min-width:780px;">
+            <thead style="background:#f8fafc;">
+                <tr>
+                    <th style="text-align:left;padding:.55rem .6rem;font-weight:700;color:var(--text2);border-bottom:1.5px solid #e2e8f0;width:32px;">#</th>
+                    <th style="text-align:left;padding:.55rem .6rem;font-weight:700;color:var(--text2);border-bottom:1.5px solid #e2e8f0;">Name</th>
+                    <th style="text-align:left;padding:.55rem .6rem;font-weight:700;color:var(--text2);border-bottom:1.5px solid #e2e8f0;">Relationship</th>
+                    <th style="text-align:left;padding:.55rem .6rem;font-weight:700;color:var(--text2);border-bottom:1.5px solid #e2e8f0;">Date of Birth</th>
+                    <th style="text-align:left;padding:.55rem .6rem;font-weight:700;color:var(--text2);border-bottom:1.5px solid #e2e8f0;">Occupation</th>
+                    <th style="text-align:left;padding:.55rem .6rem;font-weight:700;color:var(--text2);border-bottom:1.5px solid #e2e8f0;">Mobile</th>
+                    <th style="text-align:center;padding:.55rem .6rem;font-weight:700;color:var(--text2);border-bottom:1.5px solid #e2e8f0;">Dependent?</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for m in _fam %}
+                <tr>
+                    <td style="padding:.45rem .6rem;border-bottom:1px solid #f1f5f9;color:var(--text3);font-weight:700;">{{ loop.index }}</td>
+                    <td style="padding:.45rem .6rem;border-bottom:1px solid #f1f5f9;">{{ m.name or '-' }}</td>
+                    <td style="padding:.45rem .6rem;border-bottom:1px solid #f1f5f9;">{{ m.relation or '-' }}</td>
+                    <td style="padding:.45rem .6rem;border-bottom:1px solid #f1f5f9;">{{ m.dob or '-' }}</td>
+                    <td style="padding:.45rem .6rem;border-bottom:1px solid #f1f5f9;">{{ m.occupation or '-' }}</td>
+                    <td style="padding:.45rem .6rem;border-bottom:1px solid #f1f5f9;">{{ m.mobile or '-' }}</td>
+                    <td style="padding:.45rem .6rem;border-bottom:1px solid #f1f5f9;text-align:center;">{{ m.dependent or 'No' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div style="text-align:center;padding:1rem;color:var(--text3);font-size:.78rem;">No family members on record.</div>
+    {% endif %}
+</div>
+
+{# -- PF & ESIC cards ---------------------------------------------------- #}
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem;">
+    <div class="vcard">
+        <div class="vcard-hdr"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em"><line x1="3" x2="21" y1="22" y2="22"/><line x1="6" x2="6" y1="18" y2="11"/><line x1="10" x2="10" y1="18" y2="11"/><line x1="14" x2="14" y1="18" y2="11"/><line x1="18" x2="18" y1="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg> PF (Provident Fund)</div>
+        {% for l,v in [
+            ('PF Applicable', 'Yes' if employee.pf_applicable else 'No'),
+            ('UAN Number', employee.uan_number),
+            ('PF Number', employee.pf_number),
+            ('EPS Applicable', 'Yes' if employee.eps_applicable else 'No'),
+            ('Previous PF Transfer', 'Yes' if employee.previous_pf_transfer else 'No'),
+            ('Previous PF Number', employee.previous_pf_number),
+        ] %}
+        <div class="vf"><span class="vl">{{ l }}</span><span class="vv">{{ v or '-' }}</span></div>
+        {% endfor %}
+    </div>
+    <div class="vcard">
+        <div class="vcard-hdr"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/><path d="M3.22 12H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27"/></svg> ESIC Details</div>
+        {% for l,v in [
+            ('ESIC Applicable', 'Yes' if employee.esic_applicable else 'No'),
+            ('ESIC Number', employee.esic_number),
+            ('Nominee Name', employee.esic_nominee_name),
+            ('Nominee Relation', employee.esic_nominee_relation),
+            ('Dispensary', employee.esic_dispensary),
+        ] %}
+        <div class="vf"><span class="vl">{{ l }}</span><span class="vv">{{ v or '-' }}</span></div>
+        {% endfor %}
+    </div>
+</div>
+
+{# -- TDS/Tax & Statutory Compliance cards ------------------------------- #}
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem;">
+    <div class="vcard">
+        <div class="vcard-hdr"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M8 7h8"/><path d="M8 11h8"/><path d="M8 15h5"/></svg> TDS / Income Tax</div>
+        {% for l,v in [
+            ('Aadhaar linked to PAN', 'Yes' if employee.aadhaar_pan_linked else 'No'),
+            ('Tax Regime', (employee.tax_regime + ' Regime') if employee.tax_regime else None),
+            ('Previous Employer Income', ('\u20b9 '+'{:,.0f}'.format(employee.prev_employer_income)) if employee.prev_employer_income else None),
+            ('Monthly TDS', ('\u20b9 '+'{:,.0f}'.format(employee.monthly_tds)) if employee.monthly_tds else None),
+            ('Investment Declaration', employee.investment_declaration),
+            ('Proof Submission Status', employee.proof_submission_status),
+        ] %}
+        <div class="vf"><span class="vl">{{ l }}</span><span class="vv">{{ v or '-' }}</span></div>
+        {% endfor %}
+    </div>
+    <div class="vcard">
+        <div class="vcard-hdr"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg> Statutory Compliance</div>
+        {% for l,v in [
+            ('Professional Tax Applicable', 'Yes' if employee.professional_tax_applicable else 'No'),
+            ('Labour Welfare Fund', 'Yes' if employee.labour_welfare_fund else 'No'),
+            ('Gratuity Eligible', 'Yes' if employee.gratuity_eligible else 'No'),
+            ('Bonus Eligible', 'Yes' if employee.bonus_eligible else 'No'),
+        ] %}
+        <div class="vf"><span class="vl">{{ l }}</span><span class="vv">{{ v }}</span></div>
+        {% endfor %}
+    </div>
+</div>
+
+</div>
+
+<!-- TAB 4: BANK -->
+<div class="vw-pane" id="vt4">
+<div style="max-width:580px;">
+    <div class="vcard">
+        <div class="vcard-hdr"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em"><line x1="3" x2="21" y1="22" y2="22"/><line x1="6" x2="6" y1="18" y2="11"/><line x1="10" x2="10" y1="18" y2="11"/><line x1="14" x2="14" y1="18" y2="11"/><line x1="18" x2="18" y1="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg> Bank Account Details</div>
+        {% for l,v in [
+            ('Account Holder',employee.bank_account_holder),('Bank Name',employee.bank_name),
+            ('Account Number',employee.bank_account_number),('IFSC Code',employee.bank_ifsc),
+            ('Branch',employee.bank_branch),('Account Type',employee.bank_account_type),
+        ] %}
+        <div class="vf"><span class="vl">{{ l }}</span>
+            <span class="vv">{% if l=='Account Number' and v %}{{ v[:4] }}****{{ v[-4:] if v|length > 8 else v }}{% else %}{{ v or '-' }}{% endif %}</span>
+        </div>
+        {% endfor %}
+    </div>
+    <div class="vcard">
+        <div class="vcard-hdr"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> Bank Proof</div>
+        {% if employee.bank_proof_base64 %}
+        <div style="display:flex;align-items:center;gap:.85rem;flex-wrap:wrap;padding:.4rem 0;">
+            {% set _is_pdf = employee.bank_proof_filename and employee.bank_proof_filename.lower().endswith('.pdf') %}
+            {% if _is_pdf %}
+            <span style="font-size:2rem;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v5h5"/></svg></span>
+            {% else %}
+            <img src="{{ employee.bank_proof_base64 }}" style="width:80px;height:80px;object-fit:cover;border-radius:8px;border:1px solid var(--border);background:#fff;">
+            {% endif %}
+            <div style="flex:1;min-width:160px;">
+                <div style="font-size:.82rem;font-weight:700;color:var(--text1);">{{ employee.bank_proof_filename or 'Bank Proof' }}</div>
+                <div style="font-size:.7rem;color:var(--text3);margin-top:2px;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em"><path d="M20 6 9 17l-5-5"/></svg> Uploaded</div>
+            </div>
+            <a href="{{ employee.bank_proof_base64 }}" download="{{ employee.bank_proof_filename or 'bank-proof' }}" style="background:#dbeafe;color:#1e40af;border:1.5px solid #93c5fd;border-radius:7px;padding:5px 12px;font-size:.72rem;text-decoration:none;font-weight:700;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg> Download</a>
+        </div>
+        {% else %}
+        <div style="text-align:center;padding:.6rem;color:var(--text3);font-size:.78rem;">No bank proof uploaded.</div>
+        {% endif %}
+    </div>
+    <div style="background:#fffbeb;border:1.5px solid #fcd34d;border-radius:10px;padding:.75rem 1rem;font-size:.78rem;color:#92400e;">
+        <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Bank details are confidential. Visible only to authorized HR personnel.
+    </div>
+</div>
+</div>
+
+<!-- TAB 5: SALARY -->
+<div class="vw-pane" id="vt5">
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+    <div class="vcard">
+        <div class="vcard-hdr"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg> Earnings (Monthly)</div>
+        {% for l,v in [
+            ('CTC Monthly',employee.salary_ctc),('Basic',employee.salary_basic),('HRA',employee.salary_hra),
+            ('DA',employee.salary_da),('Transport Allow.',employee.salary_ta),
+            ('Medical Allow.',employee.salary_medical_allow),('Special Allow.',employee.salary_special_allow),
+        ] %}
+        <div class="sal-row-v">
+            <span style="font-size:.78rem;color:var(--text3);font-weight:600;">{{ l }}</span>
+            <span style="font-size:.85rem;font-weight:800;">{% if v %}&#8377;{{ '{:,.0f}'.format(v) }}{% else %}-{% endif %}</span>
+        </div>
+        {% endfor %}
+    </div>
+    <div>
+        <div class="vcard">
+            <div class="vcard-hdr"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em"><polyline points="22 17 13.5 8.5 8.5 13.5 2 7"/><polyline points="16 17 22 17 22 11"/></svg> Deductions</div>
+            {% for l,v in [
+                ('PF Employee',employee.salary_pf_employee),('PF Employer',employee.salary_pf_employer),
+                ('ESIC Employee',employee.salary_esic_employee),('ESIC Employer',employee.salary_esic_employer),
+                ('Professional Tax',employee.salary_professional_tax),('TDS',employee.salary_tds),
+            ] %}
+            <div class="sal-row-v">
+                <span style="font-size:.78rem;color:var(--text3);font-weight:600;">{{ l }}</span>
+                <span style="font-size:.85rem;font-weight:800;color:#dc2626;">{% if v %}&#8377;{{ '{:,.0f}'.format(v) }}{% else %}-{% endif %}</span>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="vcard" style="background:linear-gradient(135deg,#eff6ff,#f0fdf4);border:1.5px solid #bfdbfe;">
+            <div class="vcard-hdr"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 17.5v-11"/></svg> Net Monthly Pay</div>
+            <div style="font-size:1.8rem;font-weight:900;color:#1d4ed8;">
+                {% if employee.salary_net %}&#8377;{{ '{:,.0f}'.format(employee.salary_net) }}{% else %}-{% endif %}
+            </div>
+            <div style="font-size:.75rem;color:var(--text3);margin-top:.3rem;display:flex;gap:1rem;">
+                <span>Mode: <strong>{{ employee.salary_mode or '-' }}</strong></span>
+                <span>Effective: <strong>{{ employee.salary_effective_date.strftime('%d %b %Y') if employee.salary_effective_date else '-' }}</strong></span>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+<!-- TAB 6: EDUCATION -->
+<div class="vw-pane" id="vt6">
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+    <div class="vcard">
+        <div class="vcard-hdr"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg> Education</div>
+        {% for l,v in [
+            ('Qualification',employee.highest_qualification),('University / Board',employee.university),
+            ('Passing Year',employee.passing_year|string if employee.passing_year else None),
+            ('Specialization',employee.specialization),
+        ] %}
+        <div class="vf"><span class="vl">{{ l }}</span><span class="vv">{{ v or '-' }}</span></div>
+        {% endfor %}
+    </div>
+    <div class="vcard">
+        <div class="vcard-hdr"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em"><rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg> Previous Employment</div>
+        {% for l,v in [
+            ('Company',employee.prev_company),('Designation',employee.prev_designation),
+            ('From Date',employee.prev_from_date.strftime('%d %b %Y') if employee.prev_from_date else None),
+            ('To Date',employee.prev_to_date.strftime('%d %b %Y') if employee.prev_to_date else None),
+            ('Leaving Reason',employee.prev_leaving_reason),
+            ('Total Experience',(employee.total_experience_yrs|string+' yrs') if employee.total_experience_yrs else None),
+            ('Previous Salary (\u20b9/month)',('\u20b9 '+employee.prev_salary_per_month|string) if employee.prev_salary_per_month else None),
+        ] %}
+        <div class="vf"><span class="vl">{{ l }}</span><span class="vv">{{ v or '-' }}</span></div>
+        {% endfor %}
+    </div>
+</div>
+</div>
+
+<!-- TAB 7: DOCUMENTS -->
+<div class="vw-pane" id="vt7">
+  <div id="docGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:.75rem;"></div>
+  <div id="docEmpty" style="display:none;text-align:center;padding:3rem;color:var(--text3);"><div style="font-size:2.5rem;margin-bottom:.75rem;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em"><path d="m6 14 1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.55 6a2 2 0 0 1-1.94 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.93a2 2 0 0 1 1.66.9l.82 1.2a2 2 0 0 0 1.66.9H18a2 2 0 0 1 2 2v2"/></svg></div><p>No documents uploaded</p></div>
+</div>
+</div>{# end empv-page #}
+
+{% endblock %}
+{% block extra_js %}
+<script>
+// -- Tab switcher --
+function vwTab(id, btn) {
+  document.querySelectorAll('.vw-pane').forEach(function(p){ p.classList.remove('active'); });
+  document.querySelectorAll('.vw-tab').forEach(function(b){ b.classList.remove('active'); });
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// -- Documents tab render from JSON --
+(function(){
+  var raw = {{ employee.documents_json | tojson if employee.documents_json else '[]' }};
+  var grid  = document.getElementById('docGrid');
+  var empty = document.getElementById('docEmpty');
+  var list  = [];
+  try { list = typeof raw === 'string' ? JSON.parse(raw) : raw; } catch(e){ list = []; }
+  if (!Array.isArray(list) || !list.length) { if(empty) empty.style.display='block'; return; }
+  list.forEach(function(doc){
+    var isPdf = (doc.filename||'').toLowerCase().endsWith('.pdf');
+    var icon  = isPdf ? '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v5h5"/></svg>' : '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.09-3.09a2 2 0 0 0-2.82 0L6 21"/></svg>';
+    var kb    = doc.size ? Math.round(doc.size/1024) : 0;
+    var date  = doc.uploaded_at ? doc.uploaded_at.slice(0,10) : '';
+    var item  = document.createElement('div');
+    item.className = 'doc-view-item';
+    item.innerHTML =
+      '<div style="font-size:1.5rem;flex-shrink:0;">'+icon+'</div>'+
+      '<div style="flex:1;min-width:0;">'+
+        '<div style="font-size:.82rem;font-weight:700;">'+(doc.name||'Document')+'</div>'+
+        '<div style="font-size:.7rem;color:var(--text3);">'+(doc.type||'')+' \u00b7 '+kb+' KB &middot; '+date+'</div>'+
+      '</div>'+
+      '<a href="'+(doc.base64||'#')+'" download="'+(doc.filename||'file')+'" class="btn-outline" style="font-size:.72rem;padding:4px 10px;flex-shrink:0;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg> Save</a>';
+    grid.appendChild(item);
+  });
+})();
+</script>
+{% endblock %}

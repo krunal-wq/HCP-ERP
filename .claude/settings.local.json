@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mv models/__init__1.py archive/legacy/models___init__1.py)",
+      "Bash(mv models/grn_1.py archive/legacy/grn_1.py)",
+      "Bash(mv models/npd_1.py archive/legacy/npd_1.py)",
+      "Bash(mv models/purchase_order_1.py archive/legacy/purchase_order_1.py)",
+      "Bash(python -c \"import models; print\\('models package imports OK ->', len\\(models.__all__\\), 'exports'\\)\")"
+    ]
+  }
+}

@@ -1,0 +1,324 @@
+{% extends "base.html" %}
+{% block title %}Milestone Status Master{% endblock %}
+{% block page_title %}Milestone Status Master{% endblock %}
+{% block bread %}Masters / Milestone Status{% endblock %}
+
+{% block extra_css %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============ MILESTONE STATUS MASTER - PREMIUM ============ */
+.mss-page * { font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif; }
+
+/* ---- Card ---- */
+.mss-page .card{background:#fff;border:1px solid #e2e8f0;border-radius:16px;overflow:hidden;
+                box-shadow:0 1px 3px rgba(15,23,42,.05), 0 4px 16px rgba(15,23,42,.04);}
+.mss-page .card-hdr{padding:16px 20px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;}
+.mss-page .card-title{font-size:1rem;font-weight:800;color:#1e293b;display:flex;align-items:center;gap:11px;}
+.mss-tile{width:38px;height:38px;border-radius:11px;flex-shrink:0;
+          background:linear-gradient(180deg,#8b5cf6,#6d28d9);color:#fff;
+          display:flex;align-items:center;justify-content:center;
+          box-shadow:0 2px 8px rgba(124,58,237,.3), inset 0 1px 0 rgba(255,255,255,.2);}
+
+/* ---- Hero header (above card) ---- */
+.mss-hero{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:18px;}
+.mss-hero-left{display:flex;align-items:center;gap:14px;}
+.mss-hero-tile{width:48px;height:48px;border-radius:14px;flex-shrink:0;
+               background:linear-gradient(180deg,#8b5cf6,#6d28d9);color:#fff;
+               display:flex;align-items:center;justify-content:center;
+               box-shadow:0 4px 14px rgba(124,58,237,.35), inset 0 1px 0 rgba(255,255,255,.25);}
+.mss-hero-tile svg{width:24px;height:24px;}
+.mss-h1{font-size:1.32rem;font-weight:900;letter-spacing:-.02em;margin:0;color:#1e293b;}
+.mss-hsub{font-size:12.5px;color:#94a3b8;margin:3px 0 0;font-weight:500;}
+.mss-stats{display:flex;gap:9px;flex-wrap:wrap;}
+.mss-stat{display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:8px 16px;border-radius:14px;
+          background:#fff;border:1px solid #e2e8f0;min-width:74px;box-shadow:0 1px 3px rgba(15,23,42,.05);}
+.mss-stat .n{font-size:1.15rem;font-weight:800;font-family:'JetBrains Mono',monospace;line-height:1;}
+.mss-stat .l{font-size:.62rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#94a3b8;margin-top:3px;}
+.mss-stat.total .n{color:#7c3aed;}
+.mss-stat.active .n{color:#16a34a;}
+.mss-stat.inactive .n{color:#94a3b8;}
+
+/* ---- Form section heading ---- */
+.mss-formhd{display:flex;align-items:center;gap:7px;font-size:.72rem;font-weight:800;color:#6b21a8;
+            text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px;}
+.mss-formhd svg{flex-shrink:0;}
+
+/* ---- Add form bar ---- */
+.mss-formbar{padding:16px 20px;background:linear-gradient(180deg,#faf5ff,#fdfbff);border-bottom:1px solid #ede9fe;}
+.mss-formbar form{display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;}
+.mss-lbl{font-size:.7rem;font-weight:800;color:#6b21a8;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em;}
+.mss-page .fi{padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:.85rem;
+              font-family:inherit;font-weight:500;color:#1e293b;outline:none;background:#fff;box-sizing:border-box;
+              transition:border-color .12s, box-shadow .12s;box-shadow:0 1px 2px rgba(15,23,42,.03);}
+.mss-page .fi:focus{border-color:#c4b5fd;box-shadow:0 0 0 3px rgba(124,58,237,.1);}
+.mss-page .fi::placeholder{color:#cbd5e1;}
+.mss-color{width:44px;height:38px;border:1.5px solid #e2e8f0;border-radius:10px;padding:2px;cursor:pointer;background:#fff;}
+.mss-chk{width:17px;height:17px;accent-color:#7c3aed;cursor:pointer;}
+
+/* ---- Buttons (pills) ---- */
+.mss-page .btn-primary{background:linear-gradient(180deg,#8b5cf6,#6d28d9);color:#fff;border:none;
+                       border-radius:99px;font-weight:700;cursor:pointer;font-family:inherit;
+                       display:inline-flex;align-items:center;gap:6px;padding:8px 18px;font-size:.83rem;
+                       box-shadow:0 2px 8px rgba(124,58,237,.3), inset 0 1px 0 rgba(255,255,255,.2);transition:transform .12s, box-shadow .12s;}
+.mss-page .btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(124,58,237,.4), inset 0 1px 0 rgba(255,255,255,.2);}
+.mss-page .btn-primary svg{flex-shrink:0;}
+.mss-page .btn-outline{background:#fff;color:#64748b;border:1.5px solid #e2e8f0;border-radius:99px;
+                       font-weight:700;cursor:pointer;font-family:inherit;padding:8px 18px;font-size:.83rem;transition:all .12s;}
+.mss-page .btn-outline:hover{background:#f8fafc;border-color:#cbd5e1;}
+
+/* ---- Table ---- */
+.m-table{width:100%;border-collapse:collapse;}
+.m-table th{background:#fff;padding:12px 16px;text-align:left;font-size:10.5px;font-weight:800;
+            color:#94a3b8;border-bottom:2px solid #e2e8f0;white-space:nowrap;text-transform:uppercase;letter-spacing:.06em;}
+.m-table td{padding:12px 16px;font-size:.85rem;color:#334155;border-bottom:1px solid #f1f5f9;vertical-align:middle;}
+.m-table tbody tr{transition:background .12s;}
+.m-table tbody tr:hover td{background:#faf5ff;}
+.m-table tbody tr:last-child td{border-bottom:none;}
+.mss-sr{color:#94a3b8;font-size:.78rem;font-weight:700;font-family:'JetBrains Mono',monospace;}
+.mss-iconcell{font-size:1.2rem;line-height:1;}
+.mss-slug{font-size:.76rem;color:#94a3b8;font-family:'JetBrains Mono',monospace;}
+.mss-hex{font-size:.76rem;font-family:'JetBrains Mono',monospace;color:#64748b;}
+
+/* ---- Status pill (name col) + dots ---- */
+.status-pill{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:99px;font-size:.78rem;font-weight:700;}
+.color-dot{width:14px;height:14px;border-radius:50%;display:inline-block;border:1px solid rgba(0,0,0,.12);flex-shrink:0;}
+
+/* ---- Active/Inactive badge (dot-pill) ---- */
+.badge-active,.badge-inactive{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;
+                              border-radius:99px;font-size:.74rem;font-weight:700;}
+.badge-active{background:#dcfce7;color:#166534;}
+.badge-inactive{background:#f1f5f9;color:#64748b;}
+.bdot{width:7px;height:7px;border-radius:50%;flex-shrink:0;background:currentColor;}
+.mss-toggle-btn{background:none;border:none;cursor:pointer;padding:0;}
+
+/* ---- Action buttons (pills) ---- */
+.mss-act{display:inline-flex;align-items:center;gap:5px;padding:6px 13px;border-radius:99px;
+         font-size:.76rem;font-weight:700;cursor:pointer;border:1.5px solid transparent;
+         font-family:inherit;transition:all .12s;}
+.mss-act svg{flex-shrink:0;}
+.mss-act.edit{background:#fff;color:#6d28d9;border-color:#ddd6fe;}
+.mss-act.edit:hover{background:#f5f3ff;border-color:#c4b5fd;transform:translateY(-1px);}
+.mss-act.del{background:#fff;color:#dc2626;border-color:#fecaca;margin-left:5px;}
+.mss-act.del:hover{background:#fef2f2;border-color:#f87171;transform:translateY(-1px);}
+
+/* ---- Empty state ---- */
+.mss-empty{text-align:center;padding:48px 20px;color:#94a3b8;}
+.mss-empty .es-icon{width:60px;height:60px;border-radius:16px;margin:0 auto 12px;
+                    background:#f5f3ff;border:1px solid #ede9fe;color:#a78bfa;
+                    display:flex;align-items:center;justify-content:center;}
+.mss-empty .ttl{font-weight:800;color:#475569;}
+.mss-empty .sub{font-size:.82rem;margin-top:4px;color:#94a3b8;}
+
+/* ---- Edit modal ---- */
+.mss-mod-ov{display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:1000;
+            align-items:center;justify-content:center;backdrop-filter:blur(2px);}
+.mss-mod{background:#fff;border-radius:16px;width:100%;max-width:470px;
+         box-shadow:0 20px 60px rgba(15,23,42,.25);overflow:hidden;}
+.mss-mod-hd{background:linear-gradient(180deg,#8b5cf6,#6d28d9);color:#fff;padding:15px 22px;
+            display:flex;align-items:center;justify-content:space-between;}
+.mss-mod-hd-ttl{font-weight:800;font-size:.95rem;display:flex;align-items:center;gap:8px;}
+.mss-mod-x{background:rgba(255,255,255,.18);border:none;color:#fff;width:28px;height:28px;border-radius:50%;
+           cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:background .12s;}
+.mss-mod-x:hover{background:rgba(255,255,255,.3);}
+.mss-mod-body{padding:20px 22px;display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.mss-mod-ft{padding:14px 22px;border-top:1px solid #e2e8f0;display:flex;justify-content:flex-end;gap:8px;background:#fafbfc;}
+.mss-mod .fi,.mss-mod .mss-color{width:100%;}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mss-page">
+
+{% set _medal %}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>{% endset %}
+{% set _total = statuses|length %}
+{% set _active = statuses|selectattr('is_active')|list|length %}
+{% set _inactive = _total - _active %}
+
+{# -- Hero header -- #}
+<div class="mss-hero">
+    <div class="mss-hero-left">
+        <div class="mss-hero-tile">{{ _medal }}</div>
+        <div>
+            <h1 class="mss-h1">Milestone Status Master</h1>
+            <p class="mss-hsub">Status stages a milestone moves through. Colors &amp; icons show across NPD boards.</p>
+        </div>
+    </div>
+    <div class="mss-stats">
+        <div class="mss-stat total"><span class="n">{{ _total }}</span><span class="l">Total</span></div>
+        <div class="mss-stat active"><span class="n">{{ _active }}</span><span class="l">Active</span></div>
+        <div class="mss-stat inactive"><span class="n">{{ _inactive }}</span><span class="l">Inactive</span></div>
+    </div>
+</div>
+
+<div class="card" style="margin-bottom:1.2rem;">
+    {# Add Form #}
+    <div class="mss-formbar">
+        <div class="mss-formhd">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+            Add New Status
+        </div>
+        <form method="POST" action="{{ url_for('masters.milestone_status_add') }}">
+            <div>
+                <label class="mss-lbl">Status Name *</label>
+                <input type="text" name="name" class="fi" required placeholder="e.g. In Progress" style="width:220px;">
+            </div>
+            <div>
+                <label class="mss-lbl">Icon</label>
+                <input type="text" name="icon" class="fi" placeholder="&#128309;" style="width:70px;text-align:center;">
+            </div>
+            <div>
+                <label class="mss-lbl">Color</label>
+                <input type="color" name="color" value="#6b7280" class="mss-color">
+            </div>
+            <div>
+                <label class="mss-lbl">Sort Order</label>
+                <input type="number" name="sort_order" value="0" class="fi" style="width:80px;">
+            </div>
+            <div style="display:flex;align-items:center;gap:7px;padding-bottom:9px;">
+                <input type="checkbox" name="is_active" id="add_is_active" checked class="mss-chk">
+                <label for="add_is_active" style="font-size:.82rem;font-weight:600;color:#374151;cursor:pointer;">Active</label>
+            </div>
+            <button type="submit" class="btn-primary">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                Add Status
+            </button>
+        </form>
+    </div>
+
+    <div class="card-body" style="padding:0;">
+        {% if statuses %}
+        <table class="m-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Icon</th>
+                    <th>Name</th>
+                    <th>Slug</th>
+                    <th>Color</th>
+                    <th>Sort</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in statuses %}
+                <tr>
+                    <td class="mss-sr">{{ loop.index }}</td>
+                    <td class="mss-iconcell">{{ s.icon }}</td>
+                    <td style="font-weight:600;">
+                        <span class="status-pill" style="background:{{ s.color }}22;color:{{ s.color }};border:1px solid {{ s.color }}44;">
+                            <span class="color-dot" style="background:{{ s.color }};"></span>
+                            {{ s.name }}
+                        </span>
+                    </td>
+                    <td class="mss-slug">{{ s.slug }}</td>
+                    <td>
+                        <div style="display:flex;align-items:center;gap:7px;">
+                            <span class="color-dot" style="background:{{ s.color }};width:18px;height:18px;"></span>
+                            <span class="mss-hex">{{ s.color }}</span>
+                        </div>
+                    </td>
+                    <td style="color:#94a3b8;">{{ s.sort_order }}</td>
+                    <td>
+                        <button onclick="toggleMsStatus({{ s.id }}, this)" class="mss-toggle-btn">
+                            <span class="badge-{{ 'active' if s.is_active else 'inactive' }}">
+                                <span class="bdot"></span> {{ 'Active' if s.is_active else 'Inactive' }}
+                            </span>
+                        </button>
+                    </td>
+                    <td>
+                        <button onclick="openMsEdit({{ s.id }}, '{{ s.name|e }}', '{{ s.icon|e }}', '{{ s.color }}', {{ s.sort_order }}, {{ '1' if s.is_active else '0' }})"
+                                class="mss-act edit">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                            Edit
+                        </button>
+                        <form method="POST" action="{{ url_for('masters.milestone_status_delete', id=s.id) }}" style="display:inline;"
+                              onsubmit="return confirm('Delete {{ s.name }}?')">
+                            <button type="submit" class="mss-act del">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                                Delete
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="mss-empty">
+            <div class="es-icon">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>
+            </div>
+            <div class="ttl">No milestone statuses yet</div>
+            <div class="sub">Add your first status above</div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{# Edit Modal #}
+<div id="msStatusModal" class="mss-mod-ov">
+    <div class="mss-mod">
+        <div class="mss-mod-hd">
+            <span class="mss-mod-hd-ttl">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                Edit Milestone Status
+            </span>
+            <button onclick="document.getElementById('msStatusModal').style.display='none'" class="mss-mod-x">&times;</button>
+        </div>
+        <form method="POST" id="msStatusEditForm" action="">
+            <div class="mss-mod-body">
+                <div style="grid-column:1/-1;">
+                    <label class="mss-lbl">Status Name *</label>
+                    <input type="text" name="name" id="editMsName" class="fi" required>
+                </div>
+                <div>
+                    <label class="mss-lbl">Icon</label>
+                    <input type="text" name="icon" id="editMsIcon" class="fi" style="text-align:center;">
+                </div>
+                <div>
+                    <label class="mss-lbl">Color</label>
+                    <input type="color" name="color" id="editMsColor" class="mss-color" style="height:40px;">
+                </div>
+                <div>
+                    <label class="mss-lbl">Sort Order</label>
+                    <input type="number" name="sort_order" id="editMsSort" class="fi">
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;padding-top:26px;">
+                    <input type="checkbox" name="is_active" id="editMsActive" class="mss-chk">
+                    <label for="editMsActive" style="font-size:.85rem;font-weight:600;color:#374151;cursor:pointer;">Active</label>
+                </div>
+            </div>
+            <div class="mss-mod-ft">
+                <button type="button" onclick="document.getElementById('msStatusModal').style.display='none'" class="btn-outline">Cancel</button>
+                <button type="submit" class="btn-primary">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+</div>{# end mss-page #}
+
+<script>
+function openMsEdit(id, name, icon, color, sort, active) {
+    document.getElementById('msStatusEditForm').action = '/masters/milestone-status/' + id + '/edit';
+    document.getElementById('editMsName').value  = name;
+    document.getElementById('editMsIcon').value  = icon;
+    document.getElementById('editMsColor').value = color;
+    document.getElementById('editMsSort').value  = sort;
+    document.getElementById('editMsActive').checked = active == 1;
+    document.getElementById('msStatusModal').style.display = 'flex';
+}
+document.getElementById('msStatusModal').addEventListener('click', function(e){ if(e.target===this) this.style.display='none'; });
+
+function toggleMsStatus(id, btn) {
+    fetch('/masters/milestone-status/' + id + '/toggle', {method:'POST'})
+        .then(r=>r.json()).then(d=>{
+            const span = btn.querySelector('span');
+            span.className = d.is_active ? 'badge-active' : 'badge-inactive';
+            span.innerHTML = '<span class="bdot"></span> ' + (d.is_active ? 'Active' : 'Inactive');
+        });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,277 @@
+{% extends "base.html" %}
+{% block title %}EPD Projects{% endblock %}
+{% block page_title %}EPD Projects{% endblock %}
+{% block bread %}NPD / EPD Projects{% endblock %}
+{% block extra_css %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============ EPD PROJECTS LIST - PREMIUM ============ */
+.epdl-page,.epdl-page * { font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif; }
+
+/* -- Hero -- */
+.hdr{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.9rem;margin-bottom:1.1rem;}
+.hdr-left{display:flex;align-items:center;gap:14px;}
+.hdr-tile{width:48px;height:48px;border-radius:14px;flex-shrink:0;
+          background:linear-gradient(180deg,#34d399,#059669);color:#fff;
+          display:flex;align-items:center;justify-content:center;
+          box-shadow:0 4px 14px rgba(5,150,105,.35), inset 0 1px 0 rgba(255,255,255,.25);}
+.hdr-tile svg{width:24px;height:24px;}
+.hdr-h1{font-size:1.2rem;font-weight:900;letter-spacing:-.02em;margin:0;color:#1e293b;}
+.hdr-sub{font-size:.77rem;color:#94a3b8;margin-top:2px;font-weight:500;}
+
+/* -- Table card -- */
+.proj-table-wrap{background:#fff;border:1px solid #e2e8f0;border-radius:16px;overflow:hidden;
+                 box-shadow:0 1px 3px rgba(15,23,42,.05), 0 4px 16px rgba(15,23,42,.04);}
+.proj-table{width:100%;border-collapse:collapse;font-size:.82rem;}
+.proj-table th{font-size:10.5px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;
+               padding:11px 16px;border-bottom:2px solid #e2e8f0;text-align:left;background:#fff;white-space:nowrap;}
+.proj-table td{padding:12px 16px;border-bottom:1px solid #f1f5f9;color:#334155;vertical-align:middle;}
+.proj-table tbody tr{transition:background .12s;}
+.proj-table tbody tr:hover td{background:#f0fdf4;}
+.proj-table tbody tr:last-child td{border-bottom:none;}
+.badge{display:inline-block;padding:3px 11px;border-radius:99px;font-size:.71rem;font-weight:700;}
+.prog-wrap{background:#f1f5f9;border-radius:99px;height:6px;width:60px;overflow:hidden;}
+.prog-fill{height:100%;border-radius:99px;}
+.code-mono{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:.8rem;color:#059669;}
+.age-mono{font-family:'JetBrains Mono',monospace;}
+
+/* -- Action dots menu -- */
+.act-wrap{position:relative;}
+.act-dots{width:30px;height:30px;border-radius:99px;border:1.5px solid #e2e8f0;background:#fff;cursor:pointer;
+          display:flex;align-items:center;justify-content:center;color:#64748b;transition:all .12s;}
+.act-dots:hover{background:#f0fdf4;border-color:#6ee7b7;color:#059669;}
+.act-dots svg{flex-shrink:0;}
+.act-menu{display:none;position:absolute;right:0;top:calc(100% + 4px);background:#fff;border:1.5px solid #e2e8f0;
+          border-radius:12px;box-shadow:0 12px 30px rgba(15,23,42,.14);min-width:170px;z-index:300;overflow:hidden;}
+.act-menu.open{display:block;}
+.act-item{display:flex;align-items:center;gap:9px;padding:9px 14px;font-size:.82rem;font-weight:600;color:#334155;
+          text-decoration:none;cursor:pointer;transition:background .1s;border:none;background:none;width:100%;text-align:left;font-family:inherit;}
+.act-item svg{flex-shrink:0;}
+.act-item:hover{background:#f8fafc;}
+.act-item.red{color:#dc2626;}
+.act-item.red:hover{background:#fef2f2;}
+.act-menu form{margin:0;}
+.act-divider{height:1px;background:#f1f5f9;margin:2px 0;}
+
+.epdl-empty{text-align:center;padding:48px 20px;color:#94a3b8;}
+.epdl-empty .es-ic{width:60px;height:60px;border-radius:16px;margin:0 auto 12px;
+                   background:#ecfdf5;border:1px solid #bbf7d0;color:#34d399;
+                   display:flex;align-items:center;justify-content:center;}
+.epdl-page .conv-yes{color:#16a34a;font-weight:700;font-size:.8rem;display:inline-flex;align-items:center;gap:4px;}
+.epdl-page .age-warn{color:#ef4444;display:inline-flex;vertical-align:middle;}
+
+/* -- Pagination -- */
+.epdl-pager{padding:13px 18px;display:flex;gap:9px;align-items:center;border-top:1px solid #e2e8f0;}
+.epdl-pager .pg-btn{display:inline-flex;align-items:center;gap:5px;padding:6px 13px;border-radius:99px;border:1.5px solid #e2e8f0;
+                    background:#fff;color:#475569;font-size:.78rem;font-weight:700;text-decoration:none;transition:all .12s;}
+.epdl-pager .pg-btn:hover{background:#f0fdf4;border-color:#6ee7b7;color:#059669;}
+.epdl-pager .pg-info{font-size:.78rem;color:#94a3b8;}
+
+/* === MOBILE === */
+@media(max-width: 767px) {
+    .proj-hdr-btns { display: grid !important; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; }
+    .proj-btn-new { display: flex; align-items: center; justify-content: center; gap: 7px; padding: 13px 10px; border-radius: 99px; font-size: 14px; font-weight: 700; background: linear-gradient(180deg,#34d399,#059669); color: #fff; text-decoration: none; box-shadow: 0 3px 10px rgba(5,150,105,.3); grid-column: 1 / -1; }
+    .proj-btn-dash { display: flex; align-items: center; justify-content: center; gap: 7px; padding: 11px 10px; border-radius: 99px; font-size: 13px; font-weight: 600; border: 1.5px solid #e2e8f0; background: #fff; color: #475569; text-decoration: none; grid-column: 1 / -1; }
+    .mobile-filter-form { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+    .mobile-filter-form input, .mobile-filter-form select { width: 100%; padding: 11px 14px; border: 1.5px solid #e2e8f0; border-radius: 12px; font-size: 14px; font-family: inherit; background: #fff; color: #1e293b; outline: none; -webkit-appearance: none; box-sizing: border-box; }
+    .mobile-filter-form input:focus, .mobile-filter-form select:focus { border-color: #6ee7b7; box-shadow: 0 0 0 3px rgba(5,150,105,.12); }
+    .mobile-filter-row { display: flex; gap: 8px; }
+    .mobile-filter-btn { flex: 1; padding: 12px; background: linear-gradient(180deg,#34d399,#059669); color: #fff; border: none; border-radius: 99px; font-size: 14px; font-weight: 700; font-family: inherit; cursor: pointer; }
+    .mobile-reset-btn { padding: 12px 16px; border: 1.5px solid #e2e8f0; border-radius: 99px; background: #fff; color: #475569; font-size: 13px; font-weight: 600; text-decoration: none; display: flex; align-items: center; }
+    .tbl-scroll { display: none !important; }
+    .mobile-proj-list { display: block !important; }
+    .m-proj-card { padding: 14px 16px; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 12px; text-decoration: none; color: #334155; -webkit-tap-highlight-color: transparent; }
+    .m-proj-card:active { background: #f0fdf4; }
+    .m-proj-avatar { width: 46px; height: 46px; border-radius: 12px; flex-shrink: 0; background: linear-gradient(135deg,#34d399,#059669); display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 800; color: #fff; }
+    .m-proj-info { flex: 1; min-width: 0; }
+    .m-proj-name { font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .m-proj-meta { font-size: 11.5px; color: #94a3b8; margin-top: 2px; }
+    .m-proj-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+}
+@media(min-width: 768px) {
+    .proj-hdr-btns { display: flex; gap: .5rem; flex-wrap: wrap; }
+    .proj-btn-new { display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; border-radius: 99px; font-size: 13px; font-weight: 700; background: linear-gradient(180deg,#34d399,#059669); color: #fff; text-decoration: none; box-shadow: 0 2px 8px rgba(5,150,105,.3), inset 0 1px 0 rgba(255,255,255,.2); transition: transform .12s, box-shadow .12s; }
+    .proj-btn-new:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(5,150,105,.4), inset 0 1px 0 rgba(255,255,255,.2); }
+    .proj-btn-dash { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 99px; font-size: 13px; font-weight: 700; border: 1.5px solid #bbf7d0; background: #fff; color: #047857; text-decoration: none; transition: all .12s; }
+    .proj-btn-dash:hover { background: #f0fdf4; border-color: #6ee7b7; }
+    .mobile-filter-form { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; margin-bottom: 1rem; }
+    .mobile-filter-form input, .mobile-filter-form select { padding: 8px 13px; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: .82rem; background: #fff; color: #1e293b; outline: none; font-family: inherit; transition: border-color .12s, box-shadow .12s; }
+    .mobile-filter-form input:focus, .mobile-filter-form select:focus { border-color: #6ee7b7; box-shadow: 0 0 0 3px rgba(5,150,105,.12); }
+    .mobile-filter-btn { padding: 8px 18px; background: linear-gradient(180deg,#34d399,#059669); color: #fff; border: none; border-radius: 99px; font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit; }
+    .mobile-reset-btn { padding: 8px 15px; background: #fff; color: #475569; border: 1.5px solid #e2e8f0; border-radius: 99px; font-size: 13px; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; }
+    .mobile-filter-row { display: contents; }
+    .mobile-proj-list { display: none !important; }
+    .tbl-scroll { display: block; overflow-x: auto; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="epdl-page">
+
+<div class="hdr">
+    <div class="hdr-left">
+        <div class="hdr-tile">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+        </div>
+        <div>
+            <h1 class="hdr-h1">EPD Projects</h1>
+            <div class="hdr-sub">Existing Product Development - all projects</div>
+        </div>
+    </div>
+    <div class="proj-hdr-btns">
+        <a href="/npd/epd-new" class="proj-btn-new">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+            New EPD Project
+        </a>
+        <a href="/npd/epd-dashboard" class="proj-btn-dash">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="20" y2="10"/><line x1="18" x2="18" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="16"/></svg>
+            Dashboard
+        </a>
+    </div>
+</div>
+
+<form method="GET" class="mobile-filter-form">
+    <input type="text" name="q" value="{{ q }}" placeholder="Search product, client...">
+    <div class="mobile-filter-row">
+        <select name="status">
+            <option value="">All Status</option>
+        <option value="lead_created" {% if status=='lead_created' %}selected{% endif %}>Lead Created</option>
+        <option value="sample_sent" {% if status=='sample_sent' %}selected{% endif %}>Sample Sent</option>
+        <option value="client_review" {% if status=='client_review' %}selected{% endif %}>Client Review</option>
+        <option value="commercial" {% if status=='commercial' %}selected{% endif %}>Commercial</option>
+        <option value="milestones" {% if status=='milestones' %}selected{% endif %}>Milestones</option>
+        <option value="complete" {% if status=='complete' %}selected{% endif %}>Completed</option>
+        <option value="cancelled" {% if status=='cancelled' %}selected{% endif %}>Cancelled</option>
+        </select>
+        <select name="sc">
+            <option value="">All SC</option>
+            {% for u in users %}
+            <option value="{{ u.id }}" {% if sc_id==u.id|string %}selected{% endif %}>{{ u.full_name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="mobile-filter-row">
+        <button type="submit" class="mobile-filter-btn">Filter</button>
+        <a href="/npd/epd-projects" class="mobile-reset-btn">Reset</a>
+    </div>
+</form>
+
+<div class="proj-table-wrap">
+    {% if projects.items %}
+
+    {# -- MOBILE: Card List -- #}
+    <div class="mobile-proj-list">
+        {% for p in projects.items %}
+        {% set sel_ms = p.milestones|selectattr('is_selected')|list %}
+        {% set done_ms = sel_ms|selectattr('status','eq','approved')|list %}
+        {% set ms_pct2 = ((done_ms|length / sel_ms|length)*100)|round|int if sel_ms else 0 %}
+        <a href="/npd/project/{{ p.id }}" class="m-proj-card">
+            <div class="m-proj-avatar">{{ p.product_name[0]|upper }}</div>
+            <div class="m-proj-info">
+                <div class="m-proj-name">{{ p.product_name }}</div>
+                <div class="m-proj-meta">{{ p.code }}{% if p.client_company or p.client_name %} &middot; {{ (p.client_company or p.client_name)[:20] }}{% endif %}</div>
+                {% if sel_ms %}
+                <div style="margin-top:5px;display:flex;align-items:center;gap:6px;">
+                    <div style="flex:1;background:#f1f5f9;border-radius:99px;height:4px;max-width:80px;overflow:hidden;">
+                        <div style="height:100%;border-radius:99px;width:{{ ms_pct2 }}%;background:{% if ms_pct2==100 %}#22c55e{% else %}#059669{% endif %};"></div>
+                    </div>
+                    <span style="font-size:10px;color:#94a3b8;font-family:'JetBrains Mono',monospace;">{{ done_ms|length }}/{{ sel_ms|length }}</span>
+                </div>
+                {% endif %}
+            </div>
+            <div class="m-proj-right">
+                <span class="badge" style="background:{{ p.status_color }}22;color:{{ p.status_color }};font-size:10px;">{{ p.status_label }}</span>
+                <span style="font-size:11px;color:#94a3b8;font-family:'JetBrains Mono',monospace;">{{ p.project_age }}d</span>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+
+    {# -- DESKTOP: Table -- #}
+    <div class="tbl-scroll">
+        <table class="proj-table">
+            <thead><tr>
+                <th>#</th><th>Code</th><th>Product</th><th>Client</th><th>SC</th>
+                <th>Status</th><th style="text-align:center;">Milestones</th>
+                <th>Converted</th>
+                <th>Age</th><th>Created</th><th></th>
+            </tr></thead>
+            <tbody>
+            {% for p in projects.items %}
+            {% set sel_ms = p.milestones|selectattr('is_selected')|list %}
+            {% set done_ms = sel_ms|selectattr('status','eq','approved')|list %}
+            {% set ms_pct = ((done_ms|length / sel_ms|length)*100)|round|int if sel_ms else 0 %}
+            <tr>
+                <td style="color:#94a3b8;font-size:.75rem;font-family:'JetBrains Mono',monospace;">{{ loop.index + (projects.page-1)*25 }}</td>
+                <td><span class="code-mono">{{ p.code }}</span></td>
+                <td style="max-width:160px;"><div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ p.product_name }}">{{ p.product_name }}</div>{% if p.product_category %}<div style="font-size:.7rem;color:#94a3b8;">{{ p.product_category }}</div>{% endif %}</td>
+                <td style="font-size:.8rem;"><div>{{ p.client_company or p.client_name or '-' }}</div>{% if p.client_phone %}<div style="font-size:.72rem;color:#94a3b8;">{{ p.client_phone }}</div>{% endif %}</td>
+                <td style="font-size:.8rem;color:#64748b;">{{ p.sc_user.full_name if p.sc_user else '-' }}</td>
+                <td><span class="badge" style="background:{{ p.status_color }}22;color:{{ p.status_color }};">{{ p.status_label }}</span></td>
+                <td style="text-align:center;">{% if sel_ms %}<div style="font-size:.72rem;color:#94a3b8;margin-bottom:3px;font-family:'JetBrains Mono',monospace;">{{ done_ms|length }}/{{ sel_ms|length }}</div><div class="prog-wrap" style="margin:0 auto;"><div class="prog-fill" style="width:{{ ms_pct }}%;background:{% if ms_pct==100 %}#22c55e{% else %}#059669{% endif %};"></div></div>{% else %}-{% endif %}</td>
+                <td>
+                    {% if p.converted_to_commercial %}
+                    <span class="conv-yes"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Commercial</span>
+                    {% else %}
+                    <span style="color:#94a3b8;font-size:.8rem;">-</span>
+                    {% endif %}
+                </td>
+                <td style="font-size:.78rem;color:#94a3b8;" class="age-mono">{{ p.project_age }}d{% if p.project_age>30 and p.status not in ('complete','cancelled') %} <span class="age-warn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></span>{% endif %}</td>
+                <td style="font-size:.75rem;color:#94a3b8;white-space:nowrap;font-family:'JetBrains Mono',monospace;">{{ p.created_at.strftime('%d %b %Y') if p.created_at else '-' }}</td>
+                <td>
+                    <div class="act-wrap">
+                        <button class="act-dots" onclick="toggleAct(this,event)"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg></button>
+                        <div class="act-menu">
+                            <a href="/npd/projects/{{ p.id }}" class="act-item" style="color:#2563eb;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0Z"/><circle cx="12" cy="12" r="3"/></svg> View</a>
+                            <a href="/npd/projects/{{ p.id }}/edit" class="act-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Edit</a>
+                            <div class="act-divider"></div>
+                            <form method="POST" action="/npd/projects/{{ p.id }}/status" onsubmit="return confirm('Mark complete?')"><input type="hidden" name="status" value="complete"><button type="submit" class="act-item" style="color:#22c55e;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.801 10A10 10 0 1 1 17 3.335"/><path d="m9 11 3 3L22 4"/></svg> Complete</button></form>
+                            <form method="POST" action="/npd/projects/{{ p.id }}/status" onsubmit="return confirm('Cancel?')"><input type="hidden" name="status" value="cancelled"><button type="submit" class="act-item red"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg> Cancel</button></form>
+                            <div class="act-divider"></div>
+                            <form method="POST" action="/npd/projects/{{ p.id }}/delete" onsubmit="return confirm('Delete?')"><button type="submit" class="act-item red"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> Delete</button></form>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% if projects.pages > 1 %}
+    <div class="epdl-pager">
+        {% if projects.has_prev %}<a href="?page={{ projects.prev_num }}&q={{ q }}&status={{ status }}&sc={{ sc_id }}" class="pg-btn"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg> Prev</a>{% endif %}
+        <span class="pg-info">Page {{ projects.page }} of {{ projects.pages }} ({{ projects.total }} projects)</span>
+        {% if projects.has_next %}<a href="?page={{ projects.next_num }}&q={{ q }}&status={{ status }}&sc={{ sc_id }}" class="pg-btn">Next <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></a>{% endif %}
+    </div>
+    {% endif %}
+    {% else %}
+    <div class="epdl-empty">
+        <div class="es-ic"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></div>
+        <div style="font-weight:800;color:#475569;">No EPD projects found</div>
+        <a href="/npd/epd-new" style="color:#059669;font-weight:700;text-decoration:none;display:inline-block;margin-top:6px;">+ Create EPD Project &rarr;</a>
+    </div>
+    {% endif %}
+</div>
+
+</div>{# end epdl-page #}
+<script>
+function toggleAct(btn,e){
+  e.stopPropagation();e.preventDefault();
+  var m=btn.nextElementSibling;
+  var o=m.classList.contains('open');
+  document.querySelectorAll('.act-menu.open').forEach(function(x){x.classList.remove('open');});
+  if(!o){
+    var rect=btn.getBoundingClientRect();
+    m.style.position='fixed';
+    m.style.top=(rect.bottom+4)+'px';
+    m.style.right=(window.innerWidth-rect.right)+'px';
+    m.style.left='auto';
+    m.style.zIndex='9999';
+    m.classList.add('open');
+  }
+}
+document.addEventListener('click',function(){document.querySelectorAll('.act-menu.open').forEach(function(m){m.classList.remove('open');});});
+</script>
+{% endblock %}

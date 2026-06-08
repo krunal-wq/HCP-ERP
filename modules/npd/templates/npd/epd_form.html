@@ -1,0 +1,245 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit EPD Project' if edit else 'New EPD Project' }}{% endblock %}
+{% block page_title %}{{ 'Edit EPD Project' if edit else 'New EPD Project' }}{% endblock %}
+{% block bread %}NPD / EPD Projects / {{ 'Edit' if edit else 'New' }}{% endblock %}
+{% block extra_css %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+/* ============ EPD PROJECT FORM - PREMIUM ============ */
+.epdf-page,.epdf-page * { font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif; }
+
+/* -- Banner -- */
+.epdf-banner{background:linear-gradient(135deg,#ecfdf5,#f0fdf9);border:1.5px solid #a7f3d0;border-radius:16px;
+             padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;gap:13px;
+             box-shadow:0 1px 3px rgba(5,150,105,.06);}
+.epdf-banner-tile{width:44px;height:44px;border-radius:13px;flex-shrink:0;
+                  background:linear-gradient(180deg,#34d399,#059669);color:#fff;
+                  display:flex;align-items:center;justify-content:center;
+                  box-shadow:0 3px 10px rgba(5,150,105,.3), inset 0 1px 0 rgba(255,255,255,.25);}
+.epdf-banner-tile svg{width:22px;height:22px;}
+.epdf-banner .t{font-weight:800;font-size:.95rem;color:#064e3b;}
+.epdf-banner .s{font-size:.78rem;color:#047857;margin-top:2px;}
+.epdf-back{margin-left:auto;color:#059669;font-weight:700;font-size:.82rem;white-space:nowrap;text-decoration:none;display:inline-flex;align-items:center;gap:5px;}
+
+.epdf-note{background:#f0fdf4;border:1px solid #86efac;border-radius:12px;padding:11px 16px;margin-bottom:16px;
+           font-size:.84rem;color:#065f46;display:flex;align-items:center;gap:8px;}
+.epdf-note svg{flex-shrink:0;color:#059669;}
+
+/* -- Form cards -- */
+.form-card{background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:22px;margin-bottom:16px;
+           box-shadow:0 1px 3px rgba(15,23,42,.05), 0 4px 16px rgba(15,23,42,.04);}
+.form-section-title{font-size:.74rem;font-weight:800;color:#059669;text-transform:uppercase;letter-spacing:.07em;
+                    margin-bottom:18px;padding-bottom:11px;border-bottom:2px solid #d1fae5;
+                    display:flex;align-items:center;gap:8px;}
+.form-section-title svg{flex-shrink:0;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.form-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+@media(max-width:640px){.form-grid,.form-grid-3{grid-template-columns:1fr;}}
+.form-group{display:flex;flex-direction:column;gap:6px;}
+.form-group label{font-size:.7rem;font-weight:800;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;}
+.form-group input,.form-group select,.form-group textarea{
+    padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:.85rem;color:#1e293b;background:#fff;
+    font-family:inherit;font-weight:500;outline:none;box-sizing:border-box;
+    transition:border-color .12s, box-shadow .12s;box-shadow:0 1px 2px rgba(15,23,42,.03);}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:#6ee7b7;box-shadow:0 0 0 3px rgba(5,150,105,.12);}
+.form-group input::placeholder,.form-group textarea::placeholder{color:#cbd5e1;}
+.form-group input[readonly]{background:#f8fafc;color:#64748b;}
+.form-group textarea{resize:vertical;min-height:80px;}
+.form-group.full{grid-column:1/-1;}
+.form-group select{appearance:none;-webkit-appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23059669' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 12px center;padding-right:34px;cursor:pointer;}
+
+/* -- Milestone grid -- */
+.ms-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;}
+@media(max-width:640px){.ms-grid{grid-template-columns:1fr 1fr;}}
+.ms-item{display:flex;align-items:center;gap:9px;padding:10px 13px;border:1.5px solid #e2e8f0;border-radius:11px;
+         cursor:pointer;font-size:.82rem;font-weight:600;color:#334155;transition:all .12s;background:#fff;}
+.ms-item:hover{border-color:#bbf7d0;}
+.ms-item:has(input:checked){border-color:#059669;background:#ecfdf5;color:#065f46;}
+.ms-item input{width:16px;height:16px;cursor:pointer;accent-color:#059669;flex-shrink:0;}
+
+/* -- Footer buttons (pills) -- */
+.epdf-foot{display:flex;gap:9px;justify-content:flex-end;}
+.epdf-btn{display:inline-flex;align-items:center;gap:7px;padding:10px 22px;border-radius:99px;font-size:.85rem;
+          font-weight:700;cursor:pointer;font-family:inherit;text-decoration:none;border:none;transition:transform .12s, box-shadow .12s;}
+.epdf-btn svg{flex-shrink:0;}
+.epdf-btn.cancel{background:#fff;color:#64748b;border:1.5px solid #e2e8f0;}
+.epdf-btn.cancel:hover{background:#f8fafc;border-color:#cbd5e1;}
+.epdf-btn.save{background:linear-gradient(180deg,#34d399,#059669);color:#fff;
+               box-shadow:0 2px 8px rgba(5,150,105,.3), inset 0 1px 0 rgba(255,255,255,.2);}
+.epdf-btn.save:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(5,150,105,.4), inset 0 1px 0 rgba(255,255,255,.2);}
+</style>
+{% endblock %}
+{% block content %}
+<div class="epdf-page">
+
+<!-- EPD Banner -->
+<div class="epdf-banner">
+    <div class="epdf-banner-tile">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+    </div>
+    <div>
+        <div class="t">EPD - Existing Product Development</div>
+        <div class="s">SC selects from existing products. Samples sent to client. Faster path to commercial project.</div>
+    </div>
+    {% if prefill_lead %}
+    <a href="{{ url_for('crm.lead_view', id=prefill_lead.id) }}" class="epdf-back">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+        Back to Lead
+    </a>
+    {% endif %}
+</div>
+
+{% if prefill_lead %}
+<div class="epdf-note">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+    <span>Lead se create: <strong>{{ prefill_lead.contact_name }}{% if prefill_lead.company_name %} / {{ prefill_lead.company_name }}{% endif %}</strong> - details pre-filled hain.</span>
+</div>
+{% endif %}
+
+<form method="POST" enctype="multipart/form-data">
+<input type="hidden" name="project_type" value="existing">
+{% if prefill_lead %}<input type="hidden" name="from_lead_id" value="{{ prefill_lead.id }}">{% endif %}
+
+<!-- Product Info -->
+<div class="form-card">
+    <div class="form-section-title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg>
+        Product Information
+    </div>
+    <div class="form-grid">
+        <div class="form-group full">
+            <label>Product Name <span style="color:#dc2626;">*</span></label>
+            <input type="text" name="product_name" value="{{ edit.product_name if edit else ((prefill_url.product_name if prefill_url and prefill_url.product_name else '') or (prefill_lead.product_name if prefill_lead else '')) }}" placeholder="e.g. Neem Face Wash 100ml" required>
+        </div>
+        <div class="form-group">
+            <label>Product Category</label>
+            <select name="product_category">
+                <option value="">Select Category</option>
+                {% for cat in categories %}
+                <option value="{{ cat.name }}"
+                    {% if edit and edit.product_category == cat.name %}selected
+                    {% elif prefill_lead and prefill_lead.category == cat.name %}selected
+                    {% endif %}>{{ cat.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Product Range</label>
+            <input type="text" name="product_range" value="{{ edit.product_range if edit else (prefill_lead.product_range if prefill_lead else '') }}" placeholder="e.g. Herbal">
+        </div>
+        <div class="form-group">
+            <label>Order Quantity</label>
+            <input type="text" name="order_quantity" value="{{ edit.order_quantity if edit else (prefill_lead.order_quantity if prefill_lead else '') }}" placeholder="e.g. 5000 units">
+        </div>
+        <div class="form-group">
+            <label>Reference / Matching Product</label>
+            <input type="text" name="reference_product" value="{{ edit.reference_product if edit else '' }}" placeholder="HCP existing product code/name">
+        </div>
+        <div class="form-group full">
+            <label>Requirement Specification</label>
+            <textarea name="requirement_spec" placeholder="Packaging requirements, label specs, private labeling details...">{{ edit.requirement_spec if edit else (prefill_lead.requirement_spec if prefill_lead else '') }}</textarea>
+        </div>
+    </div>
+</div>
+
+<!-- Client Info -->
+<div class="form-card">
+    <div class="form-section-title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Client Information
+    </div>
+    {% if prefill_url and prefill_url.client_id %}
+    <div class="epdf-note" style="margin-bottom:16px;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        <span>Client <strong>{{ prefill_url.client_name }}</strong>{% if prefill_url.client_company %} ({{ prefill_url.client_company }}){% endif %} is linked to this project from the lead.</span>
+    </div>
+    {% endif %}
+    <input type="hidden" name="client_id" value="{{ edit.client_id if edit else (prefill_url.client_id if prefill_url and prefill_url.client_id else '') }}">
+    <div class="form-grid">
+        <div class="form-group">
+            <label>Client Name</label>
+            <input type="text" name="client_name" value="{{ edit.client_name if edit else ((prefill_url.client_name if prefill_url and prefill_url.client_name else '') or (prefill_lead.contact_name if prefill_lead else '')) }}" placeholder="Contact person"{% if prefill_url and prefill_url.client_id %} readonly{% endif %}>
+        </div>
+        <div class="form-group">
+            <label>Company</label>
+            <input type="text" name="client_company" value="{{ edit.client_company if edit else ((prefill_url.client_company if prefill_url and prefill_url.client_company else '') or (prefill_lead.company_name if prefill_lead else '')) }}" placeholder="Company name">
+        </div>
+        <div class="form-group">
+            <label>Email</label>
+            <input type="email" name="client_email" value="{{ edit.client_email if edit else ((prefill_url.client_email if prefill_url and prefill_url.client_email else '') or (prefill_lead.email if prefill_lead else '')) }}" placeholder="email@company.com">
+        </div>
+        <div class="form-group">
+            <label>Phone</label>
+            <input type="text" name="client_phone" value="{{ edit.client_phone if edit else ((prefill_url.client_phone if prefill_url and prefill_url.client_phone else '') or (prefill_lead.phone if prefill_lead else '')) }}" placeholder="+91 99999 99999">
+        </div>
+        <div class="form-group full">
+            <label>Link to Lead (optional)</label>
+            <select name="lead_id">
+                <option value="">- Select Lead -</option>
+                {% for lead in leads %}
+                <option value="{{ lead.id }}" {% if (edit and edit.lead_id==lead.id) or (prefill_lead and lead.id==prefill_lead.id) %}selected{% endif %}>
+                    {{ lead.code or lead.id }} - {{ lead.contact_name }} / {{ lead.company_name or '' }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+</div>
+
+<!-- Advance Payment (EPD specific) -->
+<div class="form-card">
+    <div class="form-section-title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+        Advance Payment (&#8377;2,000)
+    </div>
+    <div class="form-grid">
+        <div class="form-group">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:.85rem;color:#374151;">
+                <input type="checkbox" name="advance_paid" {% if edit and edit.advance_paid %}checked{% endif %} style="width:16px;height:16px;accent-color:#059669;">
+                <span>Advance Received</span>
+            </label>
+        </div>
+        <div class="form-group">
+            <label>Amount (&#8377;)</label>
+            <input type="number" name="advance_amount" value="{{ edit.advance_amount if edit else 2000 }}" step="1">
+        </div>
+    </div>
+</div>
+
+<!-- Milestones -->
+{% if not edit %}
+<div class="form-card">
+    <div class="form-section-title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+        Select Milestones
+    </div>
+    <div class="ms-grid">
+        {% for tmpl in default_milestones %}
+        <label class="ms-item">
+            <input type="checkbox" name="milestones" value="{{ tmpl.milestone_type }}" {{ 'checked' if tmpl.default_selected else '' }}>
+            <span>{{ tmpl.icon if tmpl.icon else '' }} {{ tmpl.title }}</span>
+        </label>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<div class="epdf-foot">
+    <a href="{{ url_for('npd.epd_dashboard') }}" class="epdf-btn cancel">Cancel</a>
+    <button type="submit" class="epdf-btn save">
+        {% if edit %}
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/></svg>
+        Save Changes
+        {% else %}
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+        Create EPD Project
+        {% endif %}
+    </button>
+</div>
+</form>
+
+</div>{# end epdf-page #}
+{% endblock %}

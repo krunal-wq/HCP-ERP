@@ -1,0 +1,978 @@
+﻿"""
+client_dispatch_routes.py â€” Send Approved Samples to Client
+============================================================
+Blueprint:  client_dispatch  at  /client-dispatch
+
+Workflow:
+  1. After Office approval (approval_status='approved' on
+     OfficeDispatchItem), items become eligible for client dispatch.
+  2. Operator selects a project from the list, picks one or more
+     approved items via checkboxes, fills tracking details, hits
+     "Send to Client".
+  3. System:
+     - Creates a ClientDispatch row (token, tracking)
+     - Stamps each selected item with client_dispatch_id +
+       sent_to_client_at
+     - Updates project.status = 'sent_to_client'
+     - Sends email (if address provided) using Gmail-like SMTP
+     - Returns a wa.me URL the user can click to open WhatsApp with
+       the pre-filled message (browser opens contact picker)
+
+Endpoints:
+  GET  /client-dispatch/                        Main list page
+  GET  /client-dispatch/api/projects            List of projects with
+                                                pending approved items
+  GET  /client-dispatch/api/project/<pid>/items List of approved items
+                                                (eligible to dispatch)
+  POST /client-dispatch/api/send                Dispatch selected items
+  GET  /client-dispatch/history                 Dispatch history page
+  GET  /client-dispatch/api/history             JSON list of dispatches
+"""
+
+from datetime import datetime
+from flask import (Blueprint, render_template, request, jsonify,
+                   current_app, url_for)
+from flask_login import login_required, current_user
+
+from models import db, User
+from models.npd import (NPDProject, OfficeDispatchItem,
+                        ClientDispatch, NPDActivityLog, RDProjectLog)
+
+
+client_dispatch_bp = Blueprint(
+    'client_dispatch',
+    __name__,
+    url_prefix='/client-dispatch'
+)
+
+
+# â•••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
+# Helpers
+# â•••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
+
+def _gen_token_no():
+    """Generate next CDT-XXXX token number."""
+    last = ClientDispatch.query.order_by(ClientDispatch.id.desc()).first()
+    nxt = (last.id + 1) if last else 1
+    return f'CDT-{nxt:04d}'
+
+
+def _build_email_subject_and_body(project, items, courier_name, tracking_no, extra_notes):
+    """
+    Build email subject + HTML body using the editable Mail Master
+    template (`code='sample_dispatch'`). Admin can customize via
+    /mail/master without touching code.
+
+    Falls back to a hardcoded body if the template isn't found / DB
+    error â€” system still works during initial setup.
+    """
+    sender_name = (
+        current_user.full_name if current_user.is_authenticated else 'Administrator'
+    )
+    try:
+        from mail_routes import (
+            _get_or_create_sample_dispatch_template,
+            _render_sample_dispatch_vars,
+        )
+        t = _get_or_create_sample_dispatch_template()
+        subject = _render_sample_dispatch_vars(
+            t.subject, project, items, courier_name, tracking_no,
+            extra_notes, sender_name,
+        )
+        body = _render_sample_dispatch_vars(
+            t.body, project, items, courier_name, tracking_no,
+            extra_notes, sender_name,
+        )
+        return subject, body
+    except Exception as _ex:
+        import traceback; traceback.print_exc()
+        # Fallback â€” minimal hardcoded body so dispatch still works
+        return (
+            f"Sample Dispatch Details â€“ {project.code}",
+            _build_email_body_fallback(project, items, courier_name,
+                                        tracking_no, extra_notes),
+        )
+
+
+def _build_email_body_fallback(project, items, courier_name, tracking_no, extra_notes):
+    """Hardcoded HTML â€” used only if mail template lookup fails."""
+    sample_lines_html = ''
+    for it in items:
+        code = it.sample_code or 'â€”'
+        product = project.product_name or ''
+        sample_lines_html += (
+            f'<li style="margin:4px 0;">{code} â€“ {product}</li>'
+        )
+
+    if tracking_no and courier_name:
+        tracking_line = f'{tracking_no} ({courier_name})'
+    elif tracking_no:
+        tracking_line = tracking_no
+    elif courier_name:
+        tracking_line = courier_name
+    else:
+        tracking_line = 'â€”'
+
+    notes_block = ''
+    if extra_notes:
+        notes_block = (
+            f'<p style="margin:14px 0 0;color:#374151;">'
+            f'<strong>Note:</strong> {extra_notes}</p>'
+        )
+
+    client_name = (
+        project.client_name or project.client_company or 'Sir/Madam'
+    )
+
+    return f"""
+<html><body style="font-family:Arial,sans-serif;font-size:14px;color:#333;line-height:1.6;">
+<p>Dear <strong>{client_name}</strong>,</p>
+<p>Greetings from HCP Wellness.</p>
+<p>We have dispatched the samples for the above-mentioned project.
+Please find the tracking details below:</p>
+<p style="margin:14px 0;">
+  <strong>Tracking Details:</strong> {tracking_line}
+</p>
+<p>We request you to kindly acknowledge receipt of the samples upon
+delivery and share your feedback at the earliest to help us proceed
+further.</p>
+<p>Looking forward to your response.</p>
+<ul style="margin:14px 0;padding-left:24px;">
+  {sample_lines_html}
+</ul>
+{notes_block}
+<p style="margin-top:24px;color:#6b7280;font-size:12px;">
+â€” HCP Wellness Pvt. Ltd.
+</p>
+</body></html>
+""".strip()
+
+
+def _build_email_body(project, items, courier_name, tracking_no, extra_notes):
+    """Backward-compat wrapper â€” returns body HTML only."""
+    _, body = _build_email_subject_and_body(
+        project, items, courier_name, tracking_no, extra_notes
+    )
+    return body
+
+
+def _build_whatsapp_text(project, items, tracking_no, courier_name):
+    """Render the dispatch WhatsApp message â€” exact spec format."""
+    client_name = (
+        project.client_name or project.client_company or 'Sir/Madam'
+    )
+
+    # Tracking line â€” clear format: "Courier: <name>, Tracking: <no.>"
+    parts = []
+    if courier_name:
+        parts.append(f'*Courier:* {courier_name}')
+    if tracking_no:
+        parts.append(f'*Tracking No.:* {tracking_no}')
+    if not parts:
+        tracking_block = '*Tracking Details:* â€”'
+    else:
+        tracking_block = '\n'.join(parts)
+
+    sample_lines = '\n'.join(
+        f'â€¢ {(it.sample_code or "â€”")} â€“ {project.product_name or ""}'
+        for it in items
+    )
+
+    return (
+        f'Dear {client_name},\n\n'
+        f'Greetings from HCP Wellness.\n\n'
+        f'We have dispatched the samples for the above-mentioned project. '
+        f'Please find the tracking details below:\n\n'
+        f'{tracking_block}\n\n'
+        f'We request you to kindly acknowledge receipt of the samples upon '
+        f'delivery and share your feedback at the earliest to help us '
+        f'proceed further.\n'
+        f'Looking forward to your response.\n\n'
+        f'{sample_lines}\n\n'
+        f'â€” HCP Wellness'
+    )
+
+
+def _send_email(to_email, subject, html_body):
+    """Send email via app's SMTP config. Returns (ok: bool, error: str)."""
+    import smtplib
+    from email.mime.multipart import MIMEMultipart
+    from email.mime.text import MIMEText
+
+    cfg = current_app.config
+    if not cfg.get('MAIL_SERVER') or not cfg.get('MAIL_PORT'):
+        return False, 'Mail server not configured.'
+
+    try:
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = subject
+        msg['From']    = (
+            'HCP Wellness Pvt. Ltd. '
+            f'<{cfg.get("MAIL_USERNAME","info@hcpwellness.in")}>'
+        )
+        msg['To']      = to_email
+        msg['Reply-To']= cfg.get('MAIL_USERNAME', 'info@hcpwellness.in')
+        msg.attach(MIMEText(html_body, 'html', 'utf-8'))
+
+        server = smtplib.SMTP(cfg['MAIL_SERVER'], cfg['MAIL_PORT'], timeout=20)
+        server.ehlo()
+        if cfg.get('MAIL_USE_TLS'):
+            server.starttls()
+        if cfg.get('MAIL_USERNAME') and cfg.get('MAIL_PASSWORD'):
+            server.login(cfg['MAIL_USERNAME'], cfg['MAIL_PASSWORD'])
+        server.sendmail(msg['From'], [to_email], msg.as_string())
+        server.quit()
+        return True, ''
+    except Exception as e:
+        import traceback; traceback.print_exc()
+        return False, str(e)
+
+
+# â•••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
+# Pages
+# â•••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
+
+@client_dispatch_bp.route('/')
+@login_required
+def index():
+    """Main page â€” list of projects with approved items pending client dispatch."""
+    return render_template('client_dispatch/index.html', active_page='client_dispatch')
+
+
+@client_dispatch_bp.route('/history')
+@login_required
+def history():
+    """Past dispatches log."""
+    return render_template('client_dispatch/history.html', active_page='client_dispatch')
+
+
+
+# API: Projects with pending approved items
+
+@client_dispatch_bp.route('/api/projects')
+@login_required
+def api_projects():
+    """
+    List of projects that have at least one OfficeDispatchItem with
+    approval_status='approved' AND client_dispatch_id IS NULL (i.e.
+    not yet sent to client).
+    """
+    # Subquery â€” distinct project_ids with pending approved items
+    subq = db.session.query(
+        OfficeDispatchItem.project_id,
+        db.func.count(OfficeDispatchItem.id).label('pending_count'),
+    ).filter(
+        OfficeDispatchItem.approval_status == 'approved',
+        OfficeDispatchItem.client_dispatch_id.is_(None),
+    ).group_by(OfficeDispatchItem.project_id).subquery()
+
+    rows = db.session.query(
+        NPDProject, subq.c.pending_count
+    ).join(subq, NPDProject.id == subq.c.project_id) \
+     .filter(NPDProject.is_deleted == False) \
+     .order_by(NPDProject.id.desc()).all()
+
+    out = []
+    for p, cnt in rows:
+        out.append({
+            'id'           : p.id,
+            'code'         : p.code,
+            'product_name' : p.product_name or '',
+            'client_name'  : p.client_name or p.client_company or '',
+            'client_email' : p.client_email or '',
+            'client_phone' : p.client_phone or '',
+            'status'       : p.status or '',
+            'pending_count': int(cnt),
+        })
+    return jsonify(success=True, projects=out)
+
+
+# â•••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
+# API: Approved items for a specific project
+# â•••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
+
+@client_dispatch_bp.route('/api/project/<int:pid>/items')
+@login_required
+def api_project_items(pid):
+    """All approved-but-not-yet-sent items for the given project."""
+    proj = NPDProject.query.get_or_404(pid)
+    items = OfficeDispatchItem.query.filter(
+        OfficeDispatchItem.project_id == pid,
+        OfficeDispatchItem.approval_status == 'approved',
+        OfficeDispatchItem.client_dispatch_id.is_(None),
+    ).order_by(OfficeDispatchItem.id.desc()).all()
+
+    out = []
+    for it in items:
+        out.append({
+            'id'         : it.id,
+            'sample_code': it.sample_code or '',
+            'submitted_by': it.submitted_by or '',
+            'handover_to' : it.handover_to or '',
+            'actioned_by' : (it.actioner.full_name if it.actioner else ''),
+            'actioned_at' : (
+                it.actioned_at.strftime('%d-%m-%Y %I:%M %p')
+                if it.actioned_at else ''
+            ),
+        })
+    return jsonify(
+        success      = True,
+        project = {
+            'id'          : proj.id,
+            'code'        : proj.code,
+            'product_name': proj.product_name or '',
+            'client_name' : proj.client_name or proj.client_company or '',
+            'client_email': proj.client_email or '',
+            'client_phone': proj.client_phone or '',
+        },
+        items = out,
+    )
+
+
+# â•••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
+# API: Send selected items to client
+# â•••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
+
+@client_dispatch_bp.route('/api/send', methods=['POST'])
+@login_required
+def api_send():
+    """
+    Body:
+      {
+        project_id   : int,
+        item_ids     : [int, int, ...]  (must all be approved + unsent),
+        courier_name : str,
+        tracking_no  : str,
+        notes        : str,
+        to_email     : str  (override; defaults to project.client_email),
+        send_email   : bool (default true if to_email present),
+        send_whatsapp: bool (default true; returns wa_url)
+      }
+    """
+    try:
+        data        = request.get_json(silent=True) or {}
+        pid         = int(data.get('project_id') or 0)
+        item_ids    = data.get('item_ids') or []
+        courier     = (data.get('courier_name') or '').strip()
+        tracking    = (data.get('tracking_no')  or '').strip()
+        notes       = (data.get('notes')        or '').strip()
+        to_email    = (data.get('to_email')     or '').strip()
+        send_email  = bool(data.get('send_email', True))
+        send_wa     = bool(data.get('send_whatsapp', True))
+
+        if not pid:
+            return jsonify(success=False, error='project_id required'), 400
+        if not item_ids:
+            return jsonify(success=False, error='Select at least one sample'), 400
+        if not courier:
+            return jsonify(success=False,
+                error='Courier name is required.'), 400
+        if not tracking:
+            return jsonify(success=False,
+                error='Tracking number is required.'), 400
+
+        proj = NPDProject.query.get(pid)
+        if not proj:
+            return jsonify(success=False, error='Project not found'), 404
+
+        # Default email to project client_email
+        if send_email and not to_email:
+            to_email = (proj.client_email or '').strip()
+
+        # Fetch + validate items
+        items = OfficeDispatchItem.query.filter(
+            OfficeDispatchItem.id.in_(item_ids),
+            OfficeDispatchItem.project_id == pid,
+        ).all()
+        if len(items) != len(item_ids):
+            return jsonify(success=False,
+                error='Some items not found or belong to another project'), 400
+
+        bad = [i.id for i in items
+               if i.approval_status != 'approved' or i.client_dispatch_id]
+        if bad:
+            return jsonify(success=False,
+                error=f'Items {bad} are not eligible (not approved or already sent)'), 400
+
+        now = datetime.now()
+
+        # Create dispatch token
+        cd = ClientDispatch(
+            token_no      = _gen_token_no(),
+            project_id    = pid,
+            courier_name  = courier or None,
+            tracking_no   = tracking or None,
+            extra_notes   = notes or None,
+            email_sent_to = to_email if (send_email and to_email) else None,
+            whatsapp_sent = bool(send_wa),
+            dispatched_by = current_user.id,
+            dispatched_at = now,
+        )
+        db.session.add(cd)
+        db.session.flush()    # need cd.id
+
+        # Stamp items
+        for it in items:
+            it.client_dispatch_id = cd.id
+            it.sent_to_client_at  = now
+
+        # â”€â”€ Spec rule #10: ALL approved samples must be dispatched
+        # before the project status flips to "Sample Send to Client".
+        # Partial dispatch should NOT change project status.
+        #
+        # Slug correction: code earlier set 'sent_to_client', but that
+        # slug was a corrupted master row. The correct slug for "Sample
+        # Send to Client" in the master is `sample_sent` (row 3). The
+        # 'approved_by_office' state is preserved on partial dispatch.
+        #
+        # NPD team retains manual override capability via the project
+        # edit screen â€” this auto-update only handles the happy path.
+        db.session.flush()
+        _approved_q = OfficeDispatchItem.query.filter(
+            OfficeDispatchItem.project_id      == pid,
+            OfficeDispatchItem.approval_status == 'approved',
+        )
+        approved_total      = _approved_q.count()
+        approved_dispatched = _approved_q.filter(
+            OfficeDispatchItem.client_dispatch_id.isnot(None)
+        ).count()
+
+        all_dispatched = (approved_total > 0
+                          and approved_dispatched >= approved_total)
+        if all_dispatched:
+            proj.status = 'sample_sent'   # "Sample Send to Client"
+        # else: leave status as-is (typically 'approved_by_office')
+
+        # Audit logs
+        sample_str = ', '.join(it.sample_code or '?' for it in items)
+        db.session.add(NPDActivityLog(
+            project_id = pid,
+            user_id    = current_user.id,
+            action     = (
+                f"Sent to client: {len(items)} samples ({sample_str}) "
+                f"| Token: {cd.token_no} "
+                f"| Tracking: {tracking or 'â€”'} "
+                f"| Courier: {courier or 'â€”'}"
+            ),
+            created_at = now,
+        ))
+        db.session.add(RDProjectLog(
+            project_id = pid,
+            user_id    = current_user.id,
+            event      = 'sent_to_client',
+            detail     = (
+                f"Token {cd.token_no}: {len(items)} samples sent to client. "
+                f"Tracking: {tracking or 'â€”'}"
+            ),
+            created_at = now,
+        ))
+
+        # â”€â”€ Send Email â”€â”€
+        email_ok, email_err = True, ''
+        if send_email and to_email:
+            subject, html = _build_email_subject_and_body(
+                proj, items, courier, tracking, notes
+            )
+            email_ok, email_err = _send_email(to_email, subject, html)
+            if email_ok:
+                cd.email_sent_at = datetime.now()
+            else:
+                # Keep dispatch saved even if email fails â€” admin can resend
+                cd.email_sent_to = None
+
+        # â”€â”€ Build WhatsApp URL â”€â”€
+        wa_url = ''
+        if send_wa:
+            wa_text = _build_whatsapp_text(proj, items, tracking, courier)
+            phone   = (proj.client_phone or '').strip()
+            # Normalise phone: digits only, prepend country code if missing
+            digits = ''.join(c for c in phone if c.isdigit())
+            if digits:
+                if len(digits) == 10:        # bare Indian mobile
+                    digits = '91' + digits
+                wa_url = f'https://wa.me/{digits}?text='
+            else:
+                wa_url = 'https://wa.me/?text='     # contact picker
+            from urllib.parse import quote
+            wa_url += quote(wa_text)
+
+        db.session.commit()
+
+        return jsonify(
+            success     = True,
+            token_no    = cd.token_no,
+            dispatched_at = now.strftime('%d-%m-%Y %I:%M %p'),
+            email_ok    = email_ok,
+            email_err   = email_err,
+            wa_url      = wa_url,
+        )
+
+    except Exception as e:
+        db.session.rollback()
+        import traceback; traceback.print_exc()
+        return jsonify(success=False, error=f'Server error: {e}'), 500
+
+
+# â•••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
+# API: Build WhatsApp message + URL (preview / share â€” no save)
+# â•••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
+
+@client_dispatch_bp.route('/api/build-whatsapp', methods=['POST'])
+@login_required
+def api_build_whatsapp():
+    """
+    Build the WhatsApp share URL + text for the given project + items.
+    Does NOT persist anything â€” just renders the message. Useful for
+    "ðŸ“± Send WhatsApp" button when user wants to share via WhatsApp Web
+    (separate flow from email).
+
+    Body:
+      {
+        project_id   : int,
+        item_ids     : [int, ...],
+        courier_name : str,
+        tracking_no  : str,
+      }
+    """
+    try:
+        data        = request.get_json(silent=True) or {}
+        pid         = int(data.get('project_id') or 0)
+        item_ids    = data.get('item_ids') or []
+        courier     = (data.get('courier_name') or '').strip()
+        tracking    = (data.get('tracking_no')  or '').strip()
+
+        if not pid or not item_ids:
+            return jsonify(success=False,
+                error='project_id and item_ids required'), 400
+
+        proj = NPDProject.query.get(pid)
+        if not proj:
+            return jsonify(success=False, error='Project not found'), 404
+
+        items = OfficeDispatchItem.query.filter(
+            OfficeDispatchItem.id.in_(item_ids),
+            OfficeDispatchItem.project_id == pid,
+        ).all()
+        if not items:
+            return jsonify(success=False, error='No matching items'), 400
+
+        text = _build_whatsapp_text(proj, items, tracking, courier)
+
+        # Build wa.me URL â€” phone normalization
+        from urllib.parse import quote
+        phone = (proj.client_phone or '').strip()
+        digits = ''.join(c for c in phone if c.isdigit())
+        if digits:
+            if len(digits) == 10:        # bare Indian mobile
+                digits = '91' + digits
+            wa_url      = f'https://wa.me/{digits}?text=' + quote(text)
+            wa_web_url  = f'https://web.whatsapp.com/send?phone={digits}&text=' + quote(text)
+        else:
+            # Empty / invalid phone â†’ contact picker mode
+            wa_url      = 'https://wa.me/?text=' + quote(text)
+            wa_web_url  = 'https://web.whatsapp.com/send?text=' + quote(text)
+
+        return jsonify(
+            success    = True,
+            text       = text,
+            wa_url     = wa_url,        # mobile / native
+            wa_web_url = wa_web_url,    # WhatsApp Web (desktop)
+            phone      = digits or '',
+        )
+
+    except Exception as e:
+        import traceback; traceback.print_exc()
+        return jsonify(success=False, error=f'Server error: {e}'), 500
+
+
+# â•••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
+# API: Send Email for an EXISTING dispatch (from history page)
+# â•••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
+
+@client_dispatch_bp.route('/api/<int:cid>/send-email', methods=['POST'])
+@login_required
+def api_send_email_existing(cid):
+    """Trigger email for an already-saved dispatch.
+
+    Used by the History page's ðŸ“§ Send Email button. Email body is
+    rendered from the editable Mail Master template (`sample_dispatch`).
+    """
+    try:
+        cd = ClientDispatch.query.get(cid)
+        if not cd:
+            return jsonify(success=False, error='Dispatch not found'), 404
+
+        proj = cd.project
+        if not proj:
+            return jsonify(success=False, error='Project not found'), 404
+
+        # Optional override email from request
+        data     = request.get_json(silent=True) or {}
+        to_email = (data.get('to_email') or '').strip() or \
+                   (cd.email_sent_to or proj.client_email or '').strip()
+
+        if not to_email:
+            return jsonify(success=False,
+                error='No email address available for this client'), 400
+
+        items = list(cd.items)
+        if not items:
+            return jsonify(success=False,
+                error='No items linked to this dispatch'), 400
+
+        subject, html = _build_email_subject_and_body(
+            proj, items, cd.courier_name or '', cd.tracking_no or '',
+            cd.extra_notes or ''
+        )
+        ok, err = _send_email(to_email, subject, html)
+        if not ok:
+            return jsonify(success=False, error=err or 'Email send failed'), 500
+
+        cd.email_sent_to = to_email
+        cd.email_sent_at = datetime.now()
+        db.session.add(NPDActivityLog(
+            project_id = proj.id,
+            user_id    = current_user.id,
+            action     = f"Email sent to {to_email} for dispatch {cd.token_no} by {current_user.full_name}",
+            created_at = datetime.now(),
+        ))
+        db.session.commit()
+
+        return jsonify(
+            success     = True,
+            email_sent_to = to_email,
+            email_sent_at = cd.email_sent_at.strftime('%d-%m-%Y %I:%M %p'),
+        )
+    except Exception as e:
+        db.session.rollback()
+        import traceback; traceback.print_exc()
+        return jsonify(success=False, error=f'Server error: {e}'), 500
+
+
+# â•••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
+# API: Build WhatsApp URL for an EXISTING dispatch (from history page)
+# â•••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
+
+@client_dispatch_bp.route('/api/<int:cid>/whatsapp-url')
+@login_required
+def api_whatsapp_url_existing(cid):
+    """Return WhatsApp Web URL pre-filled for an existing dispatch."""
+    try:
+        cd = ClientDispatch.query.get(cid)
+        if not cd:
+            return jsonify(success=False, error='Dispatch not found'), 404
+
+        proj = cd.project
+        items = list(cd.items)
+        if not proj or not items:
+            return jsonify(success=False, error='Missing project/items'), 400
+
+        text = _build_whatsapp_text(
+            proj, items, cd.tracking_no or '', cd.courier_name or ''
+        )
+
+        from urllib.parse import quote
+        phone = (proj.client_phone or '').strip()
+        digits = ''.join(c for c in phone if c.isdigit())
+        if digits:
+            if len(digits) == 10:
+                digits = '91' + digits
+            wa_url     = f'https://wa.me/{digits}?text=' + quote(text)
+            wa_web_url = f'https://web.whatsapp.com/send?phone={digits}&text=' + quote(text)
+        else:
+            wa_url     = 'https://wa.me/?text=' + quote(text)
+            wa_web_url = 'https://web.whatsapp.com/send?text=' + quote(text)
+
+        # Mark whatsapp_sent flag on first request (best-effort)
+        if not cd.whatsapp_sent:
+            cd.whatsapp_sent = True
+            db.session.add(NPDActivityLog(
+                project_id = proj.id,
+                user_id    = current_user.id,
+                action     = f"WhatsApp opened for dispatch {cd.token_no} by {current_user.full_name}",
+                created_at = datetime.now(),
+            ))
+            db.session.commit()
+
+        return jsonify(
+            success    = True,
+            text       = text,
+            wa_url     = wa_url,
+            wa_web_url = wa_web_url,
+            phone      = digits or '',
+        )
+    except Exception as e:
+        db.session.rollback()
+        import traceback; traceback.print_exc()
+        return jsonify(success=False, error=f'Server error: {e}'), 500
+
+
+# â•••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
+# API: Dispatch history (past sends)
+# â•••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
+@client_dispatch_bp.route('/api/history')
+@login_required
+def api_history():
+    """List past client dispatches, newest first."""
+    rows = ClientDispatch.query.order_by(
+        ClientDispatch.dispatched_at.desc()
+    ).limit(200).all()
+    out = []
+    for r in rows:
+        out.append({
+            'id'            : r.id,
+            'token_no'      : r.token_no,
+            'project_code'  : r.project.code if r.project else '',
+            'product_name'  : r.project.product_name if r.project else '',
+            'client_name'   : (r.project.client_name or r.project.client_company)
+                              if r.project else '',
+            'client_email'  : (r.project.client_email or '') if r.project else '',
+            'client_phone'  : (r.project.client_phone or '') if r.project else '',
+            'courier_name'  : r.courier_name or '',
+            'tracking_no'   : r.tracking_no or '',
+            'item_count'    : len(r.items),
+            'sample_codes'  : ', '.join(it.sample_code or '?' for it in r.items),
+            'email_sent_to' : r.email_sent_to or '',
+            'email_sent_at' : (r.email_sent_at.strftime('%d-%m-%Y %I:%M %p')
+                               if r.email_sent_at else ''),
+            'whatsapp_sent' : bool(r.whatsapp_sent),
+            'dispatched_by' : r.dispatcher.full_name if r.dispatcher else '',
+            'dispatched_at' : r.dispatched_at.strftime('%d-%m-%Y %I:%M %p'),
+        })
+    return jsonify(success=True, dispatches=out)
+
+
+# â•••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
+# API: Revert a client dispatch (undo "Send to Client")
+# â•••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
+
+@client_dispatch_bp.route('/api/<int:cid>/revert', methods=['POST'])
+@login_required
+def api_revert(cid):
+    """
+    Undo a client dispatch:
+      - Clear client_dispatch_id + sent_to_client_at on each linked item
+      - Delete the ClientDispatch row itself (token disappears)
+      - Recompute project status â€” usually goes back to 'approved_by_office'
+
+    Note: email already sent to client cannot be "unsent" â€” but the
+    operator can re-send if needed. Audit log is preserved.
+    """
+    try:
+        cd = ClientDispatch.query.get(cid)
+        if not cd:
+            return jsonify(success=False, error='Dispatch not found'), 404
+
+        pid = cd.project_id
+        token = cd.token_no
+        item_count = len(cd.items)
+        sample_codes = ', '.join(it.sample_code or '?' for it in cd.items)
+
+        # Unstamp items
+        for it in cd.items:
+            it.client_dispatch_id = None
+            it.sent_to_client_at  = None
+
+        # Delete dispatch row
+        db.session.delete(cd)
+        db.session.flush()
+
+        # Audit log
+        db.session.add(NPDActivityLog(
+            project_id = pid,
+            user_id    = current_user.id,
+            action     = (
+                f"Client dispatch REVERTED: token {token} ({item_count} samples) "
+                f"by {current_user.full_name}. Samples: {sample_codes}"
+            ),
+            created_at = datetime.now(),
+        ))
+        db.session.add(RDProjectLog(
+            project_id = pid,
+            user_id    = current_user.id,
+            event      = 'dispatch_reverted',
+            detail     = f"Client dispatch token {token} reverted. {item_count} samples returned to approved state.",
+            created_at = datetime.now(),
+        ))
+
+        # Reset project status â€” if no other dispatches remain, fall back
+        # to 'approved_by_office'. Recognise both the new slug
+        # ('sample_sent' = "Sample Send to Client") and the legacy slug
+        # ('sent_to_client') for projects created before the slug fix.
+        from models.npd import NPDProject
+        proj = NPDProject.query.get(pid)
+        if proj and proj.status in ('sample_sent', 'sent_to_client'):
+            proj.status = 'approved_by_office'
+
+        db.session.commit()
+        return jsonify(
+            success     = True,
+            project_id  = pid,
+            new_status  = 'approved_by_office',
+            samples_returned = item_count,
+        )
+
+    except Exception as e:
+        db.session.rollback()
+        import traceback; traceback.print_exc()
+        return jsonify(success=False, error=f'Server error: {e}'), 500
+
+
+# â•••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
+# CLIENT FEEDBACK FLOW  (Spec rules #11, #12)
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# After a project's samples have been dispatched to the client, the
+# operator records the client's response on the dispatch history page.
+# Two outcomes:
+#
+#   APPROVE  â†’ project.status = 'sample_approved'   (= "Sample Approved By Client")
+#              linked Lead.status = 'Close'
+#   REJECT   â†’ project.status = 'sample_rejected'   (= "Sample Rejected By Client")
+#              All active RDSubAssignment rows are deactivated so the
+#              project surfaces in the R&D Manager's "Rejected /
+#              reassign" queue. Reassignment goes through the standard
+#              `/rd/projects/<pid>/assign-multi` route â€” which will
+#              create fresh sub-assignments and the sample loop starts
+#              over (Spec rule #12).
+#
+# Eligibility:
+#   â€¢ Project must be in 'sample_sent' (or legacy 'sent_to_client') â€”
+#     i.e. samples actually went out to the client.
+#   â€¢ Spec rule "no skipping" â€” can't approve/reject before dispatch.
+#
+# Audit:
+#   â€¢ NPDActivityLog + RDProjectLog rows recorded.
+#   â€¢ Project status transition logged.
+# â•••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
+
+# Spec slug â†’ master row mapping (kept here as a single source of truth
+# so future renames touch one place):
+_CLIENT_APPROVED_SLUG = 'sample_approved'   # "Sample Approved By Client"
+_CLIENT_REJECTED_SLUG = 'sample_rejected'   # "Sample Rejected By Client"
+_DISPATCHED_SLUGS     = ('sample_sent', 'sent_to_client')
+
+
+@client_dispatch_bp.route('/<int:pid>/client-response', methods=['POST'])
+@login_required
+def client_response(pid):
+    """
+    Record the client's response to a dispatched sample.
+
+    Body JSON:
+      { action: 'approve' | 'reject',
+        feedback: '<free-text, optional for approve, required for reject>' }
+    """
+    from models.npd import RDSubAssignment
+
+    proj = NPDProject.query.get_or_404(pid)
+    data = request.get_json(silent=True) or {}
+    action   = (data.get('action') or '').strip().lower()
+    feedback = (data.get('feedback') or '').strip()
+
+    if action not in ('approve', 'reject'):
+        return jsonify(success=False,
+            error="Invalid action. Use 'approve' or 'reject'."), 400
+
+    if action == 'reject' and not feedback:
+        return jsonify(success=False,
+            error='Rejection feedback is required.'), 400
+
+    # â”€â”€ Eligibility check (spec: no skipping) â”€â”€
+    # Project must currently be in a dispatched state. Allow re-recording
+    # of an existing decision (idempotent), but block jumps from earlier
+    # stages.
+    if proj.status not in (*_DISPATCHED_SLUGS,
+                           _CLIENT_APPROVED_SLUG, _CLIENT_REJECTED_SLUG):
+        return jsonify(success=False, error=(
+            f'Project must be dispatched to client before recording '
+            f'feedback. Current status: {proj.status_label}.'
+        )), 400
+
+    now = datetime.now()
+    prev_status = proj.status
+
+    if action == 'approve':
+        proj.status = _CLIENT_APPROVED_SLUG
+
+        # â”€â”€ Spec rule #11: close the linked Lead â”€â”€
+        lead_msg = ''
+        if proj.lead_id:
+            try:
+                from models import Lead as _LeadM
+                _lead = _LeadM.query.get(proj.lead_id)
+                if _lead and _lead.status not in ('close', 'cancel'):
+                    _lead.status      = 'close'
+                    _lead.closed_at   = now
+                    _lead.updated_at  = now
+                    _lead.modified_by = current_user.id
+                    lead_msg = f' | Lead #{_lead.id} closed.'
+            except Exception:
+                import traceback; traceback.print_exc()
+
+        action_label = (
+            f"Client APPROVED samples â€” project marked "
+            f"'Sample Approved By Client'.{lead_msg}"
+        )
+
+    else:  # reject
+        proj.status = _CLIENT_REJECTED_SLUG
+
+        # â”€â”€ Spec rule #12: re-open for R&D reassignment â”€â”€
+        # Deactivate all active sub-assignments so the project is
+        # treated as "unallotted" by the R&D Projects page. Manager
+        # can then assign fresh users via /rd/projects/<pid>/assign-multi.
+        # Office-dispatch items are kept intact for history.
+        active_subs = RDSubAssignment.query.filter_by(
+            project_id=proj.id, is_active=True
+        ).all()
+        deactivated = 0
+        for sub in active_subs:
+            sub.is_active = False
+            deactivated += 1
+
+        # Clear the legacy single-user pointer too â€” the project should
+        # show as unassigned until a manager re-allocates.
+        proj.assigned_rd = None
+
+        action_label = (
+            f"Client REJECTED samples â€” feedback: {feedback} | "
+            f"R&D unassigned ({deactivated} sub-assignment(s) closed). "
+            f"Awaiting reassignment by R&D Manager."
+        )
+
+    # â”€â”€ Audit logs â”€â”€
+    db.session.add(NPDActivityLog(
+        project_id = pid,
+        user_id    = current_user.id,
+        action     = action_label,
+        created_at = now,
+    ))
+    db.session.add(RDProjectLog(
+        project_id = pid,
+        user_id    = current_user.id,
+        event      = proj.status,
+        detail     = (
+            f"Client response: {action.upper()} | "
+            f"{prev_status or 'unknown'} â†’ {proj.status}"
+            + (f" | Feedback: {feedback}" if feedback else "")
+        ),
+        created_at = now,
+    ))
+
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        import traceback; traceback.print_exc()
+        return jsonify(success=False, error=f'Server error: {e}'), 500
+
+    return jsonify(
+        success     = True,
+        project_id  = pid,
+        action      = action,
+        prev_status = prev_status,
+        new_status  = proj.status,
+        new_status_label = proj.status_label,
+    )
+
+

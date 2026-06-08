@@ -1,0 +1,312 @@
+{% extends "base.html" %}
+{% block title %}Import Leads — CRM{% endblock %}
+{% block page_title %}Import Leads{% endblock %}
+{% block bread %}CRM / Leads / Import{% endblock %}
+
+{% block extra_css %}
+<style>
+:root {
+    --premium-bg: #f8fafc;
+    --card-bg: #ffffff;
+    --text-main: #0f172a;
+    --text-muted: #475569;
+    --text-light: #94a3b8;
+    --border-soft: #e2e8f0;
+    --border-lighter: #f1f5f9;
+    --primary: #2563eb;
+    --primary-hover: #1d4ed8;
+    --primary-light: #eff6ff;
+    --success: #10b981;
+    --success-bg: #ecfdf5;
+    --warning: #f59e0b;
+    --warning-bg: #fffbeb;
+    --danger: #ef4444;
+    --danger-bg: #fef2f2;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-pill: 9999px;
+    --shadow-soft: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.03);
+}
+
+* { box-sizing: border-box; }
+
+/* ── Header ── */
+.page-hdr {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    margin-bottom: 2rem; flex-wrap: wrap; gap: 16px;
+}
+.hdr-left { display: flex; align-items: center; gap: 16px; }
+.hdr-icon {
+    width: 48px; height: 48px; background: var(--primary-light); color: var(--primary);
+    border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center;
+    border: 1px solid #bfdbfe; flex-shrink: 0;
+}
+.hdr-info h1 {
+    font-size: 1.5rem; font-weight: 800; color: var(--text-main);
+    letter-spacing: -0.03em; margin: 0 0 4px 0;
+}
+.hdr-info p { color: var(--text-muted); font-size: 0.9rem; font-weight: 500; margin: 0; }
+
+.btn-outline {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 8px 16px; border-radius: var(--radius-pill); font-size: 0.85rem; font-weight: 600;
+    background: #fff; border: 1px solid var(--border-soft); color: var(--text-main);
+    text-decoration: none; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+}
+.btn-outline:hover { background: var(--border-lighter); }
+.btn-primary {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 10px 20px; border-radius: var(--radius-pill); font-size: 0.9rem; font-weight: 600;
+    background: var(--primary); color: #fff; border: none; cursor: pointer;
+    text-decoration: none; transition: all 0.2s; box-shadow: 0 4px 6px rgba(37,99,235,0.2);
+}
+.btn-primary:hover:not(:disabled) { background: var(--primary-hover); transform: translateY(-1px); }
+.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
+
+/* ── Centered Container ── */
+.import-wrap { max-width: 640px; margin: 0 auto; }
+
+/* ── Cards ── */
+.import-card {
+    background: var(--card-bg); border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-soft); border: 1px solid var(--border-soft);
+    padding: 28px; margin-bottom: 2rem;
+}
+.card-title {
+    font-size: 1.15rem; font-weight: 800; color: var(--text-main);
+    display: flex; align-items: center; gap: 8px; margin: 0 0 24px 0;
+}
+.card-title svg { color: var(--primary); }
+
+/* ── Steps ── */
+.step-list { margin-bottom: 24px; display: flex; flex-direction: column; gap: 14px; }
+.step-item { display: flex; align-items: center; gap: 12px; }
+.step-num {
+    width: 28px; height: 28px; border-radius: 50%; background: var(--primary-light);
+    color: var(--primary); font-size: 0.85rem; font-weight: 800;
+    display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+    border: 1px solid #bfdbfe;
+}
+.step-text { font-size: 0.95rem; color: var(--text-muted); font-weight: 500; }
+
+/* ── Template Banner ── */
+.template-banner {
+    background: var(--success-bg); border: 1px solid #bbf7d0; border-radius: var(--radius-md);
+    padding: 16px 20px; margin-bottom: 28px; display: flex; align-items: center; justify-content: space-between; gap: 16px;
+}
+.template-info-title { font-size: 0.95rem; font-weight: 700; color: #166534; display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+.template-info-sub { font-size: 0.8rem; color: #15803d; font-weight: 500; }
+.btn-success-outline {
+    display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: var(--radius-pill);
+    font-size: 0.8rem; font-weight: 700; background: #fff; border: 1px solid #86efac; color: #166534;
+    text-decoration: none; transition: all 0.2s; white-space: nowrap;
+}
+.btn-success-outline:hover { background: #dcfce7; border-color: #4ade80; }
+
+/* ── Drop Zone ── */
+.drop-zone {
+    border: 2px dashed var(--text-light); border-radius: var(--radius-md);
+    padding: 40px 20px; text-align: center; cursor: pointer; transition: all 0.2s;
+    position: relative; background: var(--premium-bg); margin-bottom: 24px;
+}
+.drop-zone:hover, .drop-zone.drag-over { border-color: var(--primary); background: var(--primary-light); }
+.drop-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; z-index: 10; }
+.drop-icon { color: var(--text-light); margin-bottom: 12px; transition: color 0.2s; display: flex; justify-content: center; }
+.drop-zone:hover .drop-icon, .drop-zone.drag-over .drop-icon { color: var(--primary); }
+.drop-title { font-weight: 700; font-size: 1.05rem; color: var(--text-main); margin-bottom: 6px; }
+.drop-sub { font-size: 0.85rem; color: var(--text-muted); font-weight: 500; }
+
+#fileDetails {
+    background: #fff; border: 1px solid #bfdbfe; border-radius: var(--radius-sm);
+    padding: 16px; display: none; align-items: center; gap: 12px;
+    box-shadow: 0 2px 4px rgba(37,99,235,0.05); text-align: left;
+}
+.file-icon { width: 40px; height: 40px; background: var(--primary-light); color: var(--primary); border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+#fileName { font-size: 0.95rem; font-weight: 700; color: var(--text-main); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 2px; }
+#fileSize { font-size: 0.8rem; color: var(--text-muted); font-weight: 500; }
+
+/* ── Form Actions ── */
+.form-actions { display: flex; gap: 12px; }
+
+/* ── Notes Callout ── */
+.note-box {
+    margin-top: 24px; background: var(--warning-bg); border: 1px solid #fde68a;
+    border-radius: var(--radius-md); padding: 20px;
+}
+.note-title { font-size: 0.9rem; font-weight: 800; color: #b45309; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+.note-list { margin: 0; padding-left: 20px; font-size: 0.85rem; color: #92400e; font-weight: 500; line-height: 1.6; }
+.note-list li { margin-bottom: 6px; }
+.note-list li:last-child { margin-bottom: 0; }
+
+@media (max-width: 767px) {
+    .import-card { padding: 20px; }
+    .template-banner { flex-direction: column; align-items: stretch; }
+    .btn-success-outline { justify-content: center; }
+    .form-actions { flex-direction: column; }
+    .page-hdr { flex-direction: column; align-items: stretch; gap: 16px; }
+    .btn-outline { width: 100%; justify-content: center; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-hdr">
+    <div class="hdr-left">
+        <div class="hdr-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+        </div>
+        <div class="hdr-info">
+            <h1>Import Leads</h1>
+            <p>Bulk import leads from CSV or Excel file seamlessly</p>
+        </div>
+    </div>
+    <a href="{{ url_for('crm.leads') }}" class="btn-outline">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+        Back to Leads
+    </a>
+</div>
+
+<div class="import-wrap">
+    <!-- Upload Card -->
+    <div class="import-card">
+        <h3 class="card-title">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
+            Upload Data File
+        </h3>
+
+        <!-- Steps -->
+        <div class="step-list">
+            {% for step in [
+                ('1', 'Download the sample template below'),
+                ('2', 'Fill your leads data in the template'),
+                ('3', 'Upload the completed file here'),
+            ] %}
+            <div class="step-item">
+                <span class="step-num">{{ step[0] }}</span>
+                <span class="step-text">{{ step[1] }}</span>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Download Template -->
+        <div class="template-banner">
+            <div>
+                <div class="template-info-title">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                    Sample Template
+                </div>
+                <div class="template-info-sub">Excel (.xlsx) with all fields + dropdowns</div>
+            </div>
+            <a href="{{ url_for('crm.lead_import_template') }}" class="btn-success-outline">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                Download
+            </a>
+        </div>
+
+        <!-- Upload Form -->
+        <form method="POST" enctype="multipart/form-data" id="importForm">
+            <div class="drop-zone" id="dropZone">
+                <input type="file" name="import_file" id="fileInput" accept=".csv,.xls,.xlsx" onchange="showFile(this)" required>
+
+                <div id="dropPlaceholder">
+                    <div class="drop-icon">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                    </div>
+                    <div class="drop-title">Drop file here or click to browse</div>
+                    <div class="drop-sub">Supports: CSV, Excel (.xlsx) up to 5MB</div>
+                </div>
+
+                <div id="fileDetails">
+                    <div class="file-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                    </div>
+                    <div style="flex:1;min-width:0;text-align:left;">
+                        <div id="fileName"></div>
+                        <div id="fileSize"></div>
+                    </div>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--success);"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn-primary" style="flex:1;" id="importBtn" disabled>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" id="btnIcon"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    <span id="btnText">Import Leads</span>
+                </button>
+                <a href="{{ url_for('crm.leads') }}" class="btn-outline">Cancel</a>
+            </div>
+        </form>
+
+        <!-- Notes -->
+        <div class="note-box">
+            <div class="note-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                Important Guidelines
+            </div>
+            <ul class="note-list">
+                <li>First row must be the header row.</li>
+                <li><strong>name</strong> column is strictly required.</li>
+                <li><strong>status</strong> must be: <i>open, in_process, close, or cancel</i>.</li>
+                <li><strong>lead_type</strong> must be: <i>Quality or Non-Quality</i> (default: Quality).</li>
+                <li>Duplicate entries will be added as new leads.</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<script>
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+const importBtn = document.getElementById('importBtn');
+const fileDetails = document.getElementById('fileDetails');
+const fileName = document.getElementById('fileName');
+const fileSize = document.getElementById('fileSize');
+const btnIcon = document.getElementById('btnIcon');
+const btnText = document.getElementById('btnText');
+
+function showFile(input) {
+    const file = input.files[0];
+    if (file) {
+        // Hide default text, show file details box
+        document.getElementById('dropPlaceholder').style.display = 'none';
+
+        fileDetails.style.display = 'flex';
+        fileName.textContent = file.name;
+        fileSize.textContent = (file.size/1024).toFixed(1) + ' KB';
+
+        importBtn.disabled = false;
+        btnText.textContent = 'Import Leads';
+    }
+}
+
+['dragenter','dragover'].forEach(e => {
+    dropZone.addEventListener(e, ev => { ev.preventDefault(); dropZone.classList.add('drag-over'); });
+});
+['dragleave','drop'].forEach(e => {
+    dropZone.addEventListener(e, ev => { ev.preventDefault(); dropZone.classList.remove('drag-over'); });
+});
+dropZone.addEventListener('drop', ev => {
+    const files = ev.dataTransfer.files;
+    if (files.length) {
+        fileInput.files = files;
+        showFile(fileInput);
+    }
+});
+
+document.getElementById('importForm').addEventListener('submit', () => {
+    btnText.textContent = 'Importing Data...';
+    importBtn.disabled = true;
+
+    // Convert icon to a loading spinner
+    btnIcon.outerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="animation:spin 1s linear infinite;"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>`;
+
+    if(!document.getElementById('spinKeyframe')){
+        const style = document.createElement('style');
+        style.id = 'spinKeyframe';
+        style.innerHTML = `@keyframes spin { 100% { transform: rotate(360deg); } }`;
+        document.head.appendChild(style);
+    }
+});
+</script>
+{% endblock %}

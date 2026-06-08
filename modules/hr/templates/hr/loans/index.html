@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% block title %}Loan / Advance{% endblock %}
+{% block page_title %}Loan / Advance{% endblock %}
+{% block bread %}HR / Loan{% endblock %}
+{% block extra_css %}
+<style>
+.lf-card { background:#fff;border:1px solid var(--border);border-radius:14px;padding:1rem 1.2rem;margin-bottom:1rem; }
+.lf-card h3 { margin:0 0 .8rem;font-size:.92rem;font-weight:800;color:var(--text2); }
+.lf-row { display:flex;gap:.7rem;flex-wrap:wrap;align-items:flex-end; }
+.lf-row label { font-size:.72rem;font-weight:700;color:var(--text3);display:block;margin-bottom:3px; }
+.lf-row select,.lf-row input { padding:.45rem .7rem;border:1px solid var(--border);border-radius:9px;font-size:.82rem;background:#fff; }
+.lf-btn { padding:.5rem 1.1rem;border:0;border-radius:9px;background:#16a34a;color:#fff;font-weight:700;font-size:.82rem;cursor:pointer; }
+.lf-tbl { width:100%;border-collapse:collapse;font-size:.82rem; }
+.lf-tbl thead th { background:#0f172a;color:#fff;padding:8px 12px;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;text-align:left; }
+.lf-tbl thead th.r,.lf-tbl td.r { text-align:right; }
+.lf-tbl td { padding:8px 12px;border-bottom:1px solid #f1f5f9;vertical-align:middle; }
+.lf-tbl tbody tr:hover td { background:#fafbff; }
+.lf-mut { color:var(--text3);font-size:.78rem; }
+.lf-pill { padding:2px 9px;border-radius:10px;font-size:.68rem;font-weight:700; }
+.lf-active { background:#dcfce7;color:#166534; }
+.lf-closed { background:#e2e8f0;color:#475569; }
+.lf-rem { font-weight:800;color:#dc2626; }
+.lf-paid { font-weight:700;color:#16a34a; }
+.lf-link { color:#2563eb;text-decoration:none;font-weight:700;font-size:.76rem; }
+.lf-mini { border:0;border-radius:7px;padding:4px 9px;font-weight:700;font-size:.72rem;cursor:pointer; }
+.lf-close { background:#fef3c7;color:#92400e; }
+.lf-del { background:#fee2e2;color:#dc2626; }
+.lf-empty { text-align:center;color:var(--text3);padding:24px;font-size:.85rem; }
+.lf-bar { height:7px;background:#eef2f7;border-radius:5px;overflow:hidden;margin-top:4px; }
+.lf-bar > i { display:block;height:100%;background:#16a34a; }
+</style>
+{% endblock %}
+
+{% block content %}
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% for cat, m in messages %}
+  <div style="padding:.6rem 1rem;border-radius:8px;margin-bottom:.8rem;font-size:.83rem;font-weight:600;
+       background:{{ '#dcfce7' if cat=='success' else ('#fef3c7' if cat=='warning' else '#fee2e2') }};
+       color:{{ '#166534' if cat=='success' else ('#92400e' if cat=='warning' else '#991b1b') }};">{{ m }}</div>
+  {% endfor %}
+{% endwith %}
+
+<!-- Add loan -->
+<div class="lf-card">
+  <h3>Naya Loan / Advance</h3>
+  <form method="POST" action="/hr/loans/add" class="lf-row">
+    <div>
+      <label>Employee</label>
+      <select name="employee_id" required style="min-width:220px">
+        <option value="">-- select --</option>
+        {% for e in employees %}
+        <option value="{{ e.id }}">{{ e.full_name }} ({{ e.employee_code or e.employee_id or e.id }})</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div><label>Loan Date</label><input type="date" name="loan_date" value="{{ today }}" required></div>
+    <div><label>Principal (Rs.)</label><input type="number" name="principal" step="0.01" min="1" required style="width:130px"></div>
+    <div><label>EMI / month (Rs.)</label><input type="number" name="emi_amount" step="0.01" min="1" required style="width:130px"></div>
+    <div>
+      <label>EMI start month</label>
+      <select name="start_month">{% for i, nm in months %}<option value="{{ i }}" {{ 'selected' if i==cur_month }}>{{ nm }}</option>{% endfor %}</select>
+    </div>
+    <div>
+      <label>Year</label>
+      <select name="start_year">{% for y in years %}<option value="{{ y }}" {{ 'selected' if y==cur_year }}>{{ y }}</option>{% endfor %}</select>
+    </div>
+    <div style="flex:1;min-width:160px"><label>Reason</label><input type="text" name="reason" placeholder="optional" style="width:100%"></div>
+    <button class="lf-btn" type="submit">Add Loan</button>
+  </form>
+  <div class="lf-mut" style="margin-top:.6rem">Zero-interest: principal monthly EMI me chukta hai. Har mahine EMI salary slip ke <b>Loan EMI</b> me deduct hota hai.</div>
+</div>
+
+<!-- Filter -->
+<div class="lf-card">
+  <form method="GET" action="/hr/loans" class="lf-row">
+    <div style="flex:1;min-width:200px"><label>Search employee</label><input type="text" name="q" placeholder="name / code" style="width:100%"></div>
+    <button class="lf-btn" style="background:#2563eb" type="submit">Search</button>
+  </form>
+</div>
+
+<!-- List -->
+<div class="lf-card" style="padding:0;overflow:hidden">
+  <table class="lf-tbl">
+    <thead>
+      <tr>
+        <th style="width:40px">#</th><th>Employee</th><th style="width:110px">Loan Date</th>
+        <th style="width:100px">EMI Start</th>
+        <th class="r" style="width:110px">Principal</th><th class="r" style="width:100px">EMI</th>
+        <th class="r" style="width:110px">Paid</th><th style="width:160px">Remaining</th>
+        <th style="width:90px">Status</th><th style="width:150px"></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+      {% set l = r.loan %}
+      {% set pct = (r.paid / (l.principal|float) * 100) if (l.principal|float) else 0 %}
+      <tr>
+        <td>{{ loop.index }}</td>
+        <td><b>{{ l.employee.full_name if l.employee else '-' }}</b><br><span class="lf-mut">{{ l.employee.employee_code or l.employee.employee_id or '' if l.employee else '' }}</span></td>
+        <td>{{ l.loan_date.strftime('%d-%b-%Y') }}</td>
+        <td><b>{{ r.start_label }}</b></td>
+        <td class="r">{{ '{:,.2f}'.format(l.principal|float) }}</td>
+        <td class="r">{{ '{:,.2f}'.format(l.emi_amount|float) }}<br><span class="lf-mut">{{ r.total_months }} mo</span></td>
+        <td class="r lf-paid">{{ '{:,.2f}'.format(r.paid) }}</td>
+        <td>
+          <span class="lf-rem">{{ '{:,.2f}'.format(r.remaining) }}</span>
+          <div class="lf-bar"><i style="width:{{ '%.0f'|format(pct if pct<100 else 100) }}%"></i></div>
+        </td>
+        <td><span class="lf-pill {{ 'lf-closed' if l.status=='closed' else 'lf-active' }}">{{ l.status|upper }}</span></td>
+        <td>
+          <a class="lf-link" href="/hr/loans/{{ l.id }}">View</a>
+          {% if l.status != 'closed' %}
+          <form method="POST" action="/hr/loans/close/{{ l.id }}" style="display:inline" onsubmit="return confirm('Close this loan?')"><button class="lf-mini lf-close" type="submit">Close</button></form>
+          {% endif %}
+          <form method="POST" action="/hr/loans/delete/{{ l.id }}" style="display:inline" onsubmit="return confirm('Delete this loan?')"><button class="lf-mini lf-del" type="submit">Del</button></form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="10" class="lf-empty">Koi loan nahi. Upar se add karo.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<script>
+  // EMI start month/year ko loan date ke hisaab se auto-set karo
+  (function () {
+    var ld = document.querySelector('input[name="loan_date"]');
+    var sm = document.querySelector('select[name="start_month"]');
+    var sy = document.querySelector('select[name="start_year"]');
+    if (!ld || !sm || !sy) return;
+    function sync() {
+      if (!ld.value) return;
+      var parts = ld.value.split('-');      // yyyy-mm-dd
+      if (parts.length < 2) return;
+      var y = parts[0], m = String(parseInt(parts[1], 10));
+      for (var i = 0; i < sm.options.length; i++) if (sm.options[i].value === m) sm.selectedIndex = i;
+      for (var j = 0; j < sy.options.length; j++) if (sy.options[j].value === y) sy.selectedIndex = j;
+    }
+    ld.addEventListener('change', sync);
+    sync();
+  })();
+</script>
+{% endblock %}
