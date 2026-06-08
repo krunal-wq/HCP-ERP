@@ -16,9 +16,6 @@ instance/
 *.db
 *.sqlite3
 
-# Secrets / config (DB password, mail credentials)
-core/config.py
-
 # Uploads (user files)
 static/uploads/
 
