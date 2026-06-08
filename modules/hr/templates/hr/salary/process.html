@@ -29,6 +29,9 @@
 .btn-slip { padding:3px 10px;background:#7c3aed;color:#fff;border-radius:6px;
   font-size:.72rem;font-weight:700;text-decoration:none;display:inline-block; }
 .btn-slip.dis { background:#cbd5e1;pointer-events:none; }
+.btn-dl { padding:3px 10px;background:#16a34a;color:#fff;border-radius:6px;
+  font-size:.72rem;font-weight:700;text-decoration:none;display:inline-block;margin-left:4px; }
+.btn-dl.dis { background:#cbd5e1;pointer-events:none; }
 .done-pill { background:#dcfce7;color:#16a34a;padding:2px 8px;border-radius:10px;
   font-size:.68rem;font-weight:700; }
 </style>
@@ -85,6 +88,11 @@
     <input type="hidden" name="q" value="{{ search_q }}">
     <button class="btn-process" type="submit">⚙️ Process Salary — {{ month_name }} {{ year }}</button>
   </form>
+  <a href="/hr/salary/register/{{ year }}/{{ month }}"
+     style="padding:.45rem 1.1rem;background:#2563eb;color:#fff;border-radius:8px;font-weight:700;font-size:.85rem;text-decoration:none;display:inline-flex;align-items:center;gap:6px;margin-left:8px;">
+    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+    Download Salary Excel
+  </a>
 </div>
 
 <div class="sal-tbl-wrap"><div style="overflow-x:auto;">
@@ -113,7 +121,7 @@
       <td>{{ '%g'|format(r.c.leave) }}</td>
       <td class="{{ 'lop-bad' if r.c.late_n > 0 }}">{{ r.c.late_n }}</td>
       <td class="{{ 'lop-bad' if r.c.late_pen > 0 }}">{{ '{:,.0f}'.format(r.c.late_pen) if r.c.late_pen else '—' }}</td>
-      <td style="color:#16a34a;font-weight:700;">{{ '+{:,.0f}'.format(r.c.extra_pay) if r.c.extra_pay else '—' }}</td>
+      <td style="color:#16a34a;font-weight:700;">{% set prod_inc = (r.c.incentive or 0) + (r.c.extra_pay or 0) %}{{ '+{:,.2f}'.format(prod_inc) if prod_inc else '—' }}</td>
       <td class="{{ 'lop-bad' if r.c.lop > 0 }}">{{ '%g'|format(r.c.lop) }}</td>
       <td>{{ '%g'|format(r.c.payable) }}</td>
       <td>{{ '{:,.0f}'.format(r.c.total_actual) }}</td>
@@ -122,10 +130,12 @@
       <td class="net-cell">₹ {{ '{:,.0f}'.format(r.c.net) }}</td>
       <td>
         {% if r.slip %}
-          <a class="btn-slip" href="/hr/salary/slip/{{ r.emp.id }}/{{ year }}/{{ month }}">📄 PDF</a>
+          <a class="btn-slip" target="_blank" href="/hr/salary/slip/{{ r.emp.id }}/{{ year }}/{{ month }}"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>Slip</a>
+          <a class="btn-dl" href="/hr/salary/slip/{{ r.emp.id }}/{{ year }}/{{ month }}?print=1" target="_blank"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>Download</a>
           <span class="done-pill">✓</span>
         {% else %}
-          <span class="btn-slip dis">📄 PDF</span>
+          <span class="btn-slip dis">Slip</span>
+          <span class="btn-dl dis">Download</span>
         {% endif %}
       </td>
     </tr>

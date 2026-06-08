@@ -13,6 +13,7 @@ from .permission import Module, RolePermission, UserGridConfig, UserPermission
 from .approval   import ApprovalRequest, ApprovalLevel
 from .attendance import RawPunchLog, Attendance, HolidayMaster, LateShiftRule, LatePenaltyRule, EarlyComingRule
 from .payroll import SalarySlip
+from .hr_finance import EmployeeChallan, EmployeeLoan
 from .hr_rules import (HRShift, HRLocation, HRLateRule, HRLatePenaltySlab,
                        HREarlyGoingRule, HROvertimeRule, HRLeavePolicy, HRLeaveType,
                        HRLOPRule, HRAbsentRule, HRCompOffRule, HRLeaveApplication)
@@ -54,6 +55,7 @@ __all__ = [
     'HRShift', 'HRLocation', 'HRLateRule', 'HRLatePenaltySlab',
     'HREarlyGoingRule', 'HROvertimeRule', 'HRLeavePolicy', 'HRLeaveType',
     'HRLOPRule', 'HRAbsentRule', 'HRCompOffRule',
+    'SalarySlip', 'EmployeeChallan', 'EmployeeLoan',
     # NPD / Product Development
     'NPDProject', 'MilestoneMaster', 'MilestoneLog', 'NPDMilestoneTemplate',
     'NPDFormulation', 'NPDPackingMaterial', 'NPDArtwork', 'NPDActivityLog', 'NPDComment', 'NPDNote',

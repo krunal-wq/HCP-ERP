@@ -430,7 +430,7 @@ def attendance_dashboard():
             return att.status, att
         if emp.id in leave_by_emp:
             return 'On Leave', None
-        if _is_week_off(emp.employee_type or '', sel_date):
+        if _is_week_off(_emp_zone(emp), sel_date):
             return 'Week Off', None
         return 'Absent', None
 
@@ -1148,19 +1148,34 @@ DEFAULT_EMPLOYEES = {
 }
 
 # â”€â”€ Week-off rule: HCP OFFICE = Sunday off; baki sab = Tuesday off â”€â”€
-def _is_week_off(emp_type, dt):
-    """dt ko us emp_type ka weekly off hai ya nahi."""
-    # Python's weekday(): Monday=0..Sunday=6
-    # PHP DAYOFWEEK: Sunday=1, Monday=2, ..., Saturday=7
+def _zone_from_type(emp_type):
+    """Sirf employee_type available ho (e.g. default employees) to zone fallback."""
+    return 'HO' if (emp_type or '').strip().upper() == 'HCP OFFICE' else 'Plant'
+
+
+def _emp_zone(emp):
+    """Employee kis zone mein hai - HO ya Plant (LOCATION-first, type fallback).
+    Location me 'office'/'ho' -> HO (Sunday off), warna Plant (Tuesday off)."""
+    loc = (getattr(emp, 'location', '') or '').strip().lower()
+    if loc:
+        return 'HO' if ('office' in loc or loc in ('ho', 'h.o', 'h.o.')) else 'Plant'
+    return _zone_from_type(getattr(emp, 'employee_type', ''))
+
+
+def _is_week_off(zone, dt):
+    """zone ('HO' / 'Plant') ka weekly off din hai ya nahi.
+    HO (Head Office) -> Sunday off; Plant (Factory) -> Tuesday off."""
+    # Python's weekday(): Monday=0 .. Sunday=6
     wd = dt.weekday()
-    if (emp_type or '').upper() == 'HCP OFFICE':
+    if zone == 'HO':
         return wd == 6   # Sunday
     return wd == 1       # Tuesday
 
 
-def _classify_status(emp_type, att_date, punch_in, punch_out):
+def _classify_status(zone, att_date, punch_in, punch_out):
     """
-    Sync ka core classification logic â€” PHP CASE expression ka direct port.
+    Sync ka core classification logic.
+    zone = 'HO' / 'Plant' (weekly-off din decide karne ke liye).
     Order matters:
       1. WOP    = Weekly off pe valid in+out (>0 mins, valid range)
       2. Present= valid in+out, hours >= 7
@@ -1178,7 +1193,7 @@ def _classify_status(emp_type, att_date, punch_in, punch_out):
 
     if has_in and has_out and punch_out > punch_in:
         hours = (punch_out - punch_in).total_seconds() / 3600.0
-        if _is_week_off(emp_type, att_date):
+        if _is_week_off(zone, att_date):
             return 'WOP'
         if hours >= 7.0:  return 'Present'
         if hours >= 6.0:  return 'Half Day'
@@ -1257,8 +1272,9 @@ def _sync_one_date(target_date):
 
         emp = emp_map.get(emp_code)
         emp_type = (emp.employee_type if emp else '') or ''
+        zone = _emp_zone(emp) if emp else _zone_from_type(emp_type)
 
-        status = _classify_status(emp_type, target_date, first_in, actual_out)
+        status = _classify_status(zone, target_date, first_in, actual_out)
         total_hours = None
         if first_in and actual_out and actual_out > first_in:
             total_hours = round((actual_out - first_in).total_seconds() / 3600.0, 2)
@@ -1281,7 +1297,7 @@ def _sync_one_date(target_date):
 
     # â”€â”€ Step 5: Default employees (9001/9002) â€” existing_atts dict use karo â”€â”€
     for emp_code, conf in DEFAULT_EMPLOYEES.items():
-        if _is_week_off(conf['type'], target_date):
+        if _is_week_off(_zone_from_type(conf['type']), target_date):
             skipped += 1
             continue
 
@@ -1619,7 +1635,7 @@ def attendance_daily():
                     status = 'Holiday';  note = h.title
                 elif lv:
                     status = 'On Leave'; note = lv.type_label
-                elif _is_week_off(emp.employee_type or '', sel_date):
+                elif _is_week_off(_emp_zone(emp), sel_date):
                     status = 'Week Off'
         else:
             h  = _holiday_for(emp)
@@ -1628,7 +1644,7 @@ def attendance_daily():
                 status = 'Holiday';  note = h.title
             elif lv:
                 status = 'On Leave'; note = lv.type_label
-            elif _is_week_off(emp.employee_type or '', sel_date):
+            elif _is_week_off(_emp_zone(emp), sel_date):
                 status = 'Week Off'
             else:
                 status = 'Absent'
@@ -1770,7 +1786,7 @@ def _build_monthly_data(year, month, emp_type, search_q):
         cnt = dict(P=0, HD=0, AB=0, MP=0, WO=0, WOP=0, HOL=0, LV=0, HLP=0)
         for d in day_list:
             a    = per_emp.get(d)
-            wo   = _is_week_off(emp.employee_type, d)
+            wo   = _is_week_off(_emp_zone(emp), d)
             hol  = _holiday_for(emp, d)
             lv   = _leave_for(emp, d)
             note = ''

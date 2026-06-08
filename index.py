@@ -21,6 +21,8 @@ from modules.hr.routes.hr_master_routes import hr_masters
 from modules.hr.routes.late_rule_routes import late_rules_bp
 from modules.hr.routes.hr_rules_routes import hr_rules_bp
 from modules.hr.routes.salary_routes import salary_bp   # ← NEW: Salary Processing + Payslip
+from modules.hr.routes.challan_routes import challan_bp   # ← NEW: Employee Challan (fine)
+from modules.hr.routes.loan_routes import loan_bp         # ← NEW: Employee Loan / Advance
 from modules.production.routes.packing_routes  import packing
 from modules.inventory.routes.material_routes import material_bp
 from modules.inventory.routes.formulation_routes import formulation_bp   # â† NEW: Formulation Master under Raw Material
@@ -109,6 +111,8 @@ app.register_blueprint(client_dispatch_bp)    # â† NEW: Client Dispatch men
 app.register_blueprint(raw_material_sample_bp)   # â† NEW: Raw Material Sample Request
 app.register_blueprint(attendance_bp)
 app.register_blueprint(salary_bp)
+app.register_blueprint(challan_bp)
+app.register_blueprint(loan_bp)
 app.register_blueprint(qr_scan_bp)        # â† NEW: QR Scanner kiosk page
 app.register_blueprint(hr_masters)
 app.register_blueprint(late_rules_bp)

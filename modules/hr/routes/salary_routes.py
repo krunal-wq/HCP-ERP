@@ -377,187 +377,302 @@ def amount_in_words(n):
 @salary_bp.route('/hr/salary/slip/<int:emp_id>/<int:year>/<int:month>')
 @login_required
 def salary_slip_pdf(emp_id, year, month):
+    """HCP 'Form IV B' salary slip - HTML print view (browser Print -> Save PDF)."""
     if not _role_ok():
         flash('Access denied.', 'error')
         return redirect('/')
     slip = SalarySlip.query.filter_by(employee_id=emp_id, year=year,
                                       month=month).first()
     if slip is None:
-        flash('Slip abhi process nahi hui — pehle Process Salary karo.', 'warning')
+        flash('Slip abhi process nahi hui - pehle Process Salary karo.', 'warning')
         return redirect(url_for('salary.salary_process_screen',
                                 year=year, month=month))
     emp = slip.employee or Employee.query.get_or_404(emp_id)
 
-    from reportlab.lib.pagesizes import A4
-    from reportlab.lib.units import mm
-    from reportlab.lib import colors
-    from reportlab.platypus import (SimpleDocTemplate, Table, TableStyle,
-                                    Paragraph, Spacer)
-    from reportlab.lib.styles import ParagraphStyle
-    from reportlab.lib.enums import TA_RIGHT, TA_CENTER
+    g = _f
+    fmt = lambda v: f'{g(v):,.2f}'
 
-    ORANGE = colors.HexColor('#F4B084')
-    BLUE   = colors.HexColor('#1F4E79')
-
-    buf = BytesIO()
-    doc = SimpleDocTemplate(buf, pagesize=A4,
-                            leftMargin=15*mm, rightMargin=15*mm,
-                            topMargin=12*mm, bottomMargin=12*mm)
-    W = doc.width
-    S = []
-
-    st_co   = ParagraphStyle('co',  fontName='Helvetica-Bold', fontSize=11,
-                             textColor=BLUE, alignment=TA_RIGHT)
-    st_addr = ParagraphStyle('ad',  fontName='Helvetica-Bold', fontSize=7,
-                             textColor=colors.HexColor('#C55A11'),
-                             alignment=TA_RIGHT, leading=9)
-    # ── Logo (static/images/icons/hcp-logo.png) — missing ho to text fallback ──
-    import os
-    from flask import current_app
-    logo_path = os.path.join(current_app.root_path, 'static', 'images',
-                             'icons', 'hcp-logo.png')
-    logo_done = False
-    if os.path.exists(logo_path):
-        try:
-            from reportlab.platypus import Image as RLImage
-            from reportlab.lib.utils import ImageReader
-            iw, ih = ImageReader(logo_path).getSize()
-            h = 14 * mm
-            w = h * iw / ih
-            img = RLImage(logo_path, width=w, height=h)
-            img.hAlign = 'RIGHT'
-            S.append(img)
-            S.append(Spacer(1, 2))
-            logo_done = True
-        except Exception:
-            logo_done = False
-    if not logo_done:
-        st_logo = ParagraphStyle('lg', fontName='Helvetica-Bold', fontSize=24,
-                                 textColor=BLUE, alignment=TA_RIGHT,
-                                 leading=26, spaceAfter=4)
-        S.append(Paragraph('hcp', st_logo))
-    S.append(Paragraph(COMPANY_NAME, st_co))
-    S.append(Paragraph(COMPANY_ADDR.replace('\n', '<br/>'), st_addr))
-    S.append(Spacer(1, 4))
-
-    mname = calendar.month_name[month]
-    tt = Table([[f'Pay Slip for the Period of {mname} {year}']], colWidths=[W])
-    tt.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, -1), ORANGE),
-        ('FONTNAME',   (0, 0), (-1, -1), 'Helvetica-Bold'),
-        ('FONTSIZE',   (0, 0), (-1, -1), 10),
-        ('ALIGN',      (0, 0), (-1, -1), 'CENTER'),
-        ('BOX',        (0, 0), (-1, -1), 1, colors.black),
-        ('TOPPADDING', (0, 0), (-1, -1), 3),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
-    ]))
-    S.append(tt)
-
-    fmt = lambda v: f'{_f(v):,.2f}' if _f(v) else '-'
-    doj = emp.date_of_joining.strftime('%d.%m.%Y') if emp.date_of_joining else '-'
-    lv_bal = (f"PL - {_f(emp.paid_leave_balance):g}  "
-              f"CL - {_f(emp.casual_leave_balance):g}  "
-              f"SL - {_f(emp.sick_leave_balance):g}")
-    lv_taken = (f"PL - {_f(slip.leave_taken_pl):g}  "
-                f"CL - {_f(slip.leave_taken_cl):g}  "
-                f"SL - {_f(slip.leave_taken_sl):g}")
-    info = [
-        ['Employee Name', ':', emp.full_name,            'Bank Name',     ':', emp.bank_name or '-'],
-        ['Employee ID',   ':', emp.employee_id or emp.employee_code or '-',
-                                                          'Account Number', ':', emp.bank_account_number or '-'],
-        ['Date of Joining', ':', doj,                     'Branch Name',   ':', emp.bank_branch or '-'],
-        ['Location',      ':', emp.location or '-',       'IFSC Code',     ':', emp.bank_ifsc or '-'],
-        ['Department',    ':', emp.department or '-',     'Worked Days',   ':', f"{_f(slip.worked_days):g}"],
-        ['Designation',   ':', emp.designation or '-',    'Loss of Pay',   ':', f"{_f(slip.lop_days):g}"],
-        ['Leave Balance', ':', lv_bal,                    'Leave Taken',   ':', lv_taken],
+    # ---- Earnings (full entitlement; LOP ab deduction side me jayega) ----
+    # extra-day (WO/Holiday) + overtime pay -> Production Incentive
+    incentive_pay = g(slip.incentive_earned) + g(getattr(slip, 'extra_earned', 0))
+    earnings = [
+        ('Basic + DA',           g(slip.basic_actual),   g(slip.basic_actual)),
+        ('HRA',                  g(slip.hra_actual),     g(slip.hra_actual)),
+        ('CONV',                 g(slip.conv_actual),    g(slip.conv_actual)),
+        ('MEDICAL',              g(slip.medical_actual), g(slip.medical_actual)),
+        ('Other Allowance',      g(slip.special_actual), g(slip.special_actual)),
+        ('Production Incentive', None,                   incentive_pay),
+        ('Arrear',               None,                   g(slip.arrears_earned)),
+        ('Bonus',                None,                   g(getattr(slip, 'bonus_earned', 0))),
     ]
-    ti = Table(info, colWidths=[W*0.17, W*0.03, W*0.30, W*0.17, W*0.03, W*0.30])
-    ti.setStyle(TableStyle([
-        ('FONTSIZE', (0, 0), (-1, -1), 8.2),
-        ('FONTNAME', (0, 0), (0, -1), 'Helvetica'),
-        ('ALIGN',    (2, 0), (2, -1), 'CENTER'),
-        ('ALIGN',    (5, 0), (5, -1), 'CENTER'),
-        ('BOX',      (0, 0), (-1, -1), 1, colors.black),
-        ('TOPPADDING', (0, 0), (-1, -1), 2.2),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 2.2),
-    ]))
-    S.append(ti)
-    S.append(Spacer(1, 5))
+    gross_actual  = sum(a for _, a, _ in earnings if a is not None)
+    gross_payable = sum(p for _, _, p in earnings if p is not None)
 
-    earn_rows = [
-        ('Basic Pay',            slip.basic_actual,   slip.basic_earned),
-        ('House Rent Allowance', slip.hra_actual,     slip.hra_earned),
-        ('Conveyance Allowance', slip.conv_actual,    slip.conv_earned),
-        ('Medical Allowance',    slip.medical_actual, slip.medical_earned),
-        ('Special Allowance',    slip.special_actual, slip.special_earned),
-        ('Other Incentive',      None,                slip.incentive_earned),
-        ('Extra Days (WO/Holiday)', None,             getattr(slip, 'extra_earned', 0)),
-        ('Arrears (If Any)',     None,                slip.arrears_earned),
+    # ---- LOP (leave) amount = per-day rate x LOP days ----
+    md = g(slip.month_days) or 30
+    struct_total = (g(slip.basic_actual) + g(slip.hra_actual) + g(slip.conv_actual)
+                    + g(slip.medical_actual) + g(slip.special_actual))
+    lop_amount = round(struct_total / md * g(slip.lop_days), 2) if md else 0.0
+
+    # ---- Challan (fine) + Loan EMI module se ----
+    from modules.hr.routes.challan_routes import challan_total_for
+    from modules.hr.routes.loan_routes import loan_emi_for
+    challan_total = challan_total_for(emp.id, year, month)
+    loan_emi      = loan_emi_for(emp.id, year, month)
+
+    # ---- Deductions: LOP + late-coming + challan + others -> Other Deduction ----
+    other_ded = (g(slip.ded_others) + g(getattr(slip, 'ded_late', 0))
+                 + lop_amount + challan_total)
+    deductions = [
+        ('PF',              g(slip.ded_pf)),
+        ('ESIC',            g(slip.ded_esic)),
+        ('PT',              g(slip.ded_pt)),
+        ('LWF',             g(slip.ded_lwf)),
+        ('TDS',             g(slip.ded_tds)),
+        ('Loan EMI',        loan_emi + g(slip.ded_advance)),
+        ('Other Deduction', other_ded),
     ]
-    ded_rows = [
-        ('PF (Employee)',    slip.ded_pf),
-        ('ESIC (Employee)',  slip.ded_esic),
-        ('Professional Tax', slip.ded_pt),
-        ('TDS',              slip.ded_tds),
-        ('Late Coming Penalty', getattr(slip, 'ded_late', 0)),
-        ('Advance',          slip.ded_advance),
-        ('Others',           slip.ded_others),
-        ('LWF',              slip.ded_lwf),
+    total_ded = sum(v for _, v in deductions)
+    net = int(round(gross_payable - total_ded))
+
+    # ---- Working details ----
+    work_total = g(slip.month_days)
+    working = [
+        ('Working Days', g(slip.month_days) - g(slip.weekoff_days) - g(slip.holiday_days)),
+        ('Weekoff',      g(slip.weekoff_days)),
+        ('Pay Holiday',  g(slip.holiday_days)),
+        ('Present Days', g(slip.present_days)),
+        ('CL',           g(slip.leave_taken_cl)),
+        ('PL',           g(slip.leave_taken_pl)),
+        ('SL',           g(slip.leave_taken_sl)),
+        ('ML/Adj',       g(slip.half_days)),
+        ('LWP',          g(slip.lop_days)),
     ]
-    body = [['Earnings', 'Actual', 'Earned', 'Deductions', 'Amount']]
-    for i in range(8):
-        en, ea, ee = earn_rows[i]
-        dn, da = ded_rows[i]
-        body.append([en,
-                     fmt(ea) if ea is not None else '',
-                     fmt(ee) if ee is not None else '',
-                     dn, fmt(da)])
-    body.append(['Total Earnings', f'{_f(slip.total_actual):,.2f}',
-                 f'{_f(slip.total_earned):,.2f}', 'Total Deductions',
-                 f'{_f(slip.total_deductions):,.2f}'])
-    te = Table(body, colWidths=[W*0.26, W*0.13, W*0.13, W*0.26, W*0.22])
-    te.setStyle(TableStyle([
-        ('FONTSIZE',  (0, 0), (-1, -1), 8.2),
-        ('FONTNAME',  (0, 0), (-1, 0),  'Helvetica-Bold'),
-        ('FONTNAME',  (0, -1), (-1, -1), 'Helvetica-Bold'),
-        ('ALIGN',     (1, 0), (2, -1), 'RIGHT'),
-        ('ALIGN',     (4, 0), (4, -1), 'RIGHT'),
-        ('BOX',       (0, 0), (-1, -1), 1, colors.black),
-        ('LINEBELOW', (0, 0), (-1, 0),  0.8, colors.black),
-        ('LINEABOVE', (0, -1), (-1, -1), 0.8, colors.black),
-        ('LINEAFTER', (2, 0), (2, -1), 0.8, colors.black),
-        ('LINEAFTER', (0, 0), (0, -1), 0.4, colors.grey),
-        ('LINEAFTER', (1, 0), (1, -1), 0.4, colors.grey),
-        ('LINEAFTER', (3, 0), (3, -1), 0.4, colors.grey),
-        ('TOPPADDING', (0, 0), (-1, -1), 2.2),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 2.2),
-    ]))
-    S.append(te)
 
-    net = int(round(_f(slip.net_pay)))
-    tn = Table([
-        ['Net Pay (Rounded)', f'{net:,}'],
-        [f'(in Words)  {amount_in_words(net)}', ''],
-    ], colWidths=[W*0.70, W*0.30])
-    tn.setStyle(TableStyle([
-        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, -1), 8.6),
-        ('ALIGN',    (1, 0), (1, 0), 'RIGHT'),
-        ('BOX',      (0, 0), (-1, -1), 1, colors.black),
-        ('SPAN',     (0, 1), (1, 1)),
-        ('TOPPADDING', (0, 0), (-1, -1), 2.5),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 2.5),
-    ]))
-    S.append(tn)
-    S.append(Spacer(1, 22))
-    st_foot = ParagraphStyle('ft', fontName='Helvetica-BoldOblique',
-                             fontSize=8, alignment=TA_CENTER)
-    S.append(Paragraph(
-        '** This is a system generated payslip does not require any signature and seal.**',
-        st_foot))
+    mabbr = calendar.month_abbr[month]
+    doj = emp.date_of_joining.strftime('%d-%b-%y') if emp.date_of_joining else '-'
 
-    doc.build(S)
-    buf.seek(0)
-    fname = f"Payslip_{(emp.employee_code or emp.id)}_{mname}_{year}.pdf"
-    return send_file(buf, as_attachment=True, download_name=fname,
-                     mimetype='application/pdf')
+    return render_template(
+        'hr/salary/slip.html',
+        emp=emp, slip=slip, year=year, month=month,
+        month_label=f'{mabbr}- {year}',
+        company_name=COMPANY_NAME, company_addr=COMPANY_ADDR,
+        working=working, work_total=work_total,
+        earnings=earnings, gross_actual=gross_actual, gross_payable=gross_payable,
+        deductions=deductions, total_ded=total_ded,
+        net=net, net_words=amount_in_words(net),
+        doj=doj, fmt=fmt,
+        period_label=f'{calendar.month_name[month]} {year}',
+        worked_days=g(slip.worked_days), lop_days=g(slip.lop_days),
+        lv_bal=(f"PL - {g(emp.paid_leave_balance):g}  "
+                f"CL - {g(emp.casual_leave_balance):g}  "
+                f"SL - {g(emp.sick_leave_balance):g}"),
+        lv_taken=(f"PL - {g(slip.leave_taken_pl):g}  "
+                  f"CL - {g(slip.leave_taken_cl):g}  "
+                  f"SL - {g(slip.leave_taken_sl):g}"),
+    )
+
+
+# ══════════════════════════════════════════════════════════════
+#  SALARY REGISTER — Excel export (Sonali format)
+#  GET /hr/salary/register/<year>/<month>
+#  Attendance grid + HCP earning/deduction breakup. TDS blank.
+# ══════════════════════════════════════════════════════════════
+@salary_bp.route('/hr/salary/register/<int:year>/<int:month>')
+@login_required
+def salary_register_export(year, month):
+    if not _role_ok():
+        flash('Access denied.', 'error')
+        return redirect('/')
+
+    import calendar as _cal
+    from io import BytesIO
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+    from openpyxl.utils import get_column_letter
+    from flask import send_file
+    from modules.hr.routes.attendance_routes import _build_monthly_data
+    from modules.hr.routes.challan_routes import challan_total_for
+    from modules.hr.routes.loan_routes import loan_emi_for
+
+    g = _f
+    md = _build_monthly_data(year, month, '', '')
+    emp_rows = _payroll_rows(md['emp_rows'])      # contractor/admin hatao
+    day_list = md['day_list']
+    n_days = len(day_list)
+    month_name = _cal.month_name[month]
+    mdays = _cal.monthrange(year, month)[1]
+
+    # slips is month ke (emp_id -> slip)
+    slips = {s.employee_id: s for s in
+             SalarySlip.query.filter_by(year=year, month=month).all()}
+
+    F = lambda h: PatternFill('solid', start_color=h)
+    ctr = Alignment(horizontal='center', vertical='center')
+    ctrw = Alignment(horizontal='center', vertical='center', wrap_text=True)
+    thin = Side(style='thin', color='B0B0B0')
+    bord = Border(left=thin, right=thin, top=thin, bottom=thin)
+    TITLE = F('F4B084'); HDR = F('D9E1F2'); SUMM = F('DEEAF1')
+    ACT = F('FFF2CC'); EARN = F('E2EFDA'); DED = F('FCE4D6'); NET = F('C9DAF0')
+    IN_F = F('E2EFDA'); OUT_F = F('FCE4D6'); HRS_F = F('EBF3FB'); OT_F = F('FFF2CC')
+
+    def _ot_for(total):
+        """OT = round(hours) - 8, sirf jab rounded >= 10 (warna 0).
+        9:50 -> 10 -> OT 2 ; 8:55 -> 9 -> 0 ; 11:18 -> 11 -> OT 3."""
+        if not total:
+            return 0
+        rh = int(float(total) + 0.5)        # round half up
+        return rh - 8 if rh >= 10 else 0
+    ST = {'P':('00B050','FFFFFF'),'WO':('BFBFBF','000000'),'WOP':('FFFF00','000000'),
+          'HD':('00B0F0','FFFFFF'),'AB':('FF0000','FFFFFF'),'MP':('FFC000','000000'),
+          'PH':('ED7D31','FFFFFF'),'HLP':('E11D48','FFFFFF'),'CL':('0070C0','FFFFFF'),
+          'SL':('7030A0','FFFFFF'),'PL':('0070C0','FFFFFF')}
+
+    ATT_HDRS = ['Present','Paid Holiday','Absent','Half Day','PL','CL','SL',
+                'Week Off','WO Present','Holiday Present']
+    ATT_CODE = ['P','PH','AB','HD','PL','CL','SL','WO','WOP','HLP']
+    SAL = [('Actual Days',None),('Paid Days',None),('OT Hrs',None),('OT Days',None),
+           ('Gross/Month',ACT),('Act Basic',ACT),('Act HRA',ACT),('Act Conv',ACT),
+           ('Act Medical',ACT),('Act Other',ACT),
+           ('Earn Basic',EARN),('Earn HRA',EARN),('Earn Conv',EARN),('Earn Medical',EARN),
+           ('Earn Other',EARN),('Prod Incentive',EARN),
+           ('Gross Earning',EARN),('Arrear',EARN),('Total Earned',EARN),
+           ('PF',DED),('ESIC',DED),('PT',DED),('LWF',DED),('Advance/Loan',DED),
+           ('Other Ded',DED),('TDS',DED),('Paid Salary',NET)]
+
+    wb = Workbook(); ws = wb.active; ws.title = 'Salary Register'
+    FIX = 7
+    total_cols = FIX + n_days + len(ATT_HDRS) + len(SAL)
+
+    titles = ['HCP Wellness Pvt. Ltd.',
+              f'SALARY REGISTER FOR {month_name.upper()} {year}',
+              'Plot No. 8, Ozone Industrial Park, Bavla-Bagodara Highway, Bhayla, Ahmedabad']
+    for r, txt in enumerate(titles, start=1):
+        ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=total_cols)
+        c = ws.cell(row=r, column=1, value=txt)
+        c.font = Font(bold=True); c.fill = TITLE; c.alignment = ctr
+
+    fixed = ['Sr.','Emp ID','Period','Employee Name','Designation','Department','Remarks']
+    for c, h in enumerate(fixed, start=1):
+        ws.merge_cells(start_row=4, start_column=c, end_row=5, end_column=c)
+        cell = ws.cell(row=4, column=c, value=h)
+        cell.fill = HDR; cell.alignment = ctr; cell.border = bord; cell.font = Font(bold=True)
+    for i, d in enumerate(day_list):
+        c1 = ws.cell(row=4, column=FIX+1+i, value=d.day)
+        c2 = ws.cell(row=5, column=FIX+1+i, value=d.strftime('%a'))
+        for cc in (c1, c2):
+            cc.fill = HDR; cc.alignment = ctr; cc.border = bord
+    base_att = FIX + n_days
+    for j, h in enumerate(ATT_HDRS):
+        col = base_att + 1 + j
+        ws.merge_cells(start_row=4, start_column=col, end_row=5, end_column=col)
+        cell = ws.cell(row=4, column=col, value=h)
+        cell.fill = SUMM; cell.alignment = ctrw; cell.border = bord; cell.font = Font(bold=True, size=9)
+    base_sal = base_att + len(ATT_HDRS)
+    for j, (h, fill) in enumerate(SAL):
+        col = base_sal + 1 + j
+        ws.merge_cells(start_row=4, start_column=col, end_row=5, end_column=col)
+        cell = ws.cell(row=4, column=col, value=h)
+        cell.fill = fill or SUMM; cell.alignment = ctrw; cell.border = bord; cell.font = Font(bold=True, size=9)
+    ws.row_dimensions[4].height = 26
+
+    def daycode(dd):
+        if dd['code'] == 'HOL': return 'PH'
+        if dd['code'] == 'LV':  return dd.get('lv_code') or 'PL'
+        return dd['code']
+
+    r = 6
+    for sr, er in enumerate(emp_rows, start=1):
+        emp = er['emp']; rs, re_ = r, r + 4
+        slip = slips.get(emp.id)
+        fixed_vals = [sr, emp.employee_code or emp.employee_id or '',
+                      'Probation' if getattr(emp, 'is_probation', False) else 'Permanent',
+                      emp.full_name, emp.designation or '', emp.department or '']
+        for c, v in enumerate(fixed_vals, start=1):
+            ws.merge_cells(start_row=rs, start_column=c, end_row=re_, end_column=c)
+            cell = ws.cell(row=rs, column=c, value=v); cell.alignment = ctrw; cell.border = bord
+        for rr, (lbl, fill) in zip(range(rs, re_+1),
+                [('In Time', IN_F), ('Out Time', OUT_F), ('Hours', HRS_F),
+                 ('OT', OT_F), ('Status', None)]):
+            gcell = ws.cell(row=rr, column=7, value=lbl); gcell.border = bord
+            if fill: gcell.fill = fill
+
+        ot_hrs = 0
+        for i, dd in enumerate(er['days']):
+            col = FIX + 1 + i
+            cin = ws.cell(row=rs, column=col, value=dd['in_t'] or None)
+            cout = ws.cell(row=rs+1, column=col, value=dd['out_t'] or None)
+            chr_ = ws.cell(row=rs+2, column=col, value=round(dd['tot'], 2) if dd['tot'] else 0)
+            ot = _ot_for(dd['tot'])
+            cot = ws.cell(row=rs+3, column=col, value=ot)
+            code = daycode(dd)
+            cst = ws.cell(row=rs+4, column=col, value=code)
+            cin.fill, cout.fill, chr_.fill, cot.fill = IN_F, OUT_F, HRS_F, OT_F
+            bg, fg = ST.get(code, ('FFFFFF', '000000'))
+            cst.fill = F(bg); cst.font = Font(bold=True, color=fg)
+            for cc in (cin, cout, chr_, cot, cst):
+                cc.alignment = ctr; cc.border = bord
+            ot_hrs += ot
+
+        # attendance summary (COUNTIF on status row)
+        d1 = get_column_letter(FIX+1); d2 = get_column_letter(FIX+n_days)
+        strow = rs + 4
+        for j, code in enumerate(ATT_CODE):
+            col = base_att + 1 + j
+            ws.merge_cells(start_row=rs, start_column=col, end_row=re_, end_column=col)
+            cell = ws.cell(row=rs, column=col, value=f'=COUNTIF({d1}{strow}:{d2}{strow},"{code}")')
+            cell.fill = SUMM; cell.alignment = ctr; cell.border = bord
+
+        # salary breakup (slip se; reduced/earned model — reference jaisa)
+        if slip:
+            ba,ha,ca,ma,oa = g(slip.basic_actual),g(slip.hra_actual),g(slip.conv_actual),g(slip.medical_actual),g(slip.special_actual)
+            be,he,ce,me_,oe = g(slip.basic_earned),g(slip.hra_earned),g(slip.conv_earned),g(slip.medical_earned),g(slip.special_earned)
+            inc = g(slip.incentive_earned) + g(getattr(slip,'extra_earned',0))
+            gm = round(ba+ha+ca+ma+oa, 2)
+            gross_earn = round(be+he+ce+me_+oe+inc, 2)
+            arr = g(slip.arrears_earned)
+            tot_earned = round(gross_earn + arr, 2)
+            pf,esic,pt,lwf = g(slip.ded_pf),g(slip.ded_esic),g(slip.ded_pt),g(slip.ded_lwf)
+            advance = round(g(slip.ded_advance) + loan_emi_for(emp.id, year, month), 2)
+            other = round(g(slip.ded_others) + g(getattr(slip,'ded_late',0)) + challan_total_for(emp.id, year, month), 2)
+            tot_ded = round(pf+esic+pt+lwf+advance+other, 2)
+            paid_days = round(g(slip.month_days) - g(slip.lop_days), 2) or mdays
+            # Paid Salary = Total Earned - SUM(PF..TDS) as FORMULA, taaki manual
+            # TDS daalte hi auto minus ho jaye. (Total Earned idx18, PF idx19, TDS idx25)
+            te_L  = get_column_letter(base_sal + 19)
+            pf_L  = get_column_letter(base_sal + 20)
+            tds_L = get_column_letter(base_sal + 26)
+            paid_f = f'={te_L}{rs}-SUM({pf_L}{rs}:{tds_L}{rs})'
+            sal_vals = [mdays, paid_days, round(ot_hrs,1), round(ot_hrs/8,2),
+                        gm, ba, ha, ca, ma, oa,
+                        be, he, ce, me_, oe, inc,
+                        gross_earn, arr, tot_earned,
+                        pf, esic, pt, lwf, advance, other, None, paid_f]
+        else:
+            sal_vals = [mdays, None, round(ot_hrs,1), round(ot_hrs/8,2)] + [None]*23
+
+        for j, v in enumerate(sal_vals):
+            col = base_sal + 1 + j
+            ws.merge_cells(start_row=rs, start_column=col, end_row=re_, end_column=col)
+            cell = ws.cell(row=rs, column=col, value=v)
+            cell.fill = SAL[j][1] or SUMM; cell.alignment = ctr; cell.border = bord
+            if SAL[j][0] in ('Total Earned', 'Paid Salary'):
+                cell.font = Font(bold=True)
+            if isinstance(v, float) or (isinstance(v, str) and v.startswith('=')):
+                cell.number_format = '#,##0.00'
+        r += 5
+
+    for col, w in zip('ABCDEFG', [4, 11, 10, 22, 16, 14, 9]):
+        ws.column_dimensions[col].width = w
+    for i in range(n_days):
+        ws.column_dimensions[get_column_letter(FIX+1+i)].width = 6
+    for j in range(len(ATT_HDRS)):
+        ws.column_dimensions[get_column_letter(base_att+1+j)].width = 8
+    for j in range(len(SAL)):
+        ws.column_dimensions[get_column_letter(base_sal+1+j)].width = 11
+    ws.freeze_panes = 'H6'
+
+    buf = BytesIO(); wb.save(buf); buf.seek(0)
+    return send_file(buf, as_attachment=True,
+        download_name=f'HCP_Salary_Register_{month_name}_{year}.xlsx',
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
