@@ -5,65 +5,80 @@
 {% block extra_css %}
 <style>
 .hdr{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem;margin-bottom:1rem;}
-.proj-table-wrap{background:var(--white);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+.hdr-title{font-size:1.1rem;font-weight:800;color:#0f172a;letter-spacing:-.01em;display:inline-flex;align-items:center;gap:8px;}
+.hdr-title svg{color:#7c3aed;}
+.proj-table-wrap{background:var(--white);border:1px solid #e2e8f0;border-radius:16px;overflow:hidden;}
 .proj-table{width:100%;border-collapse:collapse;font-size:13px;}
-.proj-table thead{background:#f8fafc;}
-.proj-table th{font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;padding:10px 14px;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap;}
+.proj-table thead{background:#fff;}
+.proj-table th{font-size:10.5px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;padding:11px 14px;border-bottom:2px solid #e2e8f0;text-align:left;white-space:nowrap;}
 .proj-table td{padding:12px 14px;border-bottom:1px solid #f1f5f9;color:var(--text);vertical-align:middle;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px;font-size:13px;}
-.proj-table tbody tr{background:#fff;transition:background .1s;}
-.proj-table tbody tr:hover td{background:#fafbff;}
+.proj-table tbody tr{background:#fff;transition:background .12s;}
+.proj-table tbody tr:hover td{background:#faf5ff;}
 .proj-table tbody tr:last-child td{border-bottom:none;}
 .row-check{width:40px;padding-left:16px !important;}
 .row-cb{width:15px;height:15px;accent-color:#7c3aed;cursor:pointer;border-radius:3px;}
-.tbl-action-btn{width:30px;height:30px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;border:none;cursor:pointer;text-decoration:none;transition:background .12s;vertical-align:middle;}
-.tbl-action-btn.view{background:#eff6ff;color:#1d4ed8;}
+.tbl-action-btn{width:30px;height:30px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;border:1px solid transparent;cursor:pointer;text-decoration:none;transition:all .12s;vertical-align:middle;}
+.tbl-action-btn:hover{transform:translateY(-1px);}
+.tbl-action-btn.view{background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe;}
 .tbl-action-btn.view:hover{background:#dbeafe;}
-.tbl-action-btn.edit{background:#f0fdf4;color:#166534;}
+.tbl-action-btn.edit{background:#f0fdf4;color:#166534;border-color:#bbf7d0;}
 .tbl-action-btn.edit:hover{background:#dcfce7;}
-.tbl-action-btn.del{background:#fef2f2;color:#dc2626;}
+.tbl-action-btn.del{background:#fef2f2;color:#dc2626;border-color:#fecaca;}
 .tbl-action-btn.del:hover{background:#fee2e2;}
-.tbl-action-btn.restore{background:#dcfce7;color:#166534;}
+.tbl-action-btn.restore{background:#dcfce7;color:#166534;border-color:#bbf7d0;}
 .tbl-action-btn.restore:hover{background:#bbf7d0;}
-.badge{display:inline-block;padding:2px 9px;border-radius:100px;font-size:.71rem;font-weight:700;}
-.prog-wrap{background:var(--border);border-radius:100px;height:6px;width:60px;}
-.prog-fill{height:100%;border-radius:100px;}
+.ra-btn{width:30px;height:30px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;border:1px solid #bbf7d0;background:#f0fdf4;cursor:pointer;transition:all .12s;}
+.ra-btn:hover{background:#dcfce7;transform:translateY(-1px);}
+.badge{display:inline-block;padding:2px 10px;border-radius:99px;font-size:.71rem;font-weight:700;}
+.prog-wrap{background:var(--border);border-radius:99px;height:6px;width:60px;}
+.prog-fill{height:100%;border-radius:99px;}
+.age-warn{color:#ef4444;font-weight:800;}
 .act-wrap{position:relative;}
-.act-dots{width:28px;height:28px;border-radius:7px;border:1px solid var(--border);background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1rem;font-weight:900;color:var(--text2);}
-.act-dots:hover{background:var(--bg);}
-.act-menu{display:none;position:absolute;right:0;top:calc(100% + 4px);background:#fff;border:1.5px solid var(--border);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);min-width:160px;z-index:300;overflow:hidden;}
+.act-dots{width:28px;height:28px;border-radius:8px;border:1px solid #e2e8f0;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1rem;font-weight:900;color:var(--text2);transition:all .12s;}
+.act-dots:hover{background:#f5f3ff;border-color:#c4b5fd;color:#6d28d9;}
+.act-menu{display:none;position:absolute;right:0;top:calc(100% + 4px);background:#fff;border:1.5px solid var(--border);border-radius:12px;box-shadow:0 8px 24px rgba(15,23,42,.14);min-width:170px;z-index:300;overflow:hidden;}
 .act-menu.open{display:block;}
-.act-item{display:flex;align-items:center;gap:8px;padding:8px 12px;font-size:.82rem;font-weight:600;color:var(--text);text-decoration:none;cursor:pointer;transition:background .1s;border:none;background:none;width:100%;text-align:left;font-family:inherit;}
-.act-item:hover{background:var(--bg);}
+.act-item{display:flex;align-items:center;gap:8px;padding:9px 13px;font-size:.82rem;font-weight:600;color:var(--text);text-decoration:none;cursor:pointer;transition:background .1s;border:none;background:none;width:100%;text-align:left;font-family:inherit;}
+.act-item:hover{background:#f5f3ff;}
 .act-item.red{color:#dc2626;}
 .act-item.red:hover{background:#fef2f2;}
 .act-divider{height:1px;background:var(--border);margin:2px 0;}
-.view-toggle{display:flex;gap:2px;background:#f1f5f9;padding:3px;border-radius:8px;}
-.vt-btn{padding:5px 12px;border-radius:6px;border:none;background:none;font-size:.77rem;font-weight:700;cursor:pointer;color:var(--text2);transition:all .15s;display:flex;align-items:center;gap:4px;}
-.vt-btn.active{background:#fff;color:#7c3aed;box-shadow:0 1px 4px rgba(0,0,0,.1);}
+.view-toggle{display:flex;gap:2px;background:#f1f5f9;padding:3px;border-radius:99px;border:1px solid #e2e8f0;}
+.vt-btn{padding:5px 13px;border-radius:99px;border:none;background:none;font-size:.77rem;font-weight:700;cursor:pointer;color:var(--text2);transition:all .15s;display:flex;align-items:center;gap:4px;font-family:inherit;}
+.vt-btn.active{background:#fff;color:#7c3aed;box-shadow:0 1px 4px rgba(15,23,42,.12);}
+/* Toolbar pills */
+.npd-btn-new{display:inline-flex;align-items:center;gap:6px;padding:.45rem 1rem;background:linear-gradient(180deg,#8b5cf6,#6d28d9);color:#fff;border:none;border-radius:99px;font-size:.82rem;font-weight:700;cursor:pointer;text-decoration:none;white-space:nowrap;box-shadow:0 2px 8px rgba(124,58,237,.3), inset 0 1px 0 rgba(255,255,255,.2);transition:transform .15s, box-shadow .15s;}
+.npd-btn-new:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(124,58,237,.4), inset 0 1px 0 rgba(255,255,255,.2);color:#fff;}
+.npd-tool-btn{display:inline-flex;align-items:center;gap:5px;padding:.42rem .9rem;border:1.5px solid #e2e8f0;border-radius:99px;background:#fff;font-size:.8rem;font-weight:700;color:var(--text2);cursor:pointer;font-family:inherit;transition:all .15s;text-decoration:none;white-space:nowrap;}
+.npd-tool-btn:hover{background:#f5f3ff;border-color:#c4b5fd;color:#6d28d9;transform:translateY(-1px);}
+.npd-search-pill{display:inline-flex;align-items:center;gap:7px;border:1.5px solid #e2e8f0;border-radius:99px;padding:.42rem .85rem;background:#fff;width:210px;flex-shrink:0;transition:border-color .15s, box-shadow .15s;}
+.npd-search-pill:focus-within{border-color:#c4b5fd;box-shadow:0 0 0 3px rgba(124,58,237,.1);}
+.npd-tabs{display:inline-flex;border:1.5px solid #e2e8f0;border-radius:99px;overflow:hidden;background:#fff;}
+.npd-tabs a{display:inline-flex;align-items:center;gap:5px;padding:.38rem .95rem;font-size:.8rem;font-weight:700;text-decoration:none;transition:all .15s;}
 /* Desktop Card Grid */
 .desk-card-grid{display:none;padding:16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;}
-.desk-card{background:#fff;border:1px solid #ede9fe;border-radius:14px;box-shadow:0 2px 10px rgba(124,58,237,.08);overflow:hidden;cursor:pointer;transition:box-shadow .15s,transform .1s;}
-.desk-card:hover{box-shadow:0 6px 24px rgba(124,58,237,.15);transform:translateY(-1px);}
+.desk-card{background:#fff;border:1.5px solid #ede9fe;border-radius:16px;box-shadow:0 2px 10px rgba(124,58,237,.08);overflow:hidden;cursor:pointer;transition:box-shadow .15s,transform .12s;}
+.desk-card:hover{box-shadow:0 6px 24px rgba(124,58,237,.15);transform:translateY(-2px);}
 .desk-card-deleted{border-color:#fecaca;background:#fff5f5;}
 .desk-card-hdr{display:flex;align-items:center;gap:10px;padding:14px 14px 10px;}
-.desk-card-av{width:44px;height:44px;border-radius:11px;background:linear-gradient(135deg,#7c3aed,#6d28d9);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#fff;flex-shrink:0;}
+.desk-card-av{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#8b5cf6,#6d28d9);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#fff;flex-shrink:0;box-shadow:inset 0 -6px 12px rgba(255,255,255,.18), 0 2px 5px rgba(109,40,217,.28);}
 .desk-card-info{flex:1;min-width:0;}
 .desk-card-name{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.desk-card-code{font-size:11px;color:#7c3aed;font-weight:700;font-family:monospace;margin-top:1px;}
+.desk-card-code{font-size:11px;color:#7c3aed;font-weight:700;font-family:'JetBrains Mono',monospace;margin-top:1px;}
 .desk-card-body{padding:0 14px 12px;display:grid;grid-template-columns:1fr 1fr;gap:7px 12px;}
 .desk-info-item{display:flex;flex-direction:column;gap:1px;}
-.desk-info-label{font-size:9.5px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;}
+.desk-info-label{font-size:9.5px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;}
 .desk-info-val{font-size:12.5px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .desk-card-footer{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;background:#faf5ff;border-top:1px solid #ede9fe;}
 .desk-card-prog{display:flex;align-items:center;gap:6px;flex:1;}
-.desk-prog-bar{flex:1;background:#e9d5ff;border-radius:100px;height:5px;max-width:100px;}
-.desk-prog-fill{height:100%;border-radius:100px;}
-.view-toggle-btn{padding:5px 10px;border-radius:6px;border:none;font-size:.77rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;transition:all .15s;}
-.view-toggle-btn.active{background:#fff;color:#7c3aed;box-shadow:0 1px 4px rgba(0,0,0,.1);}
+.desk-prog-bar{flex:1;background:#e9d5ff;border-radius:99px;height:5px;max-width:100px;}
+.desk-prog-fill{height:100%;border-radius:99px;}
+.view-toggle-btn{padding:5px 11px;border-radius:99px;border:none;font-size:.77rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;transition:all .15s;font-family:inherit;}
+.view-toggle-btn.active{background:#fff;color:#7c3aed;box-shadow:0 1px 4px rgba(15,23,42,.12);}
 .view-toggle-btn.inactive{background:transparent;color:var(--text3);}
-/* ═══ MOBILE ═══ */
+/* ====== MOBILE ====== */
 @media(max-width: 767px) {
-    /* ── Android App Style Toolbar ── */
+    /* -- Android App Style Toolbar -- */
     .grid-toolbar#npdToolbar {
         flex-direction: column;
         align-items: stretch;
@@ -77,8 +92,8 @@
     #mob-row1 a[href*="npd-new"] {
         flex: 1;
         justify-content: center;
-        background: linear-gradient(135deg,#7c3aed,#6d28d9) !important;
-        border-radius: 10px !important;
+        background: linear-gradient(135deg,#8b5cf6,#6d28d9) !important;
+        border-radius: 12px !important;
         padding: 10px 16px !important;
         font-size: 14px !important;
         font-weight: 700 !important;
@@ -87,7 +102,7 @@
     /* Row 2: All/Deleted + Search */
     #mob-row2 { display: flex; gap: 8px; align-items: center; }
     #mob-row2 .view-toggle-tabs { flex: 0 0 auto; }
-    #mob-row2 .grid-search-wrap { flex: 1; border-radius: 10px; padding: 9px 12px; background: #f5f3ff; border-color: #ddd6fe; }
+    #mob-row2 .grid-search-wrap { flex: 1; border-radius: 12px; padding: 9px 12px; background: #f5f3ff; border-color: #ddd6fe; }
     /* Row 3: Status + Filter + Sort chips */
     #mob-row3 { display: flex; gap: 6px; align-items: center; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 2px; }
     #mob-row3::-webkit-scrollbar { display: none; }
@@ -97,7 +112,7 @@
     /* Chip style for Filter/Sort/Status */
     .mob-chip {
         display: inline-flex; align-items: center; gap: 5px;
-        padding: 7px 12px; border-radius: 20px;
+        padding: 7px 13px; border-radius: 99px;
         border: 1px solid #e2e8f0; background: #fff;
         font-size: 12.5px; font-weight: 600; color: var(--text2);
         cursor: pointer; white-space: nowrap; font-family: inherit;
@@ -105,7 +120,7 @@
     }
     .mob-chip.active { background: #f5f3ff; border-color: #7c3aed; color: #7c3aed; }
     .mob-icon-btn {
-        width: 36px; height: 36px; border-radius: 10px;
+        width: 36px; height: 36px; border-radius: 11px;
         display: inline-flex; align-items: center; justify-content: center;
         border: 1px solid #e2e8f0; background: #fff;
         cursor: pointer; color: var(--text2); font-family: inherit;
@@ -114,7 +129,7 @@
     /* Hide desktop-only elements on mobile */
     .mob-desktop-only { display: none !important; }
     .proj-hdr-btns { display: grid !important; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; }
-    .proj-btn-new { display: flex; align-items: center; justify-content: center; gap: 7px; padding: 13px 10px; border-radius: 14px; font-size: 14px; font-weight: 700; background: linear-gradient(135deg,#7c3aed,#6d28d9); color: #fff; text-decoration: none; box-shadow: 0 3px 10px rgba(0,0,0,.2); grid-column: 1 / -1; }
+    .proj-btn-new { display: flex; align-items: center; justify-content: center; gap: 7px; padding: 13px 10px; border-radius: 14px; font-size: 14px; font-weight: 700; background: linear-gradient(135deg,#8b5cf6,#6d28d9); color: #fff; text-decoration: none; box-shadow: 0 3px 10px rgba(0,0,0,.2); grid-column: 1 / -1; }
     .mobile-filter-form { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
     .mobile-filter-form input, .mobile-filter-form select { width: 100%; padding: 11px 14px; border: 1.5px solid var(--border); border-radius: 12px; font-size: 14px; font-family: inherit; background: #fff; color: var(--text); outline: none; -webkit-appearance: none; box-sizing: border-box; }
     .mobile-filter-form input:focus, .mobile-filter-form select:focus { border-color: #7c3aed; }
@@ -123,29 +138,29 @@
     .mobile-reset-btn { padding: 12px 16px; border: 1.5px solid var(--border); border-radius: 12px; background: #fff; color: var(--text2); font-size: 13px; font-weight: 600; text-decoration: none; display: flex; align-items: center; }
     .tbl-scroll { display: none !important; }
     .mobile-proj-list { display: block !important; }
-    .m-proj-card { display:block; margin:10px 12px; border-radius:14px; border:1px solid #ede9fe; background:#fff; text-decoration:none; color:var(--text); box-shadow:0 2px 8px rgba(124,58,237,.07); overflow:hidden; -webkit-tap-highlight-color:transparent; }
+    .m-proj-card { display:block; margin:10px 12px; border-radius:16px; border:1.5px solid #ede9fe; background:#fff; text-decoration:none; color:var(--text); box-shadow:0 2px 8px rgba(124,58,237,.07); overflow:hidden; -webkit-tap-highlight-color:transparent; }
     .m-proj-card:active { background:#faf5ff; }
     .m-proj-card-header { display:flex; align-items:center; gap:10px; padding:12px 14px 10px; }
-    .m-proj-avatar { width:42px; height:42px; border-radius:10px; flex-shrink:0; background:linear-gradient(135deg,#7c3aed,#6d28d9); display:flex; align-items:center; justify-content:center; font-size:17px; font-weight:800; color:#fff; }
+    .m-proj-avatar { width:42px; height:42px; border-radius:11px; flex-shrink:0; background:linear-gradient(135deg,#8b5cf6,#6d28d9); display:flex; align-items:center; justify-content:center; font-size:17px; font-weight:800; color:#fff; }
     .m-proj-info { flex:1; min-width:0; }
     .m-proj-name { font-size:14.5px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .m-proj-code { font-size:11px; color:#7c3aed; font-weight:700; font-family:monospace; margin-top:1px; }
     .m-proj-right { display:flex; flex-direction:column; align-items:flex-end; gap:4px; flex-shrink:0; }
     .m-proj-body { padding:0 14px 12px; display:grid; grid-template-columns:1fr 1fr; gap:6px 10px; }
     .m-info-item { display:flex; flex-direction:column; gap:1px; }
-    .m-info-label { font-size:10px; font-weight:600; color:var(--text3); text-transform:uppercase; letter-spacing:.04em; }
+    .m-info-label { font-size:10px; font-weight:700; color:var(--text3); text-transform:uppercase; letter-spacing:.04em; }
     .m-info-val { font-size:12.5px; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .m-proj-footer { display:flex; align-items:center; justify-content:space-between; padding:8px 14px; background:#faf5ff; border-top:1px solid #ede9fe; }
     .m-proj-prog { display:flex; align-items:center; gap:6px; flex:1; }
-    .m-prog-bar { flex:1; background:#e9d5ff; border-radius:100px; height:5px; max-width:100px; }
-    .m-prog-fill { height:100%; border-radius:100px; }
+    .m-prog-bar { flex:1; background:#e9d5ff; border-radius:99px; height:5px; max-width:100px; }
+    .m-prog-fill { height:100%; border-radius:99px; }
 }
 @media(min-width: 768px) {
     .proj-hdr-btns { display: flex; gap: .4rem; flex-wrap: wrap; }
-    .proj-btn-new { display: inline-flex; align-items: center; gap: 6px; padding: 8px 18px; border-radius: 8px; font-size: 13px; font-weight: 700; background: #7c3aed; color: #fff; text-decoration: none; box-shadow: 0 2px 8px rgba(0,0,0,.2); }
-    .proj-btn-new:hover { background: #6d28d9; }
-    .proj-btn-dash { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 700; border: 1.5px solid #7c3aed; background: #fff; color: #7c3aed; text-decoration: none; }
-    .proj-btn-dash:hover { background: #f5f3ff; }
+    .proj-btn-new { display: inline-flex; align-items: center; gap: 6px; padding: 8px 18px; border-radius: 99px; font-size: 13px; font-weight: 700; background: linear-gradient(180deg,#8b5cf6,#6d28d9); color: #fff; text-decoration: none; box-shadow: 0 2px 8px rgba(124,58,237,.3), inset 0 1px 0 rgba(255,255,255,.2); }
+    .proj-btn-new:hover { transform:translateY(-1px); }
+    .proj-btn-dash { display: inline-flex; align-items: center; gap: 6px; padding: 8px 17px; border-radius: 99px; font-size: 13px; font-weight: 700; border: 1.5px solid #c4b5fd; background: #fff; color: #7c3aed; text-decoration: none; transition: all .15s; }
+    .proj-btn-dash:hover { background: #f5f3ff; transform:translateY(-1px); }
     .mobile-filter-form { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; margin-bottom: 1rem; }
     .mobile-filter-form input, .mobile-filter-form select { padding: .4rem .75rem; border: 1px solid var(--border); border-radius: var(--r-md); font-size: .82rem; background: #fff; color: var(--text); outline: none; }
     .mobile-filter-btn { padding: 7px 16px; background: #2563eb; color: #fff; border: none; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; }
@@ -156,51 +171,17 @@
     .m-sel-bar { display:none;position:fixed;bottom:0;left:0;right:0;background:#7c3aed;color:#fff;padding:14px 16px;z-index:9999;align-items:center;justify-content:space-between;box-shadow:0 -4px 20px rgba(124,58,237,.3); }
     .m-sel-bar.show { display:flex; }
     .m-sel-count { font-size:14px;font-weight:700; }
-    .m-sel-del { background:#ef4444;color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit; }
-    .m-sel-cancel { background:rgba(255,255,255,.2);color:#fff;border:none;border-radius:10px;padding:10px 16px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit; }
+    .m-sel-del { background:#ef4444;color:#fff;border:none;border-radius:99px;padding:10px 20px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit; }
+    .m-sel-cancel { background:rgba(255,255,255,.2);color:#fff;border:none;border-radius:99px;padding:10px 16px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit; }
     .m-proj-card.m-selected { border-color:#7c3aed !important;background:#f5f3ff !important; }
     .m-cb-wrap { display:none;align-items:center;justify-content:center;width:36px;height:36px;flex-shrink:0; }
     .m-cb-wrap.show { display:flex; }
     .m-cb { width:18px;height:18px;accent-color:#7c3aed;cursor:pointer; }
-    #npdToolbar { display:flex; align-items:center; gap:.4rem; flex-wrap:wrap; padding:.5rem .9rem; }
+    #npdToolbar { display:flex; align-items:center; gap:.45rem; flex-wrap:wrap; padding:.6rem .9rem; }
     #npdToolbar > div { margin-bottom:0 !important; }
     .mobile-proj-list { display: none !important; }
     .tbl-scroll { display: block; overflow: visible; }
 }
-{# ── Import Modal ── #}
-<div id="npdImportModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center;">
-  <div style="background:#fff;border-radius:14px;width:100%;max-width:480px;box-shadow:0 24px 64px rgba(0,0,0,.2);overflow:hidden;">
-    <div style="background:#1e3a5f;color:#fff;padding:1rem 1.25rem;display:flex;align-items:center;justify-content:space-between;">
-      <span style="font-weight:700;font-size:1rem;">📥 Import NPD Projects</span>
-      <button onclick="document.getElementById('npdImportModal').style.display='none'" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:1rem;">✕</button>
-    </div>
-    <div style="padding:1.5rem;">
-      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:.85rem 1rem;margin-bottom:1.2rem;font-size:.82rem;color:#166534;">
-        <strong>📋 Instructions:</strong><br>
-        1. Download the sample template below<br>
-        2. Fill in your data (Product Name* is mandatory)<br>
-        3. Upload the filled CSV file<br>
-        4. Date format: <strong>DD-MM-YYYY</strong>
-      </div>
-      <a href="/npd/npd-projects/import" style="display:inline-flex;align-items:center;gap:6px;padding:.45rem 1rem;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;border-radius:7px;font-size:.82rem;font-weight:600;text-decoration:none;margin-bottom:1.2rem;">
-        ⬇️ Download Sample Template
-      </a>
-      <form method="POST" action="/npd/npd-projects/import" enctype="multipart/form-data">
-        <div style="border:2px dashed #e2e8f0;border-radius:10px;padding:1.5rem;text-align:center;background:#fafbfc;margin-bottom:1rem;">
-          <div style="font-size:2rem;margin-bottom:.4rem;">📂</div>
-          <div style="font-size:.85rem;font-weight:600;color:var(--text);margin-bottom:.5rem;">Select CSV File</div>
-          <input type="file" name="file" accept=".csv" required style="font-size:.82rem;width:100%;">
-        </div>
-        <div style="display:flex;justify-content:flex-end;gap:.6rem;">
-          <button type="button" onclick="document.getElementById('npdImportModal').style.display='none'" style="padding:.45rem 1rem;border:1px solid #e2e8f0;border-radius:7px;background:#fff;font-size:.83rem;font-weight:600;cursor:pointer;">Cancel</button>
-          <button type="submit" style="padding:.45rem 1.2rem;background:#7c3aed;color:#fff;border:none;border-radius:7px;font-size:.83rem;font-weight:600;cursor:pointer;">📥 Import</button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
-    </div>
-  </div>
 </style>
 {% endblock %}
 
@@ -208,53 +189,58 @@
 {% block content %}
 <div class="hdr">
     <div>
-        <div style="font-size:1.1rem;font-weight:800;color:#7c3aed;">🧪 NPD Projects</div>
-        <div style="font-size:.77rem;color:var(--text3);">New Product Development — all projects</div>
+        <div class="hdr-title">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2v6a2 2 0 0 0 .245.96l5.51 10.08A2 2 0 0 1 18 22H6a2 2 0 0 1-1.755-2.96l5.51-10.08A2 2 0 0 0 10 8V2"/><path d="M6.453 15h11.094"/><path d="M8.5 2h7"/></svg>
+            NPD Projects
+        </div>
+        <div style="font-size:.77rem;color:var(--text3);">New Product Development - all projects</div>
     </div>
-    <a href="/npd/npd-dashboard" class="proj-btn-dash">📊 Dashboard</a>
+    <a href="/npd/npd-dashboard" class="proj-btn-dash">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
+        Dashboard
+    </a>
 </div>
 
 <div class="grid-card">
 
-  {# ── TOOLBAR ── #}
+  {# -- TOOLBAR -- #}
   <div class="grid-toolbar" id="npdToolbar">
 
-    {# ── MOBILE ROW 1: Add New + Dashboard ── #}
+    {# -- MOBILE ROW 1: Add New + Dashboard -- #}
     <div id="mob-row1" style="display:none;">
       {% if perm and perm.can_add %}
-      <a href="/npd/npd-new" style="display:inline-flex;align-items:center;gap:6px;padding:.38rem .9rem;background:#7c3aed;color:#fff;border:none;border-radius:var(--r-md);font-size:.82rem;font-weight:700;cursor:pointer;text-decoration:none;white-space:nowrap;">
+      <a href="/npd/npd-new" class="npd-btn-new">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Add New
       </a>
       {% endif %}
       <div id="mobSelectBtns" style="display:none;margin-left:auto;display:none;gap:8px;align-items:center;">
-        <button onclick="npdMobBulkDelete()" style="padding:.38rem .9rem;background:#dc2626;color:#fff;border:none;border-radius:var(--r-md);font-size:.82rem;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:5px;">
+        <button onclick="npdMobBulkDelete()" style="padding:.38rem .9rem;background:#dc2626;color:#fff;border:none;border-radius:99px;font-size:.82rem;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:5px;">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
           Delete
         </button>
-        <button onclick="toggleMobSelect()" style="padding:.38rem .75rem;background:#f1f5f9;color:var(--text2);border:1px solid var(--border);border-radius:var(--r-md);font-size:.82rem;font-weight:700;cursor:pointer;font-family:inherit;">
-          ✕
+        <button onclick="toggleMobSelect()" style="padding:.38rem .75rem;background:#f1f5f9;color:var(--text2);border:1px solid var(--border);border-radius:99px;font-size:.82rem;font-weight:700;cursor:pointer;font-family:inherit;">
+          &times;
         </button>
       </div>
     </div>
 
-    {# ── MOBILE ROW 2: Tabs + Search ── #}
+    {# -- MOBILE ROW 2: Tabs + Search -- #}
     <div id="mob-row2" style="display:none;">
-      <div class="view-toggle-tabs" style="display:inline-flex;border:1.5px solid var(--border);border-radius:8px;overflow:hidden;background:#fff;flex-shrink:0;">
+      <div class="view-toggle-tabs npd-tabs" style="flex-shrink:0;border-radius:12px;">
         <a href="/npd/npd-projects{% if q %}?q={{ q }}{% endif %}"
-          style="display:inline-flex;align-items:center;gap:4px;padding:.35rem .85rem;font-size:.82rem;font-weight:700;text-decoration:none;border-right:1px solid var(--border);
+          style="border-right:1px solid var(--border);
           {% if not show_deleted %}background:#7c3aed;color:#fff;{% else %}color:var(--text2);{% endif %}">
-          📋 All
+          All
         </a>
         {% if npd_sub and npd_sub.view_deleted %}
         <a href="/npd/npd-projects?deleted=1{% if q %}&q={{ q }}{% endif %}"
-          style="display:inline-flex;align-items:center;gap:4px;padding:.35rem .85rem;font-size:.82rem;font-weight:700;text-decoration:none;
-          {% if show_deleted %}background:#ef4444;color:#fff;{% else %}color:var(--text2);{% endif %}">
-          🗑 Deleted{% if deleted_count %} <span style="background:{% if show_deleted %}rgba(255,255,255,.3){% else %}#fee2e2{% endif %};color:{% if show_deleted %}#fff{% else %}#dc2626{% endif %};padding:1px 6px;border-radius:100px;font-size:.7rem;font-weight:800;">{{ deleted_count }}</span>{% endif %}
+          style="{% if show_deleted %}background:#ef4444;color:#fff;{% else %}color:var(--text2);{% endif %}">
+          Deleted{% if deleted_count %} <span style="background:{% if show_deleted %}rgba(255,255,255,.3){% else %}#fee2e2{% endif %};color:{% if show_deleted %}#fff{% else %}#dc2626{% endif %};padding:1px 6px;border-radius:99px;font-size:.7rem;font-weight:800;">{{ deleted_count }}</span>{% endif %}
         </a>
         {% endif %}
       </div>
-      <div style="flex:1;display:flex;align-items:center;gap:8px;background:#f5f3ff;border:1.5px solid #ddd6fe;border-radius:10px;padding:9px 12px;">
+      <div class="grid-search-wrap" style="flex:1;display:flex;align-items:center;gap:8px;background:#f5f3ff;border:1.5px solid #ddd6fe;border-radius:12px;padding:9px 12px;">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <input type="text" id="npd_search" placeholder="Search projects..." value="{{ q }}"
           style="border:none;outline:none;font-size:14px;color:var(--text);background:transparent;width:100%;font-family:inherit;"
@@ -262,18 +248,18 @@
       </div>
     </div>
 
-    {# ── MOBILE ROW 3: Filter chips ── #}
+    {# -- MOBILE ROW 3: Filter chips -- #}
     <div id="mob-row3" style="display:none;">
       <button onclick="toggleNpdStatusDd()" class="mob-chip {% if status %}active{% endif %}">
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        {% if status %}{% for s in npd_statuses if s.slug == status %}{{ s.icon }} {{ s.name }}{% endfor %}{% else %}Status{% endif %}
+        {% if status %}{% for s in npd_statuses if s.slug == status %}{{ s.name }}{% endfor %}{% else %}Status{% endif %}
         <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
       </button>
-      <button onclick="toggleNpdFilter()" id="filterBtn" class="mob-chip">
+      <button onclick="toggleNpdFilter()" id="filterBtnMob" class="mob-chip">
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
         Filter
       </button>
-      <button onclick="toggleNpdSort()" id="sortBtn" class="mob-chip">
+      <button onclick="toggleNpdSort()" id="sortBtnMob" class="mob-chip">
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
         Sort
       </button>
@@ -292,59 +278,58 @@
       </div>
     </div>
 
-    {# ── DESKTOP: Add New ── #}
+    {# -- DESKTOP: Add New -- #}
     {% if perm and perm.can_add %}
-    <a href="/npd/npd-new" class="mob-desktop-only" style="display:inline-flex;align-items:center;gap:5px;padding:.38rem .9rem;background:#7c3aed;color:#fff;border:none;border-radius:var(--r-md);font-size:.82rem;font-weight:700;cursor:pointer;text-decoration:none;white-space:nowrap;">
+    <a href="/npd/npd-new" class="mob-desktop-only npd-btn-new">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       Add New
     </a>
     {% endif %}
 
-    {# ── All / Deleted Tabs (desktop) ── #}
-    <div class="mob-desktop-only" style="display:inline-flex;border:1.5px solid var(--border);border-radius:8px;overflow:hidden;background:#fff;">
+    {# -- All / Deleted Tabs (desktop) -- #}
+    <div class="mob-desktop-only npd-tabs">
       <a href="/npd/npd-projects{% if q %}?q={{ q }}{% endif %}"
-        style="display:inline-flex;align-items:center;gap:5px;padding:.32rem .85rem;font-size:.8rem;font-weight:700;text-decoration:none;border-right:1px solid var(--border);transition:all .15s;
+        style="border-right:1px solid var(--border);
         {% if not show_deleted %}background:#7c3aed;color:#fff;{% else %}color:var(--text2);background:#fff;{% endif %}">
-        📋 All
+        All
       </a>
       {% if npd_sub and npd_sub.view_deleted %}
       <a href="/npd/npd-projects?deleted=1{% if q %}&q={{ q }}{% endif %}"
-        style="display:inline-flex;align-items:center;gap:5px;padding:.32rem .85rem;font-size:.8rem;font-weight:700;text-decoration:none;transition:all .15s;
-        {% if show_deleted %}background:#ef4444;color:#fff;{% else %}color:var(--text2);background:#fff;{% endif %}">
-        🗑 Deleted
-        {% if deleted_count %}<span style="padding:1px 6px;border-radius:100px;font-size:.72rem;font-weight:800;
+        style="{% if show_deleted %}background:#ef4444;color:#fff;{% else %}color:var(--text2);background:#fff;{% endif %}">
+        Deleted
+        {% if deleted_count %}<span style="padding:1px 6px;border-radius:99px;font-size:.72rem;font-weight:800;
           {% if show_deleted %}background:rgba(255,255,255,.3);color:#fff;{% else %}background:#fee2e2;color:#dc2626;{% endif %}">{{ deleted_count }}</span>{% endif %}
       </a>
       {% endif %}
     </div>
 
     {# Global Search (desktop) #}
-    <div style="display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);border-radius:var(--r-md);padding:.35rem .7rem;background:#fff;width:200px;flex-shrink:0;">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <div class="npd-search-pill">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       <input type="text" id="npd_search_desk" placeholder="Global Search..." value="{{ q }}"
         style="border:none;outline:none;font-size:.82rem;color:var(--text);background:transparent;width:100%;min-width:0;font-family:inherit;white-space:nowrap;"
         oninput="npdSearch(this.value)">
     </div>
 
-    {# Status Dropdown — desktop only #}
+    {# Status Dropdown - desktop only #}
     <div style="position:relative;" id="statusDdWrap" class="mob-desktop-only">
       <button onclick="toggleNpdStatusDd()" id="statusDdBtn"
-        style="display:inline-flex;align-items:center;gap:5px;padding:.35rem .75rem;border:1px solid {{ 'var(--purple-border)' if status else 'var(--border)' }};border-radius:var(--r-md);background:{{ '#f5f3ff' if status else '#fff' }};font-size:.8rem;font-weight:600;color:{{ '#7c3aed' if status else 'var(--text2)' }};cursor:pointer;white-space:nowrap;font-family:inherit;">
+        style="display:inline-flex;align-items:center;gap:5px;padding:.42rem .9rem;border:1.5px solid {{ '#c4b5fd' if status else '#e2e8f0' }};border-radius:99px;background:{{ '#f5f3ff' if status else '#fff' }};font-size:.8rem;font-weight:700;color:{{ '#7c3aed' if status else 'var(--text2)' }};cursor:pointer;white-space:nowrap;font-family:inherit;">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
         {% if status %}
-          {% for s in npd_statuses if s.slug == status %}{{ s.icon }} {{ s.name }}{% endfor %}
+          {% for s in npd_statuses if s.slug == status %}{{ s.name }}{% endfor %}
         {% else %}Status{% endif %}
         <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
       </button>
-      <div id="statusDdMenu" style="display:none;position:absolute;top:calc(100% + 5px);left:0;background:#fff;border:1px solid var(--border);border-radius:var(--r-lg);box-shadow:0 8px 24px rgba(0,0,0,.12);min-width:200px;z-index:500;overflow:hidden;">
-        <a href="/npd/npd-projects{% if q %}?q={{ q }}{% endif %}" style="display:flex;align-items:center;gap:.5rem;padding:.5rem .85rem;font-size:.82rem;font-weight:600;color:var(--text);text-decoration:none;{{ 'background:#f5f3ff;' if not status }}">
-          <span>📋</span> All Status
+      <div id="statusDdMenu" style="display:none;position:absolute;top:calc(100% + 5px);left:0;background:#fff;border:1px solid var(--border);border-radius:14px;box-shadow:0 8px 24px rgba(15,23,42,.14);min-width:200px;z-index:500;overflow:hidden;">
+        <a href="/npd/npd-projects{% if q %}?q={{ q }}{% endif %}" style="display:flex;align-items:center;gap:.5rem;padding:.55rem .9rem;font-size:.82rem;font-weight:600;color:var(--text);text-decoration:none;{{ 'background:#f5f3ff;' if not status }}">
+          All Status
         </a>
         <div style="height:1px;background:var(--border);"></div>
         {% for s in npd_statuses %}
         <a href="/npd/npd-projects?status={{ s.slug }}{% if q %}&q={{ q }}{% endif %}"
-          style="display:flex;align-items:center;gap:.5rem;padding:.5rem .85rem;font-size:.82rem;font-weight:600;color:var(--text);text-decoration:none;{{ 'background:' + s.color + '15;' if status==s.slug }}">
-          <span>{{ s.icon }}</span>
+          style="display:flex;align-items:center;gap:.5rem;padding:.55rem .9rem;font-size:.82rem;font-weight:600;color:var(--text);text-decoration:none;{{ 'background:' + s.color + '15;' if status==s.slug }}">
+          <span style="width:8px;height:8px;border-radius:99px;background:{{ s.color }};flex-shrink:0;"></span>
           <span style="{{ 'color:' + s.color + ';' if status==s.slug }}">{{ s.name }}</span>
         </a>
         {% endfor %}
@@ -353,15 +338,15 @@
 
 
 
-      {# Filter/Sort/List/Card — desktop only #}
+      {# Filter/Sort/List/Card - desktop only #}
       <button onclick="toggleNpdFilter()" id="filterBtn"
-        class="mob-desktop-only" style="display:inline-flex;align-items:center;gap:5px;padding:.35rem .75rem;border:1px solid var(--border);border-radius:var(--r-md);background:#fff;font-size:.8rem;font-weight:600;color:var(--text2);cursor:pointer;font-family:inherit;">
+        class="mob-desktop-only npd-tool-btn">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
         Filter
       </button>
 
       <button onclick="toggleNpdSort()" id="sortBtn"
-        class="mob-desktop-only" style="display:inline-flex;align-items:center;gap:5px;padding:.35rem .75rem;border:1px solid var(--border);border-radius:var(--r-md);background:#fff;font-size:.8rem;font-weight:600;color:var(--text2);cursor:pointer;font-family:inherit;">
+        class="mob-desktop-only npd-tool-btn">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
         Sort
       </button>
@@ -381,8 +366,7 @@
 
       {# Columns panel #}
       <div style="position:relative;" class="mob-desktop-only">
-        <button onclick="toggleNpdColPanel(event)"
-          style="display:inline-flex;align-items:center;gap:5px;padding:.35rem .75rem;border:1px solid var(--border);border-radius:var(--r-md);background:#fff;font-size:.8rem;font-weight:600;color:var(--text2);cursor:pointer;font-family:inherit;">
+        <button onclick="toggleNpdColPanel(event)" class="npd-tool-btn">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
           Columns
         </button>
@@ -395,15 +379,14 @@
       </button>
 
       {# Export #}
-      <button onclick="npdExport()"
-        class="mob-desktop-only" style="display:inline-flex;align-items:center;gap:5px;padding:.35rem .75rem;border:1px solid var(--border);border-radius:var(--r-md);background:#fff;font-size:.8rem;font-weight:600;color:var(--text2);cursor:pointer;font-family:inherit;">
+      <button onclick="npdExport()" class="mob-desktop-only npd-tool-btn">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         Export
       </button>
 
       {# Import #}
       <button onclick="document.getElementById('npdImportModal').style.display='flex'"
-        class="mob-desktop-only" style="display:inline-flex;align-items:center;gap:5px;padding:.35rem .75rem;border:1px solid var(--border);border-radius:var(--r-md);background:#fff;font-size:.8rem;font-weight:600;color:var(--text2);cursor:pointer;font-family:inherit;">
+        class="mob-desktop-only npd-tool-btn">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
         Import
       </button>
@@ -414,21 +397,21 @@
   <div id="npdFilterPanel" style="display:none;padding:10px 14px;border-bottom:1px solid var(--border);background:#fafbfc;">
     <form method="GET" id="npdFilterForm" style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:flex-end;">
       <div style="display:flex;flex-direction:column;gap:3px;">
-        <label style="font-size:.73rem;font-weight:600;color:var(--text3);">Search</label>
-        <input type="text" name="q" value="{{ q }}" placeholder="Product, client..." style="padding:.38rem .7rem;border:1px solid var(--border);border-radius:var(--r-md);font-size:.82rem;outline:none;font-family:inherit;">
+        <label style="font-size:.7rem;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.04em;">Search</label>
+        <input type="text" name="q" value="{{ q }}" placeholder="Product, client..." style="padding:.42rem .8rem;border:1.5px solid #e2e8f0;border-radius:99px;font-size:.82rem;outline:none;font-family:inherit;">
       </div>
       <div style="display:flex;flex-direction:column;gap:3px;">
-        <label style="font-size:.73rem;font-weight:600;color:var(--text3);">Status</label>
-        <select name="status" style="padding:.38rem .7rem;border:1px solid var(--border);border-radius:var(--r-md);font-size:.82rem;outline:none;font-family:inherit;">
+        <label style="font-size:.7rem;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.04em;">Status</label>
+        <select name="status" style="padding:.42rem 1.8rem .42rem .8rem;border:1.5px solid #e2e8f0;border-radius:99px;font-size:.82rem;outline:none;font-family:inherit;appearance:none;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 10px center;">
           <option value="">All Status</option>
           {% for s in npd_statuses %}
-          <option value="{{ s.slug }}" {% if status==s.slug %}selected{% endif %}>{{ s.icon }} {{ s.name }}</option>
+          <option value="{{ s.slug }}" {% if status==s.slug %}selected{% endif %}>{{ s.name }}</option>
           {% endfor %}
         </select>
       </div>
       <div style="display:flex;gap:.4rem;align-items:flex-end;">
-        <button type="submit" style="padding:.38rem .9rem;background:#7c3aed;color:#fff;border:none;border-radius:var(--r-md);font-size:.82rem;font-weight:700;cursor:pointer;font-family:inherit;">Apply</button>
-        <a href="/npd/npd-projects" style="padding:.38rem .8rem;border:1px solid var(--border);border-radius:var(--r-md);font-size:.82rem;font-weight:600;color:var(--text2);text-decoration:none;background:#fff;">Reset</a>
+        <button type="submit" style="padding:.42rem 1rem;background:linear-gradient(180deg,#8b5cf6,#6d28d9);color:#fff;border:none;border-radius:99px;font-size:.82rem;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 2px 8px rgba(124,58,237,.3), inset 0 1px 0 rgba(255,255,255,.2);">Apply</button>
+        <a href="/npd/npd-projects" style="padding:.42rem .9rem;border:1.5px solid #e2e8f0;border-radius:99px;font-size:.82rem;font-weight:700;color:var(--text2);text-decoration:none;background:#fff;">Reset</a>
       </div>
     </form>
   </div>
@@ -437,8 +420,8 @@
   <div id="npdSortPanel" style="display:none;padding:10px 14px;border-bottom:1px solid var(--border);background:#fafbfc;">
     <div style="display:flex;gap:.6rem;align-items:flex-end;flex-wrap:wrap;">
       <div style="display:flex;flex-direction:column;gap:3px;">
-        <label style="font-size:.73rem;font-weight:600;color:var(--text3);">Sort By</label>
-        <select id="npd_sort_by" onchange="npdApplySort()" style="padding:.38rem .7rem;border:1px solid var(--border);border-radius:var(--r-md);font-size:.82rem;outline:none;font-family:inherit;">
+        <label style="font-size:.7rem;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.04em;">Sort By</label>
+        <select id="npd_sort_by" onchange="npdApplySort()" style="padding:.42rem 1.8rem .42rem .8rem;border:1.5px solid #e2e8f0;border-radius:99px;font-size:.82rem;outline:none;font-family:inherit;appearance:none;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 10px center;">
           <option value="created_at">Create Date</option>
           <option value="product_name">Product Name</option>
           <option value="client_name">Client Name</option>
@@ -447,8 +430,8 @@
         </select>
       </div>
       <div style="display:flex;flex-direction:column;gap:3px;">
-        <label style="font-size:.73rem;font-weight:600;color:var(--text3);">Direction</label>
-        <select id="npd_sort_dir" onchange="npdApplySort()" style="padding:.38rem .7rem;border:1px solid var(--border);border-radius:var(--r-md);font-size:.82rem;outline:none;font-family:inherit;">
+        <label style="font-size:.7rem;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.04em;">Direction</label>
+        <select id="npd_sort_dir" onchange="npdApplySort()" style="padding:.42rem 1.8rem .42rem .8rem;border:1.5px solid #e2e8f0;border-radius:99px;font-size:.82rem;outline:none;font-family:inherit;appearance:none;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 10px center;">
           <option value="desc">Newest First</option>
           <option value="asc">Oldest First</option>
         </select>
@@ -459,21 +442,21 @@
 
 
     {% if projects.items %}
-    {# ── MOBILE: Card List ── #}
+    {# -- MOBILE: Card List -- #}
     <div class="mobile-proj-list" style="padding-bottom:16px;">
         {% for p in projects.items %}
         {% set sel_ms = p.milestones|selectattr('is_selected')|list %}
         {% set done_ms = sel_ms|selectattr('status','eq','approved')|list %}
         {% set ms_pct2 = ((done_ms|length / sel_ms|length)*100)|round|int if sel_ms else 0 %}
         {% set pc = {'Urgent':'#dc2626','High':'#f97316','Normal':'#2563eb','Low':'#6b7280'} %}
-        <div class="m-proj-card{% if show_deleted %} m-proj-deleted{% endif %}" 
+        <div class="m-proj-card{% if show_deleted %} m-proj-deleted{% endif %}"
              id="mcard_{{ p.id }}"
              onclick="mobCardClick(event,'{{ p.id }}')"
              ontouchstart="mobTouchStart(event,'{{ p.id }}')"
              ontouchend="mobTouchEnd(event)"
              style="cursor:pointer;position:relative;">
 
-            {# ── Header ── #}
+            {# -- Header -- #}
             <div class="m-proj-card-header">
                 {# Checkbox (shown in select mode) #}
                 <div class="m-cb-wrap" id="mcbwrap_{{ p.id }}">
@@ -481,7 +464,7 @@
                         onclick="event.stopPropagation();"
                         onchange="updateMobBulk();">
                 </div>
-                <div class="m-proj-avatar" style="background:{% if show_deleted %}linear-gradient(135deg,#ef4444,#dc2626){% else %}linear-gradient(135deg,#7c3aed,#6d28d9){% endif %};">
+                <div class="m-proj-avatar" style="background:{% if show_deleted %}linear-gradient(135deg,#ef4444,#dc2626){% else %}linear-gradient(135deg,#8b5cf6,#6d28d9){% endif %};">
                     {{ p.product_name[0]|upper }}
                 </div>
                 <div class="m-proj-info">
@@ -489,39 +472,44 @@
                     <div class="m-proj-code">{{ p.code }}</div>
                 </div>
                 <div class="m-proj-right">
-                    <span style="background:{{ p.status_color }}22;color:{{ p.status_color }};padding:3px 9px;border-radius:100px;font-size:10.5px;font-weight:700;white-space:nowrap;">{{ p.status_label }}</span>
+                    <span style="background:{{ p.status_color }}22;color:{{ p.status_color }};padding:3px 9px;border-radius:99px;font-size:10.5px;font-weight:700;white-space:nowrap;">{{ p.status_label }}</span>
                     {% if p.priority %}
-                    <span style="background:{{ pc.get(p.priority,'#6b7280') }}15;color:{{ pc.get(p.priority,'#6b7280') }};padding:2px 7px;border-radius:100px;font-size:10px;font-weight:700;">{{ p.priority }}</span>
+                    <span style="background:{{ pc.get(p.priority,'#6b7280') }}15;color:{{ pc.get(p.priority,'#6b7280') }};padding:2px 7px;border-radius:99px;font-size:10px;font-weight:700;">{{ p.priority }}</span>
                     {% endif %}
                     {# 3-dot action button #}
                     <div style="position:static;">
                         <button onclick="event.stopPropagation();mToggle('mact_{{ p.id }}',this)"
-                            style="width:28px;height:28px;border:1px solid #e2e8f0;border-radius:7px;background:#fff;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text3);font-weight:700;line-height:1;">⋯</button>
-                        <div id="mact_{{ p.id }}" style="display:none;position:fixed;right:12px;background:#fff;border:1px solid #e2e8f0;border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,.2);z-index:99999;min-width:170px;overflow:hidden;">
+                            style="width:28px;height:28px;border:1px solid #e2e8f0;border-radius:8px;background:#fff;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text3);font-weight:700;line-height:1;">&#8943;</button>
+                        <div id="mact_{{ p.id }}" style="display:none;position:fixed;right:12px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;box-shadow:0 8px 32px rgba(15,23,42,.2);z-index:99999;min-width:180px;overflow:hidden;">
                             <a href="/npd/projects/{{ p.id }}" onclick="event.stopPropagation();"
-                                style="display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:13px;font-weight:600;color:#2563eb;text-decoration:none;border-bottom:1px solid #e2e8f0;">
-                                👁️ View
+                                style="display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:13px;font-weight:600;color:#2563eb;text-decoration:none;border-bottom:1px solid #f1f5f9;">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                View
                             </a>
-                            {# Download NPD Form — generated PDF, available for both
+                            {# Download NPD Form - generated PDF, available for both
                                active and deleted projects so old records can still
                                be exported. #}
                             <a href="/npd/projects/{{ p.id }}/download-form" onclick="event.stopPropagation();"
-                                style="display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:13px;font-weight:600;color:#7c3aed;text-decoration:none;border-bottom:1px solid #e2e8f0;">
-                                📄 Download NPD Form
+                                style="display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:13px;font-weight:600;color:#7c3aed;text-decoration:none;border-bottom:1px solid #f1f5f9;">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                Download NPD Form
                             </a>
                             {% if not show_deleted %}
                             <a href="/npd/projects/{{ p.id }}/edit" onclick="event.stopPropagation();"
-                                style="display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:13px;font-weight:600;color:var(--text);text-decoration:none;border-bottom:1px solid #e2e8f0;">
-                                ✏️ Edit
+                                style="display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:13px;font-weight:600;color:var(--text);text-decoration:none;border-bottom:1px solid #f1f5f9;">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                Edit
                             </a>
                             {% if perm and perm.can_delete %}<button onclick="event.stopPropagation();openDeleteModal('{{ p.id }}','{{ p.code }}','{{ p.product_name|replace("'","") }}')"
                                 style="display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:13px;font-weight:600;color:#dc2626;background:none;border:none;width:100%;cursor:pointer;font-family:inherit;">
-                                🗑️ Delete
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                                Delete
                             </button>{% endif %}
                             {% else %}
                             {% if npd_sub and npd_sub.restore %}<button onclick="event.stopPropagation();openRestoreModal('{{ p.id }}','{{ p.code }}','{{ p.product_name|replace("'","") }}')"
                                 style="display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:13px;font-weight:600;color:#16a34a;background:none;border:none;width:100%;cursor:pointer;font-family:inherit;">
-                                ♻️ Restore
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.51"/></svg>
+                                Restore
                             </button>{% endif %}
                             {% endif %}
                         </div>
@@ -529,7 +517,7 @@
                 </div>
             </div>
 
-            {# ── Body: Details Grid ── #}
+            {# -- Body: Details Grid -- #}
             <div class="m-proj-body">
                 {% if p.client_name or p.client_company %}
                 <div class="m-info-item">
@@ -551,7 +539,7 @@
                 {% endif %}
                 <div class="m-info-item">
                     <span class="m-info-label">Created</span>
-                    <span class="m-info-val">{{ p.created_at.strftime('%d %b %Y') if p.created_at else '—' }}</span>
+                    <span class="m-info-val">{{ p.created_at.strftime('%d %b %Y') if p.created_at else '-' }}</span>
                 </div>
                 {% if p.project_start_date %}
                 <div class="m-info-item">
@@ -561,7 +549,7 @@
                 {% endif %}
                 <div class="m-info-item">
                     <span class="m-info-label">Age</span>
-                    <span class="m-info-val" style="color:{% if p.project_age > 30 %}#ef4444{% else %}var(--text){% endif %};">{{ p.project_age }}d{% if p.project_age > 30 %} ⚠️{% endif %}</span>
+                    <span class="m-info-val" style="color:{% if p.project_age > 30 %}#ef4444{% else %}var(--text){% endif %};">{{ p.project_age }}d{% if p.project_age > 30 %} <span class="age-warn">!</span>{% endif %}</span>
                 </div>
                 {% if p.assigned_members %}
                 {% set mids = p.assigned_members.split(',') %}
@@ -578,7 +566,7 @@
                 {% endif %}
             </div>
 
-            {# ── Footer: Milestones + Action ── #}
+            {# -- Footer: Milestones + Action -- #}
             <div class="m-proj-footer">
                 {% if sel_ms %}
                 <div class="m-proj-prog">
@@ -594,13 +582,13 @@
         {% endfor %}
     </div>
 
-    {# ── DESKTOP: Table ── #}
+    {# -- DESKTOP: Table -- #}
     {% if show_deleted %}
     <div style="padding:.5rem 1rem;background:#fef2f2;border-bottom:1px solid #fecaca;font-size:.8rem;color:#dc2626;display:flex;align-items:center;gap:.5rem;">
-        🗑️ <strong>Deleted Projects</strong> &mdash; Ye records soft-deleted hain. <strong>♻️ Restore</strong> karke wapas active kar sakte ho.
+        <strong>Deleted Projects</strong> &mdash; Ye records soft-deleted hain. <strong>Restore</strong> karke wapas active kar sakte ho.
     </div>
     {% endif %}
-    {# ── DESKTOP CARD GRID ── #}
+    {# -- DESKTOP CARD GRID -- #}
     <div class="desk-card-grid" id="deskCardGrid" style="display:none;">
         {% for p in projects.items %}
         {% set sel_ms = p.milestones|selectattr('is_selected')|list %}
@@ -609,7 +597,7 @@
         {% set pc = {'Urgent':'#dc2626','High':'#f97316','Normal':'#2563eb','Low':'#6b7280'} %}
         <div class="desk-card{% if show_deleted %} desk-card-deleted{% endif %}" onclick="window.location='/npd/projects/{{ p.id }}'">
             <div class="desk-card-hdr">
-                <div class="desk-card-av" style="background:{% if show_deleted %}linear-gradient(135deg,#ef4444,#dc2626){% else %}linear-gradient(135deg,#7c3aed,#6d28d9){% endif %};">
+                <div class="desk-card-av" style="background:{% if show_deleted %}linear-gradient(135deg,#ef4444,#dc2626){% else %}linear-gradient(135deg,#8b5cf6,#6d28d9){% endif %};">
                     {{ p.product_name[0]|upper }}
                 </div>
                 <div class="desk-card-info">
@@ -617,21 +605,21 @@
                     <div class="desk-card-code">{{ p.code }}</div>
                 </div>
                 <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;">
-                    <span style="background:{{ p.status_color }}22;color:{{ p.status_color }};padding:3px 9px;border-radius:100px;font-size:10.5px;font-weight:700;white-space:nowrap;">{{ p.status_label }}</span>
-                    {% if p.priority %}<span style="background:{{ pc.get(p.priority,'#6b7280') }}15;color:{{ pc.get(p.priority,'#6b7280') }};padding:2px 7px;border-radius:100px;font-size:10px;font-weight:700;">{{ p.priority }}</span>{% endif %}
+                    <span style="background:{{ p.status_color }}22;color:{{ p.status_color }};padding:3px 9px;border-radius:99px;font-size:10.5px;font-weight:700;white-space:nowrap;">{{ p.status_label }}</span>
+                    {% if p.priority %}<span style="background:{{ pc.get(p.priority,'#6b7280') }}15;color:{{ pc.get(p.priority,'#6b7280') }};padding:2px 7px;border-radius:99px;font-size:10px;font-weight:700;">{{ p.priority }}</span>{% endif %}
                     {# Actions #}
                     <div style="position:static;">
                         <button onclick="event.stopPropagation();mToggle('dact_{{ p.id }}',this)"
-                            style="width:28px;height:28px;border:1px solid #e2e8f0;border-radius:7px;background:#fff;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text3);font-weight:700;">⋯</button>
-                        <div id="dact_{{ p.id }}" style="display:none;position:fixed;background:#fff;border:1px solid #e2e8f0;border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,.2);z-index:99999;min-width:170px;overflow:hidden;">
-                            {% if perm and perm.can_view %}<a href="/npd/projects/{{ p.id }}" onclick="event.stopPropagation();" style="display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:13px;font-weight:600;color:#2563eb;text-decoration:none;border-bottom:1px solid #f1f5f9;">👁️ View</a>{% endif %}
-                            {# Download NPD Form — see mobile menu above #}
-                            <a href="/npd/projects/{{ p.id }}/download-form" onclick="event.stopPropagation();" style="display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:13px;font-weight:600;color:#7c3aed;text-decoration:none;border-bottom:1px solid #f1f5f9;">📄 Download NPD Form</a>
+                            style="width:28px;height:28px;border:1px solid #e2e8f0;border-radius:8px;background:#fff;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text3);font-weight:700;">&#8943;</button>
+                        <div id="dact_{{ p.id }}" style="display:none;position:fixed;background:#fff;border:1px solid #e2e8f0;border-radius:12px;box-shadow:0 8px 32px rgba(15,23,42,.2);z-index:99999;min-width:180px;overflow:hidden;">
+                            {% if perm and perm.can_view %}<a href="/npd/projects/{{ p.id }}" onclick="event.stopPropagation();" style="display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:13px;font-weight:600;color:#2563eb;text-decoration:none;border-bottom:1px solid #f1f5f9;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> View</a>{% endif %}
+                            {# Download NPD Form - see mobile menu above #}
+                            <a href="/npd/projects/{{ p.id }}/download-form" onclick="event.stopPropagation();" style="display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:13px;font-weight:600;color:#7c3aed;text-decoration:none;border-bottom:1px solid #f1f5f9;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Download NPD Form</a>
                             {% if not show_deleted %}
-                            <a href="/npd/projects/{{ p.id }}/edit" onclick="event.stopPropagation();" style="display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:13px;font-weight:600;color:var(--text);text-decoration:none;border-bottom:1px solid #f1f5f9;">✏️ Edit</a>
-                            <button onclick="event.stopPropagation();openDeleteModal('{{ p.id }}','{{ p.code }}','{{ p.product_name|replace("'","") }}')" style="display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:13px;font-weight:600;color:#dc2626;background:none;border:none;width:100%;cursor:pointer;font-family:inherit;">🗑️ Delete</button>
+                            <a href="/npd/projects/{{ p.id }}/edit" onclick="event.stopPropagation();" style="display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:13px;font-weight:600;color:var(--text);text-decoration:none;border-bottom:1px solid #f1f5f9;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Edit</a>
+                            <button onclick="event.stopPropagation();openDeleteModal('{{ p.id }}','{{ p.code }}','{{ p.product_name|replace("'","") }}')" style="display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:13px;font-weight:600;color:#dc2626;background:none;border:none;width:100%;cursor:pointer;font-family:inherit;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg> Delete</button>
                             {% else %}
-                            {% if npd_sub and npd_sub.restore %}<button onclick="event.stopPropagation();openRestoreModal('{{ p.id }}','{{ p.code }}','{{ p.product_name|replace("'","") }}')" style="display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:13px;font-weight:600;color:#16a34a;background:none;border:none;width:100%;cursor:pointer;font-family:inherit;">♻️ Restore</button>{% endif %}
+                            {% if npd_sub and npd_sub.restore %}<button onclick="event.stopPropagation();openRestoreModal('{{ p.id }}','{{ p.code }}','{{ p.product_name|replace("'","") }}')" style="display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:13px;font-weight:600;color:#16a34a;background:none;border:none;width:100%;cursor:pointer;font-family:inherit;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.51"/></svg> Restore</button>{% endif %}
                             {% endif %}
                         </div>
                     </div>
@@ -647,11 +635,11 @@
                 {% if p.reference_brand %}
                 <div class="desk-info-item"><span class="desk-info-label">Ref Brand</span><span class="desk-info-val">{{ p.reference_brand }}</span></div>
                 {% endif %}
-                <div class="desk-info-item"><span class="desk-info-label">Created</span><span class="desk-info-val">{{ p.created_at.strftime('%d %b %Y') if p.created_at else '—' }}</span></div>
+                <div class="desk-info-item"><span class="desk-info-label">Created</span><span class="desk-info-val">{{ p.created_at.strftime('%d %b %Y') if p.created_at else '-' }}</span></div>
                 {% if p.project_start_date %}
                 <div class="desk-info-item"><span class="desk-info-label">Start Date</span><span class="desk-info-val">{{ p.project_start_date.strftime('%d %b %Y') }}</span></div>
                 {% endif %}
-                <div class="desk-info-item"><span class="desk-info-label">Age</span><span class="desk-info-val" style="color:{% if p.project_age > 30 %}#ef4444{% else %}var(--text){% endif %};">{{ p.project_age }}d{% if p.project_age > 30 %} ⚠️{% endif %}</span></div>
+                <div class="desk-info-item"><span class="desk-info-label">Age</span><span class="desk-info-val" style="color:{% if p.project_age > 30 %}#ef4444{% else %}var(--text){% endif %};">{{ p.project_age }}d{% if p.project_age > 30 %} <span class="age-warn">!</span>{% endif %}</span></div>
                 {% if p.assigned_members %}{% set mids = p.assigned_members.split(',') %}
                 <div class="desk-info-item"><span class="desk-info-label">Members</span><span class="desk-info-val">{{ mids|length }} member{{ 's' if mids|length > 1 else '' }}</span></div>
                 {% endif %}
@@ -692,31 +680,31 @@
                 <td class="row-check"><input type="checkbox" class="row-cb row-check-item" value="{{ p.id }}" onchange="updateNpdBulk()"></td>
                 <td style="color:#94a3b8;font-size:11px;font-weight:600;">{{ loop.index + (projects.page-1)*25 }}</td>
                 {% for col in grid_cols %}
-                <td>{% if col == 'created_at' %}<span style="font-size:.78rem;color:var(--text3);">{{ p.created_at.strftime('%d-%b-%y') if p.created_at else '—' }}</span>
+                <td>{% if col == 'created_at' %}<span style="font-size:.78rem;color:var(--text3);">{{ p.created_at.strftime('%d-%b-%y') if p.created_at else '-' }}</span>
                 {% elif col == 'code' %}{% if perm and perm.can_view %}<a href="/npd/projects/{{ p.id }}" style="font-family:var(--font-mono);font-weight:700;font-size:.8rem;color:#7c3aed;text-decoration:none;">{{ p.code }}</a>{% else %}<span style="font-family:var(--font-mono);font-weight:700;font-size:.8rem;">{{ p.code }}</span>{% endif %}
-                {% elif col in ('category','product_category') %}<span style="font-size:.8rem;color:var(--text2);">{{ p.product_category or '—' }}</span>
-                {% elif col == 'client_name' %}<span style="font-size:.8rem;font-weight:600;">{{ p.client_name or p.client_company or '—' }}</span>
-                {% elif col == 'client_company' %}<span style="font-size:.8rem;">{{ p.client_company or '—' }}</span>
-                {% elif col == 'client_email' %}<span style="font-size:.78rem;color:var(--text2);">{{ p.client_email or '—' }}</span>
-                {% elif col == 'client_phone' %}<span style="font-size:.78rem;">{{ p.client_phone or '—' }}</span>
+                {% elif col in ('category','product_category') %}<span style="font-size:.8rem;color:var(--text2);">{{ p.product_category or '-' }}</span>
+                {% elif col == 'client_name' %}<span style="font-size:.8rem;font-weight:600;">{{ p.client_name or p.client_company or '-' }}</span>
+                {% elif col == 'client_company' %}<span style="font-size:.8rem;">{{ p.client_company or '-' }}</span>
+                {% elif col == 'client_email' %}<span style="font-size:.78rem;color:var(--text2);">{{ p.client_email or '-' }}</span>
+                {% elif col == 'client_phone' %}<span style="font-size:.78rem;">{{ p.client_phone or '-' }}</span>
                 {% elif col == 'product_name' %}<div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.83rem;" title="{{ p.product_name }}">{{ p.product_name }}</div>
-                {% elif col == 'assigned_members' %}{% if p.assigned_members %}{% set mids = p.assigned_members.split(',') %}<span style="font-size:.8rem;color:var(--text2);">{{ mids|length }} member{{ 's' if mids|length > 1 else '' }}</span>{% else %}—{% endif %}
-                {% elif col == 'reference_brand' %}<span style="font-size:.8rem;color:var(--text2);">{{ p.reference_brand or '—' }}</span>
-                {% elif col == 'priority' %}{% if p.priority %}<span style="background:{{ pc.get(p.priority,'#6b7280') }}22;color:{{ pc.get(p.priority,'#6b7280') }};padding:2px 8px;border-radius:100px;font-size:.72rem;font-weight:700;">{{ p.priority }}</span>{% else %}—{% endif %}
-                {% elif col == 'last_connected' %}{% if p.last_connected %}{% set diff = (now() - p.last_connected).days %}<span style="font-size:.78rem;color:var(--text3);">{% if diff == 0 %}Today{% elif diff == 1 %}Yesterday{% elif diff < 30 %}{{ diff }} days ago{% elif diff < 60 %}1 month ago{% else %}{{ (diff // 30) }} months ago{% endif %}</span>{% else %}—{% endif %}
-                {% elif col == 'milestones' %}{% if sel_ms %}<div style="font-size:.72rem;color:var(--text3);margin-bottom:2px;">{{ done_ms|length }}/{{ sel_ms|length }}</div><div class="prog-wrap" style="margin:0 auto;"><div class="prog-fill" style="width:{{ ms_pct }}%;background:{% if ms_pct==100 %}#22c55e{% else %}#7c3aed{% endif %};"></div></div>{% else %}—{% endif %}
-                {% elif col == 'project_age' %}<span style="font-size:.78rem;color:var(--text3);">{{ p.project_age }}d{% if p.project_age>30 and p.status not in ('finish','cancelled') %} <span style="color:#ef4444;">⚠️</span>{% endif %}</span>
+                {% elif col == 'assigned_members' %}{% if p.assigned_members %}{% set mids = p.assigned_members.split(',') %}<span style="font-size:.8rem;color:var(--text2);">{{ mids|length }} member{{ 's' if mids|length > 1 else '' }}</span>{% else %}-{% endif %}
+                {% elif col == 'reference_brand' %}<span style="font-size:.8rem;color:var(--text2);">{{ p.reference_brand or '-' }}</span>
+                {% elif col == 'priority' %}{% if p.priority %}<span style="background:{{ pc.get(p.priority,'#6b7280') }}22;color:{{ pc.get(p.priority,'#6b7280') }};padding:2px 8px;border-radius:99px;font-size:.72rem;font-weight:700;">{{ p.priority }}</span>{% else %}-{% endif %}
+                {% elif col == 'last_connected' %}{% if p.last_connected %}{% set diff = (now() - p.last_connected).days %}<span style="font-size:.78rem;color:var(--text3);">{% if diff == 0 %}Today{% elif diff == 1 %}Yesterday{% elif diff < 30 %}{{ diff }} days ago{% elif diff < 60 %}1 month ago{% else %}{{ (diff // 30) }} months ago{% endif %}</span>{% else %}-{% endif %}
+                {% elif col == 'milestones' %}{% if sel_ms %}<div style="font-size:.72rem;color:var(--text3);margin-bottom:2px;">{{ done_ms|length }}/{{ sel_ms|length }}</div><div class="prog-wrap" style="margin:0 auto;"><div class="prog-fill" style="width:{{ ms_pct }}%;background:{% if ms_pct==100 %}#22c55e{% else %}#7c3aed{% endif %};"></div></div>{% else %}-{% endif %}
+                {% elif col == 'project_age' %}<span style="font-size:.78rem;color:var(--text3);">{{ p.project_age }}d{% if p.project_age>30 and p.status not in ('finish','cancelled') %} <span class="age-warn">!</span>{% endif %}</span>
                 {% elif col == 'status' %}<span class="badge" style="background:{{ p.status_color }}22;color:{{ p.status_color }};font-size:.72rem;">{{ p.status_label }}</span>
-                {% elif col == 'project_start_date' %}<span style="font-size:.78rem;color:var(--text3);">{{ p.project_start_date.strftime('%d-%m-%Y') if p.project_start_date else '—' }}</span>
-                {% elif col == 'market_level' %}<span style="font-size:.78rem;color:var(--text2);">{{ p.market_level or '—' }}</span>
-                {% elif col == 'npd_fee_paid' %}{% if p.npd_fee_paid %}<span style="color:#22c55e;font-size:.78rem;font-weight:700;">✅ Paid</span>{% else %}<span style="color:#ef4444;font-size:.78rem;">⏳ Pending</span>{% endif %}
-                {% elif col == 'area_of_application' %}<span style="font-size:.78rem;color:var(--text2);">{{ p.area_of_application or '—' }}</span>
-                {% elif col == 'viscosity' %}<span style="font-size:.78rem;color:var(--text2);">{{ p.viscosity or '—' }}</span>
-                {% elif col == 'ph_value' %}<span style="font-size:.78rem;color:var(--text2);">{{ p.ph_value or '—' }}</span>
-                {% elif col == 'fragrance' %}<span style="font-size:.78rem;color:var(--text2);">{{ p.fragrance or '—' }}</span>
-                {% elif col == 'packaging_type' %}<span style="font-size:.78rem;color:var(--text2);">{{ p.packaging_type or '—' }}</span>
-                {% elif col == 'costing_range' %}<span style="font-size:.78rem;color:var(--text2);">{{ p.costing_range or '—' }}</span>
-                {% else %}—{% endif %}</td>
+                {% elif col == 'project_start_date' %}<span style="font-size:.78rem;color:var(--text3);">{{ p.project_start_date.strftime('%d-%m-%Y') if p.project_start_date else '-' }}</span>
+                {% elif col == 'market_level' %}<span style="font-size:.78rem;color:var(--text2);">{{ p.market_level or '-' }}</span>
+                {% elif col == 'npd_fee_paid' %}{% if p.npd_fee_paid %}<span style="color:#16a34a;font-size:.72rem;font-weight:700;background:#dcfce7;border:1px solid #bbf7d0;padding:2px 9px;border-radius:99px;">Paid</span>{% else %}<span style="color:#b45309;font-size:.72rem;font-weight:700;background:#fef3c7;border:1px solid #fde68a;padding:2px 9px;border-radius:99px;">Pending</span>{% endif %}
+                {% elif col == 'area_of_application' %}<span style="font-size:.78rem;color:var(--text2);">{{ p.area_of_application or '-' }}</span>
+                {% elif col == 'viscosity' %}<span style="font-size:.78rem;color:var(--text2);">{{ p.viscosity or '-' }}</span>
+                {% elif col == 'ph_value' %}<span style="font-size:.78rem;color:var(--text2);">{{ p.ph_value or '-' }}</span>
+                {% elif col == 'fragrance' %}<span style="font-size:.78rem;color:var(--text2);">{{ p.fragrance or '-' }}</span>
+                {% elif col == 'packaging_type' %}<span style="font-size:.78rem;color:var(--text2);">{{ p.packaging_type or '-' }}</span>
+                {% elif col == 'costing_range' %}<span style="font-size:.78rem;color:var(--text2);">{{ p.costing_range or '-' }}</span>
+                {% else %}-{% endif %}</td>
                 {% endfor %}
                 <td style="text-align:right;padding-right:.75rem;">
                     {% if show_deleted %}
@@ -726,13 +714,13 @@
                     </button>
                     {% else %}
                     <div class="act-wrap">
-                        <button class="act-dots" onclick="toggleAct(this,event)" title="Actions">⋯</button>
+                        <button class="act-dots" onclick="toggleAct(this,event)" title="Actions">&#8943;</button>
                         <div class="act-menu">
                             {% if perm and perm.can_view %}<a href="/npd/projects/{{ p.id }}" class="act-item" style="border-bottom:1px solid #f1f5f9;">
                                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                                 <span style="color:#2563eb;">View</span>
                             </a>{% endif %}
-                            {# Download NPD Form — same link in mobile + desktop card menus too.
+                            {# Download NPD Form - same link in mobile + desktop card menus too.
                                No permission gate: we already check visibility on the route,
                                and form download is a non-destructive read action. #}
                             <a href="/npd/projects/{{ p.id }}/download-form" class="act-item" style="border-bottom:1px solid #f1f5f9;">
@@ -762,33 +750,75 @@
     </div>{# end deskTableWrap #}
     {% if projects.pages > 1 %}
     <div style="padding:.75rem 1rem;display:flex;gap:.4rem;align-items:center;border-top:1px solid var(--border);">
-        {% if projects.has_prev %}<a href="?page={{ projects.prev_num }}&q={{ q }}&status={{ status }}&sc={{ sc_id }}" class="btn btn-outline btn-xs">← Prev</a>{% endif %}
+        {% if projects.has_prev %}<a href="?page={{ projects.prev_num }}&q={{ q }}&status={{ status }}&sc={{ sc_id }}" class="btn btn-outline btn-xs">&larr; Prev</a>{% endif %}
         <span style="font-size:.78rem;color:var(--text3);">Page {{ projects.page }} of {{ projects.pages }} ({{ projects.total }} projects)</span>
-        {% if projects.has_next %}<a href="?page={{ projects.next_num }}&q={{ q }}&status={{ status }}&sc={{ sc_id }}" class="btn btn-outline btn-xs">Next →</a>{% endif %}
+        {% if projects.has_next %}<a href="?page={{ projects.next_num }}&q={{ q }}&status={{ status }}&sc={{ sc_id }}" class="btn btn-outline btn-xs">Next &rarr;</a>{% endif %}
     </div>
     {% endif %}
     {% else %}
     <div style="text-align:center;padding:3rem;color:var(--text3);">
-        <div style="font-size:2.5rem;margin-bottom:.5rem;">🧪</div>
+        <div style="display:flex;justify-content:center;margin-bottom:.7rem;color:#cbd5e1;">
+            <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2v6a2 2 0 0 0 .245.96l5.51 10.08A2 2 0 0 1 18 22H6a2 2 0 0 1-1.755-2.96l5.51-10.08A2 2 0 0 0 10 8V2"/><path d="M6.453 15h11.094"/><path d="M8.5 2h7"/></svg>
+        </div>
         <div style="font-weight:700;">No NPD projects found</div>
-        {% if perm and perm.can_add %}<a href="/npd/npd-new" style="color:#7c3aed;font-weight:600;">+ Create NPD Project →</a>{% endif %}
+        {% if perm and perm.can_add %}<a href="/npd/npd-new" style="color:#7c3aed;font-weight:600;">+ Create NPD Project &rarr;</a>{% endif %}
     </div>
     {% endif %}
 </div>
-{# ── Mobile Bulk Select Bar ── #}
+
+{# -- Import Modal (pehle ye style block ke andar tha - render nahi hota tha, FIX) -- #}
+<div id="npdImportModal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:16px;width:100%;max-width:480px;box-shadow:0 24px 64px rgba(15,23,42,.2);overflow:hidden;">
+    <div style="background:linear-gradient(135deg,#8b5cf6,#6d28d9);color:#fff;padding:1rem 1.25rem;display:flex;align-items:center;justify-content:space-between;">
+      <span style="font-weight:700;font-size:1rem;display:inline-flex;align-items:center;gap:8px;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Import NPD Projects
+      </span>
+      <button onclick="document.getElementById('npdImportModal').style.display='none'" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:28px;height:28px;border-radius:99px;cursor:pointer;font-size:1rem;line-height:1;">&times;</button>
+    </div>
+    <div style="padding:1.5rem;">
+      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:.85rem 1rem;margin-bottom:1.2rem;font-size:.82rem;color:#166534;">
+        <strong>Instructions:</strong><br>
+        1. Download the sample template below<br>
+        2. Fill in your data (Product Name* is mandatory)<br>
+        3. Upload the filled CSV file<br>
+        4. Date format: <strong>DD-MM-YYYY</strong>
+      </div>
+      <a href="/npd/npd-projects/import" style="display:inline-flex;align-items:center;gap:6px;padding:.5rem 1.1rem;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;border-radius:99px;font-size:.82rem;font-weight:700;text-decoration:none;margin-bottom:1.2rem;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download Sample Template
+      </a>
+      <form method="POST" action="/npd/npd-projects/import" enctype="multipart/form-data">
+        <div style="border:2px dashed #ddd6fe;border-radius:12px;padding:1.5rem;text-align:center;background:#faf5ff;margin-bottom:1rem;">
+          <div style="display:flex;justify-content:center;margin-bottom:.5rem;color:#7c3aed;">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>
+          </div>
+          <div style="font-size:.85rem;font-weight:600;color:var(--text);margin-bottom:.5rem;">Select CSV File</div>
+          <input type="file" name="file" accept=".csv" required style="font-size:.82rem;width:100%;">
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:.6rem;">
+          <button type="button" onclick="document.getElementById('npdImportModal').style.display='none'" style="padding:.5rem 1.1rem;border:1.5px solid #e2e8f0;border-radius:99px;background:#fff;font-size:.83rem;font-weight:700;cursor:pointer;font-family:inherit;">Cancel</button>
+          <button type="submit" style="padding:.5rem 1.3rem;background:linear-gradient(180deg,#8b5cf6,#6d28d9);color:#fff;border:none;border-radius:99px;font-size:.83rem;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 2px 8px rgba(124,58,237,.3), inset 0 1px 0 rgba(255,255,255,.2);">Import</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{# -- Mobile Bulk Select Bar -- #}
 <div class="m-sel-bar" id="mobSelBar">
   <span class="m-sel-count" id="mobSelCount">0 selected</span>
   <div style="display:flex;gap:8px;">
     <button class="m-sel-cancel" onclick="toggleMobSelect()">Cancel</button>
-    <button class="m-sel-del" onclick="npdMobBulkDelete()">🗑️ Delete</button>
+    <button class="m-sel-del" onclick="npdMobBulkDelete()">Delete</button>
   </div>
 </div>
 
-{# ── Columns Panel (shared mobile + desktop) ── #}
-<div id="npdColPanel" style="display:none;position:fixed;top:auto;right:12px;z-index:99999;background:#fff;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.2);border:1px solid var(--border);padding:1rem;width:240px;">
+{# -- Columns Panel (shared mobile + desktop) -- #}
+<div id="npdColPanel" style="display:none;position:fixed;top:auto;right:12px;z-index:99999;background:#fff;border-radius:14px;box-shadow:0 8px 32px rgba(15,23,42,.2);border:1px solid var(--border);padding:1rem;width:240px;">
   <div style="font-size:.75rem;font-weight:800;color:var(--text2);margin-bottom:.6rem;display:flex;align-items:center;justify-content:space-between;">
     Select Columns
-    <button onclick="document.getElementById('npdColPanel').style.display='none';_colPanelOpen=false;" style="background:none;border:none;font-size:1rem;cursor:pointer;color:var(--text3);">✕</button>
+    <button onclick="document.getElementById('npdColPanel').style.display='none';_colPanelOpen=false;" style="background:none;border:none;font-size:1rem;cursor:pointer;color:var(--text3);">&times;</button>
   </div>
   <div style="display:flex;flex-direction:column;gap:.3rem;max-height:260px;overflow-y:auto;">
     {% for key, label in all_cols.items() %}
@@ -799,8 +829,8 @@
     {% endfor %}
   </div>
   <div style="margin-top:.75rem;display:flex;gap:.4rem;">
-    <button onclick="saveNpdCols()" style="flex:1;padding:6px;border-radius:7px;background:#7c3aed;color:#fff;border:none;font-size:.8rem;font-weight:700;cursor:pointer;">Apply</button>
-    <button onclick="document.getElementById('npdColPanel').style.display='none';_colPanelOpen=false;" style="padding:6px 10px;border-radius:7px;background:#f1f5f9;border:1px solid var(--border);font-size:.8rem;cursor:pointer;">✕</button>
+    <button onclick="saveNpdCols()" style="flex:1;padding:7px;border-radius:99px;background:linear-gradient(180deg,#8b5cf6,#6d28d9);color:#fff;border:none;font-size:.8rem;font-weight:700;cursor:pointer;font-family:inherit;">Apply</button>
+    <button onclick="document.getElementById('npdColPanel').style.display='none';_colPanelOpen=false;" style="padding:7px 12px;border-radius:99px;background:#fff;border:1.5px solid var(--border);font-size:.8rem;cursor:pointer;font-family:inherit;">&times;</button>
   </div>
 </div>
 <script>
@@ -831,7 +861,7 @@ window.addEventListener('scroll',function(){
   document.querySelectorAll('.act-menu.open').forEach(function(m){m.classList.remove('open');});
 }, false);
 
-/* ── Toolbar functions ── */
+/* -- Toolbar functions -- */
 function toggleNpdStatusDd(){
   var m=document.getElementById('statusDdMenu');
   m.style.display=m.style.display==='block'?'none':'block';
@@ -841,16 +871,22 @@ function toggleNpdFilter(){
   var s=document.getElementById('npdSortPanel');
   s.style.display='none';
   p.style.display=p.style.display==='none'?'block':'none';
-  document.getElementById('filterBtn').style.background=p.style.display==='block'?'#f5f3ff':'#fff';
-  document.getElementById('filterBtn').style.color=p.style.display==='block'?'#7c3aed':'var(--text2)';
+  var fb=document.getElementById('filterBtn');
+  if(fb){
+    fb.style.background=p.style.display==='block'?'#f5f3ff':'#fff';
+    fb.style.color=p.style.display==='block'?'#7c3aed':'var(--text2)';
+  }
 }
 function toggleNpdSort(){
   var p=document.getElementById('npdSortPanel');
   var f=document.getElementById('npdFilterPanel');
   f.style.display='none';
   p.style.display=p.style.display==='none'?'block':'none';
-  document.getElementById('sortBtn').style.background=p.style.display==='block'?'#f5f3ff':'#fff';
-  document.getElementById('sortBtn').style.color=p.style.display==='block'?'#7c3aed':'var(--text2)';
+  var sb=document.getElementById('sortBtn');
+  if(sb){
+    sb.style.background=p.style.display==='block'?'#f5f3ff':'#fff';
+    sb.style.color=p.style.display==='block'?'#7c3aed':'var(--text2)';
+  }
 }
 function npdSearch(val){
   clearTimeout(window._npdSt);
@@ -875,7 +911,7 @@ function npdExport(){
   window.location.href=url.toString();
 }
 
-/* ── Columns Panel ── */
+/* -- Columns Panel -- */
 var _colPanelOpen=false;
 function toggleNpdColPanel(e){
   e&&e.stopPropagation();
@@ -908,73 +944,73 @@ function saveNpdCols(){
 }
 </script>
 
-{# ── Bulk Delete Modal ── #}
-<div id="bulkDeleteModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;align-items:center;justify-content:center;">
-  <div style="background:#fff;border-radius:14px;width:100%;max-width:420px;box-shadow:0 24px 60px rgba(0,0,0,.2);overflow:hidden;">
-    <div style="background:#dc2626;color:#fff;padding:1rem 1.25rem;display:flex;align-items:center;gap:.75rem;">
-      <span style="font-size:1.3rem;">🗑️</span>
+{# -- Bulk Delete Modal -- #}
+<div id="bulkDeleteModal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:16px;width:100%;max-width:420px;box-shadow:0 24px 60px rgba(15,23,42,.2);overflow:hidden;">
+    <div style="background:linear-gradient(135deg,#ef4444,#b91c1c);color:#fff;padding:1rem 1.25rem;display:flex;align-items:center;gap:.75rem;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
       <div><div style="font-weight:700;font-size:1rem;">Delete Selected Projects</div>
       <div style="font-size:.8rem;opacity:.85;" id="bulkDelCount"></div></div>
     </div>
     <div style="padding:1.25rem 1.5rem;">
       <p style="font-size:.85rem;color:#374151;margin:0;">Selected projects <strong>Deleted</strong> tab mein chale jayenge. Baad mein restore bhi kar sakte hain.</p>
     </div>
-    <div style="padding:.9rem 1.5rem;border-top:1px solid #e5e7eb;display:flex;justify-content:flex-end;gap:.6rem;background:#f9fafb;">
-      <button onclick="closeBulkDeleteModal()" style="padding:.45rem 1.1rem;border:1px solid #e2e8f0;border-radius:8px;background:#fff;font-size:.83rem;font-weight:600;cursor:pointer;">Cancel</button>
-      <button onclick="confirmBulkDelete()" style="padding:.45rem 1.2rem;background:#dc2626;color:#fff;border:none;border-radius:8px;font-size:.83rem;font-weight:700;cursor:pointer;">🗑️ Delete All</button>
+    <div style="padding:.9rem 1.5rem;border-top:1px solid #e5e7eb;display:flex;justify-content:flex-end;gap:.6rem;background:#f8fafc;">
+      <button onclick="closeBulkDeleteModal()" style="padding:.5rem 1.1rem;border:1.5px solid #e2e8f0;border-radius:99px;background:#fff;font-size:.83rem;font-weight:700;cursor:pointer;font-family:inherit;">Cancel</button>
+      <button onclick="confirmBulkDelete()" style="padding:.5rem 1.2rem;background:linear-gradient(180deg,#ef4444,#b91c1c);color:#fff;border:none;border-radius:99px;font-size:.83rem;font-weight:700;cursor:pointer;font-family:inherit;">Delete All</button>
     </div>
   </div>
 </div>
 
-{# ── Restore Confirm Modal ── #}
-<div id="restoreModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;align-items:center;justify-content:center;">
-  <div style="background:#fff;border-radius:14px;width:100%;max-width:420px;box-shadow:0 24px 60px rgba(0,0,0,.2);overflow:hidden;animation:fadeUp .2s ease;">
-    <div style="background:#16a34a;color:#fff;padding:1rem 1.25rem;display:flex;align-items:center;gap:.75rem;">
-      <span style="font-size:1.4rem;">♻️</span>
+{# -- Restore Confirm Modal -- #}
+<div id="restoreModal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:16px;width:100%;max-width:420px;box-shadow:0 24px 60px rgba(15,23,42,.2);overflow:hidden;">
+    <div style="background:linear-gradient(135deg,#22c55e,#15803d);color:#fff;padding:1rem 1.25rem;display:flex;align-items:center;gap:.75rem;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.51"/></svg>
       <div>
         <div style="font-weight:700;font-size:1rem;">Restore Project</div>
         <div style="font-size:.8rem;opacity:.85;">Is project ko wapas active karein?</div>
       </div>
     </div>
     <div style="padding:1.25rem 1.5rem;">
-      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:.85rem 1rem;margin-bottom:1.2rem;">
+      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:.85rem 1rem;margin-bottom:1.2rem;">
         <div style="font-size:.78rem;color:#166534;font-weight:600;margin-bottom:.25rem;">Project</div>
         <div id="restoreCode" style="font-family:monospace;font-weight:800;color:#15803d;font-size:.95rem;"></div>
         <div id="restoreName" style="font-size:.82rem;color:#374151;margin-top:.2rem;"></div>
       </div>
       <p style="font-size:.85rem;color:#374151;margin:0;">Yeh project <strong>Deleted</strong> tab se hata ke <strong>Active</strong> list mein aa jayega.</p>
     </div>
-    <div style="padding:.9rem 1.5rem;border-top:1px solid #e5e7eb;display:flex;justify-content:flex-end;gap:.6rem;background:#f9fafb;">
-      <button onclick="closeRestoreModal()" style="padding:.45rem 1.1rem;border:1px solid #e2e8f0;border-radius:8px;background:#fff;font-size:.83rem;font-weight:600;cursor:pointer;color:var(--text2);">Cancel</button>
+    <div style="padding:.9rem 1.5rem;border-top:1px solid #e5e7eb;display:flex;justify-content:flex-end;gap:.6rem;background:#f8fafc;">
+      <button onclick="closeRestoreModal()" style="padding:.5rem 1.1rem;border:1.5px solid #e2e8f0;border-radius:99px;background:#fff;font-size:.83rem;font-weight:700;cursor:pointer;color:var(--text2);font-family:inherit;">Cancel</button>
       <form id="restoreForm" method="POST" action="" style="margin:0;">
-        <button type="submit" style="padding:.45rem 1.2rem;background:#16a34a;color:#fff;border:none;border-radius:8px;font-size:.83rem;font-weight:700;cursor:pointer;">♻️ Restore</button>
+        <button type="submit" style="padding:.5rem 1.2rem;background:linear-gradient(180deg,#22c55e,#15803d);color:#fff;border:none;border-radius:99px;font-size:.83rem;font-weight:700;cursor:pointer;font-family:inherit;">Restore</button>
       </form>
     </div>
   </div>
 </div>
 
-{# ── Delete Confirm Modal ── #}
-<div id="deleteModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;align-items:center;justify-content:center;">
-  <div style="background:#fff;border-radius:14px;width:100%;max-width:420px;box-shadow:0 24px 60px rgba(0,0,0,.2);overflow:hidden;animation:fadeUp .2s ease;">
-    <div style="background:#dc2626;color:#fff;padding:1rem 1.25rem;display:flex;align-items:center;gap:.75rem;">
-      <span style="font-size:1.4rem;">🗑️</span>
+{# -- Delete Confirm Modal -- #}
+<div id="deleteModal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:16px;width:100%;max-width:420px;box-shadow:0 24px 60px rgba(15,23,42,.2);overflow:hidden;">
+    <div style="background:linear-gradient(135deg,#ef4444,#b91c1c);color:#fff;padding:1rem 1.25rem;display:flex;align-items:center;gap:.75rem;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
       <div>
         <div style="font-weight:700;font-size:1rem;">Delete Project</div>
         <div style="font-size:.8rem;opacity:.85;">Kya aap sure hain?</div>
       </div>
     </div>
     <div style="padding:1.25rem 1.5rem;">
-      <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:.85rem 1rem;margin-bottom:1.2rem;">
+      <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:.85rem 1rem;margin-bottom:1.2rem;">
         <div style="font-size:.78rem;color:#dc2626;font-weight:600;margin-bottom:.25rem;">Project</div>
         <div id="deleteCode" style="font-family:monospace;font-weight:800;color:#dc2626;font-size:.95rem;"></div>
         <div id="deleteName" style="font-size:.82rem;color:#374151;margin-top:.2rem;"></div>
       </div>
       <p style="font-size:.85rem;color:#374151;margin:0;">Yeh project <strong>Deleted</strong> tab mein chala jayega. Baad mein restore bhi kar sakte hain.</p>
     </div>
-    <div style="padding:.9rem 1.5rem;border-top:1px solid #e5e7eb;display:flex;justify-content:flex-end;gap:.6rem;background:#f9fafb;">
-      <button onclick="closeDeleteModal()" style="padding:.45rem 1.1rem;border:1px solid #e2e8f0;border-radius:8px;background:#fff;font-size:.83rem;font-weight:600;cursor:pointer;color:var(--text2);">Cancel</button>
+    <div style="padding:.9rem 1.5rem;border-top:1px solid #e5e7eb;display:flex;justify-content:flex-end;gap:.6rem;background:#f8fafc;">
+      <button onclick="closeDeleteModal()" style="padding:.5rem 1.1rem;border:1.5px solid #e2e8f0;border-radius:99px;background:#fff;font-size:.83rem;font-weight:700;cursor:pointer;color:var(--text2);font-family:inherit;">Cancel</button>
       <form id="deleteForm" method="POST" action="" style="margin:0;">
-        <button type="submit" style="padding:.45rem 1.2rem;background:#dc2626;color:#fff;border:none;border-radius:8px;font-size:.83rem;font-weight:700;cursor:pointer;">🗑️ Delete</button>
+        <button type="submit" style="padding:.5rem 1.2rem;background:linear-gradient(180deg,#ef4444,#b91c1c);color:#fff;border:none;border-radius:99px;font-size:.83rem;font-weight:700;cursor:pointer;font-family:inherit;">Delete</button>
       </form>
     </div>
   </div>
@@ -983,7 +1019,7 @@ function saveNpdCols(){
 
 
 <script>
-// ── Mobile Select Mode ──
+// -- Mobile Select Mode --
 var _mobSelectMode = false;
 var _mobLongPressTimer = null;
 
@@ -1021,7 +1057,7 @@ function updateMobBulk() {
   // Bottom bar
   if(bar) bar.classList.toggle('show', n > 0);
   if(count) count.textContent = n + ' selected';
-  // Top row buttons — show only when items selected
+  // Top row buttons - show only when items selected
   if(selBtns) selBtns.style.display = (_mobSelectMode && n > 0) ? 'flex' : 'none';
   // Highlight selected cards
   document.querySelectorAll('.mob-check-item').forEach(function(cb){
@@ -1102,13 +1138,13 @@ function setView(v) {
   if(v === 'card') {
     document.getElementById('deskCardGrid').style.display = 'grid';
     document.getElementById('deskTableWrap').style.display = 'none';
-    document.getElementById('btnList').className = 'vt-btn';
-    document.getElementById('btnCard').className = 'vt-btn active';
+    document.getElementById('btnList').className = 'view-toggle-btn inactive';
+    document.getElementById('btnCard').className = 'view-toggle-btn active';
   } else {
     document.getElementById('deskCardGrid').style.display = 'none';
     document.getElementById('deskTableWrap').style.display = 'block';
-    document.getElementById('btnList').className = 'vt-btn active';
-    document.getElementById('btnCard').className = 'vt-btn';
+    document.getElementById('btnList').className = 'view-toggle-btn active';
+    document.getElementById('btnCard').className = 'view-toggle-btn inactive';
   }
 }
 // Restore saved view

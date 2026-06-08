@@ -4,112 +4,159 @@
 {% block bread %}NPD / Client Dispatch{% endblock %}
 
 {% block extra_css %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
-.cd-wrap{display:grid;grid-template-columns:340px 1fr;gap:14px;align-items:start;}
+/* ============ CLIENT DISPATCH - PREMIUM ============ */
+.cd-page * { font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif; }
+
+.cd-wrap{display:grid;grid-template-columns:350px 1fr;gap:16px;align-items:start;}
 @media(max-width:980px){.cd-wrap{grid-template-columns:1fr;}}
 
-.cd-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px;}
-.cd-card h3{margin:0 0 10px;font-size:.95rem;color:var(--text);}
-
-.cd-proj{padding:10px 12px;border:1px solid var(--border);border-radius:var(--r-sm);
-         margin-bottom:8px;cursor:pointer;background:var(--white);transition:.1s;}
-.cd-proj:hover{border-color:var(--blue);box-shadow:0 1px 4px rgba(37,99,235,.1);}
-.cd-proj.active{border-color:var(--blue);background:var(--blue-lt);}
-.cd-proj-code{font-size:.75rem;font-weight:800;color:var(--blue);}
-.cd-proj-name{font-size:.82rem;font-weight:600;color:var(--text);margin-top:2px;}
-.cd-proj-meta{font-size:.7rem;color:var(--text3);margin-top:4px;display:flex;justify-content:space-between;}
-.cd-pill{background:#dcfce7;color:#15803d;padding:2px 8px;border-radius:10px;font-weight:700;font-size:.66rem;}
-
-.cd-empty{padding:30px;text-align:center;color:var(--text3);font-size:.85rem;}
-.cd-loading{padding:18px;text-align:center;color:var(--text3);font-size:.8rem;}
-
-.cd-items{width:100%;border-collapse:collapse;margin-top:10px;}
-.cd-items th{text-align:left;padding:8px 10px;background:#f3f4f6;border-bottom:1px solid var(--border);
-             font-size:.7rem;text-transform:uppercase;color:var(--text2);font-weight:700;letter-spacing:.4px;}
-.cd-items td{padding:9px 10px;border-bottom:1px solid #f1f5f9;font-size:.84rem;}
-.cd-items tbody tr:hover{background:#fafafa;}
-.cd-items input[type="checkbox"]{transform:scale(1.15);cursor:pointer;}
-
-.cd-form{margin-top:14px;padding-top:14px;border-top:1px dashed var(--border);}
-.cd-form label{display:block;font-size:.74rem;font-weight:700;color:var(--text2);
-               text-transform:uppercase;letter-spacing:.3px;margin:10px 0 4px;}
-.cd-form input,.cd-form textarea{
-   width:100%;padding:.5rem .7rem;border:1px solid var(--border);border-radius:var(--r-sm);
-   font-size:.85rem;background:var(--white);color:var(--text);outline:none;font-family:inherit;
+.cd-card{
+   background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:16px;
+   box-shadow:0 1px 3px rgba(15,23,42,.05), 0 4px 16px rgba(15,23,42,.04);
 }
-.cd-form input:focus,.cd-form textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-lt);}
-.cd-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.cd-card h3{margin:0 0 12px;font-size:.95rem;color:#1e293b;font-weight:800;display:flex;align-items:center;gap:8px;}
+.cd-card h3 svg{flex-shrink:0;}
+.cd-h3-tile{width:30px;height:30px;border-radius:9px;flex-shrink:0;
+            background:linear-gradient(180deg,#8b5cf6,#6d28d9);color:#fff;
+            display:flex;align-items:center;justify-content:center;
+            box-shadow:0 2px 6px rgba(124,58,237,.3), inset 0 1px 0 rgba(255,255,255,.2);}
+/* Inline mini icons in meta lines */
+.cd-mini-ic{display:inline-flex;align-items:center;justify-content:center;
+            width:16px;height:16px;color:#a78bfa;vertical-align:-3px;flex-shrink:0;}
+.cd-pcli .cd-mini-ic{color:#a78bfa;}
+/* Spinner for in-progress button state */
+@keyframes cdspin{to{transform:rotate(360deg);}}
+.cd-spin{animation:cdspin .7s linear infinite;}
+
+/* ---- Project cards ---- */
+.cd-proj{padding:12px 14px;border:1.5px solid #e2e8f0;border-radius:12px;
+         margin-bottom:9px;cursor:pointer;background:#fff;transition:all .12s;}
+.cd-proj:hover{border-color:#c4b5fd;box-shadow:0 2px 10px rgba(124,58,237,.08);transform:translateY(-1px);}
+.cd-proj.active{border-color:#7c3aed;background:#faf5ff;box-shadow:0 2px 10px rgba(124,58,237,.12);}
+.cd-proj-code{font-size:.74rem;font-weight:700;color:#7c3aed;font-family:'JetBrains Mono',monospace;}
+.cd-proj-name{font-size:.84rem;font-weight:700;color:#1e293b;margin-top:3px;}
+.cd-proj-meta{font-size:.7rem;color:#94a3b8;margin-top:6px;display:flex;justify-content:space-between;align-items:center;gap:6px;}
+.cd-pill{background:#dcfce7;color:#15803d;padding:3px 10px;border-radius:99px;font-weight:700;font-size:.66rem;white-space:nowrap;}
+
+.cd-empty{padding:38px 24px;text-align:center;color:#94a3b8;font-size:.85rem;}
+.cd-loading{padding:20px;text-align:center;color:#94a3b8;font-size:.8rem;}
+
+/* ---- Items table ---- */
+.cd-items{width:100%;border-collapse:collapse;margin-top:12px;}
+.cd-items th{text-align:left;padding:10px 12px;background:#fff;border-bottom:2px solid #e2e8f0;
+             font-size:10.5px;text-transform:uppercase;color:#94a3b8;font-weight:800;letter-spacing:.06em;}
+.cd-items td{padding:11px 12px;border-bottom:1px solid #f1f5f9;font-size:.84rem;color:#334155;}
+.cd-items tbody tr{transition:background .12s;}
+.cd-items tbody tr:hover{background:#faf5ff;}
+.cd-items input[type="checkbox"]{transform:scale(1.2);cursor:pointer;accent-color:#7c3aed;}
+.cd-items .smp-code{font-family:'JetBrains Mono',monospace;font-weight:600;color:#1e293b;}
+
+/* ---- Form ---- */
+.cd-form{margin-top:16px;padding-top:16px;border-top:1px dashed #e2e8f0;}
+.cd-form h3{font-size:.85rem;font-weight:800;color:#1e293b;margin:0 0 6px;}
+.cd-form label{display:block;font-size:.7rem;font-weight:800;color:#6b21a8;
+               text-transform:uppercase;letter-spacing:.05em;margin:12px 0 5px;}
+.cd-form input,.cd-form textarea{
+   width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:10px;
+   font-size:.85rem;background:#fff;color:#1e293b;outline:none;font-family:inherit;font-weight:500;
+   box-sizing:border-box;transition:border-color .12s, box-shadow .12s;
+   box-shadow:0 1px 2px rgba(15,23,42,.03);
+}
+.cd-form input:focus,.cd-form textarea:focus{border-color:#c4b5fd;box-shadow:0 0 0 3px rgba(124,58,237,.1);}
+.cd-form input::placeholder,.cd-form textarea::placeholder{color:#cbd5e1;}
+.cd-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 @media(max-width:640px){.cd-form-grid{grid-template-columns:1fr;}}
 
-.cd-send-btn{margin-top:14px;padding:.55rem 1.2rem;color:#fff;border:none;
-             border-radius:var(--r-sm);font-size:.85rem;font-weight:700;cursor:pointer;letter-spacing:.2px;
-             transition:.15s;}
-.cd-send-btn:disabled{background:#94a3b8 !important;cursor:not-allowed;}
+/* ---- Buttons (pills) ---- */
+.cd-send-btn{margin-top:14px;padding:10px 22px;color:#fff;border:none;
+             border-radius:99px;font-size:.85rem;font-weight:700;cursor:pointer;
+             font-family:inherit;display:inline-flex;align-items:center;gap:7px;
+             transition:transform .12s, box-shadow .12s;}
+.cd-send-btn svg{flex-shrink:0;}
+.cd-send-btn:disabled{background:#94a3b8 !important;cursor:not-allowed;box-shadow:none !important;transform:none !important;}
+.cd-send-row{display:flex;justify-content:flex-end;margin-top:16px;}
+.cd-main-btn{background:linear-gradient(180deg,#8b5cf6,#6d28d9);
+             box-shadow:0 2px 8px rgba(124,58,237,.3), inset 0 1px 0 rgba(255,255,255,.2);}
+.cd-main-btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 4px 14px rgba(124,58,237,.4), inset 0 1px 0 rgba(255,255,255,.2);}
 
-.cd-send-row{display:flex;justify-content:flex-end;margin-top:14px;}
-.cd-main-btn{background:#2563eb;}
-.cd-main-btn:hover:not(:disabled){background:#1d4ed8;}
+.cd-sel-btn{font-size:.74rem;font-weight:700;background:#fff;border:1.5px solid #ddd6fe;color:#6d28d9;
+            padding:6px 14px;border-radius:99px;cursor:pointer;font-family:inherit;transition:all .12s;}
+.cd-sel-btn:hover{background:#f5f3ff;border-color:#c4b5fd;}
 
-.cd-toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
-.cd-history-link{font-size:.78rem;color:var(--blue);text-decoration:none;font-weight:700;}
-.cd-history-link:hover{text-decoration:underline;}
+/* ---- Toolbar ---- */
+.cd-toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;}
+.cd-toolbar-hint{font-size:.82rem;color:#64748b;font-weight:500;}
+.cd-history-link{font-size:.78rem;color:#7c3aed;text-decoration:none;font-weight:700;
+                 display:inline-flex;align-items:center;gap:6px;
+                 padding:7px 16px;border:1.5px solid #ddd6fe;border-radius:99px;
+                 background:#fff;transition:all .12s;box-shadow:0 1px 2px rgba(15,23,42,.04);}
+.cd-history-link:hover{background:#f5f3ff;border-color:#c4b5fd;transform:translateY(-1px);}
+.cd-history-link svg{flex-shrink:0;}
 
-.cd-result{padding:14px;background:#dcfce7;border:1.5px solid #6ee7b7;border-radius:10px;
+.cd-result{padding:14px;background:#dcfce7;border:1.5px solid #6ee7b7;border-radius:12px;
            margin-top:14px;font-size:.85rem;color:#065f46;}
 .cd-result.err{background:#fee2e2;border-color:#fca5a5;color:#991b1b;}
-.cd-wa-link{display:inline-block;margin-top:8px;padding:7px 14px;background:#25d366;color:#fff;
-            border-radius:6px;text-decoration:none;font-weight:700;font-size:.82rem;}
-.cd-wa-link:hover{background:#1ea952;}
 
-.cd-pcli{font-size:.74rem;color:var(--text3);margin-top:4px;}
-.cd-meta-line{display:flex;justify-content:space-between;align-items:center;
-              margin-bottom:8px;font-size:.85rem;}
-.cd-meta-line strong{color:var(--text);}
+.cd-pcli{font-size:.74rem;color:#94a3b8;margin-top:5px;display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
+.cd-pcli svg{flex-shrink:0;vertical-align:-2px;}
+.cd-meta-line{display:flex;justify-content:space-between;align-items:flex-start;
+              margin-bottom:8px;font-size:.85rem;gap:12px;}
+.cd-meta-line strong{color:#1e293b;}
 
-/* ── Confirmation / Success Modal ───────────────────────── */
+/* ---- Confirmation / Success Modal ---- */
 .cd-mod-ov{position:fixed;inset:0;background:rgba(15,23,42,.55);display:none;
-           align-items:center;justify-content:center;z-index:9999;animation:cdFadeIn .15s ease-out;}
+           align-items:center;justify-content:center;z-index:9999;animation:cdFadeIn .15s ease-out;
+           backdrop-filter:blur(2px);}
 .cd-mod-ov.open{display:flex;}
 @keyframes cdFadeIn{from{opacity:0;}to{opacity:1;}}
 @keyframes cdSlideIn{from{transform:translateY(-16px) scale(.96);opacity:0;}
                       to  {transform:translateY(0) scale(1);opacity:1;}}
-.cd-mod{background:#fff;border-radius:14px;width:min(460px,92vw);
-        box-shadow:0 20px 50px rgba(0,0,0,.25);overflow:hidden;
+.cd-mod{background:#fff;border-radius:16px;width:min(460px,92vw);
+        box-shadow:0 20px 50px rgba(15,23,42,.25);overflow:hidden;
         animation:cdSlideIn .2s ease-out;}
-.cd-mod-hd{padding:18px 22px 12px;display:flex;align-items:center;gap:10px;}
-.cd-mod-ic{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;
-           justify-content:center;font-size:1.4rem;flex-shrink:0;}
+.cd-mod-hd{padding:20px 24px 12px;display:flex;align-items:center;gap:12px;}
+.cd-mod-ic{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;
+           justify-content:center;flex-shrink:0;}
+.cd-mod-ic svg{width:24px;height:24px;}
 .cd-mod-ic.warn{background:#fef3c7;color:#d97706;}
 .cd-mod-ic.ok{background:#dcfce7;color:#16a34a;}
 .cd-mod-ic.err{background:#fee2e2;color:#dc2626;}
-.cd-mod-ic.info{background:#dbeafe;color:#2563eb;}
+.cd-mod-ic.info{background:#ede9fe;color:#7c3aed;}
 .cd-mod-ttl{font-size:1.05rem;font-weight:800;color:#0f172a;margin:0;line-height:1.3;}
-.cd-mod-bd{padding:0 22px 18px;font-size:.88rem;color:#374151;line-height:1.55;}
+.cd-mod-bd{padding:0 24px 18px;font-size:.88rem;color:#374151;line-height:1.55;}
 .cd-mod-bd strong{color:#0f172a;}
 .cd-warn-line{margin-top:10px;padding:8px 12px;background:#fff7ed;border-left:3px solid #f59e0b;
               border-radius:0 6px 6px 0;font-size:.8rem;color:#9a3412;}
-.cd-success-stat{margin-top:10px;padding:10px 14px;background:#f0fdf4;border:1px solid #bbf7d0;
-                 border-radius:8px;font-size:.83rem;color:#065f46;}
+.cd-success-stat{margin-top:10px;padding:12px 16px;background:#f0fdf4;border:1px solid #bbf7d0;
+                 border-radius:12px;font-size:.83rem;color:#065f46;}
 .cd-success-stat .row{display:flex;justify-content:space-between;padding:3px 0;}
-.cd-mod-ft{padding:14px 22px 18px;display:flex;justify-content:flex-end;gap:8px;
+.cd-success-stat .row strong{font-family:'JetBrains Mono',monospace;}
+.cd-mod-ft{padding:14px 24px 20px;display:flex;justify-content:flex-end;gap:8px;
            background:#fafbfc;border-top:1px solid #f1f5f9;}
-.cd-mod-btn{padding:8px 18px;border-radius:8px;font-size:.85rem;font-weight:700;
-            cursor:pointer;border:1px solid var(--border);background:#fff;color:#374151;
-            text-decoration:none;display:inline-flex;align-items:center;transition:.1s;}
+.cd-mod-btn{padding:9px 20px;border-radius:99px;font-size:.85rem;font-weight:700;
+            cursor:pointer;border:1.5px solid #e2e8f0;background:#fff;color:#374151;
+            text-decoration:none;display:inline-flex;align-items:center;gap:6px;transition:all .12s;}
 .cd-mod-btn:hover{background:#f3f4f6;}
-.cd-mod-btn.primary{background:#2563eb;color:#fff;border-color:#2563eb;}
-.cd-mod-btn.primary:hover{background:#1d4ed8;}
-.cd-mod-btn.wa{background:#25d366;color:#fff;border-color:#25d366;}
-.cd-mod-btn.wa:hover{background:#1ea952;}
+.cd-mod-btn.primary{background:linear-gradient(180deg,#8b5cf6,#6d28d9);color:#fff;border-color:transparent;
+                    box-shadow:0 2px 8px rgba(124,58,237,.3), inset 0 1px 0 rgba(255,255,255,.2);}
+.cd-mod-btn.primary:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(124,58,237,.4), inset 0 1px 0 rgba(255,255,255,.2);}
+.cd-mod-btn.wa{background:linear-gradient(180deg,#25d366,#1ea952);color:#fff;border-color:transparent;
+               box-shadow:0 2px 8px rgba(37,211,102,.3), inset 0 1px 0 rgba(255,255,255,.2);}
+.cd-mod-btn.wa:hover{transform:translateY(-1px);}
 </style>
 {% endblock %}
 
 {% block content %}
+<div class="cd-page">
+
 <!-- Reusable modal container -->
 <div class="cd-mod-ov" id="cd-modal" onclick="if(event.target===this)closeCdModal()">
   <div class="cd-mod">
     <div class="cd-mod-hd">
-      <div class="cd-mod-ic" id="cd-mod-ic">ℹ️</div>
+      <div class="cd-mod-ic info" id="cd-mod-ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg></div>
       <h3 class="cd-mod-ttl" id="cd-mod-ttl"></h3>
     </div>
     <div class="cd-mod-bd" id="cd-mod-bd"></div>
@@ -118,37 +165,62 @@
 </div>
 
 <div class="cd-toolbar">
-  <div style="font-size:.82rem;color:var(--text2);">
+  <div class="cd-toolbar-hint">
     Select an approved project on the left, then choose samples to dispatch.
   </div>
-  <a href="{{ url_for('client_dispatch.history') }}" class="cd-history-link">📜 Dispatch History</a>
+  <a href="{{ url_for('client_dispatch.history') }}" class="cd-history-link">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>
+    Dispatch History
+  </a>
 </div>
 
 <div class="cd-wrap">
 
   <!-- Left: Projects List -->
   <div class="cd-card" style="max-height:75vh;overflow:auto;">
-    <h3>📦 Approved Projects <span id="cd-proj-count" style="color:var(--text3);font-weight:600;font-size:.8rem;"></span></h3>
+    <h3>
+      <span class="cd-h3-tile"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></span>
+      Approved Projects <span id="cd-proj-count" style="color:#94a3b8;font-weight:600;font-size:.8rem;"></span>
+    </h3>
     <div id="cd-proj-list">
-      <div class="cd-loading">Loading…</div>
+      <div class="cd-loading">Loading...</div>
     </div>
   </div>
 
   <!-- Right: Selected Project + Items + Send Form -->
   <div class="cd-card" id="cd-detail">
-    <div class="cd-empty">← Select a project from the left to see its approved samples.</div>
+    <div class="cd-empty">&larr; Select a project from the left to see its approved samples.</div>
   </div>
 
 </div>
 
+</div>{# end cd-page #}
+
 <script>
 const CD_PROJ_LIST_URL = '{{ url_for("client_dispatch.api_projects") }}';
-const CD_ITEMS_URL_TPL = '{{ url_for("client_dispatch.api_project_items", pid=0) }}';   // contains /0/items — replace 0 with actual pid
+const CD_ITEMS_URL_TPL = '{{ url_for("client_dispatch.api_project_items", pid=0) }}';   // contains /0/items - replace 0 with actual pid
 const CD_SEND_URL      = '{{ url_for("client_dispatch.api_send") }}';
 
 let CD_CURRENT_PROJ = null;
 
-// ── Load list of projects ──
+// -- Premium inline SVG icons (replaces OS emoji for a consistent look) --
+const CD_SVG = {
+  user : '<span class="cd-mini-ic"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>',
+  mail : '<span class="cd-mini-ic"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg></span>',
+  phone: '<span class="cd-mini-ic"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384z"/></svg></span>',
+  spin : '<svg class="cd-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>',
+};
+
+// Modal status icon (premium, keyed by status class) - returned as SVG markup
+function cdIconSvg(kind) {
+  var open = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">';
+  if (kind === 'warn') return open + '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>';
+  if (kind === 'ok')   return open + '<path d="M20 6 9 17l-5-5"/></svg>';
+  if (kind === 'err')  return open + '<path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>';
+  return open + '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>';
+}
+
+// -- Load list of projects --
 async function loadProjects() {
   const list = document.getElementById('cd-proj-list');
   try {
@@ -164,9 +236,9 @@ async function loadProjects() {
       <div class="cd-proj" data-pid="${p.id}" onclick="selectProject(${p.id}, this)">
         <div class="cd-proj-code">${escapeHtml(p.code)}</div>
         <div class="cd-proj-name">${escapeHtml(p.product_name)}</div>
-        <div class="cd-pcli">👤 ${escapeHtml(p.client_name || '—')}</div>
+        <div class="cd-pcli">${CD_SVG.user} ${escapeHtml(p.client_name || '-')}</div>
         <div class="cd-proj-meta">
-          <span>${escapeHtml(p.client_email || '—')}</span>
+          <span>${escapeHtml(p.client_email || '-')}</span>
           <span class="cd-pill">${p.pending_count} sample${p.pending_count > 1 ? 's' : ''}</span>
         </div>
       </div>
@@ -176,19 +248,19 @@ async function loadProjects() {
   }
 }
 
-// ── Select project → load its approved items ──
+// -- Select project -> load its approved items --
 async function selectProject(pid, el) {
   document.querySelectorAll('.cd-proj').forEach(x => x.classList.remove('active'));
   if (el) el.classList.add('active');
 
   const detail = document.getElementById('cd-detail');
-  detail.innerHTML = '<div class="cd-loading">Loading samples…</div>';
+  detail.innerHTML = '<div class="cd-loading">Loading samples...</div>';
 
   try {
-    // URL template: /client-dispatch/api/project/0/items — replace /0/ with /<pid>/
+    // URL template: /client-dispatch/api/project/0/items - replace /0/ with /<pid>/
     const url = CD_ITEMS_URL_TPL.replace('/project/0/', '/project/' + pid + '/');
     const r = await fetch(url);
-    // Read raw text first — if backend returned HTML (404/500), we'll
+    // Read raw text first - if backend returned HTML (404/500), we'll
     // see <!DOCTYPE and surface a useful error instead of "Unexpected token".
     const rawText = await r.text();
     let d;
@@ -217,23 +289,23 @@ function renderDetail(p, items) {
   const itemRows = items.map(it => `
     <tr>
       <td><input type="checkbox" class="cd-item-chk" data-iid="${it.id}" data-code="${escapeHtml(it.sample_code)}"></td>
-      <td><strong>${escapeHtml(it.sample_code) || '—'}</strong></td>
-      <td>${escapeHtml(it.submitted_by) || '—'}</td>
-      <td>${escapeHtml(it.actioned_by) || '—'}</td>
-      <td style="font-size:.75rem;color:var(--text3);">${escapeHtml(it.actioned_at) || '—'}</td>
+      <td><span class="smp-code">${escapeHtml(it.sample_code) || '-'}</span></td>
+      <td>${escapeHtml(it.submitted_by) || '-'}</td>
+      <td>${escapeHtml(it.actioned_by) || '-'}</td>
+      <td style="font-size:.75rem;color:#94a3b8;font-family:'JetBrains Mono',monospace;">${escapeHtml(it.actioned_at) || '-'}</td>
     </tr>
   `).join('');
 
   detail.innerHTML = `
     <div class="cd-meta-line">
       <div>
-        <strong>${escapeHtml(p.code)}</strong> — ${escapeHtml(p.product_name)}
-        <div class="cd-pcli">👤 ${escapeHtml(p.client_name || '—')}
-          ${p.client_email ? ' | 📧 ' + escapeHtml(p.client_email) : ''}
-          ${p.client_phone ? ' | 📱 ' + escapeHtml(p.client_phone) : ''}
+        <strong>${escapeHtml(p.code)}</strong> - ${escapeHtml(p.product_name)}
+        <div class="cd-pcli">${CD_SVG.user} ${escapeHtml(p.client_name || '-')}
+          ${p.client_email ? ' | ' + CD_SVG.mail + ' ' + escapeHtml(p.client_email) : ''}
+          ${p.client_phone ? ' | ' + CD_SVG.phone + ' ' + escapeHtml(p.client_phone) : ''}
         </div>
       </div>
-      <button onclick="toggleAllItems(this)" style="font-size:.75rem;background:none;border:1px solid var(--border);padding:5px 10px;border-radius:6px;cursor:pointer;">Select All</button>
+      <button class="cd-sel-btn" onclick="toggleAllItems(this)">Select All</button>
     </div>
 
     <table class="cd-items">
@@ -250,7 +322,7 @@ function renderDetail(p, items) {
     </table>
 
     <div class="cd-form">
-      <h3 style="margin:0 0 4px;font-size:.85rem;">Tracking Details</h3>
+      <h3>Tracking Details</h3>
       <div class="cd-form-grid">
         <div>
           <label>Courier Name <span style="color:#dc2626;">*</span></label>
@@ -270,7 +342,8 @@ function renderDetail(p, items) {
 
       <div class="cd-send-row">
         <button class="cd-send-btn cd-main-btn" id="cd-send-btn" onclick="saveDispatch()">
-          📤 Send to Client
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/><path d="m21.854 2.147-10.94 10.939"/></svg>
+          Send to Client
         </button>
       </div>
       <div id="cd-result"></div>
@@ -285,12 +358,12 @@ function toggleAllItems(btn) {
   btn.textContent = allChecked ? 'Select All' : 'Deselect All';
 }
 
-// ── Common: validate & gather form data ──
+// -- Common: validate & gather form data --
 function gatherSendInputs() {
   const selected = Array.from(document.querySelectorAll('.cd-item-chk:checked'))
                         .map(b => parseInt(b.dataset.iid, 10));
   if (!selected.length) {
-    showCdModal({icon:'⚠️', iconClass:'warn', title:'No samples selected',
+    showCdModal({iconClass:'warn', title:'No samples selected',
                  body:'Please tick at least one sample to dispatch.',
                  footer:'<button class="cd-mod-btn primary" onclick="closeCdModal()">OK</button>'});
     return null;
@@ -298,13 +371,13 @@ function gatherSendInputs() {
   const courier  = document.getElementById('cd-courier').value.trim();
   const tracking = document.getElementById('cd-tracking').value.trim();
   if (!courier) {
-    showCdModal({icon:'⚠️', iconClass:'warn', title:'Courier name required',
+    showCdModal({iconClass:'warn', title:'Courier name required',
                  body:'Please enter the <strong>Courier Name</strong> (e.g. BlueDart, DTDC, Delhivery).',
                  footer:'<button class="cd-mod-btn primary" onclick="closeCdModal();document.getElementById(&quot;cd-courier&quot;).focus();">OK</button>'});
     return null;
   }
   if (!tracking) {
-    showCdModal({icon:'⚠️', iconClass:'warn', title:'Tracking number required',
+    showCdModal({iconClass:'warn', title:'Tracking number required',
                  body:'Please enter the <strong>Tracking No.</strong> from the courier so the client can track the parcel.',
                  footer:'<button class="cd-mod-btn primary" onclick="closeCdModal();document.getElementById(&quot;cd-tracking&quot;).focus();">OK</button>'});
     return null;
@@ -319,7 +392,7 @@ function gatherSendInputs() {
   };
 }
 
-// ── 📤 Save dispatch — no email/whatsapp; those happen from History page ──
+// -- Save dispatch - no email/whatsapp; those happen from History page --
 async function saveDispatch() {
   const payload = gatherSendInputs();
   if (!payload) return;
@@ -330,7 +403,7 @@ async function saveDispatch() {
   const btn = document.getElementById('cd-send-btn');
   const orig = btn.innerHTML;
   btn.disabled = true;
-  btn.innerHTML = '⏳ Saving...';
+  btn.innerHTML = CD_SVG.spin + ' Saving...';
 
   try {
     const r = await fetch(CD_SEND_URL, {
@@ -347,9 +420,9 @@ async function saveDispatch() {
     }
     if (!d.success) throw new Error(d.error || 'Failed');
 
-    // Success modal — direct user to History page for actual notification
+    // Success modal - direct user to History page for actual notification
     showCdModal({
-      icon: '✓', iconClass: 'ok',
+      iconClass: 'ok',
       title: 'Dispatch saved',
       body: `
         Token <strong>${escapeHtml(d.token_no)}</strong> created.
@@ -359,19 +432,19 @@ async function saveDispatch() {
           <div class="row"><span>Project status:</span><strong>Sent to Client</strong></div>
         </div>
         <div style="margin-top:14px;font-size:.83rem;color:#374151;">
-          📧 To send <strong>Email</strong> or 📱 <strong>WhatsApp</strong> notification,
+          ${CD_SVG.mail} To send <strong>Email</strong> or ${CD_SVG.phone} <strong>WhatsApp</strong> notification,
           go to <strong>Dispatch History</strong> and click the buttons next to this token.
         </div>
       `,
       footer: `
         <button class="cd-mod-btn" onclick="closeCdModal();afterSend();">Close</button>
-        <a class="cd-mod-btn primary" href="/client-dispatch/history">📜 Open History</a>
+        <a class="cd-mod-btn primary" href="/client-dispatch/history">Open History</a>
       `,
     });
 
   } catch (err) {
     showCdModal({
-      icon:'✕', iconClass:'err', title:'Could not save dispatch',
+      iconClass:'err', title:'Could not save dispatch',
       body:'<strong>Reason:</strong> ' + escapeHtml(err.message),
       footer:'<button class="cd-mod-btn primary" onclick="closeCdModal()">Close</button>',
     });
@@ -381,16 +454,16 @@ async function saveDispatch() {
   }
 }
 
-// ── Refresh project list and reset detail panel after a successful send ──
+// -- Refresh project list and reset detail panel after a successful send --
 function afterSend() {
   loadProjects();
   const detail = document.getElementById('cd-detail');
-  detail.innerHTML = '<div class="cd-empty">✅ Dispatched. Select another project.</div>';
+  detail.innerHTML = '<div class="cd-empty"><span class="cd-mini-ic" style="color:#16a34a;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span> Dispatched. Select another project.</div>';
 }
 
-// ── Reusable modal helpers ──
+// -- Reusable modal helpers --
 function showCdModal({icon, iconClass, title, body, footer}) {
-  document.getElementById('cd-mod-ic').textContent = icon || 'ℹ️';
+  document.getElementById('cd-mod-ic').innerHTML = cdIconSvg(iconClass || 'info');
   document.getElementById('cd-mod-ic').className = 'cd-mod-ic ' + (iconClass || 'info');
   document.getElementById('cd-mod-ttl').textContent = title || '';
   document.getElementById('cd-mod-bd').innerHTML = body || '';

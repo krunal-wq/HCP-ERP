@@ -4,63 +4,78 @@
 {% block bread %}NPD / NPD Projects / {{ 'Edit' if edit else 'New' }}{% endblock %}
 {% block extra_css %}
 <style>
-/* ── Form width ── */
-.npd-wrap{max-width:860px;margin:0 auto;}
-.form-card{background:#fff;border:1px solid var(--border);border-radius:var(--r-lg);padding:1.25rem;margin-bottom:.85rem;}
-.sec-title{font-size:.78rem;font-weight:800;color:#7c3aed;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.9rem;padding-bottom:.45rem;border-bottom:2px solid #f3e8ff;}
+/* -- Form width -- */
+.npd-wrap{margin:0 auto;}
+.form-card{background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:1.35rem;margin-bottom:.9rem;box-shadow:0 1px 3px rgba(15,23,42,.05), 0 4px 16px rgba(15,23,42,.04);}
+.sec-title{font-size:.78rem;font-weight:800;color:#7c3aed;text-transform:uppercase;letter-spacing:.08em;margin-bottom:1rem;padding-bottom:.55rem;border-bottom:2px solid #f3e8ff;display:flex;align-items:center;gap:8px;}
+.sec-ic{width:26px;height:26px;border-radius:8px;background:#f5f3ff;border:1px solid #ede9fe;display:inline-flex;align-items:center;justify-content:center;color:#7c3aed;flex-shrink:0;}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:.85rem;}
 .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.85rem;}
 .g4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:.85rem;}
 @media(max-width:900px){.g4{grid-template-columns:1fr 1fr;}}
 @media(max-width:640px){.g2,.g3,.g4{grid-template-columns:1fr;}}
-.fg{display:flex;flex-direction:column;gap:.3rem;}
-.fg label{font-size:.76rem;font-weight:600;color:var(--text2);}
+.fg{display:flex;flex-direction:column;gap:.32rem;}
+.fg label{font-size:.72rem;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.04em;}
 .req{color:#ef4444;margin-left:2px;}
-.fi{padding:.45rem .7rem;border:1.5px solid var(--border);border-radius:var(--r-md);font-size:.83rem;color:var(--text);background:#fff;font-family:inherit;width:100%;transition:border-color .15s;}
-.fi:focus{outline:none;border-color:#7c3aed;box-shadow:0 0 0 3px #f3e8ff;}
+.fi{padding:.5rem .8rem;border:1.5px solid #e2e8f0;border-radius:10px;font-size:.83rem;color:var(--text);background:#fff;font-family:inherit;width:100%;transition:border-color .15s, box-shadow .15s;box-sizing:border-box;}
+.fi:focus{outline:none;border-color:#c4b5fd;box-shadow:0 0 0 3px rgba(124,58,237,.1);}
+select.fi{appearance:none;padding-right:32px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;cursor:pointer;}
 textarea.fi{resize:vertical;min-height:72px;}
 .fi.field-error{border-color:#dc2626!important;background:#fff8f8!important;}
 .field-err-msg{font-size:.7rem;color:#dc2626;font-weight:600;margin-top:2px;display:none;}
 .field-err-msg.show{display:block;}
 .full{grid-column:1/-1;}
 
-/* ── Shared multi-select dropdown ── */
+/* -- Shared multi-select dropdown -- */
 .msd{position:relative;z-index:10;}
 .msd:focus-within,.msd.active{z-index:9999;}
-.msd-trigger{padding:.45rem .75rem;border:1.5px solid var(--border);border-radius:var(--r-md);font-size:.83rem;color:var(--text2);background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:space-between;user-select:none;transition:border-color .15s;min-height:36px;}
-.msd-trigger:hover{border-color:#7c3aed;}
-.msd-trigger.open{border-color:#7c3aed;box-shadow:0 0 0 3px #f3e8ff;}
+.msd-trigger{padding:.5rem .8rem;border:1.5px solid #e2e8f0;border-radius:10px;font-size:.83rem;color:var(--text2);background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:space-between;user-select:none;transition:border-color .15s, box-shadow .15s;min-height:36px;}
+.msd-trigger:hover{border-color:#c4b5fd;}
+.msd-trigger.open{border-color:#c4b5fd;box-shadow:0 0 0 3px rgba(124,58,237,.1);}
 .msd-trigger.field-error{border-color:#dc2626!important;background:#fff8f8!important;}
 .msd-lbl{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .msd-arrow{font-size:.6rem;color:var(--text3);transition:transform .2s;flex-shrink:0;margin-left:6px;}
 .msd-trigger.open .msd-arrow{transform:rotate(180deg);}
-.msd-panel{display:none;position:absolute;top:calc(100% + 3px);left:0;right:0;background:#fff;border:1.5px solid var(--border);border-radius:var(--r-md);box-shadow:0 8px 28px rgba(0,0,0,.14);z-index:9999;overflow:hidden;}
+.msd-panel{display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;background:#fff;border:1.5px solid #e2e8f0;border-radius:12px;box-shadow:0 8px 28px rgba(15,23,42,.14);z-index:9999;overflow:hidden;}
 .msd-panel.open{display:block;}
-.msd-search{width:100%;padding:.5rem .75rem;border:none;border-bottom:1px solid var(--border);font-size:.82rem;font-family:inherit;outline:none;color:var(--text);background:#fafbfc;}
+.msd-search{width:100%;padding:.55rem .8rem;border:none;border-bottom:1px solid #e2e8f0;font-size:.82rem;font-family:inherit;outline:none;color:var(--text);background:#fafbfc;box-sizing:border-box;}
 .msd-list{max-height:190px;overflow-y:auto;}
-.msd-opt{display:flex;align-items:center;gap:.65rem;padding:.48rem .75rem;font-size:.82rem;font-weight:500;color:var(--text2);cursor:pointer;transition:background .1s;}
+.msd-opt{display:flex;align-items:center;gap:.65rem;padding:.5rem .8rem;font-size:.82rem;font-weight:500;color:var(--text2);cursor:pointer;transition:background .1s;}
 .msd-opt:hover{background:#f5f3ff;}
 .msd-opt input[type=checkbox]{width:15px;height:15px;accent-color:#7c3aed;cursor:pointer;flex-shrink:0;}
-.msd-opt-av{width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#6366f1);color:#fff;font-size:.65rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-.msd-footer{display:flex;align-items:center;gap:.4rem;padding:.5rem .65rem;border-top:1px solid var(--border);background:#fafbfc;}
-.msd-btn{padding:.28rem .75rem;border-radius:6px;font-size:.76rem;font-weight:700;cursor:pointer;border:1.5px solid var(--border);background:#fff;color:var(--text2);transition:all .12s;font-family:inherit;}
-.msd-btn:hover{border-color:#7c3aed;color:#7c3aed;}
-.msd-btn-done{background:#7c3aed;color:#fff;border-color:#7c3aed;margin-left:auto;}
-.msd-btn-done:hover{background:#6d28d9;border-color:#6d28d9;color:#fff;}
+.msd-opt-av{width:24px;height:24px;border-radius:99px;background:linear-gradient(135deg,#8b5cf6,#6366f1);color:#fff;font-size:.65rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.msd-footer{display:flex;align-items:center;gap:.4rem;padding:.5rem .65rem;border-top:1px solid #e2e8f0;background:#f8fafc;}
+.msd-btn{padding:.3rem .85rem;border-radius:99px;font-size:.76rem;font-weight:700;cursor:pointer;border:1.5px solid #e2e8f0;background:#fff;color:var(--text2);transition:all .12s;font-family:inherit;}
+.msd-btn:hover{border-color:#c4b5fd;color:#7c3aed;}
+.msd-btn-done{background:linear-gradient(180deg,#8b5cf6,#6d28d9);color:#fff;border-color:transparent;margin-left:auto;box-shadow:0 2px 6px rgba(124,58,237,.3), inset 0 1px 0 rgba(255,255,255,.2);}
+.msd-btn-done:hover{color:#fff;transform:translateY(-1px);}
 .msd-tags{display:none!important;}
-.msd-tag{display:inline-flex;align-items:center;gap:.3rem;padding:.2rem .6rem;background:#ede9fe;border:1px solid #ddd6fe;border-radius:100px;font-size:.72rem;font-weight:700;color:#6d28d9;}
+.msd-tag{display:inline-flex;align-items:center;gap:.3rem;padding:.2rem .6rem;background:#ede9fe;border:1px solid #ddd6fe;border-radius:99px;font-size:.72rem;font-weight:700;color:#6d28d9;}
 .msd-tag-x{cursor:pointer;color:#a78bfa;font-size:.82rem;line-height:1;transition:color .1s;}
 .msd-tag-x:hover{color:#dc2626;}
 
-/* ── Milestones ── */
-.ms-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.45rem;}
+/* -- Milestones -- */
+.ms-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;}
 @media(max-width:640px){.ms-grid{grid-template-columns:1fr 1fr;}}
-.ms-item{display:flex;align-items:center;gap:.45rem;padding:.5rem .65rem;border:1.5px solid var(--border);border-radius:var(--r-md);cursor:pointer;font-size:.78rem;font-weight:600;color:var(--text2);transition:all .15s;user-select:none;}
-.ms-item:has(input:checked){border-color:#7c3aed;background:#f3e8ff;color:#6d28d9;}
+.ms-item{display:flex;align-items:center;gap:.45rem;padding:.55rem .7rem;border:1.5px solid #e2e8f0;border-radius:10px;cursor:pointer;font-size:.78rem;font-weight:600;color:var(--text2);transition:all .15s;user-select:none;background:#fff;}
+.ms-item:hover{border-color:#c4b5fd;}
+.ms-item:has(input:checked){border-color:#7c3aed;background:#f5f3ff;color:#6d28d9;box-shadow:0 0 0 3px rgba(124,58,237,.08);}
 .ms-item input{width:14px;height:14px;cursor:pointer;accent-color:#7c3aed;}
-.val-toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-100px);background:#dc2626;color:#fff;padding:10px 20px;border-radius:10px;font-size:.82rem;font-weight:600;z-index:99999;transition:transform .3s cubic-bezier(.34,1.56,.64,1);box-shadow:0 4px 20px rgba(220,38,38,.35);white-space:nowrap;}
+.val-toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-100px);background:#dc2626;color:#fff;padding:10px 20px;border-radius:99px;font-size:.82rem;font-weight:600;z-index:99999;transition:transform .3s cubic-bezier(.34,1.56,.64,1);box-shadow:0 4px 20px rgba(220,38,38,.35);white-space:nowrap;}
 .val-toast.show{transform:translateX(-50%) translateY(0);}
-/* ── Flatpickr custom theme ── */
+
+/* -- Hero banner -- */
+.npd-banner{background:linear-gradient(135deg,#7c3aed12,#a855f70d);border:1.5px solid #ddd6fe;border-radius:16px;padding:.9rem 1.1rem;margin-bottom:.9rem;display:flex;align-items:center;gap:.85rem;}
+.npd-banner-ic{width:40px;height:40px;border-radius:11px;background:linear-gradient(135deg,#8b5cf6,#6d28d9);color:#fff;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 8px rgba(124,58,237,.3), inset 0 1px 0 rgba(255,255,255,.2);}
+
+/* -- Footer buttons -- */
+.btn-cancel-pill{display:inline-flex;align-items:center;padding:.55rem 1.3rem;border:1.5px solid #e2e8f0;border-radius:99px;background:#fff;color:var(--text2);font-size:.86rem;font-weight:700;text-decoration:none;transition:all .15s;font-family:inherit;}
+.btn-cancel-pill:hover{background:#f8fafc;}
+.btn-save-pill{background:linear-gradient(180deg,#8b5cf6,#6d28d9);color:#fff;border:none;padding:.55rem 1.5rem;font-size:.88rem;font-weight:700;border-radius:99px;cursor:pointer;display:flex;align-items:center;gap:6px;font-family:inherit;box-shadow:0 2px 8px rgba(124,58,237,.3), inset 0 1px 0 rgba(255,255,255,.2);transition:transform .15s, box-shadow .15s;}
+.btn-save-pill:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(124,58,237,.4), inset 0 1px 0 rgba(255,255,255,.2);}
+.btn-save-pill:disabled{opacity:.7;cursor:not-allowed;transform:none;}
+
+/* -- Flatpickr custom theme -- */
 /* Flatpickr theme handled globally in base.html */
 .fi-date{cursor:pointer;}
 @keyframes spin{to{transform:rotate(360deg);}}
@@ -69,17 +84,20 @@ textarea.fi{resize:vertical;min-height:72px;}
 
 {% block content %}
 <div class="npd-wrap">
-<div style="background:linear-gradient(135deg,#7c3aed15,#a855f710);border:2px solid #7c3aed33;border-radius:var(--r-lg);padding:.8rem 1rem;margin-bottom:.85rem;display:flex;align-items:center;gap:.75rem;">
-    <span style="font-size:1.3rem;">🧪</span>
-    <div>
-        <div style="font-weight:800;font-size:.9rem;color:#4c1d95;">NPD — New Product Development</div>
-        <div style="font-size:.75rem;color:#6d28d9;">R&D formulation from scratch. Full sampling loop. ₹10,000 fee applicable.</div>
+<div class="npd-banner">
+    <div class="npd-banner-ic">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2v6a2 2 0 0 0 .245.96l5.51 10.08A2 2 0 0 1 18 22H6a2 2 0 0 1-1.755-2.96l5.51-10.08A2 2 0 0 0 10 8V2"/><path d="M6.453 15h11.094"/><path d="M8.5 2h7"/></svg>
     </div>
-    {% if prefill_lead %}<a href="{{ url_for('crm.lead_view', id=prefill_lead.id) }}" style="margin-left:auto;color:#7c3aed;font-weight:600;font-size:.8rem;white-space:nowrap;">← Back to Lead</a>{% endif %}
+    <div>
+        <div style="font-weight:800;font-size:.9rem;color:#4c1d95;">NPD - New Product Development</div>
+        <div style="font-size:.75rem;color:#6d28d9;">R&D formulation from scratch. Full sampling loop. Rs. 10,000 fee applicable.</div>
+    </div>
+    {% if prefill_lead %}<a href="{{ url_for('crm.lead_view', id=prefill_lead.id) }}" style="margin-left:auto;color:#7c3aed;font-weight:600;font-size:.8rem;white-space:nowrap;">&larr; Back to Lead</a>{% endif %}
 </div>
 {% if prefill_lead %}
-<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:var(--r-lg);padding:.65rem 1rem;margin-bottom:.85rem;font-size:.82rem;">
-    🔗 Lead se create: <strong>{{ prefill_lead.contact_name }}{% if prefill_lead.company_name %} / {{ prefill_lead.company_name }}{% endif %}</strong>
+<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:.65rem 1rem;margin-bottom:.9rem;font-size:.82rem;display:flex;align-items:center;gap:8px;">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+    <span>Lead se create: <strong>{{ prefill_lead.contact_name }}{% if prefill_lead.company_name %} / {{ prefill_lead.company_name }}{% endif %}</strong></span>
 </div>
 {% endif %}
 
@@ -89,16 +107,22 @@ textarea.fi{resize:vertical;min-height:72px;}
 
 <!-- SECTION 5: NPD Fee -->
 <div class="form-card">
-    <div class="sec-title">🔥 NPD Fee</div>
+    <div class="sec-title">
+        <span class="sec-ic"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>
+        NPD Fee
+    </div>
     <div class="g3" style="align-items:end;">
-        <div class="fg"><label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;margin-top:1rem;"><input type="checkbox" name="npd_fee_paid" id="npd_fee_paid" style="width:16px;height:16px;accent-color:#7c3aed;" {{ 'checked' if edit and edit.npd_fee_paid }} onchange="toggleFeeAmt()"><span style="font-size:.83rem;font-weight:600;">NPD Fee Received (₹10,000)</span></label></div>
-        <div class="fg"><label>Amount (₹)</label><input type="number" name="npd_fee_amount" id="npd_fee_amount" class="fi" value="{{ edit.npd_fee_amount if edit else 10000 }}" min="0"></div>
-        <div class="fg"><label>Fee Receipt</label><input type="file" name="npd_fee_receipt" class="fi" accept=".pdf,.jpg,.jpeg,.png">{% if edit and edit.npd_fee_receipt %}<span style="font-size:.72rem;color:var(--text3);">📎 <a href="/npd/uploads/{{ edit.npd_fee_receipt }}" target="_blank" style="color:var(--blue);">View</a></span>{% endif %}</div>
+        <div class="fg"><label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;margin-top:1rem;text-transform:none;letter-spacing:0;"><input type="checkbox" name="npd_fee_paid" id="npd_fee_paid" style="width:16px;height:16px;accent-color:#7c3aed;" {{ 'checked' if edit and edit.npd_fee_paid }} onchange="toggleFeeAmt()"><span style="font-size:.83rem;font-weight:600;color:var(--text);">NPD Fee Received (Rs. 10,000)</span></label></div>
+        <div class="fg"><label>Amount (Rs.)</label><input type="number" name="npd_fee_amount" id="npd_fee_amount" class="fi" value="{{ edit.npd_fee_amount if edit else 10000 }}" min="0"></div>
+        <div class="fg"><label>Fee Receipt</label><input type="file" name="npd_fee_receipt" class="fi" accept=".pdf,.jpg,.jpeg,.png">{% if edit and edit.npd_fee_receipt %}<span style="font-size:.72rem;color:var(--text3);display:inline-flex;align-items:center;gap:4px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> <a href="/npd/uploads/{{ edit.npd_fee_receipt }}" target="_blank" style="color:var(--blue);">View</a></span>{% endif %}</div>
     </div>
 </div>
 <!-- SECTION 1: Basic Info -->
 <div class="form-card">
-    <div class="sec-title">📋 Basic Project Information</div>
+    <div class="sec-title">
+        <span class="sec-ic"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M8 13h8"/><path d="M8 17h8"/></svg></span>
+        Basic Project Information
+    </div>
     <div class="g3">
         {% if edit %}<div class="fg"><label>Project No</label><input type="text" class="fi" value="{{ edit.code }}" disabled style="background:var(--bg);"></div>{% endif %}
         <div class="fg{% if not edit %} full{% endif %}">
@@ -130,13 +154,13 @@ textarea.fi{resize:vertical;min-height:72px;}
             <div class="msd" id="client_dd">
                 <div class="msd-trigger" id="client_trigger" onclick="clientToggle()" style="justify-content:space-between;">
                     <span class="msd-lbl" id="client_lbl">{% if edit and edit.client_name %}{{ edit.client_name }}{% elif prefill_url and prefill_url.client_name %}{{ prefill_url.client_name }}{% elif prefill_lead and prefill_lead.contact_name %}{{ prefill_lead.contact_name }}{% else %}Select Client{% endif %}</span>
-                    <span class="msd-arrow">▼</span>
+                    <span class="msd-arrow">&#9662;</span>
                 </div>
                 <div class="msd-panel" id="client_panel">
-                    <input type="text" class="msd-search" placeholder="🔍 Search client..." oninput="clientSearch(this)">
+                    <input type="text" class="msd-search" placeholder="Search client..." oninput="clientSearch(this)">
                     <div class="msd-list" id="client_list" style="max-height:220px;">
                         <div class="msd-opt" onclick="selectClient('','','','','')">
-                            <span style="color:var(--text3);font-style:italic;">— None —</span>
+                            <span style="color:var(--text3);font-style:italic;">- None -</span>
                         </div>
                         {% if clients %}
                             {% for c in clients %}
@@ -172,17 +196,17 @@ textarea.fi{resize:vertical;min-height:72px;}
             <div class="field-err-msg" id="err_area_of_application">Area of Application is required</div>
         </div>
 
-        {# ── Market Level multi-select dropdown ── #}
+        {# -- Market Level multi-select dropdown -- #}
         <div class="fg">
             <label>Market Level <span class="req">*</span></label>
             <input type="hidden" name="market_level" id="fi_market_level" value="{{ edit.market_level if edit else '' }}">
             <div class="msd" id="ml_dd">
                 <div class="msd-trigger" id="ml_trigger" onclick="msdToggle('ml')">
                     <span class="msd-lbl" id="ml_lbl">Select Market Level</span>
-                    <span class="msd-arrow">▼</span>
+                    <span class="msd-arrow">&#9662;</span>
                 </div>
                 <div class="msd-panel" id="ml_panel">
-                    <input type="text" class="msd-search" placeholder="🔍 Search..." oninput="msdSearch(this,'ml_list')">
+                    <input type="text" class="msd-search" placeholder="Search..." oninput="msdSearch(this,'ml_list')">
                     <div class="msd-list" id="ml_list">
                         {% for lvl in ['Premium','Mass Market','Mid Range','Luxury','Economy'] %}
                         <label class="msd-opt" onclick="event.stopPropagation()">
@@ -201,17 +225,17 @@ textarea.fi{resize:vertical;min-height:72px;}
             <div class="field-err-msg" id="err_market_level">Market Level is required</div>
         </div>
 
-        {# ── Assign Members (Employee list) ── #}
+        {# -- Assign Members (Employee list) -- #}
         <div class="fg">
             <label>Assign Members</label>
             <input type="hidden" name="assigned_members" id="fi_assigned_members" value="{{ edit.assigned_members if edit else '' }}">
             <div class="msd" id="mem_dd">
                 <div class="msd-trigger" id="mem_trigger" onclick="msdToggle('mem')">
                     <span class="msd-lbl" id="mem_lbl">Select Members</span>
-                    <span class="msd-arrow">▼</span>
+                    <span class="msd-arrow">&#9662;</span>
                 </div>
                 <div class="msd-panel" id="mem_panel">
-                    <input type="text" class="msd-search" placeholder="🔍 Search members..." oninput="msdSearch(this,'mem_list')">
+                    <input type="text" class="msd-search" placeholder="Search members..." oninput="msdSearch(this,'mem_list')">
                     <div class="msd-list" id="mem_list">
                         {% if employees %}
                             {% for emp in employees %}
@@ -248,7 +272,7 @@ textarea.fi{resize:vertical;min-height:72px;}
             <select name="status" class="fi">
                 {% if npd_statuses %}
                     {% for s in npd_statuses %}
-                    <option value="{{ s.slug }}" {{ 'selected' if edit and edit.status==s.slug else ('selected' if not edit and loop.first else '') }}>{{ s.icon }} {{ s.name }}</option>
+                    <option value="{{ s.slug }}" {{ 'selected' if edit and edit.status==s.slug else ('selected' if not edit and loop.first else '') }}>{{ s.name }}</option>
                     {% endfor %}
                 {% else %}
                     <option value="not_started" selected>Not Started</option>
@@ -259,7 +283,7 @@ textarea.fi{resize:vertical;min-height:72px;}
     <div style="margin-top:.85rem;display:flex;flex-direction:column;gap:.7rem;">
         <div class="fg">
             <label>Description <span class="req">*</span></label>
-            <textarea name="description" id="fi_description" class="fi" rows="2" placeholder="About this item — detailed product description..." required>{{ edit.description if edit else '' }}</textarea>
+            <textarea name="description" id="fi_description" class="fi" rows="2" placeholder="About this item - detailed product description..." required>{{ edit.description if edit else '' }}</textarea>
             <div class="field-err-msg" id="err_description">Description is required</div>
         </div>
         <div class="fg">
@@ -281,7 +305,10 @@ textarea.fi{resize:vertical;min-height:72px;}
 
 <!-- SECTION 2: Product Specs -->
 <div class="form-card">
-    <div class="sec-title">🔬 Product Specifications</div>
+    <div class="sec-title">
+        <span class="sec-ic"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></span>
+        Product Specifications
+    </div>
     <div class="g3">
         <div class="fg"><label>Reference Brand <span class="req">*</span></label><input type="text" name="reference_brand" id="fi_reference_brand" class="fi" value="{{ edit.reference_brand if edit else '' }}" placeholder="Foxtale, Minimalist" required><div class="field-err-msg" id="err_reference_brand">Required</div></div>
         <div class="fg"><label>Reference Product Name <span class="req">*</span></label><input type="text" name="reference_product_name" id="fi_reference_product_name" class="fi" value="{{ edit.reference_product_name if edit else '' }}" placeholder="Foxtale Oil Face Wash" required><div class="field-err-msg" id="err_reference_product_name">Required</div></div>
@@ -305,19 +332,22 @@ textarea.fi{resize:vertical;min-height:72px;}
 
 <!-- SECTION 3: Team -->
 <div class="form-card">
-    <div class="sec-title">👥 Team Assignment</div>
+    <div class="sec-title">
+        <span class="sec-ic"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+        Team Assignment
+    </div>
     <div class="g2">
-        {# ── R&D Person multi-select ── #}
+        {# -- R&D Person multi-select -- #}
         <div class="fg">
             <label>R&D Person</label>
             <input type="hidden" name="assigned_rd_members" id="fi_assigned_rd" value="{{ edit_assigned_rd_emp_csv if edit_assigned_rd_emp_csv is defined else (edit.assigned_rd_members if edit else '') }}">
             <div class="msd" id="rd_dd">
                 <div class="msd-trigger" id="rd_trigger" onclick="msdToggle('rd')">
                     <span class="msd-lbl" id="rd_lbl">Select R&D Members</span>
-                    <span class="msd-arrow">▼</span>
+                    <span class="msd-arrow">&#9662;</span>
                 </div>
                 <div class="msd-panel" id="rd_panel">
-                    <input type="text" class="msd-search" placeholder="🔍 Search members..." oninput="msdSearch(this,'rd_list')">
+                    <input type="text" class="msd-search" placeholder="Search members..." oninput="msdSearch(this,'rd_list')">
                     <div class="msd-list" id="rd_list">
                         {% if rd_employees %}
                             {% for emp in rd_employees %}
@@ -347,9 +377,9 @@ textarea.fi{resize:vertical;min-height:72px;}
         <div class="fg">
             <label>Link to Lead</label>
             <select name="lead_id" class="fi">
-                <option value="">— Select Lead —</option>
+                <option value="">- Select Lead -</option>
                 {% for lead in leads %}
-                <option value="{{ lead.id }}" {{ 'selected' if prefill_lead and lead.id==prefill_lead.id }}>{{ lead.code or lead.id }} — {{ lead.contact_name }} / {{ lead.company_name or '' }}</option>
+                <option value="{{ lead.id }}" {{ 'selected' if prefill_lead and lead.id==prefill_lead.id }}>{{ lead.code or lead.id }} - {{ lead.contact_name }} / {{ lead.company_name or '' }}</option>
                 {% endfor %}
             </select>
         </div>
@@ -359,7 +389,10 @@ textarea.fi{resize:vertical;min-height:72px;}
 
 <!-- SECTION 4: Timeline -->
 <div class="form-card">
-    <div class="sec-title">📅 Timeline</div>
+    <div class="sec-title">
+        <span class="sec-ic"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>
+        Timeline
+    </div>
     <div class="g3">
         <div class="fg">
             <label>Project Start Date</label>
@@ -385,7 +418,10 @@ textarea.fi{resize:vertical;min-height:72px;}
 
 <!-- SECTION 6: Milestones -->
 <div class="form-card">
-    <div class="sec-title">⚙️ Select Milestones</div>
+    <div class="sec-title">
+        <span class="sec-ic"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
+        Select Milestones
+    </div>
     {% if edit %}
     {# Build a map of milestone_type -> MilestoneMaster row for this project #}
     {% set existing_map = {} %}
@@ -404,7 +440,7 @@ textarea.fi{resize:vertical;min-height:72px;}
             {% endif %}
             <span>{{ tmpl.icon if tmpl.icon else '' }} {{ tmpl.title }}</span>
             {% if ms and ms.status and ms.status != 'pending' %}
-            <span style="font-size:.68rem;font-weight:700;padding:1px 6px;border-radius:100px;background:{% if ms.status=='approved' %}#dcfce7{% else %}#fef9c3{% endif %};color:{% if ms.status=='approved' %}#16a34a{% else %}#854d0e{% endif %};margin-left:auto;">{{ ms.status|title }}</span>
+            <span style="font-size:.68rem;font-weight:700;padding:1px 7px;border-radius:99px;background:{% if ms.status=='approved' %}#dcfce7{% else %}#fef9c3{% endif %};color:{% if ms.status=='approved' %}#16a34a{% else %}#854d0e{% endif %};margin-left:auto;">{{ ms.status|title }}</span>
             {% endif %}
         </label>
         {% endfor %}
@@ -420,9 +456,15 @@ textarea.fi{resize:vertical;min-height:72px;}
 
 <!-- Footer -->
 <div style="display:flex;gap:.5rem;justify-content:flex-end;margin-bottom:2rem;">
-    <a href="{{ url_for('npd.npd_projects') }}" class="btn btn-outline">Cancel</a>
-    <button type="submit" id="saveBtn" style="background:#7c3aed;color:#fff;border:none;padding:.5rem 1.5rem;font-size:.88rem;font-weight:700;border-radius:var(--r-md);cursor:pointer;display:flex;align-items:center;gap:6px;">
-        {{ '💾 Save Changes' if edit else '✨ Create NPD Project' }}
+    <a href="{{ url_for('npd.npd_projects') }}" class="btn-cancel-pill">Cancel</a>
+    <button type="submit" id="saveBtn" class="btn-save-pill">
+        {% if edit %}
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        Save Changes
+        {% else %}
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Create NPD Project
+        {% endif %}
     </button>
 </div>
 </form>
@@ -431,7 +473,7 @@ textarea.fi{resize:vertical;min-height:72px;}
 <div class="val-toast" id="valToast"></div>
 
 <script>
-/* ── Unified Multi-Select Dropdown (msd) ── */
+/* -- Unified Multi-Select Dropdown (msd) -- */
 var msdState={};
 
 var MSD_CONFIG={
@@ -487,11 +529,11 @@ function msdChange(id){
         tagsEl.innerHTML=checks.map(function(c){
             var n=c.dataset.name||c.value;
             var ini=n.charAt(0).toUpperCase();
-            return '<span class="msd-tag"><span style="width:15px;height:15px;border-radius:50%;background:#7c3aed;color:#fff;font-size:.6rem;font-weight:800;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;">'+ini+'</span>'+n+'<span class="msd-tag-x" onclick="msdRemove(\''+id+'\',\''+c.value+'\')">✕</span></span>';
+            return '<span class="msd-tag"><span style="width:15px;height:15px;border-radius:50%;background:#7c3aed;color:#fff;font-size:.6rem;font-weight:800;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;">'+ini+'</span>'+n+'<span class="msd-tag-x" onclick="msdRemove(\''+id+'\',\''+c.value+'\')">\u2715</span></span>';
         }).join('');
     } else {
         tagsEl.innerHTML=checks.map(function(c){
-            return '<span class="msd-tag">'+c.value+'<span class="msd-tag-x" onclick="msdRemove(\''+id+'\',\''+c.value+'\')">✕</span></span>';
+            return '<span class="msd-tag">'+c.value+'<span class="msd-tag-x" onclick="msdRemove(\''+id+'\',\''+c.value+'\')">\u2715</span></span>';
         }).join('');
     }
     // Clear validation error
@@ -548,7 +590,7 @@ document.addEventListener('click',function(e){
     if(rdVal){rdVal.split(',').forEach(function(v){v=v.trim();document.querySelectorAll('#rd_list input').forEach(function(cb){if(cb.value===v)cb.checked=true;});});msdChange('rd');}
 })();
 
-/* ── Client Dropdown ── */
+/* -- Client Dropdown -- */
 var clientOpen=false;
 function clientToggle(){
     clientOpen=!clientOpen;
@@ -586,8 +628,8 @@ document.addEventListener('click',function(e){
     }
 });
 
-/* ── Timeline auto-calc ── */
-/* ── Flatpickr Date Pickers ── */
+/* -- Timeline auto-calc -- */
+/* -- Flatpickr Date Pickers -- */
 var fpStart, fpEnd;
 
 function calcEndFromStart() {
@@ -643,12 +685,12 @@ document.getElementById('lead_days').addEventListener('input', calcEndFromStart)
 }); // end DOMContentLoaded
 
 
-/* ── NPD Fee ── */
+/* -- NPD Fee -- */
 function toggleFeeAmt(){var cb=document.getElementById('npd_fee_paid');var amt=document.getElementById('npd_fee_amount');amt.disabled=!cb.checked;amt.style.opacity=cb.checked?'1':'.5';}
 toggleFeeAmt();
 
-/* ── Validation ── */
-function showValToast(msg){var t=document.getElementById('valToast');t.innerHTML='⚠️ '+msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},3500);}
+/* -- Validation -- */
+function showValToast(msg){var t=document.getElementById('valToast');t.innerHTML='\u26A0\uFE0F '+msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},3500);}
 var REQUIRED=[
     ['fi_product_name','err_product_name','Product Name'],
     ['fi_client_coordinator','err_client_coordinator','Client CO-Ordinator'],
